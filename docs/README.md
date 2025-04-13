@@ -4,11 +4,11 @@ This AI-powered productivity app helps you work with focus, structure, and accou
 
 ### Core Features
 
-#### 1. Adaptive Task Management
+#### Adaptive Task Management
 
 The app transforms task management through adaptive Pomodoro sessions. You define goals, break them into manageable tasks, and organize them into focused work intervals. After each session, it conducts check-ins to assess completion and focus levels, then adjusts your remaining schedule based on actual progress and energy.
 
-#### 2. Accountability Framework
+#### Guided Focus Sessions
 
 Three distinct work modes provide structured accountability:
 
@@ -18,7 +18,7 @@ Three distinct work modes provide structured accountability:
 
 **Collab Mode**: Work with others on the same task, with collaborative intervals and optional breakout intervals for individual focus.
 
-#### 3. Performance Analytics
+#### Performance Analytics
 
 The app compiles data from your work sessions into personalized summaries, providing insights into focus patterns, task completion rates, and areas for improvement. This enables better decisions about work habits and continuous improvement.
 
