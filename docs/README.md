@@ -2,13 +2,13 @@
 
 This AI-powered productivity app helps you work with focus, structure, and accountability. It guides you through planning your day, executing focused work intervals, and reflecting on your performance.
 
-## Core Features
+### Core Features
 
-### 1. Adaptive Task Management
+#### 1. Adaptive Task Management
 
 The app transforms task management through adaptive Pomodoro sessions. You define goals, break them into manageable tasks, and organize them into focused work intervals. After each session, it conducts check-ins to assess completion and focus levels, then adjusts your remaining schedule based on actual progress and energy.
 
-### 2. Accountability Framework
+#### 2. Accountability Framework
 
 Three distinct work modes provide structured accountability:
 
@@ -18,32 +18,32 @@ Three distinct work modes provide structured accountability:
 
 **Collab Mode**: Work with others on the same task, with collaborative intervals and optional breakout intervals for individual focus.
 
-### 3. Performance Analytics
+#### 3. Performance Analytics
 
 The app compiles data from your work sessions into personalized summaries, providing insights into focus patterns, task completion rates, and areas for improvement. This enables better decisions about work habits and continuous improvement.
 
-## User Flow
+### User Flow
 
-### 1. Planning
+#### 1. Planning
 
-- Gather TODOs from user input or the backlog
-- Split TODOs into objective-specific or standalone tasks
-- Distribute tasks across intervals for a balanced schedule
+* Gather TODOs from user input or the backlog
+* Split TODOs into objective-specific or standalone tasks
+* Distribute tasks across intervals for a balanced schedule
 
-### 2. Execution
+#### 2. Execution
 
-- Commit to specific tasks during each interval
-- Work with focused attention
-- Report on achievements through check-ins
-- Ad-hoc refinement of upcoming intervals based on progress
+* Commit to specific tasks during each interval
+* Work with focused attention
+* Report on achievements through check-ins
+* Ad-hoc refinement of upcoming intervals based on progress
 
-### 3. Reflection
+#### 3. Reflection
 
-- Review performance insights and identify improvements
-- Prepare tasks for the next session
-- Update the backlog with completed and remaining work
+* Review performance insights and identify improvements
+* Prepare tasks for the next session
+* Update the backlog with completed and remaining work
 
-## Terminology
+### Terminology
 
 **TODO**: Something that needs to be done, from quick actions to complex undertakings.
 
