@@ -1,95 +1,133 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+import dynamic from "next/dynamic";
+const ReactPlayer = dynamic(() => import("react-player"), { ssr: false });
+
+import styles from "./home.module.css";
+import dayjs, { Dayjs } from "dayjs";
+import duration, { Duration } from "dayjs/plugin/duration";
+import { useEffect, useState } from "react";
+import { useInterval } from "@mantine/hooks";
+import {
+  AppShell,
+  Box,
+  Button,
+  Center,
+  RingProgress,
+  Text,
+} from "@mantine/core";
+
+dayjs.extend(duration);
 
 export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [isReady, setIsReady] = useState(false);
+  const { timeLeft, duration, deadline, start, progress } = useTimer({
+    duration: dayjs.duration({ minutes: 45, seconds: 0 }),
+    onFinish: () => {
+      alert("finished");
+    },
+  });
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+  return (
+    <AppShell.Main h="100dvh" display="grid">
+      <ReactPlayer
+        url="https://www.youtube.com/watch?v=B8JhwzElIhQ"
+        playing
+        loop
+        config={{
+          youtube: {
+            playerVars: {
+              start: 70,
+            },
+          },
+        }}
+        muted
+        height="100%"
+        width="100%"
+        style={{
+          position: "fixed",
+          inset: 0,
+          pointerEvents: "none",
+          opacity: deadline ? 1 : 0,
+          transition: "opacity 2s ease-in-out",
+        }}
+        onReady={() => setIsReady(true)}
+      />
+
+      <Center my="auto">
+        {deadline ? (
+          <RingProgress
+            size={250}
+            thickness={20}
+            roundCaps
+            sections={[
+              {
+                value: progress,
+                color: "blue",
+              },
+            ]}
+            styles={{ label: { textAlign: "center" } }}
+            label={
+              <Text
+                c="blue.1"
+                style={{
+                  fontSize: 32,
+                  fontFamily: "monospace",
+                  textShadow: "0 0 4px rgba(0, 0, 0, 1)",
+                }}
+                fw={700}
+                px="xs"
+                component="span"
+              >
+                {timeLeft.format("mm:ss")}
+              </Text>
+            }
+          />
+        ) : (
+          <Button
+            size="xl"
+            radius="xl"
+            loading={!isReady}
+            loaderProps={{ type: "bars" }}
+            onClick={start}
           >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+            Start Session
+          </Button>
+        )}
+      </Center>
+    </AppShell.Main>
   );
 }
+
+const useTimer = ({
+  duration,
+  onFinish,
+}: {
+  duration: Duration;
+  onFinish: () => void;
+}) => {
+  const [deadline, setDeadline] = useState<Dayjs>();
+
+  const [timeLeft, setTimeLeft] = useState(duration);
+  const interval = useInterval(() => {
+    if (!deadline) return;
+    setTimeLeft(dayjs.duration(deadline.diff(dayjs())));
+  }, 100);
+
+  useEffect(() => {
+    if (!deadline) return;
+
+    if (deadline.isAfter(dayjs())) return;
+    onFinish();
+    interval.stop();
+  }, [timeLeft, deadline]);
+
+  const start = () => {
+    setDeadline(dayjs().add(duration));
+    interval.start();
+  };
+
+  const progress =
+    Math.max(0, timeLeft.asSeconds() / duration.asSeconds()) * 100;
+
+  return { timeLeft, duration, start, progress, deadline };
+};

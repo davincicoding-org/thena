@@ -1,5 +1,5 @@
 {
-  "name": "con8",
+  "name": "concentraid",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,17 +9,39 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "^0.2.9",
+    "@ai-sdk/react": "^1.2.8",
+    "@hookform/resolvers": "^5.0.1",
+    "@lmstudio/sdk": "^1.1.0",
+    "@mantine/core": "^7.17.4",
+    "@mantine/hooks": "^7.17.4",
+    "@tabler/icons-react": "^3.31.0",
+    "ai": "^4.3.5",
+    "chrome-ai": "^1.11.1",
+    "dayjs": "^1.11.13",
+    "next": "15.3.0",
+    "ollama-ai-provider": "^1.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next": "15.3.0"
+    "react-hook-form": "^7.55.0",
+    "react-player": "^2.16.0",
+    "react-speech-kit": "^3.0.1",
+    "zod": "^3.24.2",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@tauri-apps/cli": "1",
+    "@types/dom-speech-recognition": "^0.0.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-speech-kit": "^3.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.3.0",
-    "@eslint/eslintrc": "^3"
+    "postcss": "^8.5.3",
+    "postcss-preset-mantine": "^1.17.0",
+    "postcss-simple-vars": "^7.0.1",
+    "typescript": "^5"
   }
 }
