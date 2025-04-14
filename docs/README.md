@@ -1,4 +1,4 @@
-# App Functionality
+# Summary
 
 This AI-powered productivity app helps you work with focus, structure, and accountability. It guides you through planning your day, executing focused work intervals, and reflecting on your performance.
 
@@ -55,7 +55,7 @@ The app compiles data from your work sessions into personalized summaries, provi
 
 **Session**: Complete work period for the day, consisting of multiple intervals with breaks and transitions.
 
-**Interval**: Pomodoro-style unit of focused work (typically 25 minutes) followed by a short break.
+**Interval**: Pomodoro-style unit of focused work (typically 25 minutes - occasionally 50 minutes) followed by a short break.
 
 **Check-In**: Evaluation point after each interval to report progress, focus level, and energy.
 
