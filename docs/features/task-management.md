@@ -7,7 +7,7 @@
 * Task creation (smallest interval) and organization functionality
 * Goal breakdown into actionable tasks
 * Focused work interval organization
-* Option for different interval durations (25 minutes or 50 minutes)
+* Option for different interval durations
 * Post-session check-ins to assess completion and focus (TRACKING)
 
 ## Future Enhancements

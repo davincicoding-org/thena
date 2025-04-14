@@ -4,9 +4,10 @@
 
 ## MVP Implementation
 
-* Natural language interaction for task management (English & German)
+* Natural language interaction for task management
 * Voice-based interactions for hands-free productivity
 * Customizable language, voice and personality
+* Multi-lingual support (German and English)
 
 ## Future Enhancements
 

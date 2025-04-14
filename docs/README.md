@@ -55,7 +55,7 @@ The app compiles data from your work sessions into personalized summaries, provi
 
 **Session**: Complete work period for the day, consisting of multiple intervals with breaks and transitions.
 
-**Interval**: Pomodoro-style unit of focused work (typically 25 minutes - occasionally 50 minutes) followed by a short break.
+**Interval**: Pomodoro-style unit of focused work followed by a short break.
 
 **Check-In**: Evaluation point after each interval to report progress, focus level, and energy.
 
