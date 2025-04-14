@@ -1,21 +1,39 @@
-import { Flex, Loader, Paper, Stack } from "@mantine/core";
+import { Flex, Loader, Paper, Stack, TextInput } from "@mantine/core";
 import { Message, UseChatHelpers } from "@ai-sdk/react";
+import { useInputState } from "@mantine/hooks";
 
 export function Chat({
   messages,
   verbose,
   status,
+  onSend,
 }: {
   messages: Message[];
   status: UseChatHelpers["status"];
   verbose?: boolean;
+  onSend: (message: string) => void;
 }) {
+  const [input, setInput] = useInputState("");
+
   return (
     <Stack gap="md">
       {messages.map((message) => (
         <ChatMessage key={message.id} message={message} verbose={verbose} />
       ))}
       {status === "submitted" && <Loader size="sm" />}
+      <TextInput
+        value={input}
+        onChange={setInput}
+        onKeyDown={(e) => {
+          if (e.currentTarget.value.length === 0 && e.code === "Space")
+            return e.preventDefault();
+          if (e.code === "Space") e.stopPropagation();
+          if (e.code === "Enter") {
+            onSend(e.currentTarget.value);
+            setInput("");
+          }
+        }}
+      />
     </Stack>
   );
 }

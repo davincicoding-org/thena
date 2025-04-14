@@ -89,8 +89,13 @@ export const useVoiceAssistant = ({
       window.speechSynthesis.cancel();
       setSpeaking(false);
 
-      recognitionRef.current.start();
-      setListening(true);
+      try {
+        recognitionRef.current.start();
+      } catch (error) {
+        console.error("Error starting speech recognition:", error);
+      } finally {
+        setListening(true);
+      }
     } catch (error) {
       console.error("Error starting speech recognition:", error);
       setListening(false);

@@ -131,39 +131,19 @@ export function Configuration() {
 }
 
 const VOICE_EXAMMPLES: Record<string, string> = {
-  ar: "مرحبًا ومرحبًا بك في Concentrate! سأساعدك في تخطيط مهامك. ماذا تريد أن تحقق اليوم؟",
-  bg: "Здравейте и добре дошли в Concentrate! Ще ви помогна да планирате задачите си. Какво искате да постигнете днес?",
-  ca: "Hola i benvingut a Concentrate! T'ajudaré a planificar les teves tasques. Què vols aconseguir avui?",
-  cs: "Ahoj a vítej v Concentrate! Pomohu ti naplánovat tvé úkoly. Čeho chceš dnes dosáhnout?",
-  da: "Hej og velkommen til Concentrate! Jeg vil hjælpe dig med at planlægge dine opgaver. Hvad vil du opnå i dag?",
   de: "Hallo und willkommen bei Concentrate! Ich helfe dir, deine Aufgaben zu planen. Was möchtest du heute erreichen?",
-  el: "Γεια σου και καλώς ήρθες στο Concentrate! Θα σε βοηθήσω να προγραμματίσεις τις εργασίες σου. Τι θέλεις να πετύχεις σήμερα;",
   en: "Hello and welcome to Concentrate! I will help you to plan your tasks. What do you want to achieve today?",
   es: "¡Hola y bienvenido a Concentrate! Te ayudaré a planificar tus tareas. ¿Qué quieres lograr hoy?",
-  fi: "Hei ja tervetuloa Concentrateen! Autan sinua suunnittelemaan tehtäväsi. Mitä haluat saavuttaa tänään?",
   fr: "Bonjour et bienvenue sur Concentrate ! Je vais vous aider à planifier vos tâches. Que souhaitez-vous accomplir aujourd'hui ?",
-  he: "שלום וברוך הבא ל-Concentrate! אני אעזור לך לתכנן את המשימות שלך. מה אתה רוצה להשיג היום?",
   hi: "नमस्ते और Concentrate में आपका स्वागत है! मैं आपकी कार्यों की योजना बनाने में मदद करूंगा। आप आज क्या हासिल करना चाहते हैं?",
-  hr: "Pozdrav i dobrodošli u Concentrate! Pomoći ću vam planirati vaše zadatke. Što želite postići danas?",
-  hu: "Helló és üdvözöllek a Concentrate-ben! Segítek megtervezni a feladataidat. Mit szeretnél ma elérni?",
   id: "Halo dan selamat datang di Concentrate! Saya akan membantu Anda merencanakan tugas Anda. Apa yang ingin Anda capai hari ini?",
   it: "Ciao e benvenuto su Concentrate! Ti aiuterò a pianificare i tuoi compiti. Cosa vuoi ottenere oggi?",
   ja: "こんにちは、Concentrateへようこそ！ あなたのタスクを計画するお手伝いをします。今日は何を達成したいですか？",
   ko: "안녕하세요, Concentrate에 오신 것을 환영합니다! 당신의 작업을 계획하는 데 도와드리겠습니다. 오늘 무엇을 이루고 싶으신가요?",
-  ms: "Hai dan selamat datang ke Concentrate! Saya akan membantu anda merancang tugas anda. Apa yang anda ingin capai hari ini?",
-  nb: "Hei og velkommen til Concentrate! Jeg vil hjelpe deg med å planlegge oppgavene dine. Hva ønsker du å oppnå i dag?",
   nl: "Hallo en welkom bij Concentrate! Ik help je met het plannen van je taken. Wat wil je vandaag bereiken?",
   pl: "Cześć i witaj w Concentrate! Pomogę Ci zaplanować Twoje zadania. Co chcesz dziś osiągnąć?",
   pt: "Olá e bem-vindo ao Concentrate! Vou ajudá-lo a planejar suas tarefas. O que você quer alcançar hoje?",
-  ro: "Bună și bine ai venit la Concentrate! Te voi ajuta să-ți planifici sarcinile. Ce vrei să realizezi astăzi?",
   ru: "Здравствуйте и добро пожаловать в Concentrate! Я помогу вам спланировать ваши задачи. Чего вы хотите достичь сегодня?",
-  sk: "Ahoj a vitaj v Concentrate! Pomôžem ti naplánovať tvoje úlohy. Čo chceš dnes dosiahnuť?",
-  sl: "Pozdravljeni in dobrodošli v Concentrate! Pomagal vam bom načrtovati vaše naloge. Kaj želite doseči danes?",
-  sv: "Hej och välkommen till Concentrate! Jag hjälper dig att planera dina uppgifter. Vad vill du uppnå idag?",
-  th: "สวัสดีและยินดีต้อนรับสู่ Concentrate! ฉันจะช่วยคุณวางแผนงานของคุณ วันนี้คุณต้องการบรรลุอะไร?",
-  tr: "Merhaba ve Concentrate'e hoş geldiniz! Görevlerinizi planlamanıza yardımcı olacağım. Bugün ne başarmak istiyorsunuz?",
-  uk: "Привіт і ласкаво просимо до Concentrate! Я допоможу вам спланувати ваші завдання. Що ви хочете досягти сьогодні?",
-  vi: "Xin chào và chào mừng đến với Concentrate! Tôi sẽ giúp bạn lên kế hoạch cho các nhiệm vụ của mình. Hôm nay bạn muốn đạt được điều gì?",
   zh: "你好，欢迎使用Concentrate！我将帮助你规划任务。你今天想要实现什么目标？",
 };
 
@@ -177,16 +157,23 @@ function SpeechConfig() {
     rate: speech.synthesis.rate,
   });
 
+  const googleVoices = voices.filter((voice) =>
+    voice.voiceURI.startsWith("Google")
+  );
+
   const langOptions = Array.from(
-    new Set(voices.map((voice) => voice.lang))
+    new Set(googleVoices.map((voice) => voice.lang.substring(0, 2)))
   ).sort();
 
-  const voiceExample = VOICE_EXAMMPLES[speech.lang.split("-")[0]!];
+  const voiceExample = VOICE_EXAMMPLES[speech.lang];
 
-  const voiceOptions = voices
-    .filter((voice) => voice.lang === speech.lang)
+  console.log(googleVoices);
+  const voiceOptions = googleVoices
+    .filter((voice) => voice.lang.startsWith(speech.lang))
     .map((voice) => ({
-      label: voice.name,
+      label: voice.name
+        .replace(/^Google /, "")
+        .replace(/^./, (c) => c.toUpperCase()),
       value: voice.voiceURI,
     }))
     .sort((a, b) => a.label.localeCompare(b.label));
@@ -202,6 +189,11 @@ function SpeechConfig() {
           onChange={(value) => {
             if (!value) return;
             updateSpeechConfig({ lang: value });
+            const voice = googleVoices.find((voice) =>
+              voice.lang.startsWith(value)
+            );
+            console.log(voice);
+            if (voice) updateSynthesisConfig({ voice: voice.voiceURI });
           }}
         />
       </Flex>
@@ -220,6 +212,7 @@ function SpeechConfig() {
             <Select
               flex={1}
               data={voiceOptions}
+              disabled={voiceOptions.length < 2}
               value={speech.synthesis.voice}
               onChange={(value) => {
                 if (!value) return;

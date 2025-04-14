@@ -48,7 +48,7 @@ export default function IntroPage() {
       const input = await stopListening();
       if (!input) return;
       chat.append({
-        id: `user-input-${Date.now()}`,
+        id: `voice-input-${Date.now()}`,
         role: "user",
         content: input,
       });
@@ -91,7 +91,17 @@ export default function IntroPage() {
           Start
         </Button>
       ) : (
-        <Chat messages={chat.messages} status={chat.status} />
+        <Chat
+          messages={chat.messages}
+          status={chat.status}
+          onSend={(message) => {
+            chat.append({
+              id: `manual-input-${Date.now()}`,
+              role: "user",
+              content: message,
+            });
+          }}
+        />
       )}
     </Modal>
   );
