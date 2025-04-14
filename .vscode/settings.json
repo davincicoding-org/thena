@@ -16,6 +16,12 @@
     "strings": true
   },
 
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "*.tsx": "$(capture).stories.tsx",
+    "package.json": "pnpm-lock.yaml"
+  },
+
   "eslint.validate": [
     "javascript",
     "javascriptreact",
@@ -37,6 +43,6 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "html.autoClosingTags": true,
-  "editor.linkedEditing": true
+  "editor.linkedEditing": true,
+  "editor.folding": true
 }
