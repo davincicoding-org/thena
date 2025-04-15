@@ -35,7 +35,6 @@ export function useSpeechSynthesis({
   }, [abortSpeech]);
 
   useEffect(() => {
-    console.log("lang changed", lang);
     const updateVoices = () => {
       const supportedVoices = window.speechSynthesis.getVoices();
 

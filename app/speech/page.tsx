@@ -66,9 +66,13 @@ To get started with a template, open it on GitHub and click "Use this template" 
             <Stack gap="lg">
               <Button
                 variant="outline"
-                onClick={() =>
-                  isListening ? stopListening() : startListening()
-                }
+                onClick={() => {
+                  if (isListening) {
+                    return stopListening();
+                  }
+                  setTranscriptions([]);
+                  return startListening();
+                }}
               >
                 {isListening ? "Stop Listening" : "Start Listening"}
               </Button>

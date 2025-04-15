@@ -88,13 +88,16 @@ export function useSpeechRecognition({
       recognition.current.addEventListener("result", resultHandler);
     });
 
-  const stopListening = () => {
-    return new Promise<string | null>((resolve, reject) => {
+  const stopListening = () =>
+    new Promise<string | null>((resolve, reject) => {
       if (!recognition.current) return null;
+
+      console.log("stopListening");
 
       // Store handlers as refs so we can remove them
       const resultHandler = (event: SpeechRecognitionEvent) => {
         const results = Array.from(event.results);
+        console.log(results);
         if (results.some((result) => !result.isFinal)) return;
 
         const transcription = Array.from(results)
@@ -134,7 +137,6 @@ export function useSpeechRecognition({
         resolve(null);
       }
     });
-  };
 
   return { startListening, stopListening, isListening, abortListening };
 }

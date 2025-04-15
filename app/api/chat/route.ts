@@ -11,7 +11,6 @@ export async function POST(req: Request) {
   // Get the current LLM settings from the store state
   const settings = LLMConfigSchema.parse(llm);
 
-  console.log(settings);
   const result = streamText({
     model: createModel(settings),
     messages,

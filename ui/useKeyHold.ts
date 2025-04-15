@@ -6,30 +6,30 @@ export const useKeyHold = ({
   onStart,
   onRelease,
 }: {
-  keyCode: string;
+  keyCode: string | string[];
   onStart: () => void;
   onRelease: () => void;
 }) => {
-  const [isHeld, { open: setIsHeld, close: setIsReleased }] =
-    useDisclosure(false);
+  const [isHeld, setIsHeld] = useState(false);
+  const keyCodes = Array.isArray(keyCode) ? keyCode : [keyCode];
 
   useWindowEvent("keydown", (e) => {
-    if (e.code !== keyCode) return;
+    if (!keyCodes.includes(e.code)) return;
     e.preventDefault();
-    setIsHeld();
+    setIsHeld(true);
   });
 
   useWindowEvent("keyup", (e) => {
-    if (e.code !== keyCode) return;
+    if (!keyCodes.includes(e.code)) return;
     e.preventDefault();
-    setIsReleased();
+    setIsHeld(false);
   });
 
   useEffect(() => {
-    if (isHeld) {
-      onStart();
-    } else {
+    if (!isHeld) return;
+    onStart();
+    return () => {
       onRelease();
-    }
+    };
   }, [isHeld]);
 };

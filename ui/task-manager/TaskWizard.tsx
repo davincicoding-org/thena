@@ -4,10 +4,14 @@ import { useMessagesConfigStore } from "@/core/config/messages";
 import { useModelsConfigStore } from "@/core/config/models";
 import { useChat } from "@ai-sdk/react";
 import { useKeyHold } from "@/ui/useKeyHold";
-import { Button } from "@mantine/core";
-import { AssistantIndicator } from "../AssistantIndicator";
+import { Button, Kbd, Stack, Text } from "@mantine/core";
+import {
+  AssistantIndicator,
+  AssistantIndicatorProps,
+} from "../AssistantIndicator";
 import { useSpeechSynthesis } from "../speech/useSpeechSynthesis";
 import { useSpeechRecognition } from "../speech/useSpeechRecognition";
+import { useState } from "react";
 
 export interface TaskWizardProps {}
 
@@ -17,12 +21,12 @@ export function TaskWizard({}: TaskWizardProps) {
   const { llm } = useModelsConfigStore();
   const { messages } = useMessagesConfigStore();
 
-  const { speak, isSpeaking, abortSpeech } = useSpeechSynthesis({
+  const { speak, abortSpeech } = useSpeechSynthesis({
     lang: speech.lang,
     voiceURI: speech.synthesis.voice,
     rate: speech.synthesis.rate,
   });
-  const { startListening, stopListening, isListening } = useSpeechRecognition({
+  const { startListening, stopListening } = useSpeechRecognition({
     lang: speech.lang,
   });
 
@@ -34,8 +38,10 @@ export function TaskWizard({}: TaskWizardProps) {
         content: instructions.agent,
       },
     ],
-    onFinish: (response) => {
-      speak(response.content);
+    onFinish: async (response) => {
+      setAssistantStatus("speaking");
+      await speak(response.content);
+      setAssistantStatus("idle");
     },
     body: {
       llm,
@@ -43,8 +49,11 @@ export function TaskWizard({}: TaskWizardProps) {
   });
 
   useKeyHold({
-    keyCode: "AltLeft",
-    onStart: startListening,
+    keyCode: ["AltLeft", "AltRight"],
+    onStart: () => {
+      abortSpeech();
+      startListening();
+    },
     onRelease: async () => {
       const input = await stopListening();
       if (!input) return;
@@ -52,8 +61,12 @@ export function TaskWizard({}: TaskWizardProps) {
         role: "user",
         content: input,
       });
+      setAssistantStatus("thinking");
     },
   });
+
+  const [assistantStatus, setAssistantStatus] =
+    useState<AssistantIndicatorProps["status"]>();
 
   return (
     <div>
@@ -62,17 +75,21 @@ export function TaskWizard({}: TaskWizardProps) {
           Start
         </Button>
       ) : (
-        <AssistantIndicator
-          className="w-32"
-          // volume={Math.max(inputVolume * 10, outputVolume)}
-          status={(() => {
-            if (isListening) return "listening";
-            if (isSpeaking) return "speaking";
-            if (chat.status === "submitted" || chat.status === "streaming")
-              return "thinking";
-            return "idle";
-          })()}
-        />
+        <Stack gap={0}>
+          <AssistantIndicator
+            className="w-64"
+            // volume={Math.max(inputVolume * 10, outputVolume)}
+            status={assistantStatus}
+          />
+
+          <Text size="xl" ta="center" h={33}>
+            {assistantStatus === "idle" && (
+              <>
+                Hold <Kbd className="align-middle">option</Kbd> to speak
+              </>
+            )}
+          </Text>
+        </Stack>
       )}
     </div>
   );

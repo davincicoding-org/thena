@@ -37,10 +37,6 @@ export const useVoiceAssistant = ({
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    console.log(inputVolume);
-  }, [inputVolume]);
-
   // Initialize voices
   useEffect(() => {
     const updateVoices = () => {

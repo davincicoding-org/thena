@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "./utils";
-import { Kbd } from "@mantine/core";
 
 export interface AssistantIndicatorProps {
   status?: "idle" | "listening" | "thinking" | "speaking";
@@ -33,10 +32,6 @@ export function AssistantIndicator({
   const resetBars = () => {
     setBars(Array(50).fill(0));
   };
-
-  {
-    /* Hold <Kbd className="align-middle">option</Kbd> to speak */
-  }
 
   return (
     <svg
