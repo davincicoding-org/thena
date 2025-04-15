@@ -1,13 +1,14 @@
 "use client";
 
-import { useInstructionsConfigStore } from "@/core/config/instructions";
-import { useSpeechConfigStore } from "@/core/config/speech";
-import { useMessagesConfigStore } from "@/core/config/messages";
-import { useModelsConfigStore } from "@/core/config/models";
-import { Chat } from "@/ui/Chat";
 import { useChat } from "@ai-sdk/react";
 import { AppShell, Button, Center, Container } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+
+import { useInstructionsConfigStore } from "@/core/config/instructions";
+import { useMessagesConfigStore } from "@/core/config/messages";
+import { useModelsConfigStore } from "@/core/config/models";
+import { useSpeechConfigStore } from "@/core/config/speech";
+import { Chat } from "@/ui/Chat";
 import { useSpeechSynthesis } from "@/ui/speech/useSpeechSynthesis";
 
 export default function ChatPage() {

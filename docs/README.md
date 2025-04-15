@@ -26,22 +26,22 @@ The app compiles data from your work sessions into personalized summaries, provi
 
 #### 1. Planning
 
-* Gather TODOs from user input or the backlog
-* Split TODOs into objective-specific or standalone tasks
-* Distribute tasks across intervals for a balanced schedule
+- Gather TODOs from user input or the backlog
+- Split TODOs into objective-specific or standalone tasks
+- Distribute tasks across intervals for a balanced schedule
 
 #### 2. Execution
 
-* Commit to specific tasks during each interval
-* Work with focused attention
-* Report on achievements through check-ins
-* Ad-hoc refinement of upcoming intervals based on progress
+- Commit to specific tasks during each interval
+- Work with focused attention
+- Report on achievements through check-ins
+- Ad-hoc refinement of upcoming intervals based on progress
 
 #### 3. Reflection
 
-* Review performance insights and identify improvements
-* Prepare tasks for the next session
-* Update the backlog with completed and remaining work
+- Review performance insights and identify improvements
+- Prepare tasks for the next session
+- Update the backlog with completed and remaining work
 
 ### Terminology
 

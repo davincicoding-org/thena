@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
+
 // import type {} from '@redux-devtools/extension' // required for devtools typing
 
 export type MessageKey = "intro";
@@ -24,7 +25,7 @@ export const useMessagesConfigStore = create<MessagesConfigState>()(
       }),
       {
         name: "messages-config-storage",
-      }
-    )
-  )
+      },
+    ),
+  ),
 );

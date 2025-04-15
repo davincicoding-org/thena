@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { AgentConfig, createAgentConfig } from "./common";
 
 export const TASK_COLLECTOR_AGENT = createAgentConfig({
@@ -36,7 +37,7 @@ const AGENTS: AgentConfig[] = [TASK_COLLECTOR_AGENT];
 
 AGENTS.forEach((agent, i, agents) => {
   const duplicates = agents.filter(
-    (a, index) => a.name === agent.name && index !== i
+    (a, index) => a.name === agent.name && index !== i,
   );
   if (duplicates.length > 0) {
     throw new Error(`Agent ${agent.name} already exists`);

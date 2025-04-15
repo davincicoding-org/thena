@@ -4,17 +4,17 @@
 
 ## MVP Implementation
 
-* Natural language interaction for task management
-* Voice-based interactions for hands-free productivity
-* Customizable language, voice and personality
-* Multi-lingual support (German and English)
+- Natural language interaction for task management
+- Voice-based interactions for hands-free productivity
+- Customizable language, voice and personality
+- Multi-lingual support (German and English)
 
 ## Future Enhancements
 
-* End-of-session feedback and improvement suggestions
-* Personalized work session recommendations based on past performance
-* Focus monitoring with gentle interventions when attention wavers
-* Custom productivity tips tailored to user's work style
-* Sentiment analysis to detect frustration or burnout
-* Integration with knowledge bases for domain-specific assistance
-* Contextual awareness of task difficulty and time requirements
+- End-of-session feedback and improvement suggestions
+- Personalized work session recommendations based on past performance
+- Focus monitoring with gentle interventions when attention wavers
+- Custom productivity tips tailored to user's work style
+- Sentiment analysis to detect frustration or burnout
+- Integration with knowledge bases for domain-specific assistance
+- Contextual awareness of task difficulty and time requirements

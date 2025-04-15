@@ -1,20 +1,21 @@
+import { Message, UseChatHelpers } from "@ai-sdk/react";
 import {
-  BoxProps,
+  ActionIcon,
   Box,
+  BoxProps,
   Loader,
   Paper,
   ScrollArea,
   Stack,
   TextInput,
-  ActionIcon,
 } from "@mantine/core";
-import { Message, UseChatHelpers } from "@ai-sdk/react";
 import { useInputState } from "@mantine/hooks";
+import { IconCircleCheck, IconMicrophone } from "@tabler/icons-react";
+
 import { useSpeechConfigStore } from "@/core/config/speech";
-import { IconMicrophone } from "@tabler/icons-react";
-import { useSpeechRecognition } from "./speech/useSpeechRecognition";
-import { IconCircleCheck } from "@tabler/icons-react";
+
 import { Markdown } from "./components/Markdown";
+import { useSpeechRecognition } from "./speech/useSpeechRecognition";
 
 export interface ChatProps extends BoxProps {
   messages: Message[];

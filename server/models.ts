@@ -1,7 +1,7 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { chromeai } from "chrome-ai";
-
 import { createOllama } from "ollama-ai-provider";
+
 import { LLMConfig } from "@/core/config/models";
 
 export const createModel = (config: LLMConfig) => {

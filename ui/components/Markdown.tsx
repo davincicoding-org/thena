@@ -1,5 +1,5 @@
-import MarkdownView from "react-markdown";
 import { TypographyStylesProvider } from "@mantine/core";
+import MarkdownView from "react-markdown";
 
 export function Markdown({ content }: { content: string }) {
   return (

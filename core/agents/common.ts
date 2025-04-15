@@ -1,8 +1,9 @@
 import { useChat, UseChatOptions } from "@ai-sdk/react";
 import { Message } from "ai";
 import { z } from "zod";
-import { supportedLangSchema, useSpeechConfigStore } from "../config/speech";
+
 import { LLMConfigSchema } from "../config/models";
+import { supportedLangSchema, useSpeechConfigStore } from "../config/speech";
 
 export const agentBodySchema = z.object({
   agent: z.string(),
@@ -19,7 +20,7 @@ export interface AgentChatOptions<Output extends z.AnyZodObject>
 
 export const useAgentChat = <Output extends z.AnyZodObject>(
   config: AgentConfig<Output>,
-  options?: AgentChatOptions<Output>
+  options?: AgentChatOptions<Output>,
 ) => {
   const { speech } = useSpeechConfigStore();
   // const { llm } = useModelsConfigStore();

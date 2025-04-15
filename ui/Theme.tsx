@@ -1,7 +1,7 @@
 import "./globals.css";
-import { Notifications } from "@mantine/notifications";
 
 import { createTheme, MantineProvider } from "@mantine/core";
+import { Notifications } from "@mantine/notifications";
 
 const theme = createTheme({
   primaryColor: "cyan",

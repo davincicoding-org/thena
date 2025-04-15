@@ -1,12 +1,12 @@
 # Table of contents
 
-* [Summary](README.md)
-* [Feedback](feedback.md)
+- [Summary](README.md)
+- [Feedback](feedback.md)
 
 ## Features
 
-* [AI Asssistant](features/ai-assistant.md)
-* [Focus Sessions](features/focus-sessions.md)
-* [Task Management](features/task-management.md)
-* [Performance Analytics](features/performance-analytics.md)
-* [Community / Forum](features/community-forum.md)
+- [AI Asssistant](features/ai-assistant.md)
+- [Focus Sessions](features/focus-sessions.md)
+- [Task Management](features/task-management.md)
+- [Performance Analytics](features/performance-analytics.md)
+- [Community / Forum](features/community-forum.md)

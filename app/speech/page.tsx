@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   AppShell,
   Button,
@@ -13,13 +14,13 @@ import {
   Stack,
   Textarea,
 } from "@mantine/core";
-import { useSpeechRecognition } from "@/ui/speech/useSpeechRecognition";
-import { useKeyHold } from "@/ui/useKeyHold";
-import { useSpeechSynthesis } from "@/ui/speech/useSpeechSynthesis";
-import { useEffect, useState } from "react";
 import { useInputState } from "@mantine/hooks";
-import { cn } from "@/ui/utils";
+
 import { useSpeechConfigStore } from "@/core/config/speech";
+import { useSpeechRecognition } from "@/ui/speech/useSpeechRecognition";
+import { useSpeechSynthesis } from "@/ui/speech/useSpeechSynthesis";
+import { useKeyHold } from "@/ui/useKeyHold";
+import { cn } from "@/ui/utils";
 
 export default function SpeechPage() {
   const { speech } = useSpeechConfigStore();
@@ -34,7 +35,7 @@ export default function SpeechPage() {
         results.map((result) => ({
           isFinal: result.isFinal,
           text: result[0]!.transcript,
-        }))
+        })),
       ),
   });
 
@@ -83,7 +84,7 @@ To get started with a template, open it on GitHub and click "Use this template" 
                     withBorder
                     p="xs"
                     className={cn({
-                      "opacity-50 italic": !transcription.isFinal,
+                      "italic opacity-50": !transcription.isFinal,
                     })}
                   >
                     {transcription.text}

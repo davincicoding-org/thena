@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-
 import { Geist, Geist_Mono } from "next/font/google";
 
-import Shell from "./shell";
 import { ThemeProvider } from "@/ui/Theme";
+
+import Shell from "./shell";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

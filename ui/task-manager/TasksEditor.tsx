@@ -1,16 +1,18 @@
+import { ReactElement, useRef } from "react";
 import {
   ActionIcon,
+  BoxProps,
   Button,
+  Paper,
   Stack,
   TextInput,
-  Paper,
-  BoxProps,
 } from "@mantine/core";
 import { useDisclosure, useInputState } from "@mantine/hooks";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
-import { ReactElement, useRef } from "react";
-import { MultiActionIcon } from "../components/MultiActionIcon";
 import { useFieldArray, useForm } from "react-hook-form";
+
+import { MultiActionIcon } from "../components/MultiActionIcon";
+
 interface Task {
   name: string;
   label: string;
@@ -296,7 +298,7 @@ function TaskItem({
       className="group"
       rightSection={
         <MultiActionIcon
-          className="transition-opacity opacity-0 group-hover:opacity-100"
+          className="opacity-0 transition-opacity group-hover:opacity-100"
           overlayProps={{
             radius: "sm",
           }}

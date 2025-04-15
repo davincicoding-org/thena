@@ -4,16 +4,16 @@
 
 ## MVP Implementation
 
-* Session data compilation into personalized insights
-* Task completion rate monitoring (statistics how, where?)
+- Session data compilation into personalized insights
+- Task completion rate monitoring (statistics how, where?)
 
 ## Future Enhancements
 
-* Improvement recommendations based on performance data
-* Focus pattern tracking
-* Performance analytics via email or dashboard for weekly/monthly reviews
-* Gamification with reward systems and awards
-* Integration with health tracking platforms (Apple Health, Oura)
-* Mood tracking functionality
-* User group-specific analytics (Students, ADHD, Knowledge Workers)
-* Community forums for users to share insights
+- Improvement recommendations based on performance data
+- Focus pattern tracking
+- Performance analytics via email or dashboard for weekly/monthly reviews
+- Gamification with reward systems and awards
+- Integration with health tracking platforms (Apple Health, Oura)
+- Mood tracking functionality
+- User group-specific analytics (Students, ADHD, Knowledge Workers)
+- Community forums for users to share insights

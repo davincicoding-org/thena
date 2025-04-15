@@ -1,8 +1,10 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { cn } from "./utils";
 import { Box, BoxProps } from "@mantine/core";
+import { motion } from "framer-motion";
+
+import { cn } from "./utils";
 
 export interface AssistantIndicatorProps extends BoxProps {
   status?: "idle" | "listening" | "thinking" | "speaking";
@@ -39,10 +41,10 @@ export function AssistantIndicator({
       component="svg"
       viewBox="0 0 300 300"
       className={cn("transition-all", className, {
-        "stroke-purple-700 animate-speaking": status === "speaking",
-        "stroke-white animate-listening": status === "listening",
+        "animate-speaking stroke-purple-700": status === "speaking",
+        "animate-listening stroke-white": status === "listening",
         "stroke-white": status === "idle",
-        "stroke-purple-300 animate-processing": status === "thinking",
+        "animate-processing stroke-purple-300": status === "thinking",
       })}
       {...boxProps}
     >

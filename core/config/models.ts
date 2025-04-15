@@ -1,5 +1,4 @@
 import { z } from "zod";
-
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
@@ -65,7 +64,7 @@ export const useModelsConfigStore = create<ModelsConfigState>()(
       }),
       {
         name: "models-config-storage",
-      }
-    )
-  )
+      },
+    ),
+  ),
 );

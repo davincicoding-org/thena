@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+
 import { AssistantIndicator } from "./AssistantIndicator";
 
 const meta = {

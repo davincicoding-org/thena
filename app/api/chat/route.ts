@@ -1,5 +1,6 @@
 import { openai } from "@ai-sdk/openai";
 import { generateObject, NoObjectGeneratedError } from "ai";
+
 import { agentBodySchema } from "@/core/agents/common";
 import { getAgentConfig } from "@/core/agents/config";
 
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
   if (!agentConfig) {
     return Response.json(
       { error: `Agent "${agent}" not found` },
-      { status: 404 }
+      { status: 404 },
     );
   }
 

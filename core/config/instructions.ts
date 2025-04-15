@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
+
 // import type {} from '@redux-devtools/extension' // required for devtools typing
 
 export type InstructionKey = "agent";
@@ -24,7 +25,7 @@ export const useInstructionsConfigStore = create<InstructionsConfigState>()(
       }),
       {
         name: "instructions-config-storage",
-      }
-    )
-  )
+      },
+    ),
+  ),
 );

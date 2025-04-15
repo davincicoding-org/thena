@@ -1,6 +1,8 @@
 "use client";
-import { AppShell, Button, Flex } from "@mantine/core";
+
 import Link from "next/link";
+import { AppShell, Button, Flex } from "@mantine/core";
+
 export default function Shell({ children }: { children: React.ReactNode }) {
   return (
     <AppShell header={{ height: 60 }}>

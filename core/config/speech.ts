@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
+
 // import type {} from '@redux-devtools/extension' // required for devtools typing
 
 export const supportedLangSchema = z.enum([
@@ -41,10 +42,10 @@ const speechRecognitionConfigSchema = z.discriminatedUnion("provider", [
 const speechConfigSchema = z.object({
   lang: supportedLangSchema.default("en"),
   synthesis: speechSynthesisConfigSchema.default(
-    speechSynthesisConfigBrowserSchema.parse({})
+    speechSynthesisConfigBrowserSchema.parse({}),
   ),
   recognition: speechRecognitionConfigSchema.default(
-    speechRecognitionConfigBrowserSchema.parse({})
+    speechRecognitionConfigBrowserSchema.parse({}),
   ),
 });
 export type SpeechConfig = z.infer<typeof speechConfigSchema>;
@@ -53,14 +54,14 @@ interface SpeechConfigState {
   speech: SpeechConfig;
   updateSpeechConfig: (config: Partial<SpeechConfig>) => void;
   switchSynthesisProvider: (
-    provider: SpeechConfig["synthesis"]["provider"]
+    provider: SpeechConfig["synthesis"]["provider"],
   ) => void;
   updateSynthesisConfig: (config: Partial<SpeechConfig["synthesis"]>) => void;
   updateRecognitionConfig: (
-    config: Partial<SpeechConfig["recognition"]>
+    config: Partial<SpeechConfig["recognition"]>,
   ) => void;
   switchRecognitionProvider: (
-    provider: SpeechConfig["recognition"]["provider"]
+    provider: SpeechConfig["recognition"]["provider"],
   ) => void;
 }
 
@@ -115,7 +116,7 @@ export const useSpeechConfigStore = create<SpeechConfigState>()(
       }),
       {
         name: "speech-config-storage",
-      }
-    )
-  )
+      },
+    ),
+  ),
 );

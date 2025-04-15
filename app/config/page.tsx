@@ -1,9 +1,11 @@
 "use client";
+
+import { AppShell, Button, Card, Center, Modal } from "@mantine/core";
+
 import { useInstructionsConfigStore } from "@/core/config/instructions";
 import { useMessagesConfigStore } from "@/core/config/messages";
 import { useModelsConfigStore } from "@/core/config/models";
 import { Configuration } from "@/ui/Configuration";
-import { AppShell, Button, Card, Center, Modal } from "@mantine/core";
 
 export default function ConfigPage() {
   const { llm } = useModelsConfigStore();

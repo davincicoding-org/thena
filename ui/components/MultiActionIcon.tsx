@@ -1,3 +1,4 @@
+import { ReactElement } from "react";
 import {
   ActionIcon,
   ActionIconProps,
@@ -8,7 +9,6 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconDotsVertical } from "@tabler/icons-react";
-import { ReactElement } from "react";
 
 export interface MultiActionIconProps extends ActionIconProps {
   actions: ReactElement[];

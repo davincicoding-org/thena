@@ -17,6 +17,10 @@
 /.next/
 /out/
 
+# Storybook
+storybook-static/
+*storybook.log
+
 # production
 /build
 
@@ -40,4 +44,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-*storybook.log
+

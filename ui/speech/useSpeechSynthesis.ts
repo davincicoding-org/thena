@@ -1,5 +1,6 @@
-import { SupportedLang } from "@/core/config/speech";
 import { useCallback, useEffect, useState } from "react";
+
+import { SupportedLang } from "@/core/config/speech";
 
 export function useSpeechSynthesis({
   lang,
@@ -39,7 +40,7 @@ export function useSpeechSynthesis({
       const supportedVoices = window.speechSynthesis.getVoices();
 
       const voicesForLang = supportedVoices.filter((voice) =>
-        voice.lang.startsWith(lang)
+        voice.lang.startsWith(lang),
       );
 
       return setVoices(() => {
@@ -49,7 +50,7 @@ export function useSpeechSynthesis({
             return voicesForLang.filter(
               (voice) =>
                 voice.voiceURI.startsWith("Google") ||
-                voice.voiceURI.startsWith("Microsoft")
+                voice.voiceURI.startsWith("Microsoft"),
             );
           case "privacy":
             return voicesForLang.filter((voice) => voice.localService);
@@ -75,7 +76,7 @@ export function useSpeechSynthesis({
 
         if (voiceURI) {
           const selectedVoice = voices.find(
-            (voice) => voice.voiceURI === voiceURI
+            (voice) => voice.voiceURI === voiceURI,
           );
           if (selectedVoice) {
             utterance.voice = selectedVoice;
@@ -126,7 +127,7 @@ export function useSpeechSynthesis({
 
         window.speechSynthesis.speak(utterance);
       }),
-    [lang, rate, voiceURI, voices]
+    [lang, rate, voiceURI, voices],
   );
 
   return { isSpeaking, speak, abortSpeech, voices };

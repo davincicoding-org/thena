@@ -1,6 +1,5 @@
-import { useSpeechConfigStore } from "@/core/config/speech";
+import { useState } from "react";
 import { useChat } from "@ai-sdk/react";
-import { useKeyHold } from "@/ui/useKeyHold";
 import {
   Box,
   BoxProps,
@@ -11,17 +10,20 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
+
+import { useAgentChat } from "@/core/agents/common";
+import { TASK_COLLECTOR_AGENT } from "@/core/agents/config";
+import { useSpeechConfigStore } from "@/core/config/speech";
+import { useKeyHold } from "@/ui/useKeyHold";
+
 import {
   AssistantIndicator,
   AssistantIndicatorProps,
 } from "../AssistantIndicator";
-import { useSpeechSynthesis } from "../speech/useSpeechSynthesis";
 import { useSpeechRecognition } from "../speech/useSpeechRecognition";
-import { useState } from "react";
-import { useAgentChat } from "@/core/agents/common";
-import { TASK_COLLECTOR_AGENT } from "@/core/agents/config";
-import { TasksEditor, TasksEditorProps, buildTaskName } from "./TasksEditor";
+import { useSpeechSynthesis } from "../speech/useSpeechSynthesis";
 import { cn } from "../utils";
+import { buildTaskName, TasksEditor, TasksEditorProps } from "./TasksEditor";
 
 export interface TaskWizardProps extends BoxProps {}
 
@@ -55,7 +57,7 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
         tasks.map((task, index) => ({
           name: buildTaskName(index),
           label: task,
-        }))
+        })),
       );
       await speak(reply);
       setAssistantStatus("idle");

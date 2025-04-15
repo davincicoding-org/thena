@@ -1,12 +1,13 @@
 "use client";
-import dynamic from "next/dynamic";
-const ReactPlayer = dynamic(() => import("react-player"), { ssr: false });
 
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import { AppShell, Button, Center, RingProgress, Text } from "@mantine/core";
+import { useInterval } from "@mantine/hooks";
 import dayjs, { Dayjs } from "dayjs";
 import duration, { Duration } from "dayjs/plugin/duration";
-import { useEffect, useState } from "react";
-import { useInterval } from "@mantine/hooks";
-import { AppShell, Button, Center, RingProgress, Text } from "@mantine/core";
+
+const ReactPlayer = dynamic(() => import("react-player"), { ssr: false });
 
 dayjs.extend(duration);
 

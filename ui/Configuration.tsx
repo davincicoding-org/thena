@@ -1,4 +1,23 @@
 "use client";
+
+import { useEffect } from "react";
+import {
+  ActionIcon,
+  Fieldset,
+  Flex,
+  InputLabel,
+  Paper,
+  ScrollArea,
+  Select,
+  Slider,
+  Stack,
+  Tabs,
+  Textarea,
+  TextInput,
+} from "@mantine/core";
+import { IconVolume, IconX } from "@tabler/icons-react";
+
+import type { SupportedLang } from "@/core/config/speech";
 import {
   InstructionKey,
   useInstructionsConfigStore,
@@ -9,30 +28,15 @@ import {
   LLMConfigSchema,
   useModelsConfigStore,
 } from "@/core/config/models";
-import { IconVolume, IconX } from "@tabler/icons-react";
 import {
   supportedLangSchema,
-  type SupportedLang,
   useSpeechConfigStore,
 } from "@/core/config/speech";
-import {
-  Select,
-  Tabs,
-  InputLabel,
-  TextInput,
-  Flex,
-  Textarea,
-  Fieldset,
-  Stack,
-  Slider,
-  ActionIcon,
-  ScrollArea,
-  Paper,
-} from "@mantine/core";
+
 import { useSpeechSynthesis } from "./speech/useSpeechSynthesis";
-import { useEffect } from "react";
+
 const llmProviders = LLMConfigSchema.options.map(
-  (option) => option.parse({}).provider
+  (option) => option.parse({}).provider,
 );
 
 export function Configuration() {
