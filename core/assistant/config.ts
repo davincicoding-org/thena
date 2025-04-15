@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-import { AgentConfig, createAgentConfig } from "./common";
+import { AssistantConfig, createAssistantConfig } from "./common";
 
-export const TASK_COLLECTOR_AGENT = createAgentConfig({
+export const TASK_COLLECTOR_ASSISTANT = createAssistantConfig({
   name: "task-collector",
-  initialMessage:
+  invocation:
     "Start the conversation by asking the user what he wants to accomplish today.",
   instructions: `
 You are a task management assistant. Your only job is to gather a list of tasks the user wants to complete today. Do not ask for task details or offer help completing them.
@@ -18,10 +18,10 @@ You are a task management assistant. Your only job is to gather a list of tasks 
 - Ensure all tasks are clearly and beautifully phrased, using natural, grammatically correct language.
 
   `,
-  output: z.object({
-    reply: z
-      .string()
-      .describe("A short, spoken response. Do not include any tasks."),
+  artifact: z.object({
+    // reply: z
+    //   .string()
+    //   .describe("A short, spoken response. Do not include any tasks."),
     tasks: z
       .array(z.string())
       .default([])
@@ -33,17 +33,19 @@ You are a task management assistant. Your only job is to gather a list of tasks 
   }),
 });
 
-const AGENTS: AgentConfig[] = [TASK_COLLECTOR_AGENT];
+const ASSISTANTS: AssistantConfig[] = [TASK_COLLECTOR_ASSISTANT];
 
-AGENTS.forEach((agent, i, agents) => {
-  const duplicates = agents.filter(
-    (a, index) => a.name === agent.name && index !== i,
+ASSISTANTS.forEach((assistant, i, allAssistants) => {
+  const duplicates = allAssistants.filter(
+    (a, index) => a.name === assistant.name && index !== i,
   );
   if (duplicates.length > 0) {
-    throw new Error(`Agent ${agent.name} already exists`);
+    throw new Error(`Assistant "${assistant.name}" already exists`);
   }
 });
 
-export const getAgentConfig = (agent: string): AgentConfig | null => {
-  return AGENTS.find((config) => config.name === agent) ?? null;
+export const getAssistantConfig = (
+  assistant: string,
+): AssistantConfig | null => {
+  return ASSISTANTS.find((config) => config.name === assistant) ?? null;
 };

@@ -1,8 +1,11 @@
 import { openai } from "@ai-sdk/openai";
 import { generateObject, NoObjectGeneratedError } from "ai";
 
-import { agentBodySchema } from "@/core/agents/common";
-import { getAgentConfig } from "@/core/agents/config";
+import {
+  assistantBodySchema,
+  buildAssistantSchema,
+} from "@/core/assistant/common";
+import { getAssistantConfig } from "@/core/assistant/config";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -11,13 +14,13 @@ export async function POST(req: Request) {
   const {
     messages: clientMessages,
     lang,
-    agent,
-  } = await req.json().then(agentBodySchema.parse);
+    assistant,
+  } = await req.json().then(assistantBodySchema.parse);
 
-  const agentConfig = getAgentConfig(agent);
+  const agentConfig = getAssistantConfig(assistant);
   if (!agentConfig) {
     return Response.json(
-      { error: `Agent "${agent}" not found` },
+      { error: `Assistant "${assistant}" not found` },
       { status: 404 },
     );
   }
@@ -33,10 +36,9 @@ export async function POST(req: Request) {
 
   try {
     const result = await generateObject({
-      // model: createModel(llm),
       model: openai("gpt-4.1-nano"),
       messages: messages,
-      schema: agentConfig.output,
+      schema: buildAssistantSchema(agentConfig.artifact),
     });
     return result.toJsonResponse();
   } catch (error) {

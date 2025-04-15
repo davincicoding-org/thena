@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Box, BoxProps } from "@mantine/core";
 import { motion } from "framer-motion";
 
-import { cn } from "./utils";
+import { cn } from "../utils";
 
 export interface AssistantIndicatorProps extends BoxProps {
   status?: "idle" | "listening" | "thinking" | "speaking";
