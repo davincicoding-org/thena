@@ -10,12 +10,15 @@ import {
   useModelsConfigStore,
 } from "@/core/config/models";
 import { IconVolume, IconX } from "@tabler/icons-react";
-import { useSpeechConfigStore } from "@/core/config/speech";
+import {
+  supportedLangSchema,
+  type SupportedLang,
+  useSpeechConfigStore,
+} from "@/core/config/speech";
 import {
   Select,
   Tabs,
   InputLabel,
-  Divider,
   TextInput,
   Flex,
   Textarea,
@@ -26,8 +29,8 @@ import {
   ScrollArea,
   Paper,
 } from "@mantine/core";
-import { useVoiceAssistant } from "./speech/useVoiceAssistant";
-
+import { useSpeechSynthesis } from "./speech/useSpeechSynthesis";
+import { useEffect } from "react";
 const llmProviders = LLMConfigSchema.options.map(
   (option) => option.parse({}).provider
 );
@@ -151,32 +154,24 @@ function SpeechConfig() {
   const { speech, updateSpeechConfig, updateSynthesisConfig } =
     useSpeechConfigStore();
 
-  const { voices, speak, speaking, cancelSpeaking } = useVoiceAssistant({
+  const { voices, speak, isSpeaking, abortSpeech } = useSpeechSynthesis({
     lang: speech.lang,
     voiceURI: speech.synthesis.voice,
     rate: speech.synthesis.rate,
   });
 
-  const googleVoices = voices.filter((voice) =>
-    voice.voiceURI.startsWith("Google")
-  );
-
-  const langOptions = Array.from(
-    new Set(googleVoices.map((voice) => voice.lang.substring(0, 2)))
-  ).sort();
+  const langOptions = supportedLangSchema.options.sort();
 
   const voiceExample = VOICE_EXAMMPLES[speech.lang];
 
-  console.log(googleVoices);
-  const voiceOptions = googleVoices
-    .filter((voice) => voice.lang.startsWith(speech.lang))
-    .map((voice) => ({
-      label: voice.name
-        .replace(/^Google /, "")
-        .replace(/^./, (c) => c.toUpperCase()),
-      value: voice.voiceURI,
-    }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+  const voiceOptions = voices.map((voice) => voice.voiceURI).sort();
+
+  useEffect(() => {
+    if (!speech.synthesis.voice) return;
+    if (voiceOptions.length === 0) return;
+    if (voiceOptions.includes(speech.synthesis.voice)) return;
+    updateSynthesisConfig({ voice: voiceOptions[0] });
+  }, [voiceOptions, speech.synthesis.voice, speech.lang]);
 
   return (
     <Stack gap="sm">
@@ -188,12 +183,7 @@ function SpeechConfig() {
           value={speech.lang}
           onChange={(value) => {
             if (!value) return;
-            updateSpeechConfig({ lang: value });
-            const voice = googleVoices.find((voice) =>
-              voice.lang.startsWith(value)
-            );
-            console.log(voice);
-            if (voice) updateSynthesisConfig({ voice: voice.voiceURI });
+            updateSpeechConfig({ lang: value as SupportedLang });
           }}
         />
       </Flex>
@@ -223,12 +213,12 @@ function SpeechConfig() {
               <ActionIcon
                 size="input-sm"
                 variant="light"
-                color={speaking ? "red" : undefined}
+                color={isSpeaking ? "red" : undefined}
                 onClick={() =>
-                  speaking ? cancelSpeaking() : speak(voiceExample)
+                  isSpeaking ? abortSpeech() : speak(voiceExample)
                 }
               >
-                {speaking ? <IconX /> : <IconVolume />}
+                {isSpeaking ? <IconX /> : <IconVolume />}
               </ActionIcon>
             )}
           </Flex>

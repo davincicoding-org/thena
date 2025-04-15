@@ -3,7 +3,7 @@ import { useInstructionsConfigStore } from "@/core/config/instructions";
 import { useMessagesConfigStore } from "@/core/config/messages";
 import { useModelsConfigStore } from "@/core/config/models";
 import { Configuration } from "@/ui/Configuration";
-import { Button, Modal } from "@mantine/core";
+import { AppShell, Button, Card, Center, Modal } from "@mantine/core";
 
 export default function ConfigPage() {
   const { llm } = useModelsConfigStore();
@@ -30,27 +30,23 @@ export default function ConfigPage() {
   };
 
   return (
-    <>
-      <Modal
-        opened
-        radius="md"
-        onClose={() => {}}
-        withCloseButton={false}
-        centered
-      >
-        <Configuration />
-      </Modal>
-      <Button
-        pos="fixed"
-        style={{ zIndex: 1000 }}
-        bottom={16}
-        right={16}
-        variant="default"
-        size="xs"
-        onClick={downloadConfig}
-      >
-        Download Config
-      </Button>
-    </>
+    <AppShell.Main className="grid">
+      <Center>
+        <Card withBorder>
+          <Configuration />
+        </Card>
+        <Button
+          pos="fixed"
+          style={{ zIndex: 1000 }}
+          bottom={16}
+          right={16}
+          variant="default"
+          size="xs"
+          onClick={downloadConfig}
+        >
+          Download Config
+        </Button>
+      </Center>
+    </AppShell.Main>
   );
 }

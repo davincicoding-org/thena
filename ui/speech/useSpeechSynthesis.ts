@@ -1,8 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { z } from "zod";
-
-const supportedLang = z.enum(["en", "de", "fr", "es", "it", "ja", "zh"]);
-type SupportedLang = z.infer<typeof supportedLang>;
+import { SupportedLang } from "@/core/config/speech";
+import { useCallback, useEffect, useState } from "react";
 
 export function useSpeechSynthesis({
   lang,
@@ -38,6 +35,7 @@ export function useSpeechSynthesis({
   }, [abortSpeech]);
 
   useEffect(() => {
+    console.log("lang changed", lang);
     const updateVoices = () => {
       const supportedVoices = window.speechSynthesis.getVoices();
 
@@ -59,6 +57,8 @@ export function useSpeechSynthesis({
         }
       });
     };
+
+    updateVoices();
 
     window.speechSynthesis.onvoiceschanged = updateVoices;
 

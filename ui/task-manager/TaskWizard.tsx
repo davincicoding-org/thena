@@ -2,11 +2,12 @@ import { useInstructionsConfigStore } from "@/core/config/instructions";
 import { useSpeechConfigStore } from "@/core/config/speech";
 import { useMessagesConfigStore } from "@/core/config/messages";
 import { useModelsConfigStore } from "@/core/config/models";
-import { useVoiceAssistant } from "@/ui/speech/useVoiceAssistant";
 import { useChat } from "@ai-sdk/react";
 import { useKeyHold } from "@/ui/useKeyHold";
-import { Button, Center } from "@mantine/core";
+import { Button } from "@mantine/core";
 import { AssistantIndicator } from "../AssistantIndicator";
+import { useSpeechSynthesis } from "../speech/useSpeechSynthesis";
+import { useSpeechRecognition } from "../speech/useSpeechRecognition";
 
 export interface TaskWizardProps {}
 
@@ -15,18 +16,14 @@ export function TaskWizard({}: TaskWizardProps) {
   const { speech } = useSpeechConfigStore();
   const { llm } = useModelsConfigStore();
   const { messages } = useMessagesConfigStore();
-  const {
-    speak,
-    startListening,
-    stopListening,
-    inputVolume,
-    outputVolume,
-    listening,
-    speaking,
-  } = useVoiceAssistant({
+
+  const { speak, isSpeaking, abortSpeech } = useSpeechSynthesis({
     lang: speech.lang,
     voiceURI: speech.synthesis.voice,
     rate: speech.synthesis.rate,
+  });
+  const { startListening, stopListening, isListening } = useSpeechRecognition({
+    lang: speech.lang,
   });
 
   const chat = useChat({
@@ -51,7 +48,6 @@ export function TaskWizard({}: TaskWizardProps) {
     onRelease: async () => {
       const input = await stopListening();
       if (!input) return;
-      console.log(input);
       chat.append({
         role: "user",
         content: input,
@@ -70,10 +66,10 @@ export function TaskWizard({}: TaskWizardProps) {
           className="w-32"
           // volume={Math.max(inputVolume * 10, outputVolume)}
           status={(() => {
-            if (listening) return "listening";
-            if (speaking) return "speaking";
+            if (isListening) return "listening";
+            if (isSpeaking) return "speaking";
             if (chat.status === "submitted" || chat.status === "streaming")
-              return "processing";
+              return "thinking";
             return "idle";
           })()}
         />

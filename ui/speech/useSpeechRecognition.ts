@@ -1,3 +1,4 @@
+import { SupportedLang } from "@/core/config/speech";
 import { useRef, useState, useEffect } from "react";
 
 export function useSpeechRecognition({
@@ -7,9 +8,13 @@ export function useSpeechRecognition({
   onEnd,
   onError,
 }: {
-  lang: string;
+  lang: SupportedLang;
   onStart?: () => void;
-  onResult?: (result: SpeechRecognitionResult) => void;
+  onResult?: (params: {
+    results: SpeechRecognitionResult[];
+    resultIndex: number;
+    result: SpeechRecognitionResult;
+  }) => void;
   onEnd?: () => void;
   onError?: (error: SpeechRecognitionErrorEvent) => void;
 }) {
@@ -40,6 +45,7 @@ export function useSpeechRecognition({
       recognition.current = new SpeechRecognitionAPI();
       recognition.current.lang = lang;
       recognition.current.continuous = true;
+      recognition.current.interimResults = true;
       hasSpoken.current = false;
 
       // Store handlers as refs so we can remove them
@@ -48,12 +54,10 @@ export function useSpeechRecognition({
         reject(event);
       };
 
-      const resultHandler = ({
-        results,
-        resultIndex,
-      }: SpeechRecognitionEvent) => {
-        const result = results[resultIndex];
-        if (result) onResult?.(result);
+      const resultHandler = (event: SpeechRecognitionEvent) => {
+        const results = Array.from(event.results);
+        const result = results[event.resultIndex]!;
+        onResult?.({ results, resultIndex: event.resultIndex, result });
       };
 
       recognition.current.start();

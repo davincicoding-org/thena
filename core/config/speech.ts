@@ -3,6 +3,17 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 // import type {} from '@redux-devtools/extension' // required for devtools typing
 
+export const supportedLangSchema = z.enum([
+  "en",
+  "de",
+  "fr",
+  "es",
+  "it",
+  "ja",
+  "zh",
+]);
+export type SupportedLang = z.infer<typeof supportedLangSchema>;
+
 const speechSynthesisConfigBrowserSchema = z.object({
   provider: z.literal("browser").default("browser"),
   rate: z.number().min(0.5).max(2).default(1),
@@ -28,7 +39,7 @@ const speechRecognitionConfigSchema = z.discriminatedUnion("provider", [
 ]);
 
 const speechConfigSchema = z.object({
-  lang: z.string().default("en-GB"),
+  lang: supportedLangSchema.default("en"),
   synthesis: speechSynthesisConfigSchema.default(
     speechSynthesisConfigBrowserSchema.parse({})
   ),
