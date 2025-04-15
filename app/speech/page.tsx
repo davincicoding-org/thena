@@ -76,18 +76,20 @@ To get started with a template, open it on GitHub and click "Use this template" 
               >
                 {isListening ? "Stop Listening" : "Start Listening"}
               </Button>
-              <Card withBorder>
+              <Stack gap="xs">
                 {transcriptions.map((transcription, index) => (
-                  <span
+                  <Card
                     key={index}
+                    withBorder
+                    p="xs"
                     className={cn({
-                      "text-neutral-400 italic": !transcription.isFinal,
+                      "opacity-50 italic": !transcription.isFinal,
                     })}
                   >
                     {transcription.text}
-                  </span>
+                  </Card>
                 ))}
-              </Card>
+              </Stack>
             </Stack>
           </Fieldset>
           <Fieldset legend="Speech Synthesis">

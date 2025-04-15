@@ -1,10 +1,16 @@
-import { useInstructionsConfigStore } from "@/core/config/instructions";
 import { useSpeechConfigStore } from "@/core/config/speech";
-import { useMessagesConfigStore } from "@/core/config/messages";
-import { useModelsConfigStore } from "@/core/config/models";
 import { useChat } from "@ai-sdk/react";
 import { useKeyHold } from "@/ui/useKeyHold";
-import { Button, Kbd, Stack, Text } from "@mantine/core";
+import {
+  Box,
+  BoxProps,
+  Button,
+  Center,
+  Flex,
+  Kbd,
+  Stack,
+  Text,
+} from "@mantine/core";
 import {
   AssistantIndicator,
   AssistantIndicatorProps,
@@ -12,14 +18,19 @@ import {
 import { useSpeechSynthesis } from "../speech/useSpeechSynthesis";
 import { useSpeechRecognition } from "../speech/useSpeechRecognition";
 import { useState } from "react";
+import { useAgentChat } from "@/core/agents/common";
+import { TASK_COLLECTOR_AGENT } from "@/core/agents/config";
+import { TasksEditor, TasksEditorProps, buildTaskName } from "./TasksEditor";
+import { cn } from "../utils";
 
-export interface TaskWizardProps {}
+export interface TaskWizardProps extends BoxProps {}
 
-export function TaskWizard({}: TaskWizardProps) {
-  const { instructions } = useInstructionsConfigStore();
+export function TaskWizard({ ...boxProps }: TaskWizardProps) {
+  const [stage, setStage] = useState<"START" | "COLLECTION" | "REFINEMENT">();
+
   const { speech } = useSpeechConfigStore();
-  const { llm } = useModelsConfigStore();
-  const { messages } = useMessagesConfigStore();
+
+  const [tasks, setTasks] = useState<TasksEditorProps["items"]>([]);
 
   const { speak, abortSpeech } = useSpeechSynthesis({
     lang: speech.lang,
@@ -30,25 +41,29 @@ export function TaskWizard({}: TaskWizardProps) {
     lang: speech.lang,
   });
 
-  const chat = useChat({
-    initialMessages: [
-      {
-        id: "agent-instructions",
-        role: "system",
-        content: instructions.agent,
-      },
-    ],
-    onFinish: async (response) => {
-      setAssistantStatus("speaking");
-      await speak(response.content);
+  const taskCollector = useAgentChat(TASK_COLLECTOR_AGENT, {
+    onResponse: async ({ reply, tasks }) => {
+      taskCollector.setMessages((prev) => [
+        ...prev,
+        {
+          id: `task-collector-${Date.now()}`,
+          role: "assistant",
+          content: `${reply}\n\nTasks: \n - ${tasks.join("\n - ")}`,
+        },
+      ]);
+      setTasks(
+        tasks.map((task, index) => ({
+          name: buildTaskName(index),
+          label: task,
+        }))
+      );
+      await speak(reply);
       setAssistantStatus("idle");
-    },
-    body: {
-      llm,
     },
   });
 
   useKeyHold({
+    disabled: stage === "START",
     keyCode: ["AltLeft", "AltRight"],
     onStart: async () => {
       abortSpeech();
@@ -58,7 +73,9 @@ export function TaskWizard({}: TaskWizardProps) {
     onRelease: async () => {
       const input = await stopListening();
       if (!input) return;
-      chat.append({
+
+      taskCollector.append({
+        id: `user-${Date.now()}`,
         role: "user",
         content: input,
       });
@@ -70,28 +87,41 @@ export function TaskWizard({}: TaskWizardProps) {
     useState<AssistantIndicatorProps["status"]>();
 
   return (
-    <div>
-      {chat.messages.length === 1 ? (
-        <Button variant="outline" size="lg" onClick={() => chat.reload()}>
+    <Center inline {...boxProps}>
+      {stage === "START" ? (
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={() => {
+            taskCollector.reload();
+            setStage("COLLECTION");
+            setAssistantStatus("thinking");
+          }}
+        >
           Start
         </Button>
       ) : (
-        <Stack gap={0}>
+        <Flex h="100%" direction="column" align="center">
+          {tasks.length > 0 && (
+            <TasksEditor
+              my="auto"
+              w="90vw"
+              maw={500}
+              disableRefine
+              items={tasks}
+              onChange={(items) => setTasks(items)}
+              onRefineTask={console.log}
+            />
+          )}
           <AssistantIndicator
-            className="w-64"
+            className={cn(tasks.length > 0 ? "w-32" : "w-64", {
+              "my-auto": tasks.length === 0,
+            })}
             // volume={Math.max(inputVolume * 10, outputVolume)}
             status={assistantStatus}
           />
-
-          <Text size="xl" ta="center" h={33}>
-            {assistantStatus === "idle" && (
-              <>
-                Hold <Kbd className="align-middle">option</Kbd> to speak
-              </>
-            )}
-          </Text>
-        </Stack>
+        </Flex>
       )}
-    </div>
+    </Center>
   );
 }

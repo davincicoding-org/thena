@@ -1,4 +1,11 @@
-import { ActionIcon, Button, Stack, TextInput, Paper } from "@mantine/core";
+import {
+  ActionIcon,
+  Button,
+  Stack,
+  TextInput,
+  Paper,
+  BoxProps,
+} from "@mantine/core";
 import { useDisclosure, useInputState } from "@mantine/hooks";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { ReactElement, useRef } from "react";
@@ -19,8 +26,9 @@ const isTaskGroup = (item: TaskGroup | Task): item is TaskGroup => {
   return "tasks" in item;
 };
 
-export interface TasksEditorProps {
+export interface TasksEditorProps extends BoxProps {
   items: (TaskGroup | Task)[];
+  disableRefine?: boolean;
   onChange: (items: (TaskGroup | Task)[]) => void;
   onRefineTask: (task: Task) => void;
 }
@@ -29,6 +37,8 @@ export function TasksEditor({
   items,
   onChange,
   onRefineTask,
+  disableRefine = false,
+  ...boxProps
 }: TasksEditorProps) {
   const { control, handleSubmit } = useForm<{
     items: (TaskGroup | Task)[];
@@ -71,7 +81,7 @@ export function TasksEditor({
   const [input, setInput] = useInputState("");
 
   return (
-    <Stack component="form">
+    <Stack component="form" {...boxProps}>
       {fields.map((item, index) => {
         if (isTaskGroup(item))
           return (
@@ -88,16 +98,20 @@ export function TasksEditor({
         return (
           <TaskItem
             key={item.id}
-            actions={[
-              <Button
-                key="refine"
-                size="compact-sm"
-                variant="outline"
-                onClick={() => onRefineTask(item)}
-              >
-                Refine
-              </Button>,
-            ]}
+            actions={
+              disableRefine
+                ? []
+                : [
+                    <Button
+                      key="refine"
+                      size="compact-sm"
+                      variant="outline"
+                      onClick={() => onRefineTask(item)}
+                    >
+                      Refine
+                    </Button>,
+                  ]
+            }
             value={item}
             onChange={(updatedItem) => {
               update(index, updatedItem);
@@ -147,9 +161,11 @@ export function TasksEditor({
 function TaskGroupItem({
   value,
   onChange,
+  disableRefine = false,
 }: {
   value: TaskGroup;
   onChange: (item: TaskGroup) => void;
+  disableRefine?: boolean;
 }) {
   const { control, register, handleSubmit } = useForm<TaskGroup>({
     values: value,
@@ -306,7 +322,7 @@ function TaskItem({
   );
 }
 
-const buildTaskName = (index: number, subIndex?: number) => {
+export const buildTaskName = (index: number, subIndex?: number) => {
   const base = String.fromCharCode(97 + index).toUpperCase();
   if (subIndex !== undefined) return `${base}${subIndex + 1}`;
   return base;

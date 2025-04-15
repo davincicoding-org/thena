@@ -2,17 +2,18 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { cn } from "./utils";
+import { Box, BoxProps } from "@mantine/core";
 
-export interface AssistantIndicatorProps {
+export interface AssistantIndicatorProps extends BoxProps {
   status?: "idle" | "listening" | "thinking" | "speaking";
   // volume: number;
-  className?: string;
 }
 
 // TODO: implment volume reactivity
 export function AssistantIndicator({
   className,
   status = "idle",
+  ...boxProps
 }: AssistantIndicatorProps) {
   const [bars, setBars] = useState(Array(50).fill(0));
 
@@ -34,7 +35,8 @@ export function AssistantIndicator({
   };
 
   return (
-    <svg
+    <Box
+      component="svg"
       viewBox="0 0 300 300"
       className={cn("transition-all", className, {
         "stroke-purple-700 animate-speaking": status === "speaking",
@@ -42,6 +44,7 @@ export function AssistantIndicator({
         "stroke-white": status === "idle",
         "stroke-purple-300 animate-processing": status === "thinking",
       })}
+      {...boxProps}
     >
       {bars.map((height, index) => {
         const angle = (index / bars.length) * 360;
@@ -66,6 +69,6 @@ export function AssistantIndicator({
           />
         );
       })}
-    </svg>
+    </Box>
   );
 }

@@ -17,5 +17,7 @@ export const createModel = (config: LLMConfig) => {
       })(config.model);
     case "chrome-ai":
       return chromeai();
+    default:
+      throw new Error(`Unknown provider: ${config.provider}`);
   }
 };

@@ -42,14 +42,16 @@ export function Configuration() {
 
   return (
     <>
-      <Tabs variant="pills" defaultValue="LLM" radius="xs">
+      <Tabs variant="pills" defaultValue="Speech" radius="xs">
         <Paper bg="dark.8" radius="sm" withBorder mb="lg">
           <ScrollArea scrollbars="x">
             <Tabs.List style={{ flexWrap: "nowrap" }} grow>
-              <Tabs.Tab value="LLM">LLM</Tabs.Tab>
               <Tabs.Tab value="Speech">Speech</Tabs.Tab>
               <Tabs.Tab value="Messages">Messages</Tabs.Tab>
               <Tabs.Tab value="Instructions">Instructions</Tabs.Tab>
+              <Tabs.Tab value="LLM" disabled>
+                LLM
+              </Tabs.Tab>
             </Tabs.List>
           </ScrollArea>
         </Paper>

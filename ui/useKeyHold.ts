@@ -5,21 +5,25 @@ export const useKeyHold = ({
   keyCode,
   onStart,
   onRelease,
+  disabled = false,
 }: {
   keyCode: string | string[];
   onStart: () => void;
   onRelease: () => void;
+  disabled?: boolean;
 }) => {
   const [isHeld, setIsHeld] = useState(false);
   const keyCodes = Array.isArray(keyCode) ? keyCode : [keyCode];
 
   useWindowEvent("keydown", (e) => {
+    if (disabled) return;
     if (!keyCodes.includes(e.code)) return;
     e.preventDefault();
     setIsHeld(true);
   });
 
   useWindowEvent("keyup", (e) => {
+    if (disabled) return;
     if (!keyCodes.includes(e.code)) return;
     e.preventDefault();
     setIsHeld(false);

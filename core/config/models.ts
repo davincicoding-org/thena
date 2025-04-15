@@ -18,15 +18,15 @@ const LLMConfigOllamaSchema = z.object({
 export type LLMConfigOllama = z.infer<typeof LLMConfigOllamaSchema>;
 
 // NOT WORKING YET
-// const LLMConfigChromeAiSchema = z.object({
-//   provider: z.literal("chrome-ai").default("chrome-ai"),
-// });
-// export type LLMConfigChromeAi = z.infer<typeof LLMConfigChromeAiSchema>;
+const LLMConfigChromeAiSchema = z.object({
+  provider: z.literal("chrome-ai").default("chrome-ai"),
+});
+export type LLMConfigChromeAi = z.infer<typeof LLMConfigChromeAiSchema>;
 
 export const LLMConfigSchema = z.discriminatedUnion("provider", [
   LLMConfigLmStudioSchema,
   LLMConfigOllamaSchema,
-  // LLMConfigChromeAiSchema,
+  LLMConfigChromeAiSchema,
 ]);
 export type LLMConfig = z.infer<typeof LLMConfigSchema>;
 
