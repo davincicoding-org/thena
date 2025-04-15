@@ -50,9 +50,10 @@ export function TaskWizard({}: TaskWizardProps) {
 
   useKeyHold({
     keyCode: ["AltLeft", "AltRight"],
-    onStart: () => {
+    onStart: async () => {
       abortSpeech();
-      startListening();
+      await startListening();
+      setAssistantStatus("listening");
     },
     onRelease: async () => {
       const input = await stopListening();

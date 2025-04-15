@@ -21,6 +21,7 @@
     "*.tsx": "$(capture).stories.tsx",
     "package.json": "pnpm-lock.yaml"
   },
+  "explorer.fileNesting.expand": false,
 
   "eslint.validate": [
     "javascript",
