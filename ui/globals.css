@@ -1,2 +1,28 @@
 @import "@mantine/core/styles.css";
+@import "@mantine/notifications/styles.css";
 @import "tailwindcss";
+
+@theme {
+  --animate-processing: processing 1s ease-in-out infinite;
+  @keyframes processing {
+    to {
+      transform: rotate(360deg);
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  --animate-listening: listening 1s ease-in-out infinite alternate;
+  @keyframes listening {
+    to {
+      transform: scale(1.25);
+    }
+  }
+  --animate-speaking: speaking 0.25s ease-in-out infinite alternate;
+  @keyframes speaking {
+    to {
+      transform: scale(1.25);
+    }
+  }
+}

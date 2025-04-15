@@ -26,7 +26,7 @@ import {
   ScrollArea,
   Paper,
 } from "@mantine/core";
-import { useVoiceAssistant } from "./useVoiceAssistant";
+import { useVoiceAssistant } from "./speech/useVoiceAssistant";
 
 const llmProviders = LLMConfigSchema.options.map(
   (option) => option.parse({}).provider

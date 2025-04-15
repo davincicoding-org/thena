@@ -6,7 +6,7 @@ import { useMessagesConfigStore } from "@/core/config/messages";
 import { useModelsConfigStore } from "@/core/config/models";
 import { Chat } from "@/ui/Chat";
 import { useKeyHold } from "@/ui/useKeyHold";
-import { useVoiceAssistant } from "@/ui/useVoiceAssistant";
+import { useVoiceAssistant } from "@/ui/speech/useVoiceAssistant";
 import { useChat } from "@ai-sdk/react";
 import { Button, LoadingOverlay, Modal } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
