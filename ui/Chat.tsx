@@ -10,7 +10,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useInputState } from "@mantine/hooks";
-import { IconCircleCheck, IconMicrophone } from "@tabler/icons-react";
+import { IconMicrophone, IconPlayerPause } from "@tabler/icons-react";
 
 import { useSpeechConfigStore } from "@/core/config/speech";
 
@@ -59,7 +59,7 @@ export function Chat({
           <ActionIcon
             size="lg"
             radius="sm"
-            color={isListening ? undefined : "gray"}
+            color={isListening ? "red" : "gray"}
             variant={isListening ? "filled" : "transparent"}
             onClick={async () => {
               if (!isListening) {
@@ -70,7 +70,7 @@ export function Chat({
               setInput(input);
             }}
           >
-            {isListening ? <IconCircleCheck /> : <IconMicrophone />}
+            {isListening ? <IconPlayerPause /> : <IconMicrophone />}
           </ActionIcon>
         }
         onChange={setInput}
