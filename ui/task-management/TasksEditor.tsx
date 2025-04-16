@@ -1,4 +1,5 @@
 import { ReactElement, useRef } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ActionIcon,
   BoxProps,
@@ -10,28 +11,20 @@ import {
 import { useDisclosure, useInputState } from "@mantine/hooks";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useFieldArray, useForm } from "react-hook-form";
+import { z } from "zod";
+
+import {
+  buildTaskReference,
+  Task,
+  taskSchema,
+} from "@/core/task-management/schema";
 
 import { MultiActionIcon } from "../components/MultiActionIcon";
 
-interface Task {
-  name: string;
-  label: string;
-}
-
-interface TaskGroup {
-  name: string;
-  label: string;
-  tasks: Task[];
-}
-
-const isTaskGroup = (item: TaskGroup | Task): item is TaskGroup => {
-  return "tasks" in item;
-};
-
 export interface TasksEditorProps extends BoxProps {
-  items: (TaskGroup | Task)[];
+  items: Task[];
   disableRefine?: boolean;
-  onChange: (items: (TaskGroup | Task)[]) => void;
+  onChange: (items: Task[]) => void;
   onRefineTask: (task: Task) => void;
 }
 
@@ -42,10 +35,9 @@ export function TasksEditor({
   disableRefine = false,
   ...boxProps
 }: TasksEditorProps) {
-  const { control, handleSubmit } = useForm<{
-    items: (TaskGroup | Task)[];
-  }>({
+  const { control, handleSubmit } = useForm({
     values: { items },
+    resolver: zodResolver(z.object({ items: taskSchema.array() })),
   });
 
   const { fields, remove, update, append } = useFieldArray({
@@ -54,27 +46,27 @@ export function TasksEditor({
   });
 
   const triggerChange = handleSubmit((values) => {
-    const namedItems = values.items.map((item, index) => {
-      if ("id" in item) delete item.id;
-      if (isTaskGroup(item)) {
-        return {
-          ...item,
-          name: buildTaskName(index),
-          tasks: item.tasks.map<Task>((task, subIndex) => {
-            if ("id" in task) delete task.id;
-            return {
-              ...task,
-              name: buildTaskName(index, subIndex),
-            };
-          }),
-        };
-      }
-      return {
-        ...item,
-        name: buildTaskName(index),
-      };
-    });
-    onChange(namedItems);
+    // const namedItems = values.items.map((item, index) => {
+    //   if ("id" in item) delete item.id;
+    //   if (isTaskGroup(item)) {
+    //     return {
+    //       ...item,
+    //       ref: buildTaskReference(index),
+    //       tasks: item.tasks.map<Task>((task, subIndex) => {
+    //         if ("id" in task) delete task.id;
+    //         return {
+    //           ...task,
+    //           ref: buildTaskReference(index, subIndex),
+    //         };
+    //       }),
+    //     };
+    //   }
+    //   return {
+    //     ...item,
+    //     ref: buildTaskReference(index),
+    //   };
+    // });
+    onChange(values.items);
   });
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -85,7 +77,7 @@ export function TasksEditor({
   return (
     <Stack component="form" {...boxProps}>
       {fields.map((item, index) => {
-        if (isTaskGroup(item))
+        if (item.subtasks && item.subtasks.length > 0)
           return (
             <TaskGroupItem
               key={item.id}
@@ -135,7 +127,10 @@ export function TasksEditor({
           onKeyDown={(e) => {
             if (e.code !== "Enter") return;
             if (input.length === 0) return;
-            append({ name: buildTaskName(fields.length), label: input });
+            append({
+              // ref: buildTaskReference(fields.length),
+              label: input,
+            });
             setInput("");
             closeTaskAdder();
             triggerChange();
@@ -165,16 +160,16 @@ function TaskGroupItem({
   onChange,
   disableRefine = false,
 }: {
-  value: TaskGroup;
-  onChange: (item: TaskGroup) => void;
+  value: Required<Task>;
+  onChange: (item: Task) => void;
   disableRefine?: boolean;
 }) {
-  const { control, register, handleSubmit } = useForm<TaskGroup>({
+  const { control, register, handleSubmit } = useForm<Task>({
     values: value,
   });
   const { fields, append, remove, update } = useFieldArray({
     control,
-    name: "tasks",
+    name: "subtasks",
   });
 
   const triggerChange = handleSubmit(onChange);
@@ -257,7 +252,7 @@ function TaskGroupItem({
               if (e.code !== "Enter") return;
               if (input.length === 0) return;
               append({
-                name: `${value.name}.${fields.length + 1}`,
+                // ref: `${value.ref}.${fields.length + 1}`,
                 label: input,
               });
               setInput("");
@@ -323,9 +318,3 @@ function TaskItem({
     />
   );
 }
-
-export const buildTaskName = (index: number, subIndex?: number) => {
-  const base = String.fromCharCode(97 + index).toUpperCase();
-  if (subIndex !== undefined) return `${base}${subIndex + 1}`;
-  return base;
-};

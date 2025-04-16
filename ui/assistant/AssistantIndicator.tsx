@@ -14,7 +14,7 @@ export interface AssistantIndicatorProps extends BoxProps {
 // TODO: implment volume reactivity
 export function AssistantIndicator({
   className,
-  status = "idle",
+  status,
   ...boxProps
 }: AssistantIndicatorProps) {
   const [bars, setBars] = useState(Array(50).fill(0));
@@ -41,6 +41,7 @@ export function AssistantIndicator({
       component="svg"
       viewBox="0 0 300 300"
       className={cn("transition-all", className, {
+        hidden: status === undefined,
         "animate-speaking stroke-purple-700": status === "speaking",
         "animate-listening stroke-white": status === "listening",
         "stroke-white": status === "idle",

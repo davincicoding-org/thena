@@ -6,7 +6,8 @@ import { supportedLangSchema } from "../config/speech";
 export const assistantBodySchema = z.object({
   assistant: z.string(),
   lang: supportedLangSchema,
-  messages: z.any(),
+  messages: z.array(z.any()),
+  artifact: z.any().optional(),
 });
 export type AssistantBody = z.infer<typeof assistantBodySchema>;
 
@@ -19,9 +20,10 @@ export interface AssistantConfig<
   Artifact extends AssistantArtifactSchema = AssistantArtifactSchema,
 > {
   name: string;
-  invocation: Message;
   instructions: Message;
+  invocation: Message;
   artifact: Artifact;
+  attachArtifact?: (artifact: AssistantArtifact<Artifact>) => string;
 }
 
 export const createAssistantConfig = <
@@ -31,11 +33,13 @@ export const createAssistantConfig = <
   invocation,
   instructions,
   artifact,
+  attachArtifact,
 }: {
   name: string;
-  invocation: string;
   instructions: string;
+  invocation: string;
   artifact: Artifact;
+  attachArtifact?: (artifact: AssistantArtifact<Artifact>) => string;
 }): AssistantConfig<Artifact> => ({
   name,
   invocation: {
@@ -49,12 +53,13 @@ export const createAssistantConfig = <
     content: instructions,
   },
   artifact,
+  attachArtifact,
 });
 
 export const buildAssistantSchema = <Artifact extends AssistantArtifactSchema>(
   artifact: Artifact,
-): z.objectUtil.extendShape<Artifact, { message: z.ZodString }> => {
+): z.objectUtil.extendShape<Artifact, { reply: z.ZodString }> => {
   return artifact.extend({
-    message: z.string().describe("A short, spoken response."),
+    reply: z.string().describe("A short, spoken response."),
   });
 };

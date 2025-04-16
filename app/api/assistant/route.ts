@@ -1,5 +1,13 @@
+import { config } from "process";
 import { openai } from "@ai-sdk/openai";
-import { generateObject, NoObjectGeneratedError } from "ai";
+import {
+  generateObject,
+  generateText,
+  NoObjectGeneratedError,
+  Output,
+  tool,
+} from "ai";
+import { z } from "zod";
 
 import {
   assistantBodySchema,
@@ -15,31 +23,61 @@ export async function POST(req: Request) {
     messages: clientMessages,
     lang,
     assistant,
+    artifact,
   } = await req.json().then(assistantBodySchema.parse);
 
-  const agentConfig = getAssistantConfig(assistant);
-  if (!agentConfig) {
+  const assistantConfig = getAssistantConfig(assistant);
+  if (!assistantConfig) {
     return Response.json(
       { error: `Assistant "${assistant}" not found` },
       { status: 404 },
     );
   }
 
-  const messages = [
-    agentConfig.instructions,
-    {
+  const messages = (() => {
+    const instructionMessages = [
+      assistantConfig.instructions,
+      {
+        id: "language-instruction",
+        role: "system",
+        content: `Speak in ${lang.toUpperCase()}`,
+      },
+    ];
+
+    if (!assistantConfig.attachArtifact)
+      return [...instructionMessages, ...clientMessages];
+
+    const artifactMessage = {
+      id: "assistant-artifact",
       role: "system",
-      content: `Speak in ${lang.toUpperCase()}`,
-    },
-    ...clientMessages,
-  ];
+      content: assistantConfig.attachArtifact(artifact),
+    };
+
+    const cleanedClientMessages = clientMessages.filter(
+      (message) => message.id !== artifactMessage.id,
+    );
+
+    return [...instructionMessages, ...cleanedClientMessages, artifactMessage];
+  })();
+
+  console.clear();
+  console.log("Messages");
+  console.log(JSON.stringify(messages, null, 2));
 
   try {
     const result = await generateObject({
       model: openai("gpt-4.1-nano"),
       messages: messages,
-      schema: buildAssistantSchema(agentConfig.artifact),
+      schema: buildAssistantSchema(assistantConfig.artifact),
+      // experimental_telemetry: {
+      //   isEnabled: true,
+      //   functionId: "assistant",
+      // },
     });
+
+    console.log("Result");
+    console.log(JSON.stringify(result.object, null, 2));
+
     return result.toJsonResponse();
   } catch (error) {
     if (NoObjectGeneratedError.isInstance(error)) {

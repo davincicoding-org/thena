@@ -1,9 +1,12 @@
 import { useMemo, useState } from "react";
+import { useChat } from "@ai-sdk/react";
 import { BoxProps, Button, Center, Flex, Stack } from "@mantine/core";
 
-import { TASK_COLLECTOR_ASSISTANT } from "@/core/assistant/config";
 import { useSpeechConfigStore } from "@/core/config/speech";
-import { useAssistant } from "@/ui/assistant/useAssistant";
+import {
+  taskManagerResponseSchema,
+  Tasks,
+} from "@/core/task-management/schema";
 import { useKeyHold } from "@/ui/useKeyHold";
 
 import {
@@ -12,30 +15,12 @@ import {
 } from "../assistant/AssistantIndicator";
 import { useSpeechRecognition } from "../speech/useSpeechRecognition";
 import { useSpeechSynthesis } from "../speech/useSpeechSynthesis";
-import { useStages } from "../useStages";
 import { cn } from "../utils";
-import { buildTaskName, TasksEditor, TasksEditorProps } from "./TasksEditor";
+import { TasksEditor } from "./TasksEditor";
 
 export interface TaskWizardProps extends BoxProps {}
 
 export function TaskWizard({ ...boxProps }: TaskWizardProps) {
-  const { currentStage, completeStage, isInStage } = useStages([
-    {
-      name: "START",
-      init: () => {},
-    },
-    {
-      name: "COLLECTION",
-      init: () => taskCollector.invoke(),
-    },
-    {
-      name: "REFINEMENT",
-      init: () => {},
-    },
-  ]);
-
-  const [tasks, setTasks] = useState<TasksEditorProps["items"]>([]);
-
   const { speech } = useSpeechConfigStore();
 
   const { speak, abortSpeech, isSpeaking } = useSpeechSynthesis({
@@ -47,29 +32,45 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
     lang: speech.lang,
   });
 
-  const taskCollector = useAssistant(TASK_COLLECTOR_ASSISTANT, {
-    onMessage: speak,
-    onGenerate: ({ tasks, done }) => {
-      setTasks(
-        tasks.map((task, index) => ({
-          name: buildTaskName(index),
-          label: task,
-        })) || [],
-      );
-      if (done) completeStage("COLLECTION");
+  const [tasks, setTasks] = useState<Tasks>();
+
+  const chat = useChat({
+    api: "/api/task-manager",
+    body: { tasks },
+    onResponse: async (response) => {
+      const { reply, tasks, usage } = await response
+        .json()
+        .then(taskManagerResponseSchema.parse);
+
+      console.log(`🪙 ${usage.promptTokens} -> ${usage.completionTokens}`);
+
+      if (tasks) setTasks(tasks);
+      if (reply) {
+        speak(reply);
+        chat.setMessages((prev) => [
+          ...prev,
+          {
+            id: `${Date.now()}`,
+            role: "assistant",
+            content: reply,
+          },
+        ]);
+      }
     },
   });
 
-  const assistantStatus = useMemo((): AssistantIndicatorProps["status"] => {
+  const assistantStatus = useMemo(():
+    | AssistantIndicatorProps["status"]
+    | undefined => {
     if (isListening) return "listening";
     if (isSpeaking) return "speaking";
-    if (taskCollector.status === "submitted") return "thinking";
-    if (taskCollector.status === "streaming") return "thinking";
+    if (chat?.status === "submitted") return "thinking";
+    if (chat?.status === "streaming") return "thinking";
     return "idle";
-  }, [isListening, isSpeaking, taskCollector.status]);
+  }, [isListening, isSpeaking, chat.status]);
 
   useKeyHold({
-    disabled: !isInStage(["COLLECTION", "REFINEMENT"]),
+    disabled: tasks === undefined,
     keyCode: ["AltLeft", "AltRight"],
     onStart: async () => {
       abortSpeech();
@@ -78,43 +79,42 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
     onRelease: async () => {
       const input = await stopListening();
       if (!input) return;
-      switch (currentStage) {
-        case "COLLECTION":
-          taskCollector.sendMessage(input);
-          break;
-        case "REFINEMENT":
-          // taskRefiner.sendMessage(input);
-          break;
-      }
+      chat.append({
+        role: "user",
+        content: input,
+      });
     },
   });
 
   return (
     <Center inline {...boxProps}>
-      {currentStage === "START" ? (
+      {tasks === undefined ? (
         <Button
           variant="outline"
           size="lg"
-          onClick={() => completeStage("START")}
+          onClick={() => {
+            speak("What do you want to accomplish today?");
+            setTasks([]);
+          }}
         >
           Start
         </Button>
       ) : (
         <Flex h="100%" direction="column" align="center">
           {tasks.length > 0 && (
-            <Stack>
+            <Stack my="auto">
               <TasksEditor
-                my="auto"
                 w="90vw"
                 maw={500}
-                disableRefine={currentStage !== "REFINEMENT"}
                 items={tasks}
                 onChange={(items) => setTasks(items)}
-                onRefineTask={console.log}
+                onRefineTask={(task) => {
+                  chat.append({
+                    role: "user",
+                    content: `Refine the "${task.label}" task`,
+                  });
+                }}
               />
-              <Button onClick={() => completeStage("COLLECTION")}>
-                Refine Tasks
-              </Button>
             </Stack>
           )}
           <AssistantIndicator

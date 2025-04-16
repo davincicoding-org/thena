@@ -9,6 +9,7 @@ import {
   buildAssistantSchema,
 } from "@/core/assistant/common";
 import { useSpeechConfigStore } from "@/core/config/speech";
+import { interpolate, Interpolation } from "@/core/utils";
 
 export interface AssistantChatOptions<
   Artifact extends AssistantArtifactSchema,
@@ -20,7 +21,7 @@ export interface AssistantChatOptions<
   /**
    * The assistant replied with a message.
    */
-  onMessage: (message: string) => void;
+  onReply: (reply: string) => void;
   // disabled?: boolean;
 }
 
@@ -36,7 +37,10 @@ export interface AssistantHook<Artifact extends AssistantArtifactSchema>
   /**
    * Invokes the agent with an optional user message.
    */
-  invoke: (message?: string) => void;
+  invoke: (params?: {
+    initialArtifact?: AssistantArtifact<Artifact>;
+    templateInterpolation?: Interpolation;
+  }) => void;
   /**
    * Clear the artifact and all messages .
    */
@@ -46,10 +50,6 @@ export interface AssistantHook<Artifact extends AssistantArtifactSchema>
    * Appends a user message and sends it to the assistant.
    */
   sendMessage: (message: string) => void;
-  /**
-   * Appends a system message and without sending it to the assistant.
-   */
-  attachMessage: (message: string) => void;
 }
 
 export const useAssistant = <Artifact extends AssistantArtifactSchema>(
@@ -65,13 +65,14 @@ export const useAssistant = <Artifact extends AssistantArtifactSchema>(
   const body: Omit<AssistantBody, "messages"> = {
     assistant: config.name,
     lang: speech.lang,
+    artifact,
   };
 
   const { messages, append, setMessages, status, error } = useChat({
     api: "/api/assistant",
     body,
     onResponse: async (response) => {
-      const { message, ...artifact } = buildAssistantSchema(
+      const { reply, ...artifact } = buildAssistantSchema(
         config.artifact,
       ).parse(await response.json());
       setMessages((prev) => [
@@ -79,10 +80,11 @@ export const useAssistant = <Artifact extends AssistantArtifactSchema>(
         {
           id: `response-${Date.now()}`,
           role: "assistant",
-          content: message,
+          content: reply,
         },
       ]);
-      options?.onMessage?.(message);
+      setArtifact(artifact);
+      options?.onReply?.(reply);
       options?.onGenerate?.(artifact);
     },
   });
@@ -98,24 +100,28 @@ export const useAssistant = <Artifact extends AssistantArtifactSchema>(
     },
     artifact,
     setArtifact,
-    invoke: (message?: string) => {
-      const invocation: Message = message
-        ? {
-            id: "assistant-invocation",
-            role: "user",
-            content: message,
-          }
-        : config.invocation;
-      append(invocation);
+    invoke: (options = {}) => {
+      const invocationMessage = {
+        ...config.invocation,
+        content: options.templateInterpolation
+          ? interpolate(
+              config.invocation.content,
+              options.templateInterpolation,
+            )
+          : config.invocation.content,
+      };
+      if (options.initialArtifact) {
+        setArtifact(options.initialArtifact);
+      }
+
+      append(invocationMessage, {
+        body: {
+          artifact: options.initialArtifact,
+        },
+      });
     },
     sendMessage: (message: string) => {
       append({ role: "user", content: message });
-    },
-    attachMessage: (message: string) => {
-      setMessages((prev) => [
-        ...prev,
-        { id: `${Date.now()}`, role: "system", content: message },
-      ]);
     },
   };
 };
