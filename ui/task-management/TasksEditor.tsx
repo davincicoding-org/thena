@@ -23,7 +23,6 @@ import { MultiActionIcon } from "../components/MultiActionIcon";
 
 export interface TasksEditorProps extends BoxProps {
   items: Task[];
-  disableRefine?: boolean;
   onChange: (items: Task[]) => void;
   onRefineTask: (task: Task) => void;
 }
@@ -32,7 +31,6 @@ export function TasksEditor({
   items,
   onChange,
   onRefineTask,
-  disableRefine = false,
   ...boxProps
 }: TasksEditorProps) {
   const { control, handleSubmit } = useForm({
@@ -92,20 +90,16 @@ export function TasksEditor({
         return (
           <TaskItem
             key={item.id}
-            actions={
-              disableRefine
-                ? []
-                : [
-                    <Button
-                      key="refine"
-                      size="compact-sm"
-                      variant="outline"
-                      onClick={() => onRefineTask(item)}
-                    >
-                      Refine
-                    </Button>,
-                  ]
-            }
+            actions={[
+              <Button
+                key="refine"
+                size="compact-sm"
+                variant="outline"
+                onClick={() => onRefineTask(item)}
+              >
+                Refine
+              </Button>,
+            ]}
             value={item}
             onChange={(updatedItem) => {
               update(index, updatedItem);
