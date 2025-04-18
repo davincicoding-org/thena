@@ -18,6 +18,7 @@
 
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.patterns": {
+    "*.ts": "$(capture).test.ts",
     "*.tsx": "$(capture).stories.tsx",
     "package.json": "pnpm-lock.yaml"
   },

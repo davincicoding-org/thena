@@ -72,7 +72,7 @@ export async function POST(req: Request) {
       temperature: 0,
       schema: z.object({
         reply: z.string(),
-        tasks: taskSchema.array().nullable(),
+        tasks: z.array(taskSchema).nullable(),
       }),
       // experimental_telemetry: {
       //   isEnabled: true,

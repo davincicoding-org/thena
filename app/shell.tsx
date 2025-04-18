@@ -8,11 +8,11 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     <AppShell header={{ height: 60 }}>
       <AppShell.Header>
         <Flex py="sm" px="md" gap="sm">
-          <Button component={Link} href="/speech" variant="default">
-            Speech
+          <Button component={Link} href="/backlog" variant="default">
+            Backlog
           </Button>
           <Button component={Link} href="/tasks" variant="default">
-            Tasks
+            Task Wizard
           </Button>
           <Button component={Link} href="/session" variant="default">
             Session
@@ -22,6 +22,9 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           </Button>
           <Button component={Link} href="/config" variant="default" ml="auto">
             Config
+          </Button>
+          <Button component={Link} href="/speech" variant="default">
+            Speech
           </Button>
         </Flex>
       </AppShell.Header>

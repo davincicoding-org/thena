@@ -1,5 +1,4 @@
 import { ReactElement, useRef } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   ActionIcon,
   BoxProps,
@@ -10,63 +9,56 @@ import {
 } from "@mantine/core";
 import { useDisclosure, useInputState } from "@mantine/hooks";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
-import { useFieldArray, useForm } from "react-hook-form";
-import { z } from "zod";
 
-import { Task, taskSchema } from "@/core/task-management/schema";
+import { MultiActionIcon } from "@/ui/components/MultiActionIcon";
+import { useSyncState } from "@/ui/useSyncState";
 
-import { MultiActionIcon } from "../components/MultiActionIcon";
+import { Subtask, Task } from "../types";
+import { SubtaskInput, TaskListHookReturn } from "./useTaskList";
 
-export interface TasksEditorProps extends BoxProps {
-  items: Task[];
-  onChange: (items: Task[]) => void;
+export interface TaskListEditorProps extends BoxProps {
+  tasks: TaskListHookReturn["tasks"];
+  onAddTask: TaskListHookReturn["addTask"];
+  onUpdateTask: TaskListHookReturn["updateTask"];
+  onRemoveTask: TaskListHookReturn["removeTask"];
+  onAddSubtask: TaskListHookReturn["addSubtask"];
+  onUpdateSubtask: TaskListHookReturn["updateSubtask"];
+  onRemoveSubtask: TaskListHookReturn["removeSubtask"];
   onRefineTask: (task: Task) => void;
 }
 
-export function TasksEditor({
-  items,
-  onChange,
+export function TaskListEditor({
+  tasks,
+  onAddTask,
+  onUpdateTask,
+  onRemoveTask,
+  onAddSubtask,
+  onUpdateSubtask,
+  onRemoveSubtask,
   onRefineTask,
   ...boxProps
-}: TasksEditorProps) {
-  const { control, handleSubmit } = useForm({
-    values: { items },
-    resolver: zodResolver(z.object({ items: taskSchema.array() })),
-  });
-
-  const { fields, remove, update, append } = useFieldArray({
-    control,
-    name: "items",
-  });
-
-  const triggerChange = handleSubmit(({ items }) => {
-    // strip away ids added by useFieldArray
-    items.forEach((item) => {
-      if ("id" in item) delete item.id;
-      item.subtasks?.forEach((subtask) => {
-        if ("id" in subtask) delete subtask.id;
-      });
-    });
-    onChange(items);
-  });
-
+}: TaskListEditorProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isAddingTask, { open: openTaskAdder, close: closeTaskAdder }] =
     useDisclosure(false);
   const [input, setInput] = useInputState("");
 
   return (
-    <Stack component="form" {...boxProps}>
-      {fields.map((item, index) => {
+    <Stack {...boxProps}>
+      {tasks.map((item) => {
         if (hasSubtasks(item)) {
           return (
             <TaskWithSubtasks
               key={item.id}
               value={item}
-              onChange={(updatedItem) => {
-                update(index, updatedItem);
-                triggerChange();
-              }}
+              onUpdate={(updates) => onUpdateTask(item.id, updates)}
+              onAddSubtask={(subtask) => onAddSubtask(item.id, subtask)}
+              onRemoveSubtask={(subtaskId) =>
+                onRemoveSubtask(item.id, subtaskId)
+              }
+              onUpdateSubtask={(subtaskId, updates) =>
+                onUpdateSubtask(item.id, subtaskId, updates)
+              }
             />
           );
         }
@@ -84,14 +76,8 @@ export function TasksEditor({
               </Button>,
             ]}
             value={item}
-            onChange={(updatedItem) => {
-              update(index, updatedItem);
-              triggerChange();
-            }}
-            onRemove={() => {
-              remove(index);
-              triggerChange();
-            }}
+            onUpdate={(updates) => onUpdateTask(item.id, updates)}
+            onRemove={() => onRemoveTask(item.id)}
           />
         );
       })}
@@ -104,13 +90,11 @@ export function TasksEditor({
           onKeyDown={(e) => {
             if (e.code !== "Enter") return;
             if (input.length === 0) return;
-            append({
-              id: Date.now().toString(),
-              label: input,
+            onAddTask({
+              title: input,
             });
             setInput("");
             closeTaskAdder();
-            triggerChange();
           }}
         />
       ) : (
@@ -134,20 +118,18 @@ export function TasksEditor({
 
 function TaskWithSubtasks({
   value,
-  onChange,
+  onUpdate,
+  onAddSubtask,
+  onRemoveSubtask,
+  onUpdateSubtask,
 }: {
   value: Required<Task>;
-  onChange: (item: Task) => void;
+  onUpdate: (updates: Partial<Task>) => void;
+  onAddSubtask: (subtask: SubtaskInput) => void;
+  onRemoveSubtask: (subtaskId: string) => void;
+  onUpdateSubtask: (subtaskId: string, updates: Partial<Subtask>) => void;
 }) {
-  const { control, register, handleSubmit } = useForm<Task>({
-    values: value,
-  });
-  const { fields, append, remove, update } = useFieldArray({
-    control,
-    name: "subtasks",
-  });
-
-  const triggerChange = handleSubmit(onChange);
+  const [internalValue, setInternalValue] = useSyncState(value);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [isAddingTask, { open: openTaskAdder, close: closeTaskAdder }] =
@@ -158,6 +140,10 @@ function TaskWithSubtasks({
     <Paper withBorder bg="dark.7">
       <Paper bg="dark.8" pos="relative">
         <TextInput
+          value={internalValue.title}
+          onChange={(e) =>
+            setInternalValue((prev) => ({ ...prev, title: e.target.value }))
+          }
           variant="unstyled"
           size="md"
           styles={{
@@ -169,11 +155,11 @@ function TaskWithSubtasks({
             },
           }}
           pr={0}
-          {...register(`label`)}
-          onBlur={(e) => {
-            if (e.target.value === "") return alert("Please enter a title");
-            if (e.target.value === value.label) return;
-            triggerChange();
+          onBlur={() => {
+            if (internalValue.title === "")
+              return alert("Please enter a title");
+            if (internalValue.title === value.title) return;
+            onUpdate({ title: internalValue.title });
           }}
           rightSectionWidth={28}
           rightSection={
@@ -203,18 +189,12 @@ function TaskWithSubtasks({
       </Paper>
 
       <Stack gap="xs" p="sm">
-        {fields.map((task, index) => (
+        {internalValue.subtasks.map((task, index) => (
           <TaskItem
             key={task.id}
             value={task}
-            onChange={(updatedItem) => {
-              update(index, updatedItem);
-              triggerChange();
-            }}
-            onRemove={() => {
-              remove(index);
-              triggerChange();
-            }}
+            onUpdate={(updates) => onUpdateSubtask(task.id, updates)}
+            onRemove={() => onRemoveSubtask(task.id)}
           />
         ))}
         {isAddingTask && (
@@ -226,13 +206,11 @@ function TaskWithSubtasks({
             onKeyDown={(e) => {
               if (e.code !== "Enter") return;
               if (input.length === 0) return;
-              append({
-                id: Date.now().toString(),
-                label: input,
+              onAddSubtask({
+                title: input,
               });
               setInput("");
               closeTaskAdder();
-              triggerChange();
             }}
           />
         )}
@@ -244,26 +222,26 @@ function TaskWithSubtasks({
 function TaskItem({
   value,
   actions = [],
-  onChange,
+  onUpdate,
   onRemove,
 }: {
-  value: Task;
+  value: Task | Subtask;
   actions?: ReactElement[];
-  onChange: (item: Task) => void;
+  onUpdate: (updates: Partial<Task | Subtask>) => void;
   onRemove: () => void;
 }) {
-  const { register, handleSubmit } = useForm<Task>({
-    values: value,
-  });
-  const triggerChange = handleSubmit(onChange);
+  const [internalValue, setInternalValue] = useSyncState(value);
 
   return (
     <TextInput
-      {...register(`label`)}
-      onBlur={(e) => {
-        if (e.target.value === "") return onRemove();
-        if (e.target.value === value.label) return;
-        triggerChange();
+      value={internalValue.title}
+      onChange={(e) =>
+        setInternalValue((prev) => ({ ...prev, title: e.target.value }))
+      }
+      onBlur={() => {
+        if (internalValue.title === "") return onRemove();
+        if (internalValue.title === value.title) return;
+        onUpdate({ title: internalValue.title });
       }}
       className="group"
       rightSection={

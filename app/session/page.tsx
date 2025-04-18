@@ -1,18 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import dynamic from "next/dynamic";
 import {
   AppShell,
   Box,
   Button,
   Card,
-  Center,
   Flex,
   Progress,
   Tooltip,
 } from "@mantine/core";
-import { useInterval } from "@mantine/hooks";
+import { useInterval, useWindowEvent } from "@mantine/hooks";
 import dayjs, { Dayjs } from "dayjs";
 import duration, { Duration } from "dayjs/plugin/duration";
 
@@ -21,15 +19,8 @@ import { cn } from "@/ui/utils";
 
 dayjs.extend(duration);
 
-type CompanionCapabilities = {
-  video: boolean;
-  full: boolean;
-};
-
 export default function SessionPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const taskListRef = useRef<HTMLDivElement>(null);
-  const pipWindowRef = useRef<PictureInPictureWindow>(null);
   const [pipEnabled, setPipEnabled] = useState(false);
 
   const { timeLeft, duration, deadline, startTimer, progress } = useTimer({
@@ -42,27 +33,6 @@ export default function SessionPage() {
   const startSession = () => {
     startTimer();
     videoRef.current?.play();
-  };
-
-  console.log(documentPictureInPicture);
-
-  const enterPipMode = async () => {
-    if (!videoRef.current) return;
-    const pipWindow = await videoRef.current.requestPictureInPicture();
-    setPipEnabled(true);
-    // FIXME: this is not working
-    pipWindow.addEventListener("pagehide", () => {
-      setPipEnabled(false);
-      pipWindowRef.current = null;
-    });
-    pipWindowRef.current = pipWindow;
-
-    if (documentPictureInPicture) {
-      documentPictureInPicture.requestWindow();
-      setPipEnabled(true);
-      const pipWindow2 = await documentPictureInPicture.requestWindow();
-      pipWindow2.document.body.append(taskListRef.current);
-    }
   };
 
   return (
@@ -80,22 +50,12 @@ export default function SessionPage() {
               "opacity-0": !deadline || pipEnabled,
             },
           )}
-        />
+        >
+          <source src="/videos/bunny.webm" type="video/webm" />
+          <source src="/videos/bunny.mp4" type="video/mp4" />
+        </video>
 
-        {deadline && (
-          <Button
-            pos="absolute"
-            variant="outline"
-            className={cn({ hidden: pipEnabled })}
-            top={24}
-            right={24}
-            onClick={enterPipMode}
-          >
-            Companion Mode
-          </Button>
-        )}
         <Card
-          ref={taskListRef}
           withBorder
           pos="absolute"
           bottom={24}

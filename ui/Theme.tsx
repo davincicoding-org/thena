@@ -1,10 +1,13 @@
 import "./globals.css";
 
-import { createTheme, MantineProvider } from "@mantine/core";
+import { createTheme, DEFAULT_THEME, MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 
 const theme = createTheme({
-  primaryColor: "teal",
+  colors: {
+    primary: DEFAULT_THEME.colors.teal,
+  },
+  primaryColor: "primary",
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
