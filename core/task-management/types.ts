@@ -23,24 +23,32 @@ export const colorsEnum = z.enum([
 
 export type Color = z.infer<typeof colorsEnum>;
 
-interface BaseTask {
-  id: string;
-  title: string;
-  description?: string;
-  tags?: string[];
-  estimate?: number;
-  complexity?: number;
-}
+export const baseTaskSchema = z.object({
+  id: z.string(),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  estimate: z.number().optional(),
+  complexity: z.number().optional(),
+});
+export type BaseTask = z.infer<typeof baseTaskSchema>;
 
 /**
  * Minimal subtask
  */
-export interface Subtask extends BaseTask {}
 
-export interface Task extends BaseTask {
-  projectId?: string;
-  subtasks?: Subtask[];
-}
+export const subtaskSchema = baseTaskSchema;
+export type Subtask = z.infer<typeof subtaskSchema>;
+
+/**
+ * Task inside the backlog
+ */
+
+export const taskSchema = baseTaskSchema.extend({
+  projectId: z.string().optional(),
+  subtasks: z.array(subtaskSchema).optional(),
+});
+export type Task = z.infer<typeof taskSchema>;
 
 /**
  * Task inside the backlog
@@ -75,12 +83,13 @@ export const projectSchema = z.object({
 });
 export type Project = z.infer<typeof projectSchema>;
 
-export interface Tag {
-  id: string;
-  name: string;
-  description?: string;
-  color?: ExtendedCustomColors;
-}
+export const tagSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  color: colorsEnum.optional(),
+});
+export type Tag = z.infer<typeof tagSchema>;
 
 export type StateHook<S> = (
   initialState: S,

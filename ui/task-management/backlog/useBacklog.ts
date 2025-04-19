@@ -7,7 +7,7 @@ import {
   BacklogTask,
   StateHook,
   Task,
-} from "../types";
+} from "../../../core/task-management/types";
 
 export interface BacklogHookOptions {
   initialTasks?: BacklogTask[];
@@ -116,41 +116,48 @@ export function useBacklog({
 
   // Filter and sort tasks
   const tasks = useMemo(() => {
-    let result = [...allTasks];
+    return allTasks
+      .reduce<BacklogTask[]>((acc, task) => {
+        if (filters.search) {
+          const searchLower = filters.search.toLowerCase();
+          const titleHasSearch = task.title.toLowerCase().includes(searchLower);
+          const descriptionHasSearch = task.description
+            ?.toLowerCase()
+            .includes(searchLower);
+          if (!titleHasSearch && !descriptionHasSearch) return acc;
+        }
 
-    // Apply filters
-    if (filters.projectIds?.length) {
-      result = result.filter((task) =>
-        filters.projectIds?.includes(task.projectId || ""),
-      );
-    }
-    if (filters.tags?.length) {
-      result = result.filter((task) =>
-        task.tags?.some((tag) => filters.tags?.includes(tag)),
-      );
-    }
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase();
-      result = result.filter(
-        (task) =>
-          task.title.toLowerCase().includes(searchLower) ||
-          task.description?.toLowerCase().includes(searchLower),
-      );
-    }
+        if (filters.projectIds?.length) {
+          if (task.projectId === undefined) return acc;
+          if (!filters.projectIds.includes(task.projectId)) return acc;
+        }
+        if (filters.tags?.length) {
+          const taskHasTag = task.tags?.some((tag) =>
+            filters.tags?.includes(tag),
+          );
+          const subtaskHasTag = task.subtasks?.some((subtask) =>
+            subtask.tags?.some((tag) => filters.tags?.includes(tag)),
+          );
 
-    // Apply sorting
-    result.sort((a, b) => {
-      const direction = sort.direction === "asc" ? 1 : -1;
-      if (sort.sortBy === "addedAt") {
-        return (
-          direction *
-          (new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime())
-        );
-      }
-      return direction * a.title.localeCompare(b.title);
-    });
+          if (!taskHasTag && !subtaskHasTag) return acc;
 
-    return result;
+          if (!taskHasTag)
+            task.subtasks = task.subtasks?.filter((subtask) =>
+              subtask.tags?.some((tag) => filters.tags?.includes(tag)),
+            );
+        }
+        return [...acc, task];
+      }, [])
+      .sort((a, b) => {
+        const direction = sort.direction === "asc" ? 1 : -1;
+        if (sort.sortBy === "addedAt") {
+          return (
+            direction *
+            (new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime())
+          );
+        }
+        return direction * a.title.localeCompare(b.title);
+      });
   }, [allTasks, filters, sort]);
 
   return {

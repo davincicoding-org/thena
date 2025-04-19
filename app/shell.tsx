@@ -20,11 +20,11 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           <Button component={Link} href="/chat" variant="default">
             Chat
           </Button>
-          <Button component={Link} href="/config" variant="default" ml="auto">
-            Config
-          </Button>
           <Button component={Link} href="/speech" variant="default">
             Speech
+          </Button>
+          <Button component={Link} href="/config" variant="default" ml="auto">
+            Config
           </Button>
         </Flex>
       </AppShell.Header>

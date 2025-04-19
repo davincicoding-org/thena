@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { SupportedLang } from "@/core/config/speech";
+import { SupportedLang } from "@/ui/speech/config";
 
 export function useSpeechSynthesis({
   lang,

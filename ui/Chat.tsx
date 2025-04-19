@@ -12,7 +12,7 @@ import {
 import { useInputState } from "@mantine/hooks";
 import { IconMicrophone, IconPlayerPause } from "@tabler/icons-react";
 
-import { useSpeechConfigStore } from "@/core/config/speech";
+import { useSpeechConfigStore } from "@/ui/speech/config";
 
 import { Markdown } from "./components/Markdown";
 import { useSpeechRecognition } from "./speech/useSpeechRecognition";

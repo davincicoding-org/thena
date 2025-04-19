@@ -6,20 +6,18 @@ import {
   Button,
   Card,
   Center,
-  Container,
   Fieldset,
-  Flex,
-  Group,
   SimpleGrid,
   Stack,
   Textarea,
 } from "@mantine/core";
 import { useInputState } from "@mantine/hooks";
 
-import { useSpeechConfigStore } from "@/core/config/speech";
-import { useSpeechRecognition } from "@/ui/speech/useSpeechRecognition";
-import { useSpeechSynthesis } from "@/ui/speech/useSpeechSynthesis";
-import { useKeyHold } from "@/ui/useKeyHold";
+import {
+  useSpeechConfigStore,
+  useSpeechRecognition,
+  useSpeechSynthesis,
+} from "@/ui/speech";
 import { cn } from "@/ui/utils";
 
 export default function SpeechPage() {

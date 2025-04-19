@@ -1,8 +1,8 @@
-import { useCallback, useState } from "react";
+import { Dispatch, SetStateAction, useCallback, useState } from "react";
 import { nanoid } from "nanoid";
 import useUndo from "use-undo";
 
-import { StateHook, Subtask, Task } from "../types";
+import { StateHook, Subtask, Task } from "../../../core/task-management/types";
 
 export type SubtaskInput = Omit<Subtask, "id">;
 export type TaskInput = Omit<Task, "id"> & { subtasks?: SubtaskInput[] };
@@ -15,6 +15,7 @@ export interface TaskListHookOptions {
 export interface TaskListHookReturn {
   // Current list of tasks
   tasks: Task[];
+  setTasks: Dispatch<SetStateAction<Task[]>>;
 
   // Task operations
   addTask: (task: TaskInput) => void;
@@ -219,6 +220,7 @@ export function useTaskList({
 
   return {
     tasks,
+    setTasks,
     addTask,
     addTasks,
     updateTask,

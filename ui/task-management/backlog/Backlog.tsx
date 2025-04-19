@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback } from "react";
 import {
   Avatar,
@@ -22,6 +24,8 @@ import {
   IconSortAscending,
   IconSortDescending,
 } from "@tabler/icons-react";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 
 import { useSyncInputState } from "@/ui/useSyncState";
 
@@ -33,9 +37,11 @@ import {
   Project,
   Subtask,
   Tag,
-} from "../types";
+} from "../../../core/task-management/types";
 import { hasSubtasks } from "../utils";
 import { BacklogHookReturn } from "./useBacklog";
+
+dayjs.extend(relativeTime);
 
 export interface BacklogProps {
   tasks: BacklogTask[];
@@ -97,32 +103,24 @@ export function Backlog({
               label: project.name,
             }))}
             onChange={(value) => onFiltersUpdate({ projectIds: value })}
-            renderOption={({ option }) => (
-              <Group gap="sm" wrap="nowrap">
-                <Avatar
-                  color={
-                    filters.projectIds?.includes(option.value)
-                      ? "primary"
-                      : undefined
-                  }
-                  src={projects.find((p) => p.id === option.value)?.image}
-                  size={36}
-                  radius="xl"
-                  name={option.label}
-                />
-                <Text
-                  size="sm"
-                  className="text-nowrap"
-                  c={
-                    filters.projectIds?.includes(option.value)
-                      ? "primary"
-                      : undefined
-                  }
-                >
-                  {option.label}
-                </Text>
-              </Group>
-            )}
+            renderOption={({ option }) => {
+              const project = resolveProject(option.value);
+
+              return (
+                <Group gap="sm" wrap="nowrap">
+                  <Avatar
+                    color={project?.color}
+                    src={project?.image}
+                    size={36}
+                    radius="xl"
+                    name={option.label}
+                  />
+                  <Text size="sm" className="text-nowrap">
+                    {option.label}
+                  </Text>
+                </Group>
+              );
+            }}
           />
           <MultiSelect
             placeholder={filters.tags?.length ? undefined : "Tags"}
@@ -220,6 +218,13 @@ function TaskItem({
               );
             })}
           </Flex>
+          <Tooltip
+            label={dayjs(new Date(task.addedAt)).format("DD/MM/YYYY HH:mm")}
+          >
+            <Text size="sm" ta="right" w={96}>
+              {dayjs(new Date(task.addedAt)).fromNow()}
+            </Text>
+          </Tooltip>
         </Flex>
       </Paper>
 

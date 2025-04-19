@@ -10,11 +10,11 @@ import {
   Progress,
   Tooltip,
 } from "@mantine/core";
-import { useInterval, useWindowEvent } from "@mantine/hooks";
+import { useInterval } from "@mantine/hooks";
 import dayjs, { Dayjs } from "dayjs";
 import duration, { Duration } from "dayjs/plugin/duration";
 
-import { TaskList } from "@/ui/task-management/TaskList";
+import { TaskList } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
 dayjs.extend(duration);
@@ -40,7 +40,6 @@ export default function SessionPage() {
       <Box pos="relative">
         <video
           ref={videoRef}
-          src="/videos/bunny.mp4"
           muted
           playsInline
           loop
@@ -51,8 +50,8 @@ export default function SessionPage() {
             },
           )}
         >
-          <source src="/videos/bunny.webm" type="video/webm" />
-          <source src="/videos/bunny.mp4" type="video/mp4" />
+          <source src="/videos/library.webm" type="video/webm" />
+          <source src="/videos/library.mp4" type="video/mp4" />
         </video>
 
         <Card
@@ -69,18 +68,23 @@ export default function SessionPage() {
           <TaskList
             mb="sm"
             items={[
-              { label: "Clean the kitchen" },
+              { id: "kitchen", title: "Clean the kitchen" },
               {
-                label: "Build an app",
+                id: "app",
+                title: "Build an app",
                 subtasks: [
-                  { label: "Gather requirements" },
-                  { label: "Design the UI" },
-                  { label: "Implement the logic" },
-                  { label: "Test the app" },
+                  { id: "requirements", title: "Gather requirements" },
+                  { id: "design", title: "Design the UI" },
+                  { id: "logic", title: "Implement the logic" },
+                  { id: "test", title: "Test the app" },
                 ],
               },
-              { label: "Walk the dog" },
+              { id: "dog", title: "Walk the dog" },
             ]}
+            onUpdateTask={() => {}}
+            onRemoveTask={() => {}}
+            onAddTask={() => {}}
+            onRefineTask={() => {}}
           />
           <Card.Section h={42}>
             {deadline ? (

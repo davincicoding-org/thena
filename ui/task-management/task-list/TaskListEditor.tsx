@@ -13,7 +13,7 @@ import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { MultiActionIcon } from "@/ui/components/MultiActionIcon";
 import { useSyncState } from "@/ui/useSyncState";
 
-import { Subtask, Task } from "../types";
+import { Subtask, Task } from "../../../core/task-management/types";
 import { SubtaskInput, TaskListHookReturn } from "./useTaskList";
 
 export interface TaskListEditorProps extends BoxProps {

@@ -7,7 +7,6 @@ import {
   Output,
   tool,
 } from "ai";
-import { z } from "zod";
 
 import {
   assistantBodySchema,
@@ -59,10 +58,6 @@ export async function POST(req: Request) {
 
     return [...instructionMessages, ...cleanedClientMessages, artifactMessage];
   })();
-
-  console.clear();
-  console.log("Messages");
-  console.log(JSON.stringify(messages, null, 2));
 
   try {
     const result = await generateObject({

@@ -17,16 +17,13 @@ import {
 } from "@mantine/core";
 import { IconVolume, IconX } from "@tabler/icons-react";
 
-import type { SupportedLang } from "@/core/config/speech";
+import type { SupportedLang } from "@/ui/speech/config";
 import {
   LLMConfig,
   LLMConfigSchema,
   useModelsConfigStore,
 } from "@/core/config/models";
-import {
-  supportedLangSchema,
-  useSpeechConfigStore,
-} from "@/core/config/speech";
+import { supportedLangSchema, useSpeechConfigStore } from "@/ui/speech/config";
 
 import { useSpeechSynthesis } from "./speech/useSpeechSynthesis";
 

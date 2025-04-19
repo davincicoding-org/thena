@@ -8,8 +8,8 @@ import {
   AssistantConfig,
   buildAssistantSchema,
 } from "@/core/assistant/common";
-import { useSpeechConfigStore } from "@/core/config/speech";
 import { interpolate, Interpolation } from "@/core/utils";
+import { useSpeechConfigStore } from "@/ui/speech/config";
 
 export interface AssistantChatOptions<
   Artifact extends AssistantArtifactSchema,

@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useArgs } from "@storybook/preview-api";
 import { fn } from "@storybook/test";
 
@@ -23,7 +22,7 @@ const meta = {
         subtasks: [
           { id: "3", title: "Engineer requirements" },
           { id: "1", title: "Define tech stack" },
-          { id: "2", title: "Setup codebase" },
+          { id: "2", title: "Setup codebase", tags: ["personal"] },
         ],
         addedAt: "2025-04-18T00:32:10.504Z",
       },
@@ -49,6 +48,8 @@ const meta = {
       { id: "work", name: "Work" },
       { id: "personal", name: "Personal", color: "green" },
     ],
+    onFiltersUpdate: fn(),
+    onSortUpdate: fn(),
   },
 } satisfies Meta<typeof Backlog>;
 

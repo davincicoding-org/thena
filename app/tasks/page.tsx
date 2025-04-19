@@ -1,6 +1,6 @@
 "use client";
 
-import { AppShell, Center } from "@mantine/core";
+import { AppShell } from "@mantine/core";
 
 import { TaskWizard } from "@/ui/task-management/TaskWizard";
 

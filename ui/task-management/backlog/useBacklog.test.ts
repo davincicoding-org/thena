@@ -8,7 +8,7 @@ import {
   BacklogSortOptions,
   BacklogTask,
   StateHook,
-} from "../types";
+} from "../../../core/task-management/types";
 import { useBacklog } from "./useBacklog";
 
 // Mock nanoid to get predictable IDs in tests
@@ -254,6 +254,44 @@ describe("useBacklog", () => {
     expect(result.current.tasks).toHaveLength(1);
     const filteredTasks = result.current.tasks;
     expect(filteredTasks[0]?.id).toBe("task-1");
+  });
+
+  it("should filter tasks by tags in subtasks", () => {
+    const initialTasks: BacklogTask[] = [
+      {
+        id: "task-1",
+        title: "Task 1",
+        tags: ["tag1", "tag2"],
+        subtasks: [
+          { id: "subtask-1", title: "Subtask 1", tags: ["tag3"] },
+          { id: "subtask-2", title: "Subtask 2", tags: ["tag4"] },
+        ],
+        addedAt: "2022-12-31T12:00:00.000Z",
+      },
+      {
+        id: "task-2",
+        title: "Task 2",
+        tags: ["tag2"],
+        subtasks: [{ id: "subtask-3", title: "Subtask 3", tags: ["tag5"] }],
+        addedAt: "2022-12-30T12:00:00.000Z",
+      },
+      {
+        id: "task-3",
+        title: "Task 3",
+        subtasks: [{ id: "subtask-4", title: "Subtask 4", tags: ["tag3"] }],
+        addedAt: "2022-12-29T12:00:00.000Z",
+      },
+    ];
+    const { result } = renderHook(() => useBacklog({ initialTasks }));
+
+    act(() => {
+      result.current.updateFilters({ tags: ["tag3"] });
+    });
+
+    expect(result.current.tasks).toHaveLength(2);
+    const filteredTasks = result.current.tasks;
+    expect(filteredTasks[0]?.id).toBe("task-1");
+    expect(filteredTasks[1]?.id).toBe("task-3");
   });
 
   it("should filter tasks by search term in title", () => {

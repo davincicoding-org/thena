@@ -2,10 +2,8 @@ import { openai } from "@ai-sdk/openai";
 import { generateObject, Message, NoObjectGeneratedError } from "ai";
 import { z } from "zod";
 
-import {
-  taskManagerRequestSchema,
-  taskSchema,
-} from "@/core/task-management/schema";
+import { taskSchema } from "@/core/task-management";
+import { taskManagerRequestSchema } from "@/core/task-management/schema";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -46,7 +44,7 @@ export async function POST(req: Request) {
       - If you are not sure about the user's intent, ask for clarification and do not modify the task list.
       - Inform the user if their request exceeds your defined capabilities.
       - Return with the current task list if you did not make any changes to it.
-      - Your reply must be short, in past tense, and must not include task labels or details. Say only what type of change you have performed.
+      - Your reply must be short, in past tense, and must not include task information. Say only what type of change you have performed.
       - Tasks and subtasks can be referred to by their label or by their ordinal position in the task list (which is the index plus one) or by first/last.
 
       Structure of your response:

@@ -1,23 +1,25 @@
 import { z } from "zod";
 
-export const subTaskSchema = z.object({
-  label: z.string().describe("Human-readable name of the task."),
-  completedAt: z
-    .string()
-    .date()
-    .optional()
-    .describe("The ISO 8601 timestamp of when the subtask was completed."),
-});
-export type SubTask = z.infer<typeof subTaskSchema>;
+import { taskSchema } from "@/core/task-management";
 
-export const taskSchema = z.object({
-  label: z.string().describe("Human-readable name of the task."),
-  subtasks: z
-    .array(subTaskSchema)
-    .optional()
-    .describe("The subtasks of the task."),
-});
-export type Task = z.infer<typeof taskSchema>;
+// export const subTaskSchema = z.object({
+//   label: z.string().describe("Human-readable name of the task."),
+//   completedAt: z
+//     .string()
+//     .date()
+//     .optional()
+//     .describe("The ISO 8601 timestamp of when the subtask was completed."),
+// });
+// export type SubTask = z.infer<typeof subTaskSchema>;
+
+// export const taskSchema = z.object({
+//   label: z.string().describe("Human-readable name of the task."),
+//   subtasks: z
+//     .array(subTaskSchema)
+//     .optional()
+//     .describe("The subtasks of the task."),
+// });
+// export type Task = z.infer<typeof taskSchema>;
 
 /* Utility functions */
 

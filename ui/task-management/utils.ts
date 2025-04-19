@@ -1,4 +1,4 @@
-import { Task } from "./types";
+import { Task } from "../../core/task-management/types";
 
 export const hasSubtasks = <T extends Task>(
   task: T,
