@@ -1,6 +1,4 @@
-import { Task } from "../../core/task-management/types";
-
-export const hasSubtasks = <T extends Task>(
+export const hasSubtasks = <T extends { subtasks?: unknown[] }>(
   task: T,
 ): task is T & { subtasks: Required<T>["subtasks"] } => {
   if (!task.subtasks) return false;

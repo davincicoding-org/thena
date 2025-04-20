@@ -1,0 +1,127 @@
+import type { Meta, StoryObj } from "@storybook/react";
+
+import { SessionPlanner } from "./SessionPlanner";
+import { useSessionPlanner } from "./useSprintPlanner";
+
+const Playground = () => {
+  const {
+    sprints,
+    unassignedTasks,
+    updateSprint,
+    assignTasks,
+    unassignTasks,
+    moveTasks,
+  } = useSessionPlanner(
+    [
+      {
+        id: "app",
+        title: "Building an app",
+        subtasks: [
+          {
+            id: "1",
+            title: "Gather requirements",
+          },
+          {
+            id: "2",
+            title: "Design the UI",
+          },
+          {
+            id: "3",
+            title: "Implement the UI",
+          },
+          {
+            id: "4",
+            title: "Test the app",
+          },
+        ],
+      },
+      {
+        id: "website",
+        title: "Company website redesign",
+        subtasks: [
+          {
+            id: "w1",
+            title: "Analyze current website",
+          },
+          {
+            id: "w2",
+            title: "Create wireframes",
+          },
+          {
+            id: "w3",
+            title: "Design new pages",
+          },
+        ],
+      },
+      {
+        id: "marketing",
+        title: "Marketing campaign",
+        subtasks: [
+          {
+            id: "m1",
+            title: "Define target audience",
+          },
+          {
+            id: "m2",
+            title: "Create content strategy",
+          },
+        ],
+      },
+      {
+        id: "api",
+        title: "API development",
+        subtasks: [
+          {
+            id: "a1",
+            title: "Design endpoints",
+          },
+          {
+            id: "a2",
+            title: "Implement auth system",
+          },
+          {
+            id: "a3",
+            title: "Write documentation",
+          },
+        ],
+      },
+      {
+        id: "database",
+        title: "Database optimization",
+        subtasks: [
+          {
+            id: "d1",
+            title: "Analyze performance issues",
+          },
+          {
+            id: "d2",
+            title: "Implement indexing strategy",
+          },
+        ],
+      },
+    ],
+    {
+      sprintCount: 3,
+    },
+  );
+  return (
+    <SessionPlanner
+      mah="70dvh"
+      sprints={sprints}
+      unassignedTasks={unassignedTasks}
+      onSprintChange={updateSprint}
+      onAssignTasksToSprint={assignTasks}
+      onUnassignTasksFromSprint={unassignTasks}
+      onMoveTasks={moveTasks}
+    />
+  );
+};
+
+const meta = {
+  component: Playground,
+} satisfies Meta<typeof Playground>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Showcase: Story = {};

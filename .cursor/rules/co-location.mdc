@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+When creating unit tests or stories, the should always be co-located to the code implmention

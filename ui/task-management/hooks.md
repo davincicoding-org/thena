@@ -1,155 +1,3 @@
-
-# 1. `useTaskList`
-
-```ts
-/**
- * Minimal task shape with an ID, used for both tasks and subtasks.
- */
-interface BaseTask {
-  id: string
-  title: string
-  description?: string
-  tags?: string[]
-  estimate?: number
-  complexity?: number
-}
-
-/**
- * Full Task model, extending BaseTask with optional project and nested subtasks.
- */
-interface Task extends BaseTask {
-  projectId?: string
-  subtasks?: BaseTask[]
-}
-
-/**
- * Manages a local, temporary list of tasks in a task list.
- * Tasks (and subtasks) can be added, removed, edited, and batch‑operated with undo/redo support.
- */
-function useTaskList(): {
-  // Current list of tasks
-  tasks: Task[]
-
-  // Task operations
-  addTask: (task: Omit<Task, 'id'>) => void
-  addTasks: (tasks: Omit<Task, 'id'>[]) => void
-  updateTask: (id: string, updates: Partial<Omit<Task, 'id'>>) => void
-  removeTask: (id: string) => void
-  removeTasks: (ids: string[]) => void
-
-  // Subtask operations
-  addSubtask: (taskId: string, subtask: Omit<BaseTask, 'id'>) => void
-  addSubtasks: (taskId: string, subtasks: Omit<BaseTask, 'id'>[]) => void
-  updateSubtask: (taskId: string, subtaskId: string, updates: Partial<Omit<BaseTask, 'id'>>) => void
-  removeSubtask: (taskId: string, subtaskId: string) => void
-  removeSubtasks: (taskId: string, subtaskIds: string[]) => void
-
-  // Undo/redo state & controls
-  undo: () => void
-  redo: () => void
-  canUndo: boolean
-  canRedo: boolean
-}
-```
-
-# 2. `useBacklog`
-
-```ts
-import { Dispatch, SetStateAction } from 'react';
-
-interface BacklogFilters {
-  projectIds?: string[]
-  tags?: string[]
-  search?: string
-}
-
-interface BacklogSortOptions {
-  sortBy: 'addedAt' | 'title'
-  direction: 'asc' | 'desc'
-}
-
-interface BacklogTask extends Task {
-  addedAt: string  // ISO date string
-}
-
-/**
- * Hook signature matching React.useState.
- */
-type StateHook<S> = (initialState: S) => [S, Dispatch<SetStateAction<S>>]
-
-/**
- * Manages the backlog of tasks with support for
- * create, update, delete, filtering, sorting, and undo/redo.
- */
-function useBacklog(options?: {
-  initialTasks: BacklogTask[]
-    /** State hook for managing backlock tasks (defaults to React.useState) */
-  stateAdapter?: StateHook<BacklogTask>
-  /** Initial filter settings */
-  defaultFilters?: BacklogFilters
-  /** State hook for managing filters (defaults to React.useState) */
-  filterStateAdapter?: StateHook<BacklogFilters>
-  /** Initial sort settings */
-  defaultSort?: BacklogSortOptions
-  /** State hook for managing sort (defaults to React.useState) */
-  sortStateAdapter?: StateHook<BacklogSortOptions>
-}): {
-  // Filtering state
-  filters: BacklogFilters
-  setFilters: Dispatch<SetStateAction<BacklogFilters>>
-
-  // Sorting state
-  sort: BacklogSortOptions
-  setSort: Dispatch<SetStateAction<BacklogSortOptions>>
-
-  // Current list of filtered + sorted backlog tasks
-  tasks: BacklogTask[]
-
-  // Task operations
-  addTask: (task: Omit<Task, 'id'>) => void
-  addTasks: (tasks: Omit<Task, 'id'>[]) => void
-  updateTask: (id: string, updates: Partial<Omit<Task, 'id'>>) => void
-  removeTask: (id: string) => void
-  removeTasks: (ids: string[]) => void
-
-  // Undo/Redo controls
-  undo: () => void
-  redo: () => void
-  canUndo: boolean
-  canRedo: boolean
-}
-```
-
-# 3. `useProjects`
-
-```ts
-/**
- * Represents a project to which tasks can be assigned.
- */
-interface Project {
-  id: string
-  name: string
-  description?: string
-}
-
-/**
- * Manages stored projects.
- */
-function useProjects(): {
-  /** List of all projects */
-  projects: Project[]
-
-  /** Create a new project and return it */
-  createProject: (project: Omit<Project, 'id'>) => Project
-
-  /** Update an existing project */
-  updateProject: (id: string, updates: Partial<Omit<Project, 'id'>>) => void
-
-  /** Delete a project by its ID */
-  deleteProject: (id: string) => void
-}
-```
-
 # 4. `useSessionPlanner`
 
 ```ts
@@ -211,17 +59,17 @@ function useSessionPlanner(options?: {
 
 ```ts
 interface Subtask extends Task {
-  skipped?: boolean
-  completedAt?: number
+  skipped?: boolean;
+  completedAt?: number;
   /** Subtask was pulled into the session mid‑run */
-  pulledIn?: boolean
+  pulledIn?: boolean;
 }
 
 interface SessionTask extends Task {
-  skipped?: boolean
+  skipped?: boolean;
   /** Task was pulled into the session mid‑run */
-  pulledIn?: boolean
-  subtasks?: Subtask[]
+  pulledIn?: boolean;
+  subtasks?: Subtask[];
 }
 
 /**
@@ -231,52 +79,50 @@ interface SessionTask extends Task {
 function useSession(
   session: SessionPlan,
   options?: {
-    onStart?: () => void
-    onPause?: () => void
-    onResume?: () => void
+    onStart?: () => void;
+    onPause?: () => void;
+    onResume?: () => void;
     /** Called when the session completes, receiving the final queue */
-    onComplete?: (queue: SessionTask[]) => void
+    onComplete?: (queue: SessionTask[]) => void;
     /** Called when the queue runs out of tasks */
-    onRanOut?: () => void
-  }
+    onRanOut?: () => void;
+  },
 ): {
   /** ‘idle’ before start, then ‘running’, ‘paused’, and ‘completed’ */
-  state: 'idle' | 'running' | 'paused' | 'completed'
+  state: "idle" | "running" | "paused" | "completed";
   /** Whether all tasks/subtasks have been processed before the timer ran out */
-  ranOutOfTasks: boolean
+  ranOutOfTasks: boolean;
   /** Remaining time in seconds. */
-  timeRemaining: number
+  timeRemaining: number;
   /**
    * The currently active item, by taskId and optional subTaskId
    * (for subtasks)
    */
-  currentTask: { taskId: string; subTaskId?: string } | null
+  currentTask: { taskId: string; subTaskId?: string } | null;
   /** Full queue of tasks (with nested subtasks), each flagged if pulled in */
-  queue: SessionTask[]
+  queue: SessionTask[];
   /** Chronological log of session events */
   logs: {
-    event: 'start' | 'pause' | 'resume' | 'complete' | 'ranOut'
-    timestamp: number
-  }[]
+    event: "start" | "pause" | "resume" | "complete" | "ranOut";
+    timestamp: number;
+  }[];
 
-  start: () => void
-  pause: () => void
-  resume: () => void
-  complete: () => void
+  start: () => void;
+  pause: () => void;
+  resume: () => void;
+  complete: () => void;
 
   /** Mark the specified item as completed and advance */
-  completeTask: (current: { taskId: string; subTaskId?: string }) => void
+  completeTask: (current: { taskId: string; subTaskId?: string }) => void;
   /** Mark the specified item as skipped and advance */
-  skipTask: (current: { taskId: string; subTaskId?: string }) => void
+  skipTask: (current: { taskId: string; subTaskId?: string }) => void;
 
   /** Request more items when the queue runs dry */
-  requestMoreTasks: () => void
+  requestMoreTasks: () => void;
   /** Pull specific tasks into the queue mid‑run */
-  pullInTasks: (tasks: Omit<Task, 'id'>[]) => void
-}
+  pullInTasks: (tasks: Omit<Task, "id">[]) => void;
+};
 ```
-
-
 
 # 6. useSessionsCoordinator
 
@@ -294,16 +140,16 @@ function useSessionCoordinator(
   sessions: SessionPlan[],
   options?: {
     /** Default break duration in milliseconds */
-    defaultBreakDuration?: number
-  }
+    defaultBreakDuration?: number;
+  },
 ): {
   coordinator:
     | {
-        state: 'session'
+        state: "session";
         /** The active session plan */
-        session: SessionPlan
+        session: SessionPlan;
         /** Upcoming tasks grouped by session ID */
-        upcomingBySession: Array<{ sessionId: string; tasks: SessionTask[] }>
+        upcomingBySession: Array<{ sessionId: string; tasks: SessionTask[] }>;
         /**
          * Pull specified tasks or subtasks from upcoming sessions and appends them to the queue of the current session:
          * - When `subTaskId` is omitted, the entire task (with all its subtasks) is removed from the target session.
@@ -317,24 +163,24 @@ function useSessionCoordinator(
          *               - subTaskId?: ID of a specific subtask (if pulling only that subtask)
          */
         pullTasks: (
-          items: { sessionId: string; taskId: string; subTaskId?: string }[]
-        ) => SessionTask[]
+          items: { sessionId: string; taskId: string; subTaskId?: string }[],
+        ) => SessionTask[];
         /**
          * Switches to "break" state and starts the break timer.
          * @param duration Optional break duration in milliseconds
          */
-        startBreak: (duration?: number) => void
+        startBreak: (duration?: number) => void;
       }
     | {
-        state: 'break'
+        state: "break";
         /** Remaining break time in seconds */
-        timeRemaining: number
+        timeRemaining: number;
         /** Advance to the next session and switch to session state */
-        startNextSession: () => void
+        startNextSession: () => void;
       }
     | {
-        state: 'completed'
-      }
+        state: "completed";
+      };
 
   /**
    * All session plans annotated with their status:
@@ -342,11 +188,11 @@ function useSessionCoordinator(
    * - 'current'   the active session
    * - 'upcoming'  sessions yet to run
    */
-  sessions: Array<SessionPlan & { status: 'completed' | 'current' | 'upcoming' }>
-}
+  sessions: Array<
+    SessionPlan & { status: "completed" | "current" | "upcoming" }
+  >;
+};
 ```
-
-
 
 # 6. `useSessionHistory`
 
@@ -356,21 +202,21 @@ function useSessionCoordinator(
  * including duration, tasks completed, and interruptions.
  */
 function useSessionHistory(): {
-  sessions: CompletedSession[]
-  getSessionById: (id: SessionId) => CompletedSession | undefined
-}
+  sessions: CompletedSession[];
+  getSessionById: (id: SessionId) => CompletedSession | undefined;
+};
 ```
 
 # 7. `useTaskMover`
 
 ```ts
-type Container = 'backlog' | 'tasklist' | 'session'
+type Container = "backlog" | "tasklist" | "session";
 
 interface MoveOptions {
-  taskIds: TaskId[]
-  from: Container
-  to: Container
-  sessionId?: SessionId // required if moving to/from session
+  taskIds: TaskId[];
+  from: Container;
+  to: Container;
+  sessionId?: SessionId; // required if moving to/from session
 }
 
 /**
@@ -378,10 +224,10 @@ interface MoveOptions {
  * (Backlog, TaskList, Sessions) with undo/redo support.
  */
 function useTaskMover(): {
-  moveTasks: (options: MoveOptions) => void
-  undo: () => void
-  redo: () => void
-}
+  moveTasks: (options: MoveOptions) => void;
+  undo: () => void;
+  redo: () => void;
+};
 ```
 
 # 8. `useDerivedState`
@@ -392,18 +238,24 @@ function useTaskMover(): {
  * session progress, and task distribution by project.
  */
 function useDerivedState(): {
-  getTotalEstimatedTime: (taskIds: TaskId[]) => number
-  getSessionProgress: (sessionId: SessionId) => { completed: number, total: number }
-  getBacklogStats: () => { total: number, byProject: Record<ProjectId, number> }
-}
+  getTotalEstimatedTime: (taskIds: TaskId[]) => number;
+  getSessionProgress: (sessionId: SessionId) => {
+    completed: number;
+    total: number;
+  };
+  getBacklogStats: () => {
+    total: number;
+    byProject: Record<ProjectId, number>;
+  };
+};
 ```
 
 # 9. `useAdapter`
 
 ```ts
 interface Adapter {
-  name: string
-  fetchTasks: () => Promise<TaskInput[]>
+  name: string;
+  fetchTasks: () => Promise<TaskInput[]>;
 }
 
 /**
@@ -411,9 +263,9 @@ interface Adapter {
  * Allows manual task import from registered systems into the TaskList.
  */
 function useAdapter(): {
-  registerAdapter: (adapter: Adapter) => void
-  importTasks: (name: string) => Promise<void>
-}
+  registerAdapter: (adapter: Adapter) => void;
+  importTasks: (name: string) => Promise<void>;
+};
 ```
 
 # 10. `useExportState`
@@ -424,6 +276,6 @@ function useAdapter(): {
  * synchronization, or inspection.
  */
 function useExportState(): {
-  exportState: () => LibraryState
-}
+  exportState: () => LibraryState;
+};
 ```

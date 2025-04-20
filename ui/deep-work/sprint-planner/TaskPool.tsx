@@ -1,0 +1,205 @@
+import { Fragment } from "react";
+import {
+  ActionIcon,
+  Button,
+  Card,
+  Collapse,
+  Divider,
+  Flex,
+  Menu,
+  NavLink,
+  Paper,
+  PaperProps,
+  ScrollArea,
+  Stack,
+  Text,
+} from "@mantine/core";
+import { IconArrowLeft, IconX } from "@tabler/icons-react";
+
+import { hasSubtasks, Task } from "@/core/task-management";
+import { cn } from "@/ui/utils";
+
+import { SubtaskReference, TaskSelection } from "./types";
+import { useTaskSelection } from "./useTaskSelection";
+
+export interface TaskPoolProps {
+  items: Task[];
+  selectionEnabled: boolean;
+  sprintOptions: { id: string; title: string }[];
+  onSubmitSelection: (tasks: TaskSelection[]) => void;
+  onAbortSelection: () => void;
+  onAssignTasksToSprint: (options: {
+    sprintId: string;
+    tasks: { taskId: string; subtaskId?: string }[];
+  }) => void;
+}
+
+export function TaskPool({
+  items,
+  sprintOptions,
+  selectionEnabled,
+  onSubmitSelection,
+  onAbortSelection,
+  onAssignTasksToSprint,
+  ...props
+}: TaskPoolProps & PaperProps) {
+  const {
+    selection,
+    clearSelection,
+    isTaskSelected,
+    isSubtaskSelected,
+    toggleTaskSelection,
+    toggleSubtaskSelection,
+  } = useTaskSelection();
+
+  const handleTaskClick = (task: Task) => {
+    if (!selectionEnabled) return;
+    toggleTaskSelection(task);
+  };
+
+  const handleSubtaskClick = (taskReference: SubtaskReference) => {
+    if (!selectionEnabled) return;
+    toggleSubtaskSelection(taskReference);
+  };
+
+  const handleAbortSelection = () => {
+    clearSelection();
+    onAbortSelection();
+  };
+
+  const handleAssignTasks = () => {
+    onSubmitSelection(selection);
+    clearSelection();
+  };
+
+  return (
+    <Paper
+      withBorder
+      display="grid"
+      className={cn("h-full grid-rows-[1fr_auto]", props.className)}
+      {...props}
+    >
+      <ScrollArea
+        scrollbars="y"
+        classNames={{ viewport: "pb-2" }}
+        scrollHideDelay={300}
+      >
+        {items.map((task) => (
+          <Fragment key={task.id}>
+            <Menu
+              position="bottom-end"
+              key={task.id}
+              disabled={selectionEnabled}
+            >
+              <Menu.Target>
+                <NavLink
+                  component="div"
+                  color="gray"
+                  active={isTaskSelected(task)}
+                  label={task.title}
+                  rightSection={null}
+                  onClick={() => handleTaskClick(task)}
+                />
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>Assign to</Menu.Label>
+                {sprintOptions.map((option) => (
+                  <Menu.Item
+                    key={option.id}
+                    onClick={() =>
+                      onAssignTasksToSprint({
+                        sprintId: option.id,
+                        tasks: [{ taskId: task.id }],
+                      })
+                    }
+                  >
+                    {option.title}
+                  </Menu.Item>
+                ))}
+              </Menu.Dropdown>
+            </Menu>
+            {hasSubtasks(task) && (
+              <Flex mb={4}>
+                <Divider orientation="vertical" ml="sm" />
+                <Stack gap={0} flex={1}>
+                  {task.subtasks?.map((subtask) => (
+                    <Menu
+                      position="bottom-end"
+                      key={subtask.id}
+                      disabled={selectionEnabled}
+                    >
+                      <Menu.Target>
+                        <NavLink
+                          component="div"
+                          color="gray"
+                          active={isSubtaskSelected({
+                            taskId: task.id,
+                            subtaskId: subtask.id,
+                          })}
+                          label={subtask.title}
+                          rightSection={null}
+                          onClick={() =>
+                            handleSubtaskClick({
+                              taskId: task.id,
+                              subtaskId: subtask.id,
+                            })
+                          }
+                        />
+                      </Menu.Target>
+                      <Menu.Dropdown>
+                        <Menu.Label>Assign to</Menu.Label>
+                        {sprintOptions.map((option) => (
+                          <Menu.Item
+                            key={option.id}
+                            onClick={() =>
+                              onAssignTasksToSprint({
+                                sprintId: option.id,
+                                tasks: [
+                                  { taskId: task.id, subtaskId: subtask.id },
+                                ],
+                              })
+                            }
+                          >
+                            {option.title}
+                          </Menu.Item>
+                        ))}
+                      </Menu.Dropdown>
+                    </Menu>
+                  ))}
+                </Stack>
+              </Flex>
+            )}
+          </Fragment>
+        ))}
+      </ScrollArea>
+      <Collapse in={selectionEnabled} pos="sticky" bottom={0} mt="auto">
+        <Card p="xs">
+          <Flex justify="space-between" align="center" gap="xs" h={30}>
+            {selection.length > 0 ? (
+              <Button
+                size="xs"
+                leftSection={<IconArrowLeft size={16} />}
+                onClick={handleAssignTasks}
+              >
+                Add to Sprint
+              </Button>
+            ) : (
+              <Text flex={1} opacity={0.5}>
+                No tasks selected
+              </Text>
+            )}
+            <ActionIcon
+              size="lg"
+              variant="subtle"
+              color="red"
+              className="-my-2 -mr-1"
+              onClick={handleAbortSelection}
+            >
+              <IconX size={20} />
+            </ActionIcon>
+          </Flex>
+        </Card>
+      </Collapse>
+    </Paper>
+  );
+}

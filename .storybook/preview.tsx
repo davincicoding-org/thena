@@ -1,3 +1,5 @@
+import { ReactNode, StrictMode } from "react";
+
 import type { Preview } from "@storybook/react";
 
 import { ThemeProvider } from "../ui/Theme";
@@ -13,6 +15,11 @@ const preview: Preview = {
     },
   },
   decorators: [
+    (Story: () => ReactNode) => (
+      <StrictMode>
+        <Story />
+      </StrictMode>
+    ),
     (Story) => (
       <ThemeProvider>
         <Story />

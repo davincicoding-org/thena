@@ -1,11 +1,9 @@
 import { act, renderHook } from "@testing-library/react";
-// We need to import nanoid explicitly to be able to mock it in tests
 import { nanoid } from "nanoid";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useTags } from "./useTags";
 
-// Mock nanoid to get predictable IDs in tests
 vi.mock("nanoid", () => ({
   nanoid: vi.fn().mockReturnValue("test-id"),
 }));

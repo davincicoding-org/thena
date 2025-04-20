@@ -38,7 +38,7 @@ import {
   Subtask,
   Tag,
 } from "../../../core/task-management/types";
-import { hasSubtasks } from "../utils";
+import { hasSubtasks } from "../../../core/task-management/utils";
 import { BacklogHookReturn } from "./useBacklog";
 
 dayjs.extend(relativeTime);
