@@ -31,5 +31,5 @@
     ".storybook/**/*.ts",
     ".storybook/**/*.tsx"
   ],
-  "exclude": ["node_modules", "src-tauri"]
+  "exclude": ["node_modules"]
 }

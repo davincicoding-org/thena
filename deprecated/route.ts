@@ -8,11 +8,11 @@ import {
   tool,
 } from "ai";
 
+import { getAssistantConfig } from "@/core/assistant/config";
 import {
   assistantBodySchema,
   buildAssistantSchema,
-} from "@/core/assistant/common";
-import { getAssistantConfig } from "@/core/assistant/config";
+} from "@/deprecated/assistant.common";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;

@@ -1,7 +1,7 @@
 import { Message } from "ai";
 import { z } from "zod";
 
-import { supportedLangSchema } from "../../ui/speech/config";
+import { supportedLangSchema } from "../ui/speech/config";
 
 export const assistantBodySchema = z.object({
   assistant: z.string(),
@@ -59,6 +59,7 @@ export const createAssistantConfig = <
 export const buildAssistantSchema = <Artifact extends AssistantArtifactSchema>(
   artifact: Artifact,
 ): z.objectUtil.extendShape<Artifact, { reply: z.ZodString }> => {
+  // @ts-expect-error - TODO: fix this
   return artifact.extend({
     reply: z.string().describe("A short, spoken response."),
   });

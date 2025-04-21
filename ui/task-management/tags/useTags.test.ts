@@ -2,6 +2,8 @@ import { act, renderHook } from "@testing-library/react";
 import { nanoid } from "nanoid";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { Tag } from "@/core/task-management";
+
 import { useTags } from "./useTags";
 
 vi.mock("nanoid", () => ({
@@ -22,7 +24,7 @@ describe("useTags", () => {
   });
 
   it("should initialize with provided tags", () => {
-    const initialTags = [
+    const initialTags: Tag[] = [
       { id: "tag-1", name: "Tag 1" },
       { id: "tag-2", name: "Tag 2", color: "green" },
     ];

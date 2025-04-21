@@ -12,6 +12,7 @@ const Playground = () => {
     unassignTasks,
     moveTasks,
     addSprint,
+    dropSprint,
   } = useSessionPlanner(
     [
       {
@@ -115,6 +116,7 @@ const Playground = () => {
       onUnassignTasksFromSprint={unassignTasks}
       onMoveTasks={moveTasks}
       onAddSprint={() => addSprint({})}
+      onDropSprint={dropSprint}
     />
   );
 };

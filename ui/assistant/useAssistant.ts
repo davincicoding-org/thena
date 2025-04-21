@@ -1,14 +1,14 @@
 import { Dispatch, SetStateAction, useState } from "react";
 import { Message, useChat, UseChatHelpers } from "@ai-sdk/react";
 
+import { interpolate, Interpolation } from "@/core/utils";
 import {
   AssistantArtifact,
   AssistantArtifactSchema,
   AssistantBody,
   AssistantConfig,
   buildAssistantSchema,
-} from "@/core/assistant/common";
-import { interpolate, Interpolation } from "@/core/utils";
+} from "@/deprecated/assistant.common";
 import { useSpeechConfigStore } from "@/ui/speech/config";
 
 export interface AssistantChatOptions<

@@ -118,7 +118,7 @@ export const TaskForm = withTaskForm({
                 }}
                 error={field.state.meta.errors[0]?.message}
                 rightSection={
-                  <BoundOverlay.Trigger trigger="enter">
+                  <BoundOverlay.Trigger>
                     <ActionIcon
                       variant="transparent"
                       color="gray"
