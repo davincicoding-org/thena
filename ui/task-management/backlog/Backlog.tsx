@@ -27,18 +27,18 @@ import {
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 
-import { useSyncInputState } from "@/ui/hooks/useSyncState";
-
 import {
   BACKLOG_SORT_OPTIONS,
   BacklogFilters,
   BacklogSortOptions,
   BacklogTask,
+  hasSubtasks,
   Project,
   Subtask,
   Tag,
-} from "../../../core/task-management/types";
-import { hasSubtasks } from "../../../core/task-management/utils";
+} from "@/core/task-management";
+import { useSyncInputState } from "@/ui/hooks/useSyncState";
+
 import { BacklogHookReturn } from "./useBacklog";
 
 dayjs.extend(relativeTime);
@@ -218,13 +218,13 @@ function TaskItem({
               );
             })}
           </Flex>
-          <Tooltip
+          {/* <Tooltip
             label={dayjs(new Date(task.addedAt)).format("DD/MM/YYYY HH:mm")}
           >
             <Text size="sm" ta="right" w={96}>
-              {dayjs(new Date(task.addedAt)).fromNow()}
+              {dayjs(new Date(task.addedAt)).fromNow(true)}
             </Text>
-          </Tooltip>
+          </Tooltip> */}
         </Flex>
       </Paper>
 
