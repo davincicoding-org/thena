@@ -14,6 +14,9 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           <Button component={Link} href="/sprint" variant="default">
             Sprint
           </Button>
+          <Button component={Link} href="/session-planner" variant="default">
+            Session Planner
+          </Button>
           <Button component={Link} href="/chat" variant="default">
             Chat
           </Button>
@@ -22,7 +25,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           </Button>
           <Button component={Link} href="/backlog" variant="default">
             Backlog
-          </Button>
+          </Button>§
           <Button component={Link} href="/config" variant="default" ml="auto">
             Config
           </Button>

@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import {
+  ActionIcon,
   Box,
   Button,
   Card,
@@ -16,10 +17,11 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import { IconClock } from "@tabler/icons-react";
+import { IconClock, IconDotsVertical } from "@tabler/icons-react";
 
 import { SprintPlan, TaskSelection } from "@/core/deep-work";
 import { hasSubtasks } from "@/core/task-management";
+import { BoundOverlay } from "@/ui/components/BoundOverlay";
 import { cn } from "@/ui/utils";
 
 export interface SprintPanelProps {
@@ -28,6 +30,7 @@ export interface SprintPanelProps {
   disabled?: boolean;
   canAddTasks: boolean;
   sprintOptions: { id: string; title: string }[];
+  onDrop: () => void;
   onDurationChange: (duration: number) => void;
   onAddTasks: () => void;
   onUnassignTask: (task: TaskSelection) => void;
@@ -43,6 +46,7 @@ export function SprintPanel({
   sprintOptions,
   disabled,
   canAddTasks,
+  onDrop,
   onDurationChange,
   onAddTasks,
   onUnassignTask,
@@ -59,7 +63,7 @@ export function SprintPanel({
       withBorder
       display="grid"
       className={cn(
-        "grid-rows-[auto_1fr] overflow-clip transition-opacity",
+        "min-w-64 grid-rows-[auto_1fr] overflow-clip transition-opacity",
         {
           "opacity-50": disabled,
         },
@@ -68,40 +72,65 @@ export function SprintPanel({
       radius="md"
       {...props}
     >
-      <Card px="sm" py="xs" radius={0} mb={4}>
-        <Flex justify="space-between" align="center" gap="lg">
-          <Text
-            size="lg"
-            className={cn("text-nowrap transition-opacity", {
-              "opacity-50": disabled,
-            })}
-          >
-            {title}
-          </Text>
-          <NumberInput
-            className="-my-1 -mr-1 shrink-0"
-            hideControls
-            disabled={disabled}
-            leftSection={<IconClock size={16} />}
-            radius="xl"
-            ff="monospace"
-            value={sprint.duration}
-            w={50 + sprint.duration.toString().length * 8}
-            min={5}
-            step={5}
-            styles={{
-              input: {
-                fontFamily: "inherit",
-              },
-            }}
-            onChange={(value) => {
-              if (typeof value !== "number") return;
-              onDurationChange(value);
-            }}
-          />
-        </Flex>
-      </Card>
-      <ScrollArea scrollbars="y" scrollHideDelay={300}>
+      <BoundOverlay
+        overlayProps={{
+          className: "backdrop-blur-xs",
+        }}
+        content={
+          <Flex className="h-full" align="center" justify="end" px="sm">
+            <Button
+              variant="outline"
+              color="red"
+              size="compact-sm"
+              onClick={onDrop}
+            >
+              Drop Sprint
+            </Button>
+          </Flex>
+        }
+      >
+        <Card px="sm" py="xs" radius={0}>
+          <Flex align="center" gap="xs">
+            <Text
+              size="lg"
+              className={cn("text-nowrap transition-opacity", {
+                "opacity-50": disabled,
+              })}
+            >
+              {title}
+            </Text>
+            <NumberInput
+              className="-my-1 -mr-1 shrink-0"
+              hideControls
+              disabled={disabled}
+              leftSection={<IconClock size={16} />}
+              radius="xl"
+              size="xs"
+              ff="monospace"
+              value={sprint.duration}
+              w={40 + sprint.duration.toString().length * 8}
+              min={5}
+              step={5}
+              styles={{
+                input: {
+                  fontFamily: "inherit",
+                  textAlign: "center",
+                },
+              }}
+              onChange={(value) => {
+                if (typeof value !== "number") return;
+                onDurationChange(value);
+              }}
+            />
+            <BoundOverlay.Trigger>
+              <ActionIcon variant="subtle" color="gray" ml="auto">
+                <IconDotsVertical size={16} />
+              </ActionIcon>
+            </BoundOverlay.Trigger>
+          </Flex>
+        </Card>
+      </BoundOverlay>
+      <ScrollArea scrollbars="y" scrollHideDelay={300} mt={4}>
         {sprint.tasks.map((task) => (
           <Fragment key={task.id}>
             <Menu position="bottom-end">

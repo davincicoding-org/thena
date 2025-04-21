@@ -54,6 +54,7 @@ const meta = {
       { id: "2", title: "Sprint 2" },
       { id: "2", title: "Sprint 2" },
     ],
+    onDrop: fn(),
     onDurationChange: fn(),
     onAddTasks: fn(),
     onUnassignTask: fn(),

@@ -1,19 +1,17 @@
-import type { Meta, StoryObj } from "@storybook/react";
+"use client";
 
-import { SessionPlanner } from "./SessionPlanner";
-import { useSessionPlanner } from "./useSprintPlanner";
+import { AppShell, Center } from "@mantine/core";
 
-const Playground = () => {
-  const {
-    sprints,
-    unassignedTasks,
-    updateSprint,
-    assignTasks,
-    unassignTasks,
-    moveTasks,
-    addSprint,
-  } = useSessionPlanner(
+import { SessionPlanner, useSessionPlanner } from "@/ui/deep-work";
+
+export default function SessionPlannerPage() {
+  const sessionPlanner = useSessionPlanner(
     [
+      {
+        id: "task1",
+        title: "Standup meeting",
+      },
+
       {
         id: "app",
         title: "Building an app",
@@ -35,6 +33,14 @@ const Playground = () => {
             title: "Test the app",
           },
         ],
+      },
+      {
+        id: "task2",
+        title: "Code review PR-123",
+      },
+      {
+        id: "task3",
+        title: "Reply to client emails",
       },
       {
         id: "website",
@@ -69,6 +75,11 @@ const Playground = () => {
         ],
       },
       {
+        id: "task4",
+        title: "Update sprint board",
+      },
+
+      {
         id: "api",
         title: "API development",
         subtasks: [
@@ -100,30 +111,33 @@ const Playground = () => {
           },
         ],
       },
+      {
+        id: "task5",
+        title: "Quick bug fix for nav menu",
+      },
     ],
     {
       sprintCount: 3,
+      sprintDuration: 25,
     },
   );
+
   return (
-    <SessionPlanner
-      mah="70dvh"
-      sprints={sprints}
-      unassignedTasks={unassignedTasks}
-      onSprintChange={updateSprint}
-      onAssignTasksToSprint={assignTasks}
-      onUnassignTasksFromSprint={unassignTasks}
-      onMoveTasks={moveTasks}
-      onAddSprint={() => addSprint({})}
-    />
+    <AppShell.Main className="grid">
+      <Center className="items-center" p="lg">
+        <SessionPlanner
+          mah="70dvh"
+          className="w-full max-w-4/5"
+          sprints={sessionPlanner.sprints}
+          unassignedTasks={sessionPlanner.unassignedTasks}
+          onAddSprint={() => sessionPlanner.addSprint({})}
+          onDropSprint={sessionPlanner.dropSprint}
+          onSprintChange={sessionPlanner.updateSprint}
+          onAssignTasksToSprint={sessionPlanner.assignTasks}
+          onUnassignTasksFromSprint={sessionPlanner.unassignTasks}
+          onMoveTasks={sessionPlanner.moveTasks}
+        />
+      </Center>
+    </AppShell.Main>
   );
-};
-
-const meta = {
-  component: Playground,
-} satisfies Meta<typeof Playground>;
-
-export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Showcase: Story = {};
+}

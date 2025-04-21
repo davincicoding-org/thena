@@ -23,6 +23,8 @@ import { TaskPool } from "./TaskPool";
 export interface SessionPlannerProps {
   sprints: SprintPlan[];
   unassignedTasks: Task[];
+  onAddSprint: () => void;
+  onDropSprint: (sprintId: SprintPlan["id"]) => void;
   onSprintChange: (
     id: string,
     updates: Partial<Pick<SprintPlan, "duration">>,
@@ -45,6 +47,8 @@ export interface SessionPlannerProps {
 export function SessionPlanner({
   sprints,
   unassignedTasks,
+  onAddSprint,
+  onDropSprint,
   onSprintChange: onSprintMetaChange,
   onAssignTasksToSprint,
   onUnassignTasksFromSprint: onUnassignTaskFromSprint,
@@ -73,9 +77,13 @@ export function SessionPlanner({
       {...paperProps}
     >
       <Card radius={0} px="sm" py="xs" className="shrink-0">
-        <Flex justify="space-between" align="center">
+        <Flex align="center" gap="md">
           <Text size="xl">Session Planner</Text>
+          <Button variant="outline" size="compact-sm" onClick={onAddSprint}>
+            Add Sprint
+          </Button>
           <Button
+            ml="auto"
             variant="light"
             color={unassignedTasks.length ? "orange" : "green"}
             className={cn({
@@ -120,6 +128,7 @@ export function SessionPlanner({
                   sprintToAddTaskTo !== undefined &&
                   sprintToAddTaskTo !== sprint.id
                 }
+                onDrop={() => onDropSprint(sprint.id)}
                 onDurationChange={(duration) =>
                   onSprintMetaChange(sprint.id, { duration })
                 }
