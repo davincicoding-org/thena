@@ -25,7 +25,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           </Button>
           <Button component={Link} href="/backlog" variant="default">
             Backlog
-          </Button>§
+          </Button>
           <Button component={Link} href="/config" variant="default" ml="auto">
             Config
           </Button>

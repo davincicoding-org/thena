@@ -2369,6 +2369,75 @@ describe("useSessionPlanner", () => {
           );
         }
       });
+
+      it("should unassign a single subtask when a task with all subtasks is assigned", () => {
+        // Create mock tasks with subtasks
+        const mockTasks = createMockTasks([3, 0]);
+
+        // Initialize hook with tasks
+        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+
+        // Add a sprint
+        act(() =>
+          result.current.addSprint({
+            tasks: [
+              {
+                taskId: mockTasks[0]!.id,
+                subtasks: mockTasks[0]!.subtasks!.map((s) => s.id),
+              },
+            ],
+          }),
+        );
+
+        const sprintId = result.current.sprints[0]!.id;
+        const taskId = mockTasks[0]!.id;
+
+        // Verify all subtasks were assigned
+        expect(result.current.sprints[0]!.tasks).toHaveLength(1);
+        expect(result.current.sprints[0]!.tasks[0]!.subtasks).toHaveLength(3);
+
+        // Initially, no subtasks should be in unassigned tasks
+        const unassignedTaskBefore = result.current.unassignedTasks.find(
+          (t) => t.id === taskId,
+        );
+        expect(unassignedTaskBefore).toBeUndefined();
+
+        // Unassign just one subtask
+        const subtaskToUnassign = mockTasks[0]!.subtasks![1]!.id;
+        act(() =>
+          result.current.unassignTasks({
+            sprintId,
+            tasks: [
+              {
+                taskId,
+                subtasks: [subtaskToUnassign],
+              },
+            ],
+          }),
+        );
+
+        // Sprint should still have the task with two remaining subtasks
+        expect(result.current.sprints[0]!.tasks).toHaveLength(1);
+        const taskAfterUnassign = result.current.sprints[0]!.tasks[0]!;
+        expect(taskAfterUnassign.id).toBe(taskId);
+        expect(taskAfterUnassign.subtasks).toHaveLength(2);
+
+        // The unassigned subtasks should not include the unassigned one
+        const remainingSubtaskIds = taskAfterUnassign.subtasks!.map(
+          (s) => s.id,
+        );
+        expect(remainingSubtaskIds).not.toContain(subtaskToUnassign);
+
+        // The unassigned tasks should now contain the task with only the unassigned subtask
+        const unassignedTaskAfter = result.current.unassignedTasks.find(
+          (t) => t.id === taskId,
+        );
+        expect(unassignedTaskAfter).toBeDefined();
+        if (unassignedTaskAfter?.subtasks) {
+          expect(unassignedTaskAfter.subtasks).toHaveLength(1);
+          expect(unassignedTaskAfter.subtasks[0]!.id).toBe(subtaskToUnassign);
+        }
+      });
     });
   });
 

@@ -441,6 +441,7 @@ export function useSessionPlanner(
         handleError("SPRINT_NOT_FOUND", "unassignTasks", { sprintId });
         return prevSprints;
       }
+      console.log("unassignTasks", sprintId, tasks);
 
       return prevSprints.map((sprint) => {
         if (sprint.id !== sprintId) return sprint;

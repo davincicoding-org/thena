@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   Card,
+  Divider,
   Flex,
   Paper,
   PaperProps,
@@ -73,7 +74,8 @@ export function SessionPlanner({
   return (
     <Paper
       withBorder
-      className={cn("flex! flex-col", className)}
+      radius="md"
+      className={cn("flex! flex-col overflow-clip", className)}
       {...paperProps}
     >
       <Card radius={0} px="sm" py="xs" className="shrink-0">
@@ -84,6 +86,7 @@ export function SessionPlanner({
           </Button>
           <Button
             ml="auto"
+            radius="xl"
             variant="light"
             color={unassignedTasks.length ? "orange" : "green"}
             className={cn({
@@ -103,6 +106,7 @@ export function SessionPlanner({
           </Button>
         </Flex>
       </Card>
+      <Divider />
       <Flex className="min-h-0 overflow-clip">
         <ScrollArea
           scrollbars="x"

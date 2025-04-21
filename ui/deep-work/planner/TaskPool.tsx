@@ -76,6 +76,7 @@ export function TaskPool({
     <Paper
       withBorder
       display="grid"
+      bg="dark.8"
       className={cn("h-full grid-rows-[1fr_auto]", props.className)}
       {...props}
     >
@@ -84,43 +85,59 @@ export function TaskPool({
         classNames={{ viewport: "pb-2" }}
         scrollHideDelay={300}
       >
-        {items.map((task) => (
-          <Fragment key={task.id}>
-            <Menu
-              position="bottom-end"
+        <Stack gap="sm" p="md">
+          {items.map((task) => (
+            <Paper
               key={task.id}
-              disabled={selectionEnabled}
+              withBorder
+              className="overflow-clip"
+              radius="md"
             >
-              <Menu.Target>
-                <NavLink
-                  component="div"
-                  color="gray"
-                  active={isTaskSelected(task)}
-                  label={task.title}
-                  rightSection={null}
-                  onClick={() => handleTaskClick(task)}
-                />
-              </Menu.Target>
-              <Menu.Dropdown>
-                <Menu.Label>Assign to</Menu.Label>
-                {sprintOptions.map((option) => (
-                  <Menu.Item
-                    key={option.id}
-                    onClick={() =>
-                      onAssignTasksToSprint({
-                        sprintId: option.id,
-                        tasks: [{ taskId: task.id }],
-                      })
-                    }
+              <Menu
+                position="bottom-end"
+                key={task.id}
+                disabled={selectionEnabled}
+              >
+                <Menu.Target>
+                  <Paper
+                    {...(hasSubtasks(task)
+                      ? {
+                          withBorder: true,
+                          mt: -1,
+                          mx: -1,
+                          bg: "dark.6",
+                          radius: "md",
+                        }
+                      : { radius: 0 })}
                   >
-                    {option.title}
-                  </Menu.Item>
-                ))}
-              </Menu.Dropdown>
-            </Menu>
-            {hasSubtasks(task) && (
-              <Flex mb={4}>
-                <Divider orientation="vertical" ml="sm" />
+                    <NavLink
+                      component="div"
+                      color="gray"
+                      active={isTaskSelected(task)}
+                      label={task.title}
+                      rightSection={null}
+                      onClick={() => handleTaskClick(task)}
+                    />
+                  </Paper>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  <Menu.Label>Assign to</Menu.Label>
+                  {sprintOptions.map((option) => (
+                    <Menu.Item
+                      key={option.id}
+                      onClick={() =>
+                        onAssignTasksToSprint({
+                          sprintId: option.id,
+                          tasks: [{ taskId: task.id }],
+                        })
+                      }
+                    >
+                      {option.title}
+                    </Menu.Item>
+                  ))}
+                </Menu.Dropdown>
+              </Menu>
+              {hasSubtasks(task) && (
                 <Stack gap={0} flex={1}>
                   {task.subtasks?.map((subtask) => (
                     <Menu
@@ -167,10 +184,10 @@ export function TaskPool({
                     </Menu>
                   ))}
                 </Stack>
-              </Flex>
-            )}
-          </Fragment>
-        ))}
+              )}
+            </Paper>
+          ))}
+        </Stack>
       </ScrollArea>
       <Collapse in={selectionEnabled} pos="sticky" bottom={0} mt="auto">
         <Card p="xs">
