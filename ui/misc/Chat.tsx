@@ -12,10 +12,8 @@ import {
 import { useInputState } from "@mantine/hooks";
 import { IconMicrophone, IconPlayerPause } from "@tabler/icons-react";
 
-import { useSpeechConfigStore } from "@/ui/speech/config";
-
-import { Markdown } from "../components/Markdown";
-import { useSpeechRecognition } from "../speech/useSpeechRecognition";
+import { useSpeechConfigStore, useSpeechRecognition } from "@/ui/assistant";
+import { Markdown } from "@/ui/components/Markdown";
 
 export interface ChatProps extends BoxProps {
   messages: Message[];

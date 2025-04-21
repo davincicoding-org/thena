@@ -1,7 +1,7 @@
 import { Message } from "ai";
 import { z } from "zod";
 
-import { supportedLangSchema } from "../ui/speech/config";
+import { supportedLangSchema } from "@/ui/assistant";
 
 export const assistantBodySchema = z.object({
   assistant: z.string(),

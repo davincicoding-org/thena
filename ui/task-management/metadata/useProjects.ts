@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { nanoid } from "nanoid";
 
-import { Project, StateHook } from "../../../core/task-management/types";
+import { Project, StateHook } from "@/core/task-management";
 
 export interface ProjectsHookOptions {
   initialProjects?: Project[];

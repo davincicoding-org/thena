@@ -9,7 +9,7 @@ import {
   AssistantConfig,
   buildAssistantSchema,
 } from "@/deprecated/assistant.common";
-import { useSpeechConfigStore } from "@/ui/speech/config";
+import { useSpeechConfigStore } from "@/ui/assistant/speech-config";
 
 export interface AssistantChatOptions<
   Artifact extends AssistantArtifactSchema,

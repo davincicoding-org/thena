@@ -14,9 +14,8 @@ import { useClickOutside, useDisclosure } from "@mantine/hooks";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 
+import { colorsEnum, tagSchema } from "@/core/task-management";
 import { cn } from "@/ui/utils";
-
-import { colorsEnum, tagSchema } from "../../../core/task-management/types";
 
 const tagFormValueSchema = tagSchema.omit({ id: true });
 

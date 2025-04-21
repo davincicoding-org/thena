@@ -4,16 +4,16 @@ import { BoxProps, Button, Center, Flex, Stack } from "@mantine/core";
 
 import { taskManagerResponseSchema } from "@/core/task-management/schema";
 import { useKeyHold } from "@/ui/hooks/useKeyHold";
-import { useSpeechConfigStore } from "@/ui/speech/config";
 import { TaskList, useTaskList } from "@/ui/task-management";
 
 import {
   AssistantIndicator,
   AssistantIndicatorProps,
 } from "../assistant/AssistantIndicator";
-import { useSpeechRecognition } from "../speech/useSpeechRecognition";
-import { useSpeechSynthesis } from "../speech/useSpeechSynthesis";
 import { cn } from "../utils";
+import { useSpeechConfigStore } from "./speech-config";
+import { useSpeechRecognition } from "./useSpeechRecognition";
+import { useSpeechSynthesis } from "./useSpeechSynthesis";
 
 export interface TaskWizardProps extends BoxProps {}
 

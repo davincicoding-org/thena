@@ -1,4 +1,3 @@
-import { Dispatch, SetStateAction } from "react";
 import { act, renderHook } from "@testing-library/react";
 import { nanoid } from "nanoid";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -7,23 +6,13 @@ import {
   BacklogFilters,
   BacklogSortOptions,
   BacklogTask,
-  StateHook,
-} from "../../../core/task-management/types";
+} from "@/core/task-management";
+
 import { useBacklog } from "./useBacklog";
 
-// Mock nanoid to get predictable IDs in tests
 vi.mock("nanoid", () => ({
   nanoid: vi.fn().mockReturnValue("test-id"),
 }));
-
-// Type-safe mock for state hooks
-function createMockStateHook<T>(
-  initialState: T,
-): [StateHook<T>, Dispatch<SetStateAction<T>>] {
-  const setState = vi.fn();
-  const useStateMock: StateHook<T> = () => [initialState, setState];
-  return [useStateMock, setState];
-}
 
 describe("useBacklog", () => {
   beforeEach(() => {

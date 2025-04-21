@@ -1,8 +1,7 @@
 import { Dispatch, SetStateAction, useCallback, useState } from "react";
 import { nanoid } from "nanoid";
-import useUndo from "use-undo";
 
-import { StateHook, Subtask, Task } from "../../../core/task-management/types";
+import { StateHook, Subtask, Task } from "@/core/task-management";
 
 export type SubtaskInput = Omit<Subtask, "id">;
 export type TaskInput = Omit<Task, "id"> & { subtasks?: SubtaskInput[] };

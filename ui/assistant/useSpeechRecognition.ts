@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { SupportedLang } from "@/ui/speech/config";
+import { SupportedLang } from "./speech-config";
 
 export function useSpeechRecognition({
   lang,

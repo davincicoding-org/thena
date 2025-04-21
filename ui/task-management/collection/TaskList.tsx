@@ -14,13 +14,10 @@ import {
 import { useDisclosure, useInputState } from "@mantine/hooks";
 import { IconPlus, IconTrash, IconX } from "@tabler/icons-react";
 
-import { Task } from "@/core/task-management/types";
-import { TaskForm, TaskFormProps } from "@/ui/task-management/task/TaskForm";
-import {
-  taskFormOpts,
-  TaskFormValues,
-  useTaskForm,
-} from "@/ui/task-management/task/useTaskForm";
+import { Task } from "@/core/task-management";
+
+import { TaskForm, TaskFormProps } from "../task/TaskForm";
+import { taskFormOpts, TaskFormValues, useTaskForm } from "../task/useTaskForm";
 
 export type TaskListProps = {
   items: Task[];

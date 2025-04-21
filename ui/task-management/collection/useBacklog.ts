@@ -7,7 +7,7 @@ import {
   BacklogTask,
   StateHook,
   Task,
-} from "../../../core/task-management/types";
+} from "@/core/task-management";
 
 export interface BacklogHookOptions {
   initialTasks?: BacklogTask[];

@@ -16,15 +16,17 @@ import {
 } from "@mantine/core";
 import { IconVolume, IconX } from "@tabler/icons-react";
 
-import type { SupportedLang } from "@/ui/speech/config";
+import type { SupportedLang } from "@/ui/assistant";
 import {
   LLMConfig,
   LLMConfigSchema,
   useModelsConfigStore,
 } from "@/core/config/models";
-import { supportedLangSchema, useSpeechConfigStore } from "@/ui/speech/config";
-
-import { useSpeechSynthesis } from "../speech/useSpeechSynthesis";
+import {
+  supportedLangSchema,
+  useSpeechConfigStore,
+  useSpeechSynthesis,
+} from "@/ui/assistant";
 
 const llmProviders = LLMConfigSchema.options.map(
   (option) => option.parse({}).provider,

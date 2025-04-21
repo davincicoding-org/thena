@@ -15,7 +15,7 @@ import { IconDotsVertical, IconTrash, IconX } from "@tabler/icons-react";
 import { useStore } from "@tanstack/react-form";
 import { nanoid } from "nanoid";
 
-import { Subtask } from "@/core/task-management/types";
+import { Subtask } from "@/core/task-management";
 import { BoundOverlay } from "@/ui/components/BoundOverlay";
 import { cn } from "@/ui/utils";
 

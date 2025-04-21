@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { nanoid } from "nanoid";
 
-import { StateHook, Tag } from "../../../core/task-management/types";
+import { StateHook, Tag } from "@/core/task-management";
 
 export interface TagsHookOptions {
   initialTags?: Tag[];

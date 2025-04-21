@@ -2,9 +2,9 @@
 
 import { AppShell } from "@mantine/core";
 
-import { TaskWizard } from "@/ui/task-management/TaskWizard";
+import { TaskWizard } from "@/ui/assistant";
 
-export default function TasksPage() {
+export default function TaskWizardPage() {
   return (
     <AppShell.Main display="grid">
       <TaskWizard />

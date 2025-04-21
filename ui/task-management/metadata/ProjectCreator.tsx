@@ -19,9 +19,8 @@ import { IconUpload } from "@tabler/icons-react";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 
+import { colorsEnum, projectSchema } from "@/core/task-management";
 import { cn } from "@/ui/utils";
-
-import { colorsEnum, projectSchema } from "../../../core/task-management/types";
 
 const projectFormValueSchema = projectSchema.omit({ id: true });
 

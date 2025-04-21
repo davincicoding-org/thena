@@ -5,7 +5,7 @@ import {
 } from "@tanstack/react-form";
 import { z } from "zod";
 
-import { taskSchema } from "../../../core/task-management/types";
+import { taskSchema } from "@/core/task-management";
 
 export const { fieldContext, formContext, useFieldContext } =
   createFormHookContexts();

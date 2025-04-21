@@ -18,6 +18,7 @@ export const createModel = (config: LLMConfig) => {
     case "chrome-ai":
       return chromeai();
     default:
+      // @ts-expect-error - TODO: fix this
       throw new Error(`Unknown provider: ${config.provider}`);
   }
 };

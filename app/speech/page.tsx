@@ -17,7 +17,7 @@ import {
   useSpeechConfigStore,
   useSpeechRecognition,
   useSpeechSynthesis,
-} from "@/ui/speech";
+} from "@/ui/assistant";
 import { cn } from "@/ui/utils";
 
 export default function SpeechPage() {
