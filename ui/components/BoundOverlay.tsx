@@ -4,6 +4,7 @@ import {
   ReactElement,
   ReactNode,
   useContext,
+  useEffect,
 } from "react";
 import {
   Box,
@@ -18,11 +19,13 @@ import { useDisclosure } from "@mantine/hooks";
 const Context = createContext<{
   isOpen: boolean;
   disabled: boolean;
+  trigger: "enter" | "click";
   open: () => void;
   close: () => void;
 }>({
   isOpen: false,
   disabled: false,
+  trigger: "enter",
   open: () => {},
   close: () => {},
 });
@@ -30,6 +33,8 @@ const Context = createContext<{
 export interface BoundOverlayProps {
   children: ReactNode;
   content: ReactNode;
+  trigger?: "enter" | "click";
+  isTrigger?: boolean;
   disabled?: boolean;
   closeOnClick?: boolean;
   overlayProps?: OverlayProps;
@@ -40,15 +45,30 @@ export function BoundOverlay({
   children,
   content,
   disabled = false,
+  trigger = "enter",
+  isTrigger,
   overlayProps,
   transitionProps,
   closeOnClick,
   ...boxProps
 }: BoundOverlayProps & BoxProps) {
   const [isOpen, { open, close }] = useDisclosure(false);
+  useEffect(() => {
+    if (!disabled) return;
+    close();
+  }, [disabled]);
+
   return (
-    <Box pos="relative" {...boxProps}>
-      <Context.Provider value={{ isOpen, open, close, disabled }}>
+    <Box
+      pos="relative"
+      {...boxProps}
+      onMouseLeave={close}
+      onClick={isTrigger && trigger === "click" && !disabled ? open : undefined}
+      onMouseEnter={
+        isTrigger && trigger === "enter" && !disabled ? open : undefined
+      }
+    >
+      <Context.Provider value={{ isOpen, open, close, disabled, trigger }}>
         {children}
         <Transition
           mounted={isOpen}
@@ -59,7 +79,6 @@ export function BoundOverlay({
         >
           {(styles) => (
             <Overlay
-              onMouseLeave={close}
               onClick={closeOnClick ? close : undefined}
               style={styles}
               {...overlayProps}
@@ -75,15 +94,13 @@ export function BoundOverlay({
 
 function BoundOverlayTrigger({
   children,
-  trigger,
 }: {
-  trigger: "enter" | "click";
   children: ReactElement<{
     onMouseEnter?: () => void;
     onClick?: () => void;
   }>;
 }) {
-  const { open, disabled } = useContext(Context);
+  const { open, disabled, trigger } = useContext(Context);
   if (disabled) return null;
   return cloneElement(children, {
     onMouseEnter: trigger === "enter" ? open : undefined,

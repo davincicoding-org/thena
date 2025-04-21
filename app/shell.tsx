@@ -14,8 +14,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           <Button component={Link} href="/tasks" variant="default">
             Task Wizard
           </Button>
-          <Button component={Link} href="/session" variant="default">
-            Session
+          <Button component={Link} href="/sprint" variant="default">
+            Sprint
           </Button>
           <Button component={Link} href="/chat" variant="default">
             Chat

@@ -12,7 +12,6 @@ import {
   Slider,
   Stack,
   Tabs,
-  Textarea,
   TextInput,
 } from "@mantine/core";
 import { IconVolume, IconX } from "@tabler/icons-react";
@@ -25,7 +24,7 @@ import {
 } from "@/core/config/models";
 import { supportedLangSchema, useSpeechConfigStore } from "@/ui/speech/config";
 
-import { useSpeechSynthesis } from "./speech/useSpeechSynthesis";
+import { useSpeechSynthesis } from "../speech/useSpeechSynthesis";
 
 const llmProviders = LLMConfigSchema.options.map(
   (option) => option.parse({}).provider,

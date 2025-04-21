@@ -27,7 +27,7 @@ import {
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 
-import { useSyncInputState } from "@/ui/useSyncState";
+import { useSyncInputState } from "@/ui/hooks/useSyncState";
 
 import {
   BACKLOG_SORT_OPTIONS,

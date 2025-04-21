@@ -11,7 +11,7 @@ import { useDisclosure, useInputState } from "@mantine/hooks";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 
 import { MultiActionIcon } from "@/ui/components/MultiActionIcon";
-import { useSyncState } from "@/ui/useSyncState";
+import { useSyncState } from "@/ui/hooks/useSyncState";
 
 import { Subtask, Task } from "../../../core/task-management/types";
 import { SubtaskInput, TaskListHookReturn } from "./useTaskList";

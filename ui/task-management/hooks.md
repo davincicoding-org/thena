@@ -1,60 +1,3 @@
-# 4. `useSessionPlanner`
-
-```ts
-interface SessionPlan {
-  id: string
-  duration: number
-  tasks: Task[]
-}
-
-/**
- * Provides in-memory session planning: initialize sessions, adjust durations, and assign, move, and reorder tasks. Dropping a session returns its tasks to the unassigned pool.
- */
-function useSessionPlanner(options?: {
-  /** Default duration for new sessions */
-  defaultDuration?: number
-  /** Initial tasks to populate the unassigned pool */
-  initialTasks?: Omit<Task, 'id'>[]
-}): {
-  /** Tasks not yet assigned to any session */
-  unassignedTasks: Task[]
-
-  /** All current session plans */
-  sessions: SessionPlan[]
-
-  /** Initialize `count` empty sessions */
-  initialize: (count: number) => void
-
-  /** Add a new empty session, using optional duration */
-  addSession: (duration?: number) => SessionPlan
-
-  /** Update only the duration of a session */
-  updateSession: (id: string, updates: Pick<SessionPlan, 'duration'>>) => void
-
-  /** Assign one of the unassigned tasks into a session */
-  assignTask: (options: { sessionId: string; taskId: string }) => void
-
-  /** Add more tasks into the unassigned pool */
-  addTasks: (tasks: Omit<Task, 'id'>[]) => void
-
-  /** Move tasks between two sessions */
-  moveTasks: (options: {
-    fromSessionId: string
-    toSessionId: string
-    taskIds: string[]
-  }) => void
-
-  /** Reorder sessions (for drag‑and‑drop UIs) */
-  reorderSessions: (sessionIds: string[]) => void
-
-  /** Reorder tasks within a session (for drag‑and‑drop UIs) */
-  reorderSessionTasks: (sessionId: string, taskIds: string[]) => void
-
-  /** Delete a session and return its tasks to the unassigned pool */
-  dropSession: (sessionId: string) => void
-}
-```
-
 # 5. `useSession`
 
 ```ts
@@ -89,7 +32,7 @@ function useSession(
   },
 ): {
   /** ‘idle’ before start, then ‘running’, ‘paused’, and ‘completed’ */
-  state: "idle" | "running" | "paused" | "completed";
+  status: "idle" | "running" | "paused" | "completed";
   /** Whether all tasks/subtasks have been processed before the timer ran out */
   ranOutOfTasks: boolean;
   /** Remaining time in seconds. */

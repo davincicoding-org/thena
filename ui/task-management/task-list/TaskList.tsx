@@ -59,7 +59,6 @@ export function TaskList({
               </Button>,
               "add-subtask",
               <ActionIcon
-                ml="auto"
                 key="remove"
                 color="red"
                 variant="subtle"

@@ -13,13 +13,12 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { IconClockShield } from "@tabler/icons-react";
 
-import { SprintPlan } from "@/core/deep-work";
+import { SprintPlan, TaskSelection } from "@/core/deep-work";
 import { Task } from "@/core/task-management";
 import { cn } from "@/ui/utils";
 
 import { SprintPanel } from "./SprintPanel";
 import { TaskPool } from "./TaskPool";
-import { TaskSelection } from "./types";
 
 export interface SessionPlannerProps {
   sprints: SprintPlan[];
@@ -80,7 +79,8 @@ export function SessionPlanner({
             variant="light"
             color={unassignedTasks.length ? "orange" : "green"}
             className={cn({
-              "pointer-events-none": sprintToAddTaskTo !== undefined || totalUnassignedTasks === 0,
+              "pointer-events-none":
+                sprintToAddTaskTo !== undefined || totalUnassignedTasks === 0,
             })}
             leftSection={
               unassignedTasks.length ? (

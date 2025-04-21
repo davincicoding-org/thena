@@ -18,11 +18,9 @@ import {
 } from "@mantine/core";
 import { IconClock } from "@tabler/icons-react";
 
-import { SprintPlan } from "@/core/deep-work";
+import { SprintPlan, TaskSelection } from "@/core/deep-work";
 import { hasSubtasks } from "@/core/task-management";
 import { cn } from "@/ui/utils";
-
-import { TaskSelection } from "./types";
 
 export interface SprintPanelProps {
   sprint: SprintPlan;

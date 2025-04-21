@@ -16,10 +16,10 @@ import {
 } from "@mantine/core";
 import { IconArrowLeft, IconX } from "@tabler/icons-react";
 
+import { SubtaskReference, TaskSelection } from "@/core/deep-work";
 import { hasSubtasks, Task } from "@/core/task-management";
 import { cn } from "@/ui/utils";
 
-import { SubtaskReference, TaskSelection } from "./types";
 import { useTaskSelection } from "./useTaskSelection";
 
 export interface TaskPoolProps {

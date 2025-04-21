@@ -14,8 +14,8 @@ import { IconMicrophone, IconPlayerPause } from "@tabler/icons-react";
 
 import { useSpeechConfigStore } from "@/ui/speech/config";
 
-import { Markdown } from "./components/Markdown";
-import { useSpeechRecognition } from "./speech/useSpeechRecognition";
+import { Markdown } from "../components/Markdown";
+import { useSpeechRecognition } from "../speech/useSpeechRecognition";
 
 export interface ChatProps extends BoxProps {
   messages: Message[];

@@ -3,9 +3,9 @@ import { useChat } from "@ai-sdk/react";
 import { BoxProps, Button, Center, Flex, Stack } from "@mantine/core";
 
 import { taskManagerResponseSchema } from "@/core/task-management/schema";
+import { useKeyHold } from "@/ui/hooks/useKeyHold";
 import { useSpeechConfigStore } from "@/ui/speech/config";
 import { TaskList, useTaskList } from "@/ui/task-management";
-import { useKeyHold } from "@/ui/useKeyHold";
 
 import {
   AssistantIndicator,

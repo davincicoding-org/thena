@@ -1,11 +1,10 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { AppShell, Button, Center, Container } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
+import { AppShell, Center, Container } from "@mantine/core";
 
 import { useModelsConfigStore } from "@/core/config/models";
-import { Chat } from "@/ui/Chat";
+import { Chat } from "@/ui/misc/Chat";
 
 export default function ChatPage() {
   const { llm } = useModelsConfigStore();

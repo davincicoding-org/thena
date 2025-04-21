@@ -1,10 +1,8 @@
 import { useMemo, useState } from "react";
 import { nanoid } from "nanoid";
 
-import { SprintPlan } from "@/core/deep-work";
+import { SprintPlan, TaskSelection } from "@/core/deep-work";
 import { hasSubtasks, Task } from "@/core/task-management";
-
-import { TaskSelection } from "./types";
 
 export const DEFAULT_OPTIONS: Required<SessionPlannerHookOptions> = {
   sprintCount: 0,
