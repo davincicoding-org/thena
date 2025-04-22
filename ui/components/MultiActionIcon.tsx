@@ -39,7 +39,7 @@ export function MultiActionIcon({
         <Overlay
           display="flex"
           blur={1}
-          bg="dark.5"
+          bg="neutral.5"
           backgroundOpacity={0.35}
           onMouseLeave={close}
           left="unset"

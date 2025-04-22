@@ -38,7 +38,7 @@ export function Configuration() {
   return (
     <>
       <Tabs variant="pills" defaultValue="Speech" radius="xs">
-        <Paper bg="dark.8" radius="sm" withBorder mb="lg">
+        <Paper bg="neutral.8" radius="sm" withBorder mb="lg">
           <ScrollArea scrollbars="x">
             <Tabs.List style={{ flexWrap: "nowrap" }} grow>
               <Tabs.Tab value="Speech">Speech</Tabs.Tab>

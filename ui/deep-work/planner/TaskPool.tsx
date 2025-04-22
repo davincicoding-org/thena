@@ -76,7 +76,7 @@ export function TaskPool({
     <Paper
       withBorder
       display="grid"
-      bg="dark.8"
+      bg="neutral.8"
       className={cn("h-full grid-rows-[1fr_auto]", props.className)}
       {...props}
     >
@@ -105,7 +105,7 @@ export function TaskPool({
                           withBorder: true,
                           mt: -1,
                           mx: -1,
-                          bg: "dark.6",
+                          bg: "neutral.6",
                           radius: "md",
                         }
                       : { radius: 0 })}

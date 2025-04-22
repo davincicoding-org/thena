@@ -1,16 +1,26 @@
 "use client";
 
-import { useCallback } from "react";
+import { Fragment, useCallback } from "react";
 import {
+  ActionIcon,
   Avatar,
   Badge,
+  Box,
   Button,
-  Card,
+  Collapse,
+  ColorSwatch,
+  Divider,
+  Fieldset,
   Flex,
   Group,
+  HoverCard,
   Menu,
   MultiSelect,
+  NavLink,
   Paper,
+  PaperProps,
+  Pill,
+  ScrollArea,
   Stack,
   Text,
   TextInput,
@@ -19,10 +29,13 @@ import {
 import {
   IconAbc,
   IconCalendar,
+  IconFilter,
   IconProps,
   IconSearch,
   IconSortAscending,
   IconSortDescending,
+  IconTag,
+  IconX,
 } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -37,6 +50,7 @@ import {
   Subtask,
   Tag,
 } from "@/core/task-management";
+import { Panel } from "@/ui/components/Panel";
 import { useSyncInputState } from "@/ui/hooks/useSyncState";
 
 import { BacklogHookReturn } from "./useBacklog";
@@ -61,7 +75,8 @@ export function Backlog({
   onSortUpdate,
   projects,
   tags,
-}: BacklogProps) {
+  ...paperProps
+}: BacklogProps & PaperProps) {
   const [searchValue, setSearchValue] = useSyncInputState(filters.search || "");
 
   const resolveProject = useCallback(
@@ -82,192 +97,321 @@ export function Backlog({
   );
 
   return (
-    <Card withBorder>
-      <Card.Section px="md" py="sm" pb="md">
-        <Flex gap="sm">
-          <TextInput
-            placeholder="Search"
-            leftSection={<IconSearch size={20} />}
-            value={searchValue}
-            onChange={(e) => {
-              setSearchValue(e);
-              onFiltersUpdate({ search: e.target.value });
-            }}
-          />
-          <MultiSelect
-            placeholder={filters.projectIds?.length ? undefined : "Projects"}
-            value={filters.projectIds || []}
-            checkIconPosition="right"
-            data={projects.map((project) => ({
-              value: project.id,
-              label: project.name,
-            }))}
-            onChange={(value) => onFiltersUpdate({ projectIds: value })}
-            renderOption={({ option }) => {
-              const project = resolveProject(option.value);
-
-              return (
-                <Group gap="sm" wrap="nowrap">
-                  <Avatar
-                    color={project?.color}
-                    src={project?.image}
-                    size={36}
-                    radius="xl"
-                    name={option.label}
-                  />
-                  <Text size="sm" className="text-nowrap">
-                    {option.label}
-                  </Text>
-                </Group>
-              );
-            }}
-          />
-          <MultiSelect
-            placeholder={filters.tags?.length ? undefined : "Tags"}
-            value={filters.tags || []}
-            data={tags.map((tag) => ({
-              value: tag.id,
-              label: tag.name,
-            }))}
-            onChange={(value) => onFiltersUpdate({ tags: value })}
-          />
-          <Menu>
-            <Menu.Target>
-              <Button
-                leftSection={<SortDirectionIcon sort={sort.direction} />}
-                variant="default"
-                size="sm"
-              >
-                {getSortByLabel(sort.sortBy)}
-              </Button>
-            </Menu.Target>
-            <Menu.Dropdown>
-              {BACKLOG_SORT_OPTIONS.sortBy.map((sortBy) => (
-                <Menu.Item
-                  key={sortBy}
-                  color={sort.sortBy === sortBy ? "primary" : undefined}
-                  leftSection={<SortByIcon sortBy={sortBy} size={20} />}
-                  onClick={() => onSortUpdate({ sortBy })}
-                >
-                  {getSortByLabel(sortBy)}
-                </Menu.Item>
-              ))}
-              <Menu.Divider />
-              {BACKLOG_SORT_OPTIONS.direction.map((direction) => (
-                <Menu.Item
-                  key={direction}
-                  color={sort.direction === direction ? "primary" : undefined}
-                  leftSection={<SortDirectionIcon sort={direction} size={20} />}
-                  onClick={() => onSortUpdate({ direction })}
-                >
-                  {getSortDirectionLabel(direction)}
-                </Menu.Item>
-              ))}
-            </Menu.Dropdown>
-          </Menu>
-        </Flex>
-      </Card.Section>
-      <Stack>
-        {tasks.map((task) => (
-          <TaskItem
-            key={task.id}
-            task={task}
-            resolveProject={resolveProject}
-            resolveTag={resolveTag}
-          />
-        ))}
-      </Stack>
-    </Card>
-  );
-}
-
-function TaskItem({
-  task,
-  resolveProject,
-  resolveTag,
-}: {
-  task: BacklogTask;
-  resolveProject: (projectId: string) => Project;
-  resolveTag: (tagId: string) => Tag;
-}) {
-  const project = task.projectId ? resolveProject(task.projectId) : undefined;
-
-  return (
-    <Stack gap="xs">
-      <Paper withBorder px="md" py="sm">
-        <Flex align="center">
-          {project && (
-            <Tooltip label={project.name}>
-              <Avatar
-                className="-my-2 mr-2 -ml-2"
-                src={project.image}
-                name={project.name}
-                color={project.color}
-                size={36}
-              />
-            </Tooltip>
-          )}
-          <Text size="lg">{task.title}</Text>
-          <Flex gap="xs" ml="auto" className="empty:hidden">
-            {task.tags?.map((tag) => {
-              const { name, color, id } = resolveTag(tag);
-              return (
-                <Badge key={id} color={color || "gray"}>
-                  {name}
-                </Badge>
-              );
-            })}
-          </Flex>
-          {/* <Tooltip
-            label={dayjs(new Date(task.addedAt)).format("DD/MM/YYYY HH:mm")}
-          >
-            <Text size="sm" ta="right" w={96}>
-              {dayjs(new Date(task.addedAt)).fromNow(true)}
-            </Text>
-          </Tooltip> */}
-        </Flex>
-      </Paper>
-
-      {hasSubtasks(task) && (
-        <Stack pl="md" gap="xs">
-          {task.subtasks.map((subtask) => (
-            <SubtaskItem
-              key={subtask.id}
-              subtask={subtask}
-              resolveTag={resolveTag}
+    <Panel
+      header={
+        <>
+          <Flex p="xs" gap={4}>
+            <TextInput
+              placeholder="Search"
+              leftSection={<IconSearch size={20} />}
+              value={searchValue}
+              mr="auto"
+              onChange={(e) => {
+                setSearchValue(e);
+                onFiltersUpdate({ search: e.target.value });
+              }}
             />
-          ))}
-        </Stack>
-      )}
-    </Stack>
-  );
-}
+            {(projects.length > 0 || tags.length > 0) && (
+              <HoverCard
+                position="bottom-start"
+                withArrow
+                arrowPosition="center"
+                arrowSize={12}
+              >
+                <HoverCard.Target>
+                  <ActionIcon size="36" color="gray" variant="subtle">
+                    <IconFilter size={20} />
+                  </ActionIcon>
+                </HoverCard.Target>
+                <HoverCard.Dropdown p="xs">
+                  <Flex gap="sm">
+                    {projects.length > 0 && (
+                      <Fieldset
+                        legend="Projects"
+                        p={0}
+                        classNames={{ legend: "text-center" }}
+                      >
+                        <ScrollArea scrollbars="y" h={180}>
+                          {projects.map((project) => (
+                            <NavLink
+                              key={project.id}
+                              label={project.name}
+                              leftSection={
+                                <Avatar
+                                  color={project?.color}
+                                  src={project?.image}
+                                  size={24}
+                                  radius="xl"
+                                  name={project.name}
+                                />
+                              }
+                              component="button"
+                              active={filters.projectIds?.includes(project.id)}
+                              onClick={() => {
+                                onFiltersUpdate({
+                                  projectIds: filters.projectIds?.includes(
+                                    project.id,
+                                  )
+                                    ? filters.projectIds?.filter(
+                                        (id) => id !== project.id,
+                                      )
+                                    : [
+                                        ...(filters.projectIds || []),
+                                        project.id,
+                                      ],
+                                });
+                              }}
+                            />
+                          ))}
+                        </ScrollArea>
+                      </Fieldset>
+                    )}
+                    {tags.length > 0 && (
+                      <Fieldset
+                        legend="Tags"
+                        p={0}
+                        classNames={{ legend: "text-center" }}
+                      >
+                        <ScrollArea scrollbars="y" h={180}>
+                          {tags.map((tag) => (
+                            <NavLink
+                              key={tag.id}
+                              label={tag.name}
+                              leftSection={
+                                <Box
+                                  bg={tag.color || "gray"}
+                                  className="h-4 w-4 rounded-full"
+                                />
+                              }
+                              component="button"
+                              active={filters.tags?.includes(tag.id)}
+                              onClick={() => {
+                                onFiltersUpdate({
+                                  tags: filters.tags?.includes(tag.id)
+                                    ? filters.tags?.filter(
+                                        (id) => id !== tag.id,
+                                      )
+                                    : [...(filters.tags || []), tag.id],
+                                });
+                              }}
+                            />
+                          ))}
+                        </ScrollArea>
+                      </Fieldset>
+                    )}
+                  </Flex>
+                </HoverCard.Dropdown>
+              </HoverCard>
+            )}
 
-function SubtaskItem({
-  subtask,
-  resolveTag,
-}: {
-  subtask: Subtask;
-  resolveTag: (tagId: string) => Tag;
-}) {
-  return (
-    <Paper withBorder px="md" py="sm">
-      <Flex align="center">
-        <Text>{subtask.title}</Text>
-        <Flex gap="xs" ml="auto" className="empty:hidden">
-          {subtask.tags?.map((tag) => {
-            const { name, color, id } = resolveTag(tag);
+            <Menu>
+              <Menu.Target>
+                <Button
+                  leftSection={<SortDirectionIcon sort={sort.direction} />}
+                  variant="default"
+                  size="sm"
+                >
+                  {getSortByLabel(sort.sortBy)}
+                </Button>
+              </Menu.Target>
+              <Menu.Dropdown>
+                {BACKLOG_SORT_OPTIONS.sortBy.map((sortBy) => (
+                  <Menu.Item
+                    key={sortBy}
+                    color={sort.sortBy === sortBy ? "primary" : undefined}
+                    leftSection={<SortByIcon sortBy={sortBy} size={20} />}
+                    onClick={() => onSortUpdate({ sortBy })}
+                  >
+                    {getSortByLabel(sortBy)}
+                  </Menu.Item>
+                ))}
+                <Menu.Divider />
+                {BACKLOG_SORT_OPTIONS.direction.map((direction) => (
+                  <Menu.Item
+                    key={direction}
+                    color={sort.direction === direction ? "primary" : undefined}
+                    leftSection={
+                      <SortDirectionIcon sort={direction} size={20} />
+                    }
+                    onClick={() => onSortUpdate({ direction })}
+                  >
+                    {getSortDirectionLabel(direction)}
+                  </Menu.Item>
+                ))}
+              </Menu.Dropdown>
+            </Menu>
+          </Flex>
+          <Collapse
+            in={
+              Boolean(filters.projectIds?.length) ||
+              Boolean(filters.tags?.length)
+            }
+          >
+            <ScrollArea scrollbars="x" scrollHideDelay={300}>
+              <Flex gap="xs" p="sm" pt={0}>
+                {filters.projectIds?.map((projectId) => {
+                  const project = resolveProject(projectId);
+                  return (
+                    <Badge
+                      key={projectId}
+                      component="button"
+                      className="cursor-pointer!"
+                      color={project.color || "gray"}
+                      size="md"
+                      variant="light"
+                      rightSection={<IconX size={12} />}
+                      onClick={() => {
+                        onFiltersUpdate({
+                          projectIds: filters.projectIds?.filter(
+                            (id) => id !== projectId,
+                          ),
+                        });
+                      }}
+                    >
+                      {project.name}
+                    </Badge>
+                  );
+                })}
+
+                <Divider
+                  orientation="vertical"
+                  color="neutral.2"
+                  className="first:hidden last:hidden"
+                />
+                {filters.tags?.map((tagId) => {
+                  const tag = resolveTag(tagId);
+                  return (
+                    <Badge
+                      key={tagId}
+                      component="button"
+                      className="cursor-pointer!"
+                      color={tag.color || "gray"}
+                      size="md"
+                      variant="light"
+                      leftSection={<IconTag size={12} />}
+                      rightSection={<IconX size={12} />}
+                      onClick={() => {
+                        onFiltersUpdate({
+                          tags: filters.tags?.filter((id) => id !== tagId),
+                        });
+                      }}
+                    >
+                      {tag.name}
+                    </Badge>
+                  );
+                })}
+              </Flex>
+            </ScrollArea>
+          </Collapse>
+        </>
+      }
+      {...paperProps}
+    >
+      <ScrollArea bg="neutral.8">
+        <Stack px="md" py="lg">
+          {tasks.map((task) => {
+            const project = task.projectId && resolveProject(task.projectId);
+            const tags = task.tags && task.tags.map(resolveTag);
+
             return (
-              <Badge key={id} color={color || "gray"}>
-                {name}
-              </Badge>
+              <Paper
+                key={task.id}
+                withBorder
+                className="overflow-clip"
+                radius="md"
+              >
+                <Paper
+                  {...(hasSubtasks(task)
+                    ? {
+                        withBorder: true,
+                        mt: -1,
+                        mx: -1,
+                        bg: "neutral.6",
+                        radius: "md",
+                      }
+                    : { radius: 0 })}
+                >
+                  <NavLink
+                    label={task.title}
+                    component="div"
+                    className="pointer-events-none"
+                    color="gray"
+                    leftSection={
+                      project && (
+                        <Tooltip label={project.name} position="bottom-start">
+                          <Avatar
+                            className="pointer-events-auto"
+                            color={project.color}
+                            src={project.image}
+                            size="sm"
+                            name={project.name}
+                          />
+                        </Tooltip>
+                      )
+                    }
+                    rightSection={
+                      tags && (
+                        <Flex gap={4}>
+                          {tags.map((tag) => (
+                            <Badge
+                              key={tag.id}
+                              color={tag.color || "gray"}
+                              variant="light"
+                              size="xs"
+                            >
+                              {tag.name}
+                            </Badge>
+                          ))}
+                        </Flex>
+                      )
+                    }
+                  />
+                </Paper>
+
+                {hasSubtasks(task) && (
+                  <Stack gap={0} flex={1}>
+                    {task.subtasks.map((subtask) => {
+                      const tags = subtask.tags && subtask.tags.map(resolveTag);
+                      return (
+                        <Fragment key={subtask.id}>
+                          <NavLink
+                            label={subtask.title}
+                            component="div"
+                            className="pointer-events-none"
+                            color="gray"
+                            rightSection={
+                              tags && (
+                                <Flex gap={4}>
+                                  {tags.map((tag) => (
+                                    <Badge
+                                      key={tag.id}
+                                      color={tag.color || "gray"}
+                                      variant="light"
+                                      size="xs"
+                                    >
+                                      {tag.name}
+                                    </Badge>
+                                  ))}
+                                </Flex>
+                              )
+                            }
+                          />
+                          <Divider className="last:hidden" />
+                        </Fragment>
+                      );
+                    })}
+                  </Stack>
+                )}
+              </Paper>
             );
           })}
-        </Flex>
-      </Flex>
-    </Paper>
+        </Stack>
+      </ScrollArea>
+    </Panel>
   );
 }
+
+// --------- Utility Functions ---------
 
 const getSortByLabel = (sort: BacklogSortOptions["sortBy"]) => {
   switch (sort) {

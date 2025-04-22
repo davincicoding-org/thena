@@ -12,10 +12,10 @@ import {
   Text,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconClockShield } from "@tabler/icons-react";
 
 import { SprintPlan, TaskSelection } from "@/core/deep-work";
 import { Task } from "@/core/task-management";
+import { Panel } from "@/ui/components/Panel";
 import { cn } from "@/ui/utils";
 
 import { SprintPanel } from "./SprintPanel";
@@ -72,14 +72,10 @@ export function SessionPlanner({
   );
 
   return (
-    <Paper
-      withBorder
-      radius="md"
-      className={cn("flex! flex-col overflow-clip", className)}
+    <Panel
       {...paperProps}
-    >
-      <Card radius={0} px="sm" py="xs" className="shrink-0">
-        <Flex align="center" gap="md">
+      header={
+        <Flex align="center" gap="md" px="sm" py="xs">
           <Text size="xl">Session Planner</Text>
           <Button variant="outline" size="compact-sm" onClick={onAddSprint}>
             Add Sprint
@@ -105,8 +101,8 @@ export function SessionPlanner({
             {unassignedTasks.length ? "Unassigned Tasks" : "All Tasks assigned"}
           </Button>
         </Flex>
-      </Card>
-      <Divider />
+      }
+    >
       <Flex className="min-h-0 overflow-clip">
         <ScrollArea
           scrollbars="x"
@@ -182,6 +178,6 @@ export function SessionPlanner({
           />
         </Box>
       </Flex>
-    </Paper>
+    </Panel>
   );
 }

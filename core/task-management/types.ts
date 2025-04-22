@@ -1,11 +1,8 @@
 import { Dispatch, SetStateAction } from "react";
 import { z } from "zod";
 
-import { ExtendedCustomColors } from "@/ui/mantine";
-
 export const colorsEnum = z.enum([
   "primary",
-  "dark",
   "gray",
   "red",
   "pink",
