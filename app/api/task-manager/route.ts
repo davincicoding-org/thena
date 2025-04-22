@@ -64,7 +64,7 @@ export async function POST(req: Request) {
   ];
 
   try {
-    const { object, usage, providerMetadata } = await generateObject({
+    const { object, usage } = await generateObject({
       model: openai("gpt-4.1-mini"),
       messages: messages,
       temperature: 0,

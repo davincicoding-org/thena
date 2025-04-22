@@ -22,7 +22,7 @@ import { cn } from "@/ui/utils";
 import { taskFormOpts, withTaskForm } from "./useTaskForm";
 
 export type TaskFormProps = {
-  actions?: (ReactElement | "add-subtask")[];
+  actions?: (null | ReactElement | "add-subtask")[];
   autoSubmit?: "blur" | "change";
   containerProps?: PaperProps;
 };

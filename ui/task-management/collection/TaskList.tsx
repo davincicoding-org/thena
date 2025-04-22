@@ -25,7 +25,7 @@ export type TaskListProps = {
   onUpdateTask: (taskId: Task["id"], updates: Partial<Task>) => void;
   onRemoveTask: (taskId: Task["id"]) => void;
   onAddTask: (task: Omit<Task, "id">) => void;
-  onRefineTask: (task: Task) => void;
+  onRefineTask?: (task: Task) => void;
 };
 
 export function TaskList({
@@ -46,14 +46,16 @@ export function TaskList({
             onChange={(update) => onUpdateTask(item.id, update)}
             autoSubmit="blur"
             actions={[
-              <Button
-                key="refine"
-                variant="outline"
-                size="compact-sm"
-                onClick={() => onRefineTask(item)}
-              >
-                Refine
-              </Button>,
+              onRefineTask ? (
+                <Button
+                  key="refine"
+                  variant="outline"
+                  size="compact-sm"
+                  onClick={() => onRefineTask(item)}
+                >
+                  Refine
+                </Button>
+              ) : null,
               "add-subtask",
               <ActionIcon
                 key="remove"
@@ -107,7 +109,7 @@ function TaskAdder({
 
   if (!visible)
     return (
-      <Button leftSection={<IconPlus size={20} />} size="sm" onClick={open}>
+      <Button leftSection={<IconPlus size={20} />} size="xs" onClick={open}>
         Add Task
       </Button>
     );

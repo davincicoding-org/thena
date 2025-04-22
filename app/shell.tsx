@@ -8,14 +8,17 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     <AppShell header={{ height: 60 }}>
       <AppShell.Header>
         <Flex py="sm" px="md" gap="sm">
-          <Button component={Link} href="/tasks" variant="default">
-            Task Wizard
-          </Button>
           <Button component={Link} href="/sprint" variant="default">
             Sprint
           </Button>
           <Button component={Link} href="/session-planner" variant="default">
             Session Planner
+          </Button>
+          <Button component={Link} href="/tasks" variant="default">
+            Tasks
+          </Button>
+          <Button component={Link} href="/task-wizard" variant="default">
+            Task Wizard
           </Button>
           <Button component={Link} href="/chat" variant="default">
             Chat

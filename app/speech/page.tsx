@@ -55,7 +55,7 @@ To get started with a template, open it on GitHub and click "Use this template" 
     if (isListening) {
       abortSpeech();
     }
-  }, [isListening]);
+  }, [isListening, abortSpeech]);
 
   return (
     <AppShell.Main className="grid">
