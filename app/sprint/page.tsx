@@ -56,8 +56,14 @@ export default function SessionPage() {
             },
           )}
         >
-          <source src="/videos/library.webm" type="video/webm" />
-          <source src="/videos/library.mp4" type="video/mp4" />
+          <source
+            src={`${process.env.NEXT_PUBLIC_VIDEO_BASE_URL}/library.webm`}
+            type="video/webm"
+          />
+          <source
+            src={`${process.env.NEXT_PUBLIC_VIDEO_BASE_URL}/library.webm`}
+            type="video/mp4"
+          />
         </video>
 
         <LiveSprint
