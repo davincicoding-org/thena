@@ -1,12 +1,18 @@
 # Table of contents
 
-- [Summary](README.md)
-- [Feedback](feedback.md)
+- [Overview](README.md)
 
 ## Features
 
-- [AI Asssistant](features/ai-assistant.md)
-- [Focus Sessions](features/focus-sessions.md)
 - [Task Management](features/task-management.md)
-- [Performance Analytics](features/performance-analytics.md)
-- [Community / Forum](features/community-forum.md)
+- [Work Orchestration](features/work-orchestration.md)
+- [Deep Work](features/deep-work.md)
+- [Social Reinforcement](features/social-reinforcement.md)
+- [Performance Intelligence](features/performance-intelligence.md)
+
+## Backlog
+
+- [AI Assitant](backlog/ai-assistant.md)
+- [Community](backlog/community.md)
+
+- [Inspiration](INSPO.md)

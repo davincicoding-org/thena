@@ -2,63 +2,96 @@
 
 This AI-powered productivity app helps you work with focus, structure, and accountability. It guides you through planning your day, executing focused work intervals, and reflecting on your performance.
 
-### Core Features
 
-#### Adaptive Task Management
 
-The app transforms task management through adaptive Pomodoro sessions. You define goals, break them into manageable tasks, and organize them into focused work intervals. After each session, it conducts check-ins to assess completion and focus levels, then adjusts your remaining schedule based on actual progress and energy.
+## Terminology
 
-#### Guided Focus Sessions
+**Task**: A discrete unit of work that can be assigned to a project and tagged with multiple labels. Tasks include estimates for completion time and complexity level. Complex tasks can be broken down into subtasks for easier management.
 
-Three distinct work modes provide structured accountability:
+**Subtask**: A smaller component of a parent task that helps manage complex work more effectively. Like tasks, subtasks can also have their own tags, time estimates, and complexity ratings.
 
-**Solo Mode**: Work independently while watching a prerecorded video of someone else working, with AI-assisted accountability.
+**Sprint**: A focused work period based on the Pomodoro technique, during which you work on a specific set of tasks.
 
-**Witness Mode**: Connect with another user via live video. Each person works on their own tasks while maintaining mutual accountability through verbal intention-setting and affirmations during breaks.
+**Session**: Your complete work period for the day, made up of multiple sprints, breaks, and transitions between activities.
 
-**Collab Mode**: Work with others on the same task, with collaborative intervals and optional breakout intervals for individual focus.
+**Check-In**: A brief evaluation after each sprint where you report your progress, focus level, and energy to help adjust upcoming sprints.
 
-#### Performance Analytics
+**Break**: A short rest period between sprints designed to refresh your mental energy and prevent burnout.
 
-The app compiles data from your work sessions into personalized summaries, providing insights into focus patterns, task completion rates, and areas for improvement. This enables better decisions about work habits and continuous improvement.
+**Backlog**: Your collection of all tasks waiting to be addressed in future sessions.
 
-### User Flow
+**Recap**: An end-of-day summary showing your session data, completed tasks, and insights about your productivity.
 
-#### 1. Planning
 
-- Gather TODOs from user input or the backlog
-- Split TODOs into objective-specific or standalone tasks
-- Distribute tasks across intervals for a balanced schedule
 
-#### 2. Execution
+## Core Features
 
-- Commit to specific tasks during each interval
-- Work with focused attention
-- Report on achievements through check-ins
-- Ad-hoc refinement of upcoming intervals based on progress
+### [Task Management](features/task-management.md)
 
-#### 3. Reflection
+> Effectively manage tasks, including setting estimates, organizing with tags, and syncing with external tools for streamlined progress tracking and prioritization.
 
-- Review performance insights and identify improvements
-- Prepare tasks for the next session
-- Update the backlog with completed and remaining work
+### [Work Orchestration](features/work-orchestration.md)
 
-### Terminology
+> Optimize your work sessions by structuring tasks into balanced sprints, planning strategic breaks, and adjusting based on progress to maintain productivity.
 
-**TODO**: Something that needs to be done, from quick actions to complex undertakings.
+### [Deep Work](features/deep-work.md)
 
-**Objective**: Larger piece of work requiring multiple intervals or sessions to complete. Provides the big-picture view of what you're working to accomplish.
+> Foster an environment that minimizes distractions and enhances focus, enabling sustained attention and productivity through structured work intervals.
 
-**Task**: Discrete piece of work that contributes to an objective or exists standalone. Designed to be completable within one or a few intervals.
+### [Social Reinforcement](features/social-reinforcement.md)
 
-**Backlog**: Collection of all TODOs, objectives, and tasks that need to be addressed.
+> Strengthen productivity habits through social connections and accountability, using shared experiences and structured support systems.
 
-**Session**: Complete work period for the day, consisting of multiple intervals with breaks and transitions.
+### [Performance Intelligence](features/performance-intelligence.md)
 
-**Interval**: Pomodoro-style unit of focused work followed by a short break.
+> Gain insights into productivity patterns and optimize future sessions by reviewing detailed recaps and tracking focus levels and completion rates.
 
-**Check-In**: Evaluation point after each interval to report progress, focus level, and energy.
 
-**Break**: Short rest period between work intervals, designed to refresh mental energy and prevent burnout. During breaks in Witness Mode, users may engage in verbal intention-setting and affirmations.
 
-**Recap**: End-of-day summary of session data, tasks completed, and productivity insights.
+## User Flow
+
+```mermaid
+graph TD;
+    %% Define nodes
+    StartSession
+    Recap[Recap Session]
+    PrepareSession
+
+    %% Define edges
+    NewSession --> TaskList
+
+    SessionPlanner --> StartSession
+    StartSession --> Session
+    Session --> Recap
+    Recap -.-> PrepareNextSession
+
+TaskForm[Create Task]
+        BacklogImport[Pull from Backlog]
+
+        TaskList[Collect Tasks]
+
+        SessionPlanner[Split Tasks into Sprints]
+
+
+        TaskList -- Add new Tasks --> TaskForm --> TaskList
+
+        TaskList --> SessionPlanner
+
+        TaskList -- Add existing Tasks --> BacklogImport --> TaskList
+
+
+
+
+
+    subgraph Session
+        direction LR
+
+        Sprint[Run Sprint]
+        CheckIn[Check-In]
+        Break[Take Break]
+
+        Sprint --> CheckIn
+        CheckIn --> Break
+        Break --> Sprint
+    end
+```
