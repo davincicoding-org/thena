@@ -133,7 +133,7 @@ function TaskAdder({
           variant={hasTasks ? "outline" : undefined}
           onClick={open}
         >
-          Create New Task
+          New Task
         </Button>
         <Tooltip label="COMING SOON">
           <ActionIcon

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { nanoid } from "nanoid";
 
 import { SprintPlan, TaskSelection } from "@/core/deep-work";
-import { hasSubtasks, Task } from "@/core/task-management";
+import { hasSubtasks, Subtask, Task } from "@/core/task-management";
 import { ExternalState as InjectedState } from "@/ui/utils";
 
 export const DEFAULT_OPTIONS = {
@@ -12,7 +12,7 @@ export const DEFAULT_OPTIONS = {
 
 export interface SessionPlannerHookOptions {
   /** Initial number of Sprints */
-  initialSprints?: number | SprintPlan[];
+  initialSprints?: number;
   /** Default duration for new Sprints */
   sprintDuration?: number;
   /** Error callback for handling errors without throwing */
@@ -20,19 +20,11 @@ export interface SessionPlannerHookOptions {
   externalState?: InjectedState<SprintPlan[]>;
 }
 
-// Define a sprint plan with task selections
-interface MinimalSprint extends Pick<SprintPlan, "id" | "duration"> {
-  tasks: TaskSelection[];
-}
-
-const toMinimalSprint = (sprint: SprintPlan): MinimalSprint => ({
-  id: sprint.id,
-  duration: sprint.duration,
-  tasks: sprint.tasks.map((task) => ({
-    taskId: task.id,
-    subtasks: task.subtasks?.map((subtask) => subtask.id),
-  })),
-});
+// const toMinimalTasks = (tasks: Task[]): TaskSelection[] =>
+//   tasks.map((task) => ({
+//     taskId: task.id,
+//     subtasks: task.subtasks?.map((subtask) => subtask.id),
+//   }));
 
 export interface SessionPlannerHookReturn {
   /** All current Sprint plans (with populated tasks) */
@@ -113,29 +105,18 @@ export function useSessionPlanner(
   {
     initialSprints = DEFAULT_OPTIONS.initialSprints,
     sprintDuration = DEFAULT_OPTIONS.sprintDuration,
+    externalState: [sprints, setSprints] = useState<SprintPlan[]>(
+      initializeSprints(initialSprints, sprintDuration),
+    ),
     onError,
   }: SessionPlannerHookOptions = DEFAULT_OPTIONS,
 ): SessionPlannerHookReturn {
-  // ------ Initialization ------
-  const [sprints, setSprints] = useState<MinimalSprint[]>(
-    typeof initialSprints === "number"
-      ? Array.from(
-          { length: initialSprints },
-          (): MinimalSprint => ({
-            id: nanoid(),
-            duration: sprintDuration,
-            tasks: [],
-          }),
-        )
-      : initialSprints.map(toMinimalSprint),
-  );
-
   const unassignedTasks = useMemo(() => {
     const assignedTasks = mergeTasks(sprints.flatMap((sprint) => sprint.tasks));
 
     return taskPool.reduce<Task[]>((acc, task) => {
       const assignedTask = assignedTasks.find(
-        (assignedTask) => assignedTask.taskId === task.id,
+        (assignedTask) => assignedTask.id === task.id,
       );
       if (!assignedTask) return [...acc, task];
 
@@ -143,8 +124,10 @@ export function useSessionPlanner(
 
       const taskWithoutAssignedSubtasks = {
         ...task,
-        subtasks: task.subtasks.filter(
-          (subtask) => !assignedTask.subtasks?.includes(subtask.id),
+        subtasks: task.subtasks.filter((subtask) =>
+          assignedTask.subtasks.every(
+            (assignedSubtask) => assignedSubtask.id !== subtask.id,
+          ),
         ),
       };
 
@@ -185,51 +168,26 @@ export function useSessionPlanner(
 
   // ------ Sprint Management ------
 
-  const populatedSprints = useMemo<SessionPlannerHookReturn["sprints"]>(
-    () =>
-      sprints.map((sprint: MinimalSprint): SprintPlan => {
-        const populatedTasks = sprint.tasks
-          .map((taskSelection) => {
-            // Find the full task from the pool
-            const fullTask = taskPool.find(
-              (t) => t.id === taskSelection.taskId,
-            );
-            if (!fullTask) {
-              // This should never happen if taskPool contains all tasks
-              console.warn(
-                `Task ${taskSelection.taskId} not found in task pool`,
-              );
-              return null;
-            }
+  const resolveTask = (taskSelection: TaskSelection) => {
+    const fullTask = taskPool.find((t) => t.id === taskSelection.taskId);
+    if (!fullTask) return null;
 
-            // If there are no subtask selections, return the full task
-            if (!taskSelection.subtasks?.length) {
-              return fullTask;
-            }
+    // If there are no subtask selections, return the full task
+    if (!taskSelection.subtasks?.length) return fullTask;
 
-            // If there are subtask selections, filter the subtasks
-            if (fullTask.subtasks?.length) {
-              return {
-                ...fullTask,
-                subtasks: fullTask.subtasks.filter((subtask) =>
-                  taskSelection.subtasks?.includes(subtask.id),
-                ),
-              };
-            }
+    // If there are subtask selections, filter the subtasks
+    if (fullTask.subtasks?.length)
+      return {
+        ...fullTask,
+        subtasks: fullTask.subtasks.filter((subtask) =>
+          taskSelection.subtasks?.includes(subtask.id),
+        ),
+      };
 
-            // If the task doesn't have subtasks but we have subtask selections
-            // (shouldn't happen), return the full task
-            return fullTask;
-          })
-          .filter(Boolean) as Task[];
-
-        return {
-          ...sprint,
-          tasks: populatedTasks,
-        };
-      }),
-    [sprints, taskPool],
-  );
+    // If the task doesn't have subtasks but we have subtask selections
+    // (shouldn't happen), return the full task
+    return fullTask;
+  };
 
   const addSprint: SessionPlannerHookReturn["addSprint"] = ({
     duration = sprintDuration,
@@ -242,7 +200,11 @@ export function useSessionPlanner(
       {
         id: nanoid(),
         duration,
-        tasks,
+        tasks: tasks.reduce<Task[]>((acc, task) => {
+          const resolvedTask = resolveTask(task);
+          if (!resolvedTask) return acc;
+          return [...acc, resolvedTask];
+        }, []),
       },
     ]);
   };
@@ -254,7 +216,11 @@ export function useSessionPlanner(
       ...sprintsToAdd.map(({ duration = sprintDuration, tasks = [] }) => ({
         id: nanoid(),
         duration,
-        tasks,
+        tasks: tasks.reduce<Task[]>((acc, task) => {
+          const resolvedTask = resolveTask(task);
+          if (!resolvedTask) return acc;
+          return [...acc, resolvedTask];
+        }, []),
       })),
     ]);
   };
@@ -337,8 +303,8 @@ export function useSessionPlanner(
 
       const missingTaskIds = sprintToAdjust.tasks.reduce<Task["id"][]>(
         (acc, task) => {
-          if (taskIds.includes(task.taskId)) return acc;
-          return [...acc, task.taskId];
+          if (taskIds.includes(task.id)) return acc;
+          return [...acc, task.id];
         },
         [],
       );
@@ -359,8 +325,8 @@ export function useSessionPlanner(
         return {
           ...sprint,
           tasks: [...sprint.tasks].sort((a, b) => {
-            const aIndex = taskIds.indexOf(a.taskId);
-            const bIndex = taskIds.indexOf(b.taskId);
+            const aIndex = taskIds.indexOf(a.id);
+            const bIndex = taskIds.indexOf(b.id);
             return aIndex - bIndex;
           }),
         };
@@ -387,6 +353,10 @@ export function useSessionPlanner(
         return prevSprints;
       }
 
+      const resolvedTask = resolveTask(task);
+      // TODO: Handle error
+      if (!resolvedTask) return prevSprints;
+
       // TODO: Validate task (and its subtasks) are not assigned yet
 
       return prevSprints.map((sprint) => {
@@ -394,7 +364,7 @@ export function useSessionPlanner(
 
         return {
           ...sprint,
-          tasks: mergeTasks([...sprint.tasks, task]),
+          tasks: mergeTasks([...sprint.tasks, resolvedTask]),
         };
       });
     });
@@ -410,6 +380,13 @@ export function useSessionPlanner(
         return prevSprints;
       }
 
+      const resolvedTasks = tasks.reduce<Task[]>((acc, task) => {
+        const resolvedTask = resolveTask(task);
+        // TODO: Handle error
+        if (!resolvedTask) return acc;
+        return [...acc, resolvedTask];
+      }, []);
+
       // TODO: Validate tasks (and their subtasks) are not assigned yet
 
       return prevSprints.map((sprint) => {
@@ -417,7 +394,7 @@ export function useSessionPlanner(
 
         return {
           ...sprint,
-          tasks: mergeTasks([...sprint.tasks, ...tasks]),
+          tasks: mergeTasks([...sprint.tasks, ...resolvedTasks]),
         };
       });
     });
@@ -453,14 +430,13 @@ export function useSessionPlanner(
         handleError("SPRINT_NOT_FOUND", "unassignTasks", { sprintId });
         return prevSprints;
       }
-      console.log("unassignTasks", sprintId, tasks);
 
       return prevSprints.map((sprint) => {
         if (sprint.id !== sprintId) return sprint;
 
         return {
           ...sprint,
-          tasks: tasks.reduce<TaskSelection[]>(
+          tasks: tasks.reduce<Task[]>(
             (acc, task) => excludeTask([...acc], task),
             sprint.tasks,
           ),
@@ -485,12 +461,19 @@ export function useSessionPlanner(
         return prev;
       }
 
+      const resolvedTasks = tasks.reduce<Task[]>((acc, task) => {
+        const resolvedTask = resolveTask(task);
+        // TODO: Handle error
+        if (!resolvedTask) return acc;
+        return [...acc, resolvedTask];
+      }, []);
+
       return prev.map((sprint) => {
         // Remove tasks from source sprint
         if (sprint.id === fromSprintId)
           return {
             ...sprint,
-            tasks: tasks.reduce<TaskSelection[]>(
+            tasks: tasks.reduce<Task[]>(
               (acc, task) => excludeTask([...acc], task),
               sprint.tasks,
             ),
@@ -500,7 +483,7 @@ export function useSessionPlanner(
         if (sprint.id === toSprintId)
           return {
             ...sprint,
-            tasks: mergeTasks([...sprint.tasks, ...tasks]),
+            tasks: mergeTasks([...sprint.tasks, ...resolvedTasks]),
           };
 
         // Leave other sprints unchanged
@@ -510,7 +493,7 @@ export function useSessionPlanner(
   };
 
   return {
-    sprints: populatedSprints,
+    sprints,
     unassignedTasks,
     addSprint,
     addSprints,
@@ -528,13 +511,26 @@ export function useSessionPlanner(
 
 // ------ Utility Functions ------
 
+export const initializeSprints = (
+  sprintCount: number,
+  sprintDuration: number = DEFAULT_OPTIONS.sprintDuration,
+): SprintPlan[] =>
+  Array.from(
+    { length: sprintCount },
+    (): SprintPlan => ({
+      id: nanoid(),
+      duration: sprintDuration,
+      tasks: [],
+    }),
+  );
+
 const findSprint = (
   sprintId: string,
-  sprints: MinimalSprint[],
-): MinimalSprint | null =>
+  sprints: SprintPlan[],
+): SprintPlan | null =>
   sprints.find((sprint) => sprint.id === sprintId) ?? null;
 
-const sprintExists = (sprintId: string, sprints: MinimalSprint[]): boolean =>
+const sprintExists = (sprintId: string, sprints: SprintPlan[]): boolean =>
   sprints.some((sprint) => sprint.id === sprintId);
 
 const validateTaskSelections = (selections: TaskSelection[], tasks: Task[]) =>
@@ -588,35 +584,44 @@ const validateTaskSelections = (selections: TaskSelection[], tasks: Task[]) =>
     { validTaskSelections: [], invalidTaskSelections: [] },
   );
 
-const mergeTasks = (tasks: TaskSelection[]) =>
-  tasks.reduce<TaskSelection[]>((acc, task) => {
-    const existingTask = acc.find(
-      (prevTask) => prevTask.taskId === task.taskId,
-    );
+export const mergeTasks = (tasks: Task[]): Task[] =>
+  tasks.reduce<Task[]>((acc, task) => {
+    const existingTask = acc.find((prevTask) => prevTask.id === task.id);
     if (!existingTask) return [...acc, task];
     if (!hasSubtasks(task) || !hasSubtasks(existingTask)) return acc;
 
-    return acc.map<TaskSelection>((prevTask) => {
-      if (prevTask.taskId !== task.taskId) return prevTask;
+    return acc.map<Task>((prevTask) => {
+      if (prevTask.id !== task.id) return prevTask;
       if (!hasSubtasks(prevTask)) return prevTask;
 
       return {
         ...prevTask,
-        subtasks: [...prevTask.subtasks, ...task.subtasks],
+        subtasks: task.subtasks.reduce<Subtask[]>((acc, subtask) => {
+          const isSubtaskAlreadyInList = acc.some(
+            (subtaskInList) => subtaskInList.id === subtask.id,
+          );
+          if (isSubtaskAlreadyInList) return acc;
+          return [...acc, subtask];
+        }, prevTask.subtasks),
       };
     });
   }, []);
 
-const excludeTask = (tasks: TaskSelection[], taskToExclude: TaskSelection) =>
-  tasks.reduce<TaskSelection[]>((acc, task) => {
-    if (task.taskId !== taskToExclude.taskId) return [...acc, task];
+export const excludeTask = (
+  tasks: Task[],
+  taskToExclude: TaskSelection,
+): Task[] =>
+  tasks.reduce<Task[]>((acc, task) => {
+    if (task.id !== taskToExclude.taskId) return [...acc, task];
 
     if (!hasSubtasks(task) || !hasSubtasks(taskToExclude)) return acc;
 
     const taskWithRemainingSubtasks = {
       ...task,
-      subtasks: task.subtasks.filter(
-        (subtaskId) => !taskToExclude.subtasks.includes(subtaskId),
+      subtasks: task.subtasks.filter((subtask) =>
+        taskToExclude.subtasks.every(
+          (subtaskToExclude) => subtask.id !== subtaskToExclude,
+        ),
       ),
     };
 

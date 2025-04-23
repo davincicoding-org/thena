@@ -18,7 +18,11 @@ import { IconChevronRight } from "@tabler/icons-react";
 
 import { SprintPlan } from "@/core/deep-work";
 import { Task } from "@/core/task-management";
-import { SessionPlanner, useSessionPlanner } from "@/ui/deep-work";
+import {
+  initializeSprints,
+  SessionPlanner,
+  useSessionPlanner,
+} from "@/ui/deep-work";
 import { useDerivedStateUpdater, useTemporalState } from "@/ui/hooks";
 import { TaskList, useTaskList } from "@/ui/task-management";
 import { StateSetter } from "@/ui/utils";
@@ -35,11 +39,11 @@ export default function SessionPage() {
     defaultValue: {
       stage: "task-list",
       tasks: [],
-      sprints: [],
+      sprints: initializeSprints(2),
     },
   });
 
-  const [{ tasks, stage }, setState, history] = useTemporalState({
+  const [{ stage, tasks, sprints }, setState, history] = useTemporalState({
     externalState: [localState, setLocalState],
   });
 
@@ -52,6 +56,12 @@ export default function SessionPage() {
     setState,
     transformer: ({ tasks }) => tasks,
     updater: (prev, tasks) => ({ ...prev, tasks }),
+  });
+
+  const setSprints = useDerivedStateUpdater({
+    setState,
+    transformer: ({ sprints }) => sprints,
+    updater: (prev, sprints) => ({ ...prev, sprints }),
   });
 
   const router = useRouter();
@@ -88,6 +98,8 @@ export default function SessionPage() {
           <Tabs.Panel value="session-planner">
             <PlanSession
               tasks={tasks}
+              sprints={sprints}
+              setSprints={setSprints}
               onComplete={(sprints) => {
                 setState((prev) => ({
                   ...prev,
@@ -192,12 +204,18 @@ function CollectTasks({
 
 function PlanSession({
   tasks,
+  sprints,
+  setSprints,
   onComplete,
 }: {
   tasks: Task[];
+  sprints: SprintPlan[];
+  setSprints: StateSetter<SprintPlan[]>;
   onComplete: (sprints: SprintPlan[]) => void;
 }) {
-  const sessionPlanner = useSessionPlanner(tasks, { initialSprints: 2 });
+  const sessionPlanner = useSessionPlanner(tasks, {
+    externalState: [sprints, setSprints],
+  });
   // TODO: Sync with local state
   // TODO: Add more tasks
   // TODO: Drop tasks
