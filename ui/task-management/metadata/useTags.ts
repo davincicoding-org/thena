@@ -1,11 +1,12 @@
 import { useCallback, useState } from "react";
 import { nanoid } from "nanoid";
 
-import { StateHook, Tag } from "@/core/task-management";
+import { Tag } from "@/core/task-management";
+import { ExternalState } from "@/ui/utils";
 
 export interface TagsHookOptions {
   initialTags?: Tag[];
-  stateAdapter?: StateHook<Tag[]>;
+  externalState?: ExternalState<Tag[]>;
 }
 
 export interface TagsHookReturn {
@@ -20,10 +21,8 @@ export interface TagsHookReturn {
  */
 export function useTags({
   initialTags = [],
-  stateAdapter: useTagsState = useState,
+  externalState: [tags, setTags] = useState<Tag[]>(initialTags),
 }: TagsHookOptions = {}): TagsHookReturn {
-  const [tags, setTags] = useTagsState(initialTags);
-
   const createTag = useCallback(
     (tag: Omit<Tag, "id">) => {
       const newTag: Tag = {

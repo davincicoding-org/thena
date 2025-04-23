@@ -1,25 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
 import { z } from "zod";
 
-export const colorsEnum = z.enum([
-  "primary",
-  "gray",
-  "red",
-  "pink",
-  "grape",
-  "violet",
-  "indigo",
-  "blue",
-  "cyan",
-  "teal",
-  "green",
-  "lime",
-  "yellow",
-  "orange",
-]);
-
-export type Color = z.infer<typeof colorsEnum>;
-
 export const baseTaskSchema = z.object({
   id: z.string(),
   title: z.string().min(1, "Title is required"),
@@ -71,6 +52,25 @@ export interface BacklogFilters {
   search?: string;
 }
 
+export const colorsEnum = z.enum([
+  "primary",
+  "gray",
+  "red",
+  "pink",
+  "grape",
+  "violet",
+  "indigo",
+  "blue",
+  "cyan",
+  "teal",
+  "green",
+  "lime",
+  "yellow",
+  "orange",
+]);
+
+export type Color = z.infer<typeof colorsEnum>;
+
 export const projectSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -88,6 +88,3 @@ export const tagSchema = z.object({
 });
 export type Tag = z.infer<typeof tagSchema>;
 
-export type StateHook<S> = (
-  initialState: S,
-) => [S, Dispatch<SetStateAction<S>>];

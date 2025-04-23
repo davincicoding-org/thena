@@ -19,7 +19,7 @@ describe("useTaskList", () => {
 
   it("should initialize with empty tasks array", () => {
     const { result } = renderHook(() => useTaskList());
-    expect(result.current.tasks).toEqual([]);
+    expect(result.current.items).toEqual([]);
   });
 
   describe("task operations", () => {
@@ -30,7 +30,7 @@ describe("useTaskList", () => {
         result.current.addTask({ title: "Test Task" });
       });
 
-      expect(result.current.tasks).toEqual([
+      expect(result.current.items).toEqual([
         { id: "test-id", title: "Test Task" },
       ]);
     });
@@ -48,7 +48,7 @@ describe("useTaskList", () => {
         result.current.addTasks(tasks);
       });
 
-      expect(result.current.tasks).toEqual([
+      expect(result.current.items).toEqual([
         { id: "test-id-1", title: "Task 1" },
         { id: "test-id-2", title: "Task 2" },
       ]);
@@ -65,7 +65,7 @@ describe("useTaskList", () => {
         result.current.updateTask("test-id", { title: "Updated Task" });
       });
 
-      expect(result.current.tasks).toEqual([
+      expect(result.current.items).toEqual([
         { id: "test-id", title: "Updated Task" },
       ]);
     });
@@ -86,9 +86,9 @@ describe("useTaskList", () => {
       });
 
       // Verify we have two tasks before removing
-      expect(result.current.tasks).toHaveLength(2);
-      const firstTask = result.current.tasks[0];
-      const secondTask = result.current.tasks[1];
+      expect(result.current.items).toHaveLength(2);
+      const firstTask = result.current.items[0];
+      const secondTask = result.current.items[1];
       if (firstTask && secondTask) {
         expect(firstTask.id).toBe("test-id-1");
         expect(secondTask.id).toBe("test-id-2");
@@ -100,8 +100,8 @@ describe("useTaskList", () => {
       });
 
       // Now we should have just one task (the second one) left
-      expect(result.current.tasks).toHaveLength(1);
-      const remainingTask = result.current.tasks[0];
+      expect(result.current.items).toHaveLength(1);
+      const remainingTask = result.current.items[0];
       if (remainingTask) {
         expect(remainingTask.id).toBe("test-id-2");
       }
@@ -129,7 +129,7 @@ describe("useTaskList", () => {
       });
 
       // Verify we have three tasks before removing
-      expect(result.current.tasks).toHaveLength(3);
+      expect(result.current.items).toHaveLength(3);
 
       // Remove first and third tasks
       act(() => {
@@ -137,8 +137,8 @@ describe("useTaskList", () => {
       });
 
       // Now we should have just the second task left
-      expect(result.current.tasks).toHaveLength(1);
-      const remainingTask = result.current.tasks[0];
+      expect(result.current.items).toHaveLength(1);
+      const remainingTask = result.current.items[0];
       if (remainingTask) {
         expect(remainingTask.id).toBe("test-id-2");
         expect(remainingTask.title).toBe("Task 2");
@@ -164,8 +164,8 @@ describe("useTaskList", () => {
       });
 
       // Verify both task and subtask exist
-      expect(result.current.tasks).toHaveLength(1);
-      const task = result.current.tasks[0];
+      expect(result.current.items).toHaveLength(1);
+      const task = result.current.items[0];
       if (task && task.subtasks) {
         expect(task.subtasks).toEqual([{ id: "subtask-id", title: "Subtask" }]);
       }
@@ -192,8 +192,8 @@ describe("useTaskList", () => {
       });
 
       // Verify both task and subtasks exist
-      expect(result.current.tasks).toHaveLength(1);
-      const task = result.current.tasks[0];
+      expect(result.current.items).toHaveLength(1);
+      const task = result.current.items[0];
       expect(task).toBeDefined();
       if (task) {
         expect(task.subtasks).toBeDefined();
@@ -231,8 +231,8 @@ describe("useTaskList", () => {
       });
 
       // Verify the update occurred
-      expect(result.current.tasks).toHaveLength(1);
-      const task = result.current.tasks[0];
+      expect(result.current.items).toHaveLength(1);
+      const task = result.current.items[0];
       if (task && task.subtasks && task.subtasks.length > 0) {
         const subtask = task.subtasks[0];
         expect(subtask).toEqual({
@@ -264,8 +264,8 @@ describe("useTaskList", () => {
       });
 
       // Verify the initial state
-      expect(result.current.tasks).toHaveLength(1);
-      const initialTask = result.current.tasks[0];
+      expect(result.current.items).toHaveLength(1);
+      const initialTask = result.current.items[0];
       if (initialTask && initialTask.subtasks) {
         expect(initialTask.subtasks.length).toBe(2);
       }
@@ -276,8 +276,8 @@ describe("useTaskList", () => {
       });
 
       // Verify the removal
-      expect(result.current.tasks).toHaveLength(1);
-      const task = result.current.tasks[0];
+      expect(result.current.items).toHaveLength(1);
+      const task = result.current.items[0];
       if (task && task.subtasks) {
         expect(task.subtasks).toEqual([
           { id: "subtask-id-2", title: "Subtask 2" },
@@ -313,8 +313,8 @@ describe("useTaskList", () => {
       });
 
       // Verify the initial state
-      expect(result.current.tasks).toHaveLength(1);
-      const initialTask = result.current.tasks[0];
+      expect(result.current.items).toHaveLength(1);
+      const initialTask = result.current.items[0];
       if (initialTask && initialTask.subtasks) {
         expect(initialTask.subtasks.length).toBe(3);
 
@@ -335,8 +335,8 @@ describe("useTaskList", () => {
       });
 
       // Verify the removal
-      expect(result.current.tasks).toHaveLength(1);
-      const task = result.current.tasks[0];
+      expect(result.current.items).toHaveLength(1);
+      const task = result.current.items[0];
       if (task && task.subtasks) {
         expect(task.subtasks).toEqual([
           { id: "subtask-id-2", title: "Subtask 2" },

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { BoxProps, Button, Center, Flex, Stack } from "@mantine/core";
 
-import { taskManagerResponseSchema } from "@/core/task-management/schema";
+import { taskManagerResponseSchema } from "@/ui/assistant/schema";
 import { useKeyHold } from "@/ui/hooks/useKeyHold";
 import { TaskList, useTaskList } from "@/ui/task-management";
 
@@ -29,7 +29,13 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
     lang: speech.lang,
   });
 
-  const { tasks, setTasks, addTask, updateTask, removeTask } = useTaskList();
+  const {
+    items: tasks,
+    setItems: setTasks,
+    addTask,
+    updateTask,
+    removeTask,
+  } = useTaskList();
 
   const chat = useChat({
     api: "/api/task-manager",

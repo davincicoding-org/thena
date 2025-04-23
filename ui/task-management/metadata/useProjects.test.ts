@@ -104,7 +104,7 @@ describe("useProjects", () => {
     customState.mockReturnValue([initialValue, setState]);
 
     const { result } = renderHook(() =>
-      useProjects({ stateAdapter: customState }),
+      useProjects({ externalState: [initialValue, setState] }),
     );
 
     expect(customState).toHaveBeenCalledWith(expect.any(Array));

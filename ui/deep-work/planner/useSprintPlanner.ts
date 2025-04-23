@@ -3,26 +3,36 @@ import { nanoid } from "nanoid";
 
 import { SprintPlan, TaskSelection } from "@/core/deep-work";
 import { hasSubtasks, Task } from "@/core/task-management";
+import { ExternalState as InjectedState } from "@/ui/utils";
 
-export const DEFAULT_OPTIONS: Required<SessionPlannerHookOptions> = {
-  sprintCount: 0,
+export const DEFAULT_OPTIONS = {
+  initialSprints: 0,
   sprintDuration: 25,
-  onError: () => {},
 };
 
 export interface SessionPlannerHookOptions {
   /** Initial number of Sprints */
-  sprintCount?: number;
+  initialSprints?: number | SprintPlan[];
   /** Default duration for new Sprints */
   sprintDuration?: number;
   /** Error callback for handling errors without throwing */
   onError?: (error: SprintPlannerError) => void;
+  externalState?: InjectedState<SprintPlan[]>;
 }
 
 // Define a sprint plan with task selections
 interface MinimalSprint extends Pick<SprintPlan, "id" | "duration"> {
   tasks: TaskSelection[];
 }
+
+const toMinimalSprint = (sprint: SprintPlan): MinimalSprint => ({
+  id: sprint.id,
+  duration: sprint.duration,
+  tasks: sprint.tasks.map((task) => ({
+    taskId: task.id,
+    subtasks: task.subtasks?.map((subtask) => subtask.id),
+  })),
+});
 
 export interface SessionPlannerHookReturn {
   /** All current Sprint plans (with populated tasks) */
@@ -32,7 +42,7 @@ export interface SessionPlannerHookReturn {
   unassignedTasks: Task[];
 
   /** Initialize `count` empty Sprints */
-  initialize: (options: SessionPlannerHookOptions) => void;
+  // initialize: (options: SessionPlannerHookOptions) => void;
 
   /** Add a new empty Sprint, using optional duration */
   addSprint: (sprintToAdd: {
@@ -101,21 +111,23 @@ export interface SessionPlannerHookReturn {
 export function useSessionPlanner(
   taskPool: Task[],
   {
-    sprintCount = DEFAULT_OPTIONS.sprintCount,
+    initialSprints = DEFAULT_OPTIONS.initialSprints,
     sprintDuration = DEFAULT_OPTIONS.sprintDuration,
-    onError = DEFAULT_OPTIONS.onError,
+    onError,
   }: SessionPlannerHookOptions = DEFAULT_OPTIONS,
 ): SessionPlannerHookReturn {
   // ------ Initialization ------
   const [sprints, setSprints] = useState<MinimalSprint[]>(
-    Array.from(
-      { length: sprintCount },
-      (): MinimalSprint => ({
-        id: nanoid(),
-        duration: sprintDuration,
-        tasks: [],
-      }),
-    ),
+    typeof initialSprints === "number"
+      ? Array.from(
+          { length: initialSprints },
+          (): MinimalSprint => ({
+            id: nanoid(),
+            duration: sprintDuration,
+            tasks: [],
+          }),
+        )
+      : initialSprints.map(toMinimalSprint),
   );
 
   const unassignedTasks = useMemo(() => {
@@ -142,20 +154,20 @@ export function useSessionPlanner(
     }, []);
   }, [taskPool, sprints]);
 
-  const initialize: SessionPlannerHookReturn["initialize"] = ({
-    sprintCount = DEFAULT_OPTIONS.sprintCount,
-    sprintDuration = DEFAULT_OPTIONS.sprintDuration,
-  }) =>
-    setSprints(
-      Array.from(
-        { length: sprintCount },
-        (): MinimalSprint => ({
-          id: nanoid(),
-          duration: sprintDuration,
-          tasks: [],
-        }),
-      ),
-    );
+  // const initialize: SessionPlannerHookReturn["initialize"] = ({
+  //   initialSprints: sprintCount = DEFAULT_OPTIONS.initialSprints,
+  //   sprintDuration = DEFAULT_OPTIONS.sprintDuration,
+  // }) =>
+  //   setSprints(
+  //     Array.from(
+  //       { length: sprintCount },
+  //       (): MinimalSprint => ({
+  //         id: nanoid(),
+  //         duration: sprintDuration,
+  //         tasks: [],
+  //       }),
+  //     ),
+  //   );
 
   // ------ Helpers ------
   const handleError = (
@@ -163,7 +175,7 @@ export function useSessionPlanner(
     action: SprintPlannerAction,
     details?: Record<string, unknown>,
   ) => {
-    onError({
+    onError?.({
       code,
       action,
       details,
@@ -500,7 +512,6 @@ export function useSessionPlanner(
   return {
     sprints: populatedSprints,
     unassignedTasks,
-    initialize,
     addSprint,
     addSprints,
     updateSprint,

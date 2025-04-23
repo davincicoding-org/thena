@@ -1,3 +1,6 @@
+
+import { Dispatch } from "react";
+
 export type Interpolation = Record<string, any>;
 
 export function interpolate(template: string, values: Interpolation): string {
@@ -13,3 +16,5 @@ export function interpolate(template: string, values: Interpolation): string {
     return String(value);
   });
 }
+
+

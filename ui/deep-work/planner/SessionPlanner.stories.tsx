@@ -103,7 +103,7 @@ const Playground = () => {
       },
     ],
     {
-      sprintCount: 3,
+      initialSprints: 3,
     },
   );
   return (

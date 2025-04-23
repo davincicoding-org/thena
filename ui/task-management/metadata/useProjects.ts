@@ -1,11 +1,12 @@
 import { useCallback, useState } from "react";
 import { nanoid } from "nanoid";
 
-import { Project, StateHook } from "@/core/task-management";
+import { Project } from "@/core/task-management";
+import { ExternalState } from "@/ui/utils";
 
 export interface ProjectsHookOptions {
   initialProjects?: Project[];
-  stateAdapter?: StateHook<Project[]>;
+  externalState?: ExternalState<Project[]>;
 }
 
 export interface ProjectsHookReturn {
@@ -21,10 +22,8 @@ export interface ProjectsHookReturn {
 
 export function useProjects({
   initialProjects = [],
-  stateAdapter: useProjectsState = useState,
+  externalState: [projects, setProjects] = useState(initialProjects),
 }: ProjectsHookOptions = {}): ProjectsHookReturn {
-  const [projects, setProjects] = useProjectsState(initialProjects);
-
   const createProject = useCallback(
     (project: Omit<Project, "id">) => {
       const newProject: Project = {

@@ -3,7 +3,7 @@ import { generateObject, Message, NoObjectGeneratedError } from "ai";
 import { z } from "zod";
 
 import { taskSchema } from "@/core/task-management";
-import { taskManagerRequestSchema } from "@/core/task-management/schema";
+import { taskManagerRequestSchema } from "@/ui/assistant/schema";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;

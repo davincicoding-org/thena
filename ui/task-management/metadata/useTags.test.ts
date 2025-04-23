@@ -118,7 +118,7 @@ describe("useTags", () => {
 
     customState.mockReturnValue([initialValue, setState]);
 
-    const { result } = renderHook(() => useTags({ stateAdapter: customState }));
+    const { result } = renderHook(() => useTags({ externalState: [initialValue, setState] }));
 
     expect(customState).toHaveBeenCalledWith(expect.any(Array));
     expect(result.current.tags).toBe(initialValue);

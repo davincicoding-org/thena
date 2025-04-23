@@ -77,9 +77,37 @@ export function TaskPool({
       withBorder
       display="grid"
       bg="neutral.8"
-      className={cn("h-full grid-rows-[1fr_auto]", props.className)}
+      className={cn("h-full min-w-48 grid-rows-[auto_1fr]", props.className)}
       {...props}
     >
+      <Collapse in={selectionEnabled} pos="sticky" top={0}>
+        <Card p="xs">
+          <Flex justify="space-between" align="center" gap="xs" h={30}>
+            {selection.length > 0 ? (
+              <Button
+                size="xs"
+                leftSection={<IconArrowLeft size={16} />}
+                onClick={handleAssignTasks}
+              >
+                Add to Sprint
+              </Button>
+            ) : (
+              <Text flex={1} opacity={0.5}>
+                Select Tasks
+              </Text>
+            )}
+            <ActionIcon
+              size="lg"
+              variant="subtle"
+              color="red"
+              className="-my-2 -mr-1"
+              onClick={handleAbortSelection}
+            >
+              <IconX size={20} />
+            </ActionIcon>
+          </Flex>
+        </Card>
+      </Collapse>
       <ScrollArea
         scrollbars="y"
         classNames={{ viewport: "pb-2" }}
@@ -189,34 +217,6 @@ export function TaskPool({
           ))}
         </Stack>
       </ScrollArea>
-      <Collapse in={selectionEnabled} pos="sticky" bottom={0} mt="auto">
-        <Card p="xs">
-          <Flex justify="space-between" align="center" gap="xs" h={30}>
-            {selection.length > 0 ? (
-              <Button
-                size="xs"
-                leftSection={<IconArrowLeft size={16} />}
-                onClick={handleAssignTasks}
-              >
-                Add to Sprint
-              </Button>
-            ) : (
-              <Text flex={1} opacity={0.5}>
-                No tasks selected
-              </Text>
-            )}
-            <ActionIcon
-              size="lg"
-              variant="subtle"
-              color="red"
-              className="-my-2 -mr-1"
-              onClick={handleAbortSelection}
-            >
-              <IconX size={20} />
-            </ActionIcon>
-          </Flex>
-        </Card>
-      </Collapse>
     </Paper>
   );
 }

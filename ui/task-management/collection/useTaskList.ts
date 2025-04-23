@@ -1,20 +1,21 @@
 import { Dispatch, SetStateAction, useCallback, useState } from "react";
 import { nanoid } from "nanoid";
 
-import { StateHook, Subtask, Task } from "@/core/task-management";
+import { Subtask, Task } from "@/core/task-management";
+import { ExternalState } from "@/ui/utils";
 
 export type SubtaskInput = Omit<Subtask, "id">;
 export type TaskInput = Omit<Task, "id"> & { subtasks?: SubtaskInput[] };
 
 export interface TaskListHookOptions {
   initialTasks?: Task[];
-  useStateAdapter?: StateHook<Task[]>;
+  externalState?: ExternalState<Task[]>;
 }
 
 export interface TaskListHookReturn {
   // Current list of tasks
-  tasks: Task[];
-  setTasks: Dispatch<SetStateAction<Task[]>>;
+  items: Task[];
+  setItems: Dispatch<SetStateAction<Task[]>>;
 
   // Task operations
   addTask: (task: TaskInput) => void;
@@ -41,10 +42,9 @@ export interface TaskListHookReturn {
  */
 export function useTaskList({
   initialTasks = [],
-  useStateAdapter = useState,
+  externalState: [tasks, setTasks] = useState(initialTasks),
 }: TaskListHookOptions = {}): TaskListHookReturn {
   // Use the useUndo hook for managing tasks with history
-  const [tasks, setTasks] = useStateAdapter(initialTasks);
 
   /**
    * Add a single task
@@ -218,8 +218,8 @@ export function useTaskList({
   );
 
   return {
-    tasks,
-    setTasks,
+    items: tasks,
+    setItems: setTasks,
     addTask,
     addTasks,
     updateTask,

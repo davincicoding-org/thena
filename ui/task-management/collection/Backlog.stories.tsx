@@ -61,21 +61,21 @@ export const Interactive: Story = {
     const [{ tasks, filters, sort }, updateArgs] = useArgs<BacklogProps>();
     const backlog = useBacklog({
       initialTasks: tasks,
-      stateAdapter: () => [
+      externalTasksState: [
         tasks,
         (updates) =>
           updateArgs({
             tasks: typeof updates === "function" ? updates(tasks) : updates,
           }),
       ],
-      filterStateAdapter: () => [
+      externalFiltersState: [
         filters,
         (updates) =>
           updateArgs({
             filters: typeof updates === "function" ? updates(filters) : updates,
           }),
       ],
-      sortStateAdapter: () => [
+      externalSortState: [
         sort,
         (updates) =>
           updateArgs({

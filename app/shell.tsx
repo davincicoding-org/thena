@@ -1,39 +1,54 @@
 "use client";
 
 import Link from "next/link";
-import { AppShell, Button, Flex } from "@mantine/core";
+import { usePathname } from "next/navigation";
+import { ActionIcon, AppShell, Flex, Modal, Text } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { IconAdjustmentsHorizontal } from "@tabler/icons-react";
+
+import { Configuration } from "@/ui/misc/Configuration";
+import { cn } from "@/ui/utils";
 
 export default function Shell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const [isConfigOpen, configModal] = useDisclosure(false);
+
   return (
     <AppShell header={{ height: 60 }}>
-      <AppShell.Header>
-        <Flex py="sm" px="md" gap="sm">
-          <Button component={Link} href="/sprint" variant="default">
-            Sprint
-          </Button>
-          <Button component={Link} href="/session-planner" variant="default">
-            Session Planner
-          </Button>
-          <Button component={Link} href="/tasks" variant="default">
-            Tasks
-          </Button>
-          <Button component={Link} href="/task-wizard" variant="default">
-            Task Wizard
-          </Button>
-          <Button component={Link} href="/chat" variant="default">
-            Chat
-          </Button>
-          <Button component={Link} href="/speech" variant="default">
-            Speech
-          </Button>
-          <Button component={Link} href="/backlog" variant="default">
-            Backlog
-          </Button>
-          <Button component={Link} href="/config" variant="default" ml="auto">
-            Config
-          </Button>
+      <AppShell.Header withBorder={false}>
+        <Flex py="xs" px="md" gap="sm" align="center" className="h-full">
+          <Text
+            size="xl"
+            component={Link}
+            href="/"
+            className={cn("select-none", {
+              "pointer-events-none": pathname === "/",
+            })}
+          >
+            ConcentrAID
+          </Text>
+
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            size="xl"
+            ml="auto"
+            onClick={configModal.open}
+          >
+            <IconAdjustmentsHorizontal size={24} />
+          </ActionIcon>
         </Flex>
       </AppShell.Header>
+
+      <Modal
+        title={<Text size="xl">Configuration</Text>}
+        opened={isConfigOpen}
+        centered
+        transitionProps={{ transition: "slide-down", duration: 300 }}
+        onClose={configModal.close}
+      >
+        <Configuration />
+      </Modal>
 
       {children}
     </AppShell>

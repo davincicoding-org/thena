@@ -5,17 +5,17 @@ import {
   BacklogFilters,
   BacklogSortOptions,
   BacklogTask,
-  StateHook,
   Task,
 } from "@/core/task-management";
+import { ExternalState } from "@/ui/utils";
 
 export interface BacklogHookOptions {
   initialTasks?: BacklogTask[];
-  stateAdapter?: StateHook<BacklogTask[]>;
+  externalTasksState?: ExternalState<BacklogTask[]>;
   defaultFilters?: BacklogFilters;
-  filterStateAdapter?: StateHook<BacklogFilters>;
+  externalFiltersState?: ExternalState<BacklogFilters>;
   defaultSort?: BacklogSortOptions;
-  sortStateAdapter?: StateHook<BacklogSortOptions>;
+  externalSortState?: ExternalState<BacklogSortOptions>;
 }
 
 export interface BacklogHookReturn {
@@ -39,16 +39,14 @@ export interface BacklogHookReturn {
  */
 export function useBacklog({
   initialTasks = [],
-  stateAdapter: useTasksState = useState,
+  externalTasksState: [allTasks, setAllTasks] = useState(initialTasks),
   defaultFilters = {},
-  filterStateAdapter: useFiltersState = useState,
+  externalFiltersState: [filters, setFilters] = useState(defaultFilters),
   defaultSort = { sortBy: "addedAt", direction: "desc" },
-  sortStateAdapter: useSortState = useState,
+  externalSortState: [sort, setSort] = useState(defaultSort),
 }: BacklogHookOptions = {}) {
   // State management
-  const [allTasks, setAllTasks] = useTasksState(initialTasks);
 
-  const [filters, setFilters] = useFiltersState(defaultFilters);
   const updateFilters = useCallback<BacklogHookReturn["updateFilters"]>(
     (updates: Partial<BacklogFilters>) => {
       setFilters({ ...filters, ...updates });
@@ -56,7 +54,6 @@ export function useBacklog({
     [filters, setFilters],
   );
 
-  const [sort, setSort] = useSortState(defaultSort);
   const updateSort = useCallback<BacklogHookReturn["updateSort"]>(
     (updates: Partial<BacklogSortOptions>) => {
       setSort({ ...sort, ...updates });

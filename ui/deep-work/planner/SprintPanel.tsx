@@ -258,7 +258,7 @@ export function SprintPanel({
               size="xs"
               onClick={onAddTasks}
             >
-              Add Tasks
+              Assign Tasks
             </Button>
           </Collapse>
 
@@ -271,7 +271,7 @@ export function SprintPanel({
                   fullWidth
                   onClick={onAddTasks}
                 >
-                  Add Tasks
+                  Assign Tasks
                 </Button>
               ) : (
                 <Text

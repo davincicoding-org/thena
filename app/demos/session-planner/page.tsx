@@ -117,7 +117,7 @@ export default function SessionPlannerPage() {
       },
     ],
     {
-      sprintCount: 3,
+      initialSprints: 3,
       sprintDuration: 25,
     },
   );

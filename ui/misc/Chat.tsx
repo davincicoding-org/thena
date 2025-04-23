@@ -33,6 +33,13 @@ export function Chat({
   const { speech } = useSpeechConfigStore();
   const { startListening, stopListening, isListening } = useSpeechRecognition({
     lang: speech.lang,
+    onResult: ({ results }) => {
+      setInput(
+        Array.from(results)
+          .map((result) => result.item(0).transcript.trim())
+          .join(" "),
+      );
+    },
   });
 
   return (
@@ -59,14 +66,7 @@ export function Chat({
             radius="sm"
             color={isListening ? "red" : "gray"}
             variant={isListening ? "filled" : "transparent"}
-            onClick={async () => {
-              if (!isListening) {
-                return startListening();
-              }
-              const input = await stopListening();
-              if (!input) return;
-              setInput(input);
-            }}
+            onClick={isListening ? stopListening : startListening}
           >
             {isListening ? <IconPlayerPause /> : <IconMicrophone />}
           </ActionIcon>

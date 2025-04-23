@@ -5,16 +5,24 @@ import {
   Button,
   Collapse,
   Divider,
+  Flex,
   Paper,
   PaperProps,
   Stack,
   Text,
   TextInput,
+  Tooltip,
 } from "@mantine/core";
 import { useDisclosure, useInputState } from "@mantine/hooks";
-import { IconPlus, IconTrash, IconX } from "@tabler/icons-react";
+import {
+  IconFileImport,
+  IconPlus,
+  IconTrash,
+  IconX,
+} from "@tabler/icons-react";
 
-import { Task } from "@/core/task-management";
+import { hasSubtasks, Task } from "@/core/task-management";
+import { cn } from "@/ui/utils";
 
 import { TaskForm, TaskFormProps } from "../task/TaskForm";
 import { taskFormOpts, TaskFormValues, useTaskForm } from "../task/useTaskForm";
@@ -69,7 +77,7 @@ export function TaskList({
           />
         ))}
         <Divider className="first:hidden" />
-        <TaskAdder onSubmit={onAddTask} />
+        <TaskAdder hasTasks={items.length > 0} onSubmit={onAddTask} />
       </Stack>
     </Paper>
   );
@@ -92,8 +100,10 @@ function Item({
 }
 
 function TaskAdder({
+  hasTasks,
   onSubmit,
 }: {
+  hasTasks: boolean;
   onSubmit: (task: Omit<Task, "id">) => void;
 }) {
   const [visible, { open, close }] = useDisclosure(false);
@@ -109,9 +119,33 @@ function TaskAdder({
 
   if (!visible)
     return (
-      <Button leftSection={<IconPlus size={20} />} size="xs" onClick={open}>
-        Add Task
-      </Button>
+      <Flex
+        gap="xs"
+        className={cn("transition-all", {
+          "-m-3": !hasTasks,
+        })}
+      >
+        <Button
+          className="transition-all"
+          flex={1}
+          leftSection={<IconPlus size={20} />}
+          size={hasTasks ? "xs" : "lg"}
+          variant={hasTasks ? "outline" : undefined}
+          onClick={open}
+        >
+          Create New Task
+        </Button>
+        <Tooltip label="COMING SOON">
+          <ActionIcon
+            className="transition-all"
+            size={hasTasks ? 30 : 50}
+            variant="default"
+            onClick={() => alert("COMING SOON")}
+          >
+            <IconFileImport size="60%" />
+          </ActionIcon>
+        </Tooltip>
+      </Flex>
     );
 
   return (

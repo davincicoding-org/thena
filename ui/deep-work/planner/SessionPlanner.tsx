@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Badge,
   Box,
@@ -54,7 +54,6 @@ export function SessionPlanner({
   onAssignTasksToSprint,
   onUnassignTasksFromSprint: onUnassignTaskFromSprint,
   onMoveTasks,
-  className,
   ...paperProps
 }: SessionPlannerProps & PaperProps) {
   const [isShowingUnassignedTasks, unassignedTasksPanel] = useDisclosure(false);
@@ -70,6 +69,12 @@ export function SessionPlanner({
     (acc, task) => acc + (task.subtasks?.length || 1),
     0,
   );
+
+  useEffect(() => {
+    if (unassignedTasks.length === 0) {
+      unassignedTasksPanel.close();
+    }
+  }, [unassignedTasks.length]);
 
   return (
     <Panel
