@@ -44,7 +44,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         title={<Text size="xl">Configuration</Text>}
         opened={isConfigOpen}
         centered
-        transitionProps={{ transition: "slide-down", duration: 300 }}
+        transitionProps={{ transition: "pop" }}
         onClose={configModal.close}
       >
         <Configuration />

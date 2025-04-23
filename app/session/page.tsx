@@ -1,7 +1,19 @@
 "use client";
 
-import { AppShell, Button, Center, Tabs } from "@mantine/core";
-import { useHotkeys, useLocalStorage } from "@mantine/hooks";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  AppShell,
+  Button,
+  Center,
+  Menu,
+  Modal,
+  SimpleGrid,
+  Space,
+  Tabs,
+  Text,
+} from "@mantine/core";
+import { useDisclosure, useHotkeys, useLocalStorage } from "@mantine/hooks";
 import { IconChevronRight } from "@tabler/icons-react";
 
 import { SprintPlan } from "@/core/deep-work";
@@ -14,7 +26,7 @@ import { StateSetter } from "@/ui/utils";
 type Stage = "task-list" | "session-planner" | "session-runner";
 
 export default function SessionPage() {
-  const [localState, setLocalState] = useLocalStorage<{
+  const [localState, setLocalState, removeLocalState] = useLocalStorage<{
     stage: Stage;
     tasks: Task[];
     sprints: SprintPlan[];
@@ -41,6 +53,23 @@ export default function SessionPage() {
     transformer: ({ tasks }) => tasks,
     updater: (prev, tasks) => ({ ...prev, tasks }),
   });
+
+  const router = useRouter();
+  const [
+    isDeleteModalOpen,
+    { open: openDeleteModal, close: closeDeleteModal },
+  ] = useDisclosure(false);
+
+  const handleReset = () => {
+    removeLocalState();
+    history.reset();
+  };
+
+  const handleDelete = () => {
+    if (tasks.length > 0) return openDeleteModal();
+    handleReset();
+    router.push("/");
+  };
 
   return (
     <AppShell.Main display="grid">
@@ -71,6 +100,56 @@ export default function SessionPage() {
           <Tabs.Panel value="session-runner">COMING SOON</Tabs.Panel>
         </Tabs>
       </Center>
+      <Menu position="top-start">
+        <Menu.Target>
+          <Button
+            pos="absolute"
+            left={24}
+            bottom={24}
+            size="lg"
+            variant="outline"
+            color="gray"
+          >
+            Cancel
+          </Button>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Item component={Link} href="/">
+            Save Session
+          </Menu.Item>
+          <Menu.Divider />
+          <Menu.Item color="red" onClick={handleDelete}>
+            Delete Session
+          </Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
+      <Modal
+        centered
+        size="sm"
+        transitionProps={{ transition: "pop" }}
+        withCloseButton={false}
+        opened={isDeleteModalOpen}
+        onClose={closeDeleteModal}
+      >
+        <Text className="text-center text-balance">
+          Do you want to move your tasks to the backlog or delete them
+          permanently?
+        </Text>
+        <Space h="lg" />
+        <SimpleGrid cols={2}>
+          <Button
+            color="red"
+            variant="light"
+            onClick={() => {
+              handleReset();
+              router.push("/");
+            }}
+          >
+            Delete
+          </Button>
+          <Button onClick={() => alert("COMING SOON")}>Move to Backlog</Button>
+        </SimpleGrid>
+      </Modal>
     </AppShell.Main>
   );
 }
@@ -96,16 +175,17 @@ function CollectTasks({
         onRemoveTask={taskList.removeTask}
         onAddTask={taskList.addTask}
       />
-      <Center pos="fixed" className="inset-x-0 bottom-0" p="lg">
-        <Button
-          size="lg"
-          disabled={tasks.length === 0}
-          rightSection={<IconChevronRight />}
-          onClick={onComplete}
-        >
-          Plan Session
-        </Button>
-      </Center>
+      <Button
+        pos="absolute"
+        right={24}
+        bottom={24}
+        size="lg"
+        disabled={tasks.length === 0}
+        rightSection={<IconChevronRight />}
+        onClick={onComplete}
+      >
+        Plan Session
+      </Button>
     </>
   );
 }
@@ -134,16 +214,17 @@ function PlanSession({
         onUnassignTasksFromSprint={sessionPlanner.unassignTasks}
         onMoveTasks={sessionPlanner.moveTasks}
       />
-      <Center pos="fixed" className="inset-x-0 bottom-0" p="lg">
-        <Button
-          disabled={sessionPlanner.unassignedTasks.length > 0}
-          size="lg"
-          rightSection={<IconChevronRight />}
-          onClick={() => onComplete(sessionPlanner.sprints)}
-        >
-          Start Session
-        </Button>
-      </Center>
+      <Button
+        pos="absolute"
+        right={24}
+        bottom={24}
+        size="lg"
+        rightSection={<IconChevronRight />}
+        disabled={sessionPlanner.unassignedTasks.length > 0}
+        onClick={() => onComplete(sessionPlanner.sprints)}
+      >
+        Start Session
+      </Button>
     </>
   );
 }

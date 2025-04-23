@@ -11,7 +11,7 @@ export default function HomePage() {
     <AppShell.Main display="grid">
       <Center>
         <Button size="xl" radius="md" component={Link} href="/session">
-          Start New Session
+          New Session
         </Button>
       </Center>
 

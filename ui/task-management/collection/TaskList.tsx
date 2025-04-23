@@ -45,7 +45,12 @@ export function TaskList({
   ...paperProps
 }: TaskListProps & PaperProps) {
   return (
-    <Paper withBorder p="sm" {...paperProps}>
+    <Paper
+      withBorder={items.length > 0}
+      className="transition-all"
+      p="sm"
+      {...paperProps}
+    >
       <Stack>
         {items.map((item) => (
           <Item
@@ -119,12 +124,7 @@ function TaskAdder({
 
   if (!visible)
     return (
-      <Flex
-        gap="xs"
-        className={cn("transition-all", {
-          "-m-3": !hasTasks,
-        })}
-      >
+      <Flex gap="xs">
         <Button
           className="transition-all"
           flex={1}
