@@ -41,7 +41,6 @@ describe("useBacklog", () => {
       {
         id: "task-2",
         title: "Task 2",
-        description: "Description 2",
         addedAt: "2022-12-30T12:00:00.000Z",
       },
     ];
@@ -69,10 +68,7 @@ describe("useBacklog", () => {
     const { result } = renderHook(() => useBacklog());
 
     act(() => {
-      result.current.addTasks([
-        { title: "Task 1" },
-        { title: "Task 2", description: "Description 2" },
-      ]);
+      result.current.addTasks([{ title: "Task 1" }, { title: "Task 2" }]);
     });
 
     expect(result.current.tasks).toEqual([
@@ -103,7 +99,6 @@ describe("useBacklog", () => {
     act(() => {
       result.current.updateTask("task-1", {
         title: "Updated Task",
-        description: "New description",
         tags: ["tag1", "tag2"],
       });
     });
@@ -318,13 +313,11 @@ describe("useBacklog", () => {
       {
         id: "task-1",
         title: "Task 1",
-        description: "Implement new feature",
         addedAt: "2022-12-31T12:00:00.000Z",
       },
       {
         id: "task-2",
         title: "Task 2",
-        description: "Fix critical bug",
         addedAt: "2022-12-30T12:00:00.000Z",
       },
     ];

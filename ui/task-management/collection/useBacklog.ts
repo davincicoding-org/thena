@@ -118,10 +118,7 @@ export function useBacklog({
         if (filters.search) {
           const searchLower = filters.search.toLowerCase();
           const titleHasSearch = task.title.toLowerCase().includes(searchLower);
-          const descriptionHasSearch = task.description
-            ?.toLowerCase()
-            .includes(searchLower);
-          if (!titleHasSearch && !descriptionHasSearch) return acc;
+          if (!titleHasSearch) return acc;
         }
 
         if (filters.projectIds?.length) {

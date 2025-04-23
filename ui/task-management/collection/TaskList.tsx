@@ -22,9 +22,10 @@ import {
 } from "@tabler/icons-react";
 
 import { hasSubtasks, Task } from "@/core/task-management";
+import { MOCK_PROJECTS, MOCK_TAGS } from "@/core/task-management/mock";
 import { cn } from "@/ui/utils";
 
-import { TaskForm, TaskFormProps } from "../task/TaskForm";
+import { BuiltInTaskAction, TaskForm, TaskFormProps } from "../task/TaskForm";
 import { taskFormOpts, TaskFormValues, useTaskForm } from "../task/useTaskForm";
 
 export type TaskListProps = {
@@ -57,27 +58,24 @@ export function TaskList({
             key={item.id}
             item={item}
             onChange={(update) => onUpdateTask(item.id, update)}
-            autoSubmit="blur"
+            projects={MOCK_PROJECTS}
+            tags={MOCK_TAGS}
             actions={[
-              onRefineTask ? (
-                <Button
-                  key="refine"
-                  variant="outline"
-                  size="compact-sm"
-                  onClick={() => onRefineTask(item)}
-                >
-                  Refine
-                </Button>
-              ) : null,
-              "add-subtask",
-              <ActionIcon
-                key="remove"
-                color="red"
-                variant="subtle"
-                onClick={() => onRemoveTask(item.id)}
-              >
-                <IconTrash size={16} />
-              </ActionIcon>,
+              ...(onRefineTask
+                ? [
+                    {
+                      label: "Refine",
+                      onClick: () => onRefineTask(item),
+                    },
+                    "-" as BuiltInTaskAction,
+                  ]
+                : []),
+              "subtasks",
+              {
+                label: "Remove",
+                onClick: () => onRemoveTask(item.id),
+                color: "red",
+              },
             ]}
           />
         ))}

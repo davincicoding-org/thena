@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import {
   AppShell,
@@ -10,6 +11,8 @@ import {
   Drawer,
   Fieldset,
   Flex,
+  Modal,
+  NumberFormatter,
   RingProgress,
   ScrollArea,
   Space,
@@ -18,8 +21,17 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { IconPlus } from "@tabler/icons-react";
+import { useStore } from "zustand";
 
-import { useProjects } from "@/ui/task-management";
+import { MOCK_PROJECTS, MOCK_TAGS } from "@/core/task-management/mock";
+import {
+  Backlog,
+  TaskForm,
+  taskFormOpts,
+  useBacklogTasksStore,
+  useTaskForm,
+} from "@/ui/task-management";
 
 const DEMO_PAGES = [
   {
@@ -49,17 +61,12 @@ const DEMO_PAGES = [
 ];
 
 export default function HomePage() {
-  const { projects } = useProjects({
-    initialProjects: [
-      { id: "con", name: "ConcentrAID", color: "teal" },
-      { id: "koc", name: "KOCO", color: "violet" },
-      { id: "dvc", name: "DAVINCI CODING", image: "/dvc.png" },
-      { id: "swi", name: "Swissinfluece" },
-      { id: "t4c", name: "T4 Capital", color: "blue" },
-    ],
-  });
+  const taskCount = useStore(
+    useBacklogTasksStore,
+    (state) => Object.keys(state.tasks).length,
+  );
 
-  const [isBacklogPanelOpen, backlogPanel] = useDisclosure(false);
+  const [isBacklogPanelOpen, backlogPanel] = useDisclosure(true);
 
   return (
     <AppShell.Main display="grid">
@@ -101,7 +108,15 @@ export default function HomePage() {
           <Flex gap="md">
             <Card radius="md" shadow="sm">
               <Text className="text-2xl!" my="auto">
-                3 Tasks
+                {taskCount === 0 && "No Tasks"}
+                {taskCount === 1 && "1 Task"}
+                {taskCount > 1 && (
+                  <NumberFormatter
+                    value={taskCount}
+                    thousandSeparator="'"
+                    suffix=" Tasks"
+                  />
+                )}
               </Text>
               <Space h="xs" />
               <Button variant="light" fullWidth onClick={backlogPanel.open}>
@@ -112,7 +127,7 @@ export default function HomePage() {
               <Card.Section>
                 <ScrollArea scrollbars="x" scrollHideDelay={300}>
                   <Flex gap="md" p="md">
-                    {projects.map((project) => (
+                    {MOCK_PROJECTS.map((project) => (
                       <Tooltip key={project.id} label={project.name}>
                         <Avatar
                           component={Link}
@@ -165,16 +180,103 @@ export default function HomePage() {
         </Stack>
       </Center>
 
-      <Drawer
-        opened={isBacklogPanelOpen}
-        position="right"
-        withCloseButton={false}
-        offset={24}
-        radius="md"
-        onClose={backlogPanel.close}
-      >
-        <Text size="xl">Coming soon!</Text>
-      </Drawer>
+      <BacklogPanel isOpen={isBacklogPanelOpen} onClose={backlogPanel.close} />
     </AppShell.Main>
+  );
+}
+
+function BacklogPanel({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const store = useBacklogTasksStore();
+
+  const tasks = useMemo(
+    () => Object.entries(store.tasks).map(([id, task]) => ({ id, ...task })),
+    [store.tasks],
+  );
+  const [isAddingTask, taskAdder] = useDisclosure(true);
+
+  const taskAdderForm = useTaskForm({
+    ...taskFormOpts,
+    onSubmit: ({ value, formApi }) => {
+      store.addTask(value);
+      formApi.reset();
+      taskAdder.close();
+    },
+  });
+
+  return (
+    <Drawer
+      opened={isOpen}
+      position="right"
+      closeOnEscape={!isAddingTask}
+      withCloseButton={false}
+      offset={24}
+      radius="md"
+      classNames={{
+        body: "h-full",
+      }}
+      onClose={onClose}
+    >
+      <Flex className="h-full" direction="column" gap="md">
+        <Backlog
+          flex={1}
+          tasks={tasks}
+          className="min-h-0"
+          filters={{}}
+          sort={{ direction: "desc", sortBy: "addedAt" }}
+          onFiltersUpdate={() => {}}
+          onSortUpdate={() => {}}
+          projects={MOCK_PROJECTS}
+          tags={MOCK_TAGS}
+        />
+        <Button
+          variant="light"
+          fullWidth
+          leftSection={<IconPlus />}
+          onClick={taskAdder.open}
+        >
+          New Task
+        </Button>
+      </Flex>
+      <Modal
+        size="xs"
+        centered
+        radius="md"
+        withCloseButton={false}
+        transitionProps={{ transition: "pop" }}
+        opened={isAddingTask}
+        onClose={taskAdder.close}
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            taskAdderForm.handleSubmit();
+          }}
+        >
+          <Stack>
+            <TaskForm
+              form={taskAdderForm}
+              projects={MOCK_PROJECTS}
+              tags={MOCK_TAGS}
+            />
+            <taskAdderForm.Subscribe
+              selector={(state) => state.isValid && state.isDirty}
+              children={(canSubmit) => {
+                return (
+                  <Button fullWidth disabled={!canSubmit} type="submit">
+                    Create Task
+                  </Button>
+                );
+              }}
+            />
+          </Stack>
+        </form>
+      </Modal>
+    </Drawer>
   );
 }

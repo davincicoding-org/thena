@@ -3,8 +3,7 @@ import { z } from "zod";
 
 export const baseTaskSchema = z.object({
   id: z.string(),
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
+  title: z.string().trim().min(1),
   tags: z.array(z.string()).optional(),
   estimate: z.number().optional(),
   complexity: z.number().optional(),
@@ -87,4 +86,3 @@ export const tagSchema = z.object({
   color: colorsEnum.optional(),
 });
 export type Tag = z.infer<typeof tagSchema>;
-

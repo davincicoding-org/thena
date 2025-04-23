@@ -2,6 +2,7 @@
 
 import { AppShell } from "@mantine/core";
 
+import { MOCK_PROJECTS, MOCK_TAGS } from "@/core/task-management/mock";
 import { Backlog, useBacklog } from "@/ui/task-management";
 
 export default function BacklogPage() {
@@ -130,20 +131,8 @@ export default function BacklogPage() {
         mt="10dvh"
         mx="auto"
         mb="auto"
-        projects={[
-          { id: "con", name: "ConcentrAID", color: "teal" },
-          { id: "koc", name: "KOCO", color: "violet" },
-          { id: "dvc", name: "DAVINCI CODING", image: "/dvc.png" },
-          { id: "swi", name: "Swissinfluece" },
-          { id: "t4c", name: "T4 Capital", color: "blue" },
-        ]}
-        tags={[
-          { id: "res", name: "Research", color: "yellow" },
-          { id: "des", name: "Design", color: "green" },
-          { id: "dev", name: "Development", color: "cyan" },
-          { id: "mar", name: "Marketing", color: "grape" },
-          { id: "man", name: "Management" },
-        ]}
+        projects={MOCK_PROJECTS}
+        tags={MOCK_TAGS}
         tasks={backlog.tasks}
         filters={backlog.filters}
         sort={backlog.sort}
