@@ -198,7 +198,7 @@ function BacklogPanel({
     () => Object.entries(store.tasks).map(([id, task]) => ({ id, ...task })),
     [store.tasks],
   );
-  const [isAddingTask, taskAdder] = useDisclosure(true);
+  const [isAddingTask, taskAdder] = useDisclosure(false);
 
   const taskAdderForm = useTaskForm({
     ...taskFormOpts,
@@ -212,6 +212,7 @@ function BacklogPanel({
   return (
     <Drawer
       opened={isOpen}
+      size="sm"
       position="right"
       closeOnEscape={!isAddingTask}
       withCloseButton={false}
@@ -233,6 +234,8 @@ function BacklogPanel({
           onSortUpdate={() => {}}
           projects={MOCK_PROJECTS}
           tags={MOCK_TAGS}
+          onUpdateTask={store.updateTask}
+          onDeleteTask={store.removeTask}
         />
         <Button
           variant="light"
@@ -266,14 +269,13 @@ function BacklogPanel({
             />
             <taskAdderForm.Subscribe
               selector={(state) => state.isValid && state.isDirty}
-              children={(canSubmit) => {
-                return (
-                  <Button fullWidth disabled={!canSubmit} type="submit">
-                    Create Task
-                  </Button>
-                );
-              }}
-            />
+            >
+              {(canSubmit) => (
+                <Button fullWidth disabled={!canSubmit} type="submit">
+                  Create Task
+                </Button>
+              )}
+            </taskAdderForm.Subscribe>
           </Stack>
         </form>
       </Modal>

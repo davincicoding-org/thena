@@ -50,6 +50,8 @@ const meta = {
     ],
     onFiltersUpdate: fn(),
     onSortUpdate: fn(),
+    onUpdateTask: fn(),
+    onDeleteTask: fn(),
   },
 } satisfies Meta<typeof Backlog>;
 

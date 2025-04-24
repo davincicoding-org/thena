@@ -1,4 +1,3 @@
-import { read } from "node:fs";
 import { Fragment, ReactElement, useEffect, useRef } from "react";
 import {
   ActionIcon,
@@ -39,6 +38,7 @@ export type TaskFormProps = {
   projects: Project[];
   tags: Tag[];
   readOnly?: boolean;
+  primaryAction?: ReactElement;
   actions?: (BuiltInTaskAction | CustomTaskAction | null)[];
 };
 
@@ -51,6 +51,7 @@ export const TaskForm = withTaskForm({
     projects,
     tags,
     readOnly,
+    primaryAction,
     actions = ["subtasks", "-", "tags", "project"] as BuiltInTaskAction[],
   }) => {
     const [isAddingSubtask, subtaskAdder] = useDisclosure(false);
@@ -101,13 +102,14 @@ export const TaskForm = withTaskForm({
                   );
                 }}
               />
-              <Box>
-                <Flex>
+              <Box flex={1}>
+                <Flex align="center">
                   <form.Field
                     name="title"
                     children={(field) => (
                       <TextInput
                         size="md"
+                        mr="auto"
                         readOnly={readOnly}
                         classNames={{
                           input: cn(
@@ -121,6 +123,7 @@ export const TaskForm = withTaskForm({
                       />
                     )}
                   />
+                  {primaryAction}
                   {!readOnly && (
                     <Menu.Target>
                       <ActionIcon
@@ -141,7 +144,7 @@ export const TaskForm = withTaskForm({
                     if (value === undefined) return null;
                     if (value.length === 0) return null;
                     return (
-                      <ScrollArea pt={4} type="never" w={219}>
+                      <ScrollArea pt={4} type="never">
                         <Flex gap={4} px={4}>
                           {value.map((tagId) => {
                             const tag = resolveTag(tagId);
@@ -244,6 +247,7 @@ export const TaskForm = withTaskForm({
                     <Menu
                       position="bottom-end"
                       trigger="click-hover"
+                      disabled={isAddingSubtask}
                       offset={{ mainAxis: 4, crossAxis: 12 }}
                       withinPortal={false}
                     >
@@ -285,7 +289,7 @@ export const TaskForm = withTaskForm({
                           <form.Field
                             name={`subtasks[${index}].title`}
                             children={(subField) => (
-                              <Menu.Item>
+                              <Menu.Item disabled>
                                 {subField.state.value &&
                                 subField.state.value.length > 0
                                   ? "Manage Tags"
@@ -296,9 +300,10 @@ export const TaskForm = withTaskForm({
                           <Menu.Divider />
                           <Menu.Item
                             color="red"
+                            leftSection={<IconX size={16} />}
                             onClick={() => field.removeValue(index)}
                           >
-                            Delete
+                            Remove
                           </Menu.Item>
                         </Menu.Dropdown>
                       </Flex>
@@ -388,47 +393,45 @@ function SubtaskAdder({
     <Collapse in={visible}>
       <Divider />
       <Box p="xs">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            form.handleSubmit();
-          }}
-        >
-          <form.Field
-            name="title"
-            children={(field) => (
-              <>
-                <TextInput
-                  ref={inputRef}
-                  placeholder="New subtask"
-                  rightSection={
-                    <ActionIcon
-                      variant="transparent"
-                      color="gray"
-                      onClick={handleCancel}
-                    >
-                      <IconX size={16} />
-                    </ActionIcon>
+        <form.Field
+          name="title"
+          children={(field) => (
+            <>
+              <TextInput
+                ref={inputRef}
+                placeholder="New subtask"
+                rightSection={
+                  <ActionIcon
+                    variant="transparent"
+                    color="gray"
+                    onClick={handleCancel}
+                  >
+                    <IconX size={16} />
+                  </ActionIcon>
+                }
+                value={field.state.value}
+                error={field.state.meta.errors.length > 0}
+                onChange={(e) => field.handleChange(e.target.value)}
+                onBlur={onCancel}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    form.handleSubmit();
                   }
-                  value={field.state.value}
-                  error={field.state.meta.errors.length > 0}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  // onBlur={onCancel}
-                />
-                <Collapse
-                  in={
-                    field.state.meta.isTouched &&
-                    field.state.meta.errors.length === 0
-                  }
-                >
-                  <Text size="xs" mt={2} opacity={0.5}>
-                    Press Enter to add
-                  </Text>
-                </Collapse>
-              </>
-            )}
-          />
-        </form>
+                }}
+              />
+              <Collapse
+                in={
+                  field.state.meta.isTouched &&
+                  field.state.meta.errors.length === 0
+                }
+              >
+                <Text size="xs" mt={2} opacity={0.5}>
+                  Press Enter to add
+                </Text>
+              </Collapse>
+            </>
+          )}
+        />
       </Box>
     </Collapse>
   );

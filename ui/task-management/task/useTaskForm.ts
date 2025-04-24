@@ -18,7 +18,7 @@ export const { useAppForm: useTaskForm, withForm: withTaskForm } =
     formContext,
   });
 
-const taskFormValuesSchema = taskSchema.extend({
+export const taskFormValuesSchema = taskSchema.extend({
   id: z.string().optional(),
 });
 export type TaskFormValues = z.infer<typeof taskFormValuesSchema>;

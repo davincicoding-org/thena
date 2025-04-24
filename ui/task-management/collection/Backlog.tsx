@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback } from "react";
+import { useCallback } from "react";
 import {
   ActionIcon,
   Avatar,
@@ -8,23 +8,16 @@ import {
   Box,
   Button,
   Collapse,
-  ColorSwatch,
   Divider,
   Fieldset,
   Flex,
-  Group,
   HoverCard,
   Menu,
-  MultiSelect,
   NavLink,
-  Paper,
   PaperProps,
-  Pill,
   ScrollArea,
   Stack,
-  Text,
   TextInput,
-  Tooltip,
 } from "@mantine/core";
 import {
   IconAbc,
@@ -35,23 +28,30 @@ import {
   IconSortAscending,
   IconSortDescending,
   IconTag,
+  IconTrash,
   IconX,
 } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import { isEqual } from "lodash-es";
 
 import {
   BACKLOG_SORT_OPTIONS,
   BacklogFilters,
   BacklogSortOptions,
   BacklogTask,
-  hasSubtasks,
   Project,
-  Subtask,
   Tag,
 } from "@/core/task-management";
 import { Panel } from "@/ui/components/Panel";
 import { useSyncInputState } from "@/ui/hooks/useSyncState";
+import {
+  TaskForm,
+  taskFormOpts,
+  TaskFormValues,
+  useTaskForm,
+} from "@/ui/task-management";
+import { cn } from "@/ui/utils";
 
 import { BacklogHookReturn } from "./useBacklog";
 
@@ -65,6 +65,11 @@ export interface BacklogProps {
   onSortUpdate: BacklogHookReturn["updateSort"];
   projects: Project[];
   tags: Tag[];
+  onUpdateTask: (
+    taskId: BacklogTask["id"],
+    values: Partial<BacklogTask>,
+  ) => void;
+  onDeleteTask: (taskId: BacklogTask["id"]) => void;
 }
 
 export function Backlog({
@@ -75,6 +80,8 @@ export function Backlog({
   onSortUpdate,
   projects,
   tags,
+  onUpdateTask,
+  onDeleteTask,
   ...paperProps
 }: BacklogProps & PaperProps) {
   const [searchValue, setSearchValue] = useSyncInputState(filters.search || "");
@@ -309,105 +316,81 @@ export function Backlog({
     >
       <ScrollArea bg="neutral.8">
         <Stack px="md" py="lg">
-          {tasks.map((task) => {
-            const project = task.projectId && resolveProject(task.projectId);
-            const tags = task.tags && task.tags.map(resolveTag);
-
-            return (
-              <Paper
-                key={task.id}
-                withBorder
-                className="overflow-clip"
-                radius="md"
-              >
-                <Paper
-                  {...(hasSubtasks(task)
-                    ? {
-                        withBorder: true,
-                        mt: -1,
-                        mx: -1,
-                        bg: "neutral.6",
-                        radius: "md",
-                      }
-                    : { radius: 0 })}
-                >
-                  <NavLink
-                    label={task.title}
-                    component="div"
-                    className="pointer-events-none"
-                    color="gray"
-                    leftSection={
-                      project && (
-                        <Tooltip label={project.name} position="bottom-start">
-                          <Avatar
-                            className="pointer-events-auto"
-                            color={project.color}
-                            src={project.image}
-                            size="sm"
-                            name={project.name}
-                          />
-                        </Tooltip>
-                      )
-                    }
-                    rightSection={
-                      tags && (
-                        <Flex gap={4}>
-                          {tags.map((tag) => (
-                            <Badge
-                              key={tag.id}
-                              color={tag.color || "gray"}
-                              variant="light"
-                              size="xs"
-                            >
-                              {tag.name}
-                            </Badge>
-                          ))}
-                        </Flex>
-                      )
-                    }
-                  />
-                </Paper>
-
-                {hasSubtasks(task) && (
-                  <Stack gap={0} flex={1}>
-                    {task.subtasks.map((subtask) => {
-                      const tags = subtask.tags && subtask.tags.map(resolveTag);
-                      return (
-                        <Fragment key={subtask.id}>
-                          <NavLink
-                            label={subtask.title}
-                            component="div"
-                            className="pointer-events-none"
-                            color="gray"
-                            rightSection={
-                              tags && (
-                                <Flex gap={4}>
-                                  {tags.map((tag) => (
-                                    <Badge
-                                      key={tag.id}
-                                      color={tag.color || "gray"}
-                                      variant="light"
-                                      size="xs"
-                                    >
-                                      {tag.name}
-                                    </Badge>
-                                  ))}
-                                </Flex>
-                              )
-                            }
-                          />
-                          <Divider className="last:hidden" />
-                        </Fragment>
-                      );
-                    })}
-                  </Stack>
-                )}
-              </Paper>
-            );
-          })}
+          {tasks.map((task) => (
+            <TaskItem
+              key={task.id}
+              task={task}
+              projects={projects}
+              tags={tags}
+              onUpdate={(values) => onUpdateTask(task.id, values)}
+              onDelete={() => onDeleteTask(task.id)}
+            />
+          ))}
         </Stack>
       </ScrollArea>
     </Panel>
+  );
+}
+
+function TaskItem({
+  task,
+  projects,
+  tags,
+  onUpdate,
+  onDelete,
+}: {
+  task: BacklogTask;
+  projects: Project[];
+  tags: Tag[];
+  onUpdate: (values: Partial<BacklogTask>) => void;
+  onDelete: () => void;
+}) {
+  const form = useTaskForm({
+    ...taskFormOpts,
+    defaultValues: task as TaskFormValues,
+    onSubmit: ({ value }) => onUpdate(value),
+  });
+
+  return (
+    <TaskForm
+      form={form}
+      projects={projects}
+      tags={tags}
+      primaryAction={
+        <form.Subscribe
+          selector={(state) => !isEqual(state.values, task)}
+          children={(hasChanged) => (
+            <Button
+              ml="xs"
+              variant="outline"
+              size="compact-sm"
+              classNames={{
+                root: cn(
+                  "transition-opacity",
+                  hasChanged ? "opacity-100" : "pointer-events-none opacity-0",
+                ),
+              }}
+              onClick={() => form.handleSubmit()}
+            >
+              Save
+            </Button>
+          )}
+        />
+      }
+      actions={[
+        "subtasks",
+        "-",
+        "tags",
+        "project",
+        "-",
+        {
+          label: "Delete",
+          color: "red",
+          leftSection: <IconTrash size={16} />,
+          onClick: onDelete,
+        },
+      ]}
+    />
   );
 }
 
