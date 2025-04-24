@@ -1,10 +1,15 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useChat } from "@ai-sdk/react";
 import { BoxProps, Button, Center, Flex, Stack } from "@mantine/core";
 
 import { taskManagerResponseSchema } from "@/ui/assistant/schema";
 import { useKeyHold } from "@/ui/hooks/useKeyHold";
-import { TaskList, useTaskList } from "@/ui/task-management";
+import {
+  TaskList,
+  useProjects,
+  useTags,
+  useTaskList,
+} from "@/ui/task-management";
 
 import {
   AssistantIndicator,
@@ -36,6 +41,8 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
     updateTask,
     removeTask,
   } = useTaskList();
+  const { projects, createProject } = useProjects();
+  const { tags, createTag } = useTags();
 
   const chat = useChat({
     api: "/api/task-manager",
@@ -110,6 +117,8 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
                 w="90vw"
                 maw={500}
                 items={tasks}
+                projects={projects}
+                tags={tags}
                 onUpdateTask={updateTask}
                 onRemoveTask={removeTask}
                 onAddTask={addTask}
@@ -119,6 +128,8 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
                     content: `Refine the "${task.title}" task`,
                   });
                 }}
+                onCreateProject={createProject}
+                onCreateTag={createTag}
               />
             </Stack>
           )}

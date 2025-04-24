@@ -12,17 +12,12 @@ import {
 } from "@mantine/core";
 import { useClickOutside, useDisclosure } from "@mantine/hooks";
 import { useForm } from "@tanstack/react-form";
-import { z } from "zod";
 
-import { colorsEnum, tagSchema } from "@/core/task-management";
+import { colorsEnum, TagInput, tagInputSchema } from "@/core/task-management";
 import { cn } from "@/ui/utils";
 
-const tagFormValueSchema = tagSchema.omit({ id: true });
-
-type TagFormValues = z.infer<typeof tagFormValueSchema>;
-
 export interface TagCreatorProps {
-  onCreate: (tag: TagFormValues) => void;
+  onCreate: (tag: TagInput) => void;
   className?: string;
 }
 
@@ -31,9 +26,9 @@ export function TagCreator({ onCreate }: TagCreatorProps) {
     defaultValues: {
       name: "",
       description: "",
-    } as TagFormValues,
+    } as TagInput,
     validators: {
-      onChange: tagFormValueSchema,
+      onChange: tagInputSchema,
     },
     onSubmit: ({ value }) => onCreate(value),
   });

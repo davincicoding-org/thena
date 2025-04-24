@@ -2,6 +2,7 @@ import { useArgs } from "@storybook/preview-api";
 import { fn } from "@storybook/test";
 
 import type { Meta, StoryObj } from "@storybook/react";
+import { MOCK_PROJECTS, MOCK_TAGS } from "@/core/task-management/mock";
 
 import { TaskList, TaskListProps } from "./TaskList";
 
@@ -39,10 +40,14 @@ const meta = {
         title: "Do laundry",
       },
     ],
+    projects: MOCK_PROJECTS,
+    tags: MOCK_TAGS,
     onUpdateTask: fn(),
     onRemoveTask: fn(),
     onAddTask: fn(),
     onRefineTask: fn(),
+    onCreateProject: fn(),
+    onCreateTag: fn(),
   },
 } satisfies Meta<typeof TaskList>;
 
@@ -50,11 +55,23 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Showcase: Story = {
-  render: ({ items, onAddTask, onUpdateTask, onRemoveTask, onRefineTask }) => {
+  render: ({
+    items,
+    onAddTask,
+    onUpdateTask,
+    onRemoveTask,
+    onRefineTask,
+    onCreateProject,
+    onCreateTag,
+    projects,
+    tags,
+  }) => {
     const [, updateArgs] = useArgs<TaskListProps>();
     return (
       <TaskList
         items={items}
+        projects={projects}
+        tags={tags}
         onAddTask={(task) => {
           updateArgs({
             items: [...items, { ...task, id: Date.now().toString() }],
@@ -76,6 +93,8 @@ export const Showcase: Story = {
           onRemoveTask(id);
         }}
         onRefineTask={onRefineTask}
+        onCreateProject={onCreateProject}
+        onCreateTag={onCreateTag}
       />
     );
   },

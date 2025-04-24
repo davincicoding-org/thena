@@ -2,9 +2,16 @@
 
 import { AppShell } from "@mantine/core";
 
-import { TaskList, useTaskList } from "@/ui/task-management";
+import {
+  TaskList,
+  useProjects,
+  useTags,
+  useTaskList,
+} from "@/ui/task-management";
 
 export default function TasksPage() {
+  const { projects, createProject } = useProjects();
+  const { tags, createTag } = useTags();
   const taskList = useTaskList();
 
   return (
@@ -13,9 +20,13 @@ export default function TasksPage() {
         w="90vw"
         maw={500}
         items={taskList.items}
+        projects={projects}
+        tags={tags}
         onUpdateTask={taskList.updateTask}
         onRemoveTask={taskList.removeTask}
         onAddTask={taskList.addTask}
+        onCreateProject={createProject}
+        onCreateTag={createTag}
       />
     </AppShell.Main>
   );

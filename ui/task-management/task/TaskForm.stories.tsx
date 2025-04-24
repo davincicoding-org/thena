@@ -1,4 +1,5 @@
-import { Button } from "@mantine/core";
+import { Fragment } from "react";
+import { Button, Divider } from "@mantine/core";
 import { action } from "@storybook/addon-actions";
 import { fn } from "@storybook/test";
 
@@ -33,6 +34,8 @@ const meta = {
     projects: MOCK_PROJECTS,
     tags: MOCK_TAGS,
     onSubmit: fn(),
+    onAssignToNewProject: fn(),
+    onAttachNewTag: fn(),
   },
 } satisfies Meta<typeof Playground>;
 
@@ -184,27 +187,26 @@ export const WithEverything: Story = {
 
 export const WithCustomActions: Story = {
   args: {
-    actions: [
-      {
-        label: "Refine",
-        onClick: action("refine"),
-      },
-    ],
+    TaskActions: ({ defaultActions }) => (
+      <Button fullWidth variant="subtle" onClick={action("refine")}>
+        Refine
+      </Button>
+    ),
   },
 };
 
 export const WithAdditionalActions: Story = {
   args: {
-    actions: [
-      {
-        label: "Refine",
-        onClick: action("refine"),
-      },
-      "-",
-      "subtasks",
-      "-",
-      "project",
-      "tags",
-    ],
+    TaskActions: ({ defaultActions }) => {
+      return (
+        <Fragment>
+          <Button fullWidth variant="subtle" onClick={action("refine")}>
+            Refine
+          </Button>
+          <Divider />
+          {defaultActions}
+        </Fragment>
+      );
+    },
   },
 };

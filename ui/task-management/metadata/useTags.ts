@@ -1,57 +1,59 @@
-import { useCallback, useState } from "react";
-import { nanoid } from "nanoid";
+import { useCallback, useMemo } from "react";
 
-import { Tag } from "@/core/task-management";
-import { ExternalState } from "@/ui/utils";
+import { Tag, TagInput } from "@/core/task-management";
 
-export interface TagsHookOptions {
-  initialTags?: Tag[];
-  externalState?: ExternalState<Tag[]>;
-}
+import { useTagsStore } from "./useTagsStore";
 
 export interface TagsHookReturn {
+  loading: boolean;
   tags: Tag[];
-  createTag: (tag: Omit<Tag, "id">) => Tag;
-  updateTag: (id: string, updates: Partial<Omit<Tag, "id">>) => void;
-  deleteTag: (id: string) => void;
+  createTag: (tag: TagInput, callback?: (tag: Tag) => void) => void;
+  updateTag: (tagId: Tag["id"], updates: Partial<Omit<Tag, "id">>) => void;
+  deleteTag: (tagId: Tag["id"]) => void;
 }
 
 /**
  * Manages stored tags.
  */
-export function useTags({
-  initialTags = [],
-  externalState: [tags, setTags] = useState<Tag[]>(initialTags),
-}: TagsHookOptions = {}): TagsHookReturn {
-  const createTag = useCallback(
-    (tag: Omit<Tag, "id">) => {
-      const newTag: Tag = {
+
+export function useTags(): TagsHookReturn {
+  const tagsStore = useTagsStore();
+
+  const tags = useMemo(
+    () =>
+      Object.entries(tagsStore.pool).map(([id, tag]) => ({
+        id,
         ...tag,
-        id: nanoid(),
-      };
-      setTags([...tags, newTag]);
-      return newTag;
+      })),
+    [tagsStore.pool],
+  );
+
+  const createTag = useCallback<TagsHookReturn["createTag"]>(
+    (input, callback) => {
+      tagsStore.addTag(input, async (tag) => {
+        if (callback) callback?.(tag);
+        // TODO store tag in backend
+      });
     },
-    [tags, setTags],
+    [],
   );
 
   const updateTag = useCallback<TagsHookReturn["updateTag"]>(
-    (id, updates) => {
-      setTags(
-        tags.map((tag) => (tag.id === id ? { ...tag, ...updates } : tag)),
-      );
+    (tagId, updates) => {
+      tagsStore.updateTag(tagId, updates, (tag) => {
+        // TODO update in backend
+      });
     },
-    [tags, setTags],
+    [],
   );
 
-  const deleteTag = useCallback<TagsHookReturn["deleteTag"]>(
-    (id) => {
-      setTags(tags.filter((tag) => tag.id !== id));
-    },
-    [tags, setTags],
-  );
+  const deleteTag = useCallback<TagsHookReturn["deleteTag"]>((tagId) => {
+    tagsStore.removeTag(tagId);
+    // TODO delete in backend
+  }, []);
 
   return {
+    loading: !tagsStore.ready,
     tags,
     createTag,
     updateTag,

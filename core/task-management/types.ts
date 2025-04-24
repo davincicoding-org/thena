@@ -1,12 +1,29 @@
-import { Dispatch, SetStateAction } from "react";
 import { z } from "zod";
+
+export const taskPriorityEnum = z.enum([
+  "critical",
+  "urgent",
+  "default",
+  "deferred",
+  "optional",
+]);
+export type TaskPriority = z.infer<typeof taskPriorityEnum>;
+
+export const taskComplexityEnum = z.enum([
+  "trivial",
+  "simple",
+  "default",
+  "complex",
+]);
+export type TaskComplexity = z.infer<typeof taskComplexityEnum>;
 
 export const baseTaskSchema = z.object({
   id: z.string(),
   title: z.string().trim().min(1),
   tags: z.array(z.string()).optional(),
-  estimate: z.number().optional(),
-  complexity: z.number().optional(),
+  estimatedTime: z.number().optional(),
+  complexity: taskComplexityEnum.optional(),
+  priority: taskPriorityEnum.optional(),
 });
 export type BaseTask = z.infer<typeof baseTaskSchema>;
 
@@ -72,12 +89,18 @@ export type Color = z.infer<typeof colorsEnum>;
 
 export const projectSchema = z.object({
   id: z.string(),
-  name: z.string(),
+  name: z.string().min(1),
   image: z.string().optional(),
   color: colorsEnum.optional(),
   description: z.string().optional(),
 });
 export type Project = z.infer<typeof projectSchema>;
+
+export const projectInputSchema = projectSchema.extend({
+  id: z.never(),
+  imageFile: z.instanceof(File).optional(),
+});
+export type ProjectInput = z.infer<typeof projectInputSchema>;
 
 export const tagSchema = z.object({
   id: z.string(),
@@ -86,3 +109,8 @@ export const tagSchema = z.object({
   color: colorsEnum.optional(),
 });
 export type Tag = z.infer<typeof tagSchema>;
+
+export const tagInputSchema = tagSchema.extend({
+  id: z.never(),
+});
+export type TagInput = z.infer<typeof tagInputSchema>;

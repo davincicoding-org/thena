@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AppShell,
+  Box,
   Button,
   Center,
+  HoverCard,
   Menu,
   Modal,
   SimpleGrid,
@@ -24,7 +26,13 @@ import {
   useSessionPlanner,
 } from "@/ui/deep-work";
 import { useDerivedStateUpdater, useTemporalState } from "@/ui/hooks";
-import { TaskList, useBacklogStore, useTaskList } from "@/ui/task-management";
+import {
+  TaskList,
+  useBacklogStore,
+  useProjects,
+  useTags,
+  useTaskList,
+} from "@/ui/task-management";
 import { StateSetter } from "@/ui/utils";
 
 type Stage = "task-list" | "session-planner" | "session-runner";
@@ -189,14 +197,20 @@ function CollectTasks({
   const taskList = useTaskList({
     externalState: [tasks, setTasks],
   });
+  const { projects, createProject } = useProjects();
+  const { tags, createTag } = useTags();
   return (
     <>
       <TaskList
         className="w-sm"
         items={taskList.items}
+        projects={projects}
+        tags={tags}
         onUpdateTask={taskList.updateTask}
         onRemoveTask={taskList.removeTask}
         onAddTask={taskList.addTask}
+        onCreateProject={createProject}
+        onCreateTag={createTag}
       />
       <Button
         pos="absolute"
@@ -227,9 +241,7 @@ function PlanSession({
   const sessionPlanner = useSessionPlanner(tasks, {
     externalState: [sprints, setSprints],
   });
-  // TODO: Sync with local state
-  // TODO: Add more tasks
-  // TODO: Drop tasks
+
   return (
     <>
       <SessionPlanner
@@ -243,17 +255,32 @@ function PlanSession({
         onUnassignTasksFromSprint={sessionPlanner.unassignTasks}
         onMoveTasks={sessionPlanner.moveTasks}
       />
-      <Button
-        pos="absolute"
-        right={24}
-        bottom={24}
-        size="lg"
-        rightSection={<IconChevronRight />}
-        disabled={sessionPlanner.unassignedTasks.length > 0}
-        onClick={() => onComplete(sessionPlanner.sprints)}
+      <HoverCard
+        disabled={sessionPlanner.unassignedTasks.length === 0}
+        position="top-end"
       >
-        Start Session
-      </Button>
+        <HoverCard.Target>
+          <Box pos="absolute" right={24} bottom={24}>
+            <Button
+              size="lg"
+              pos="absolute"
+              right={24}
+              bottom={24}
+              rightSection={<IconChevronRight />}
+              disabled={sessionPlanner.unassignedTasks.length > 0}
+              onClick={() => onComplete(sessionPlanner.sprints)}
+            >
+              Start Session
+            </Button>
+          </Box>
+        </HoverCard.Target>
+        <HoverCard.Dropdown maw={250}>
+          <Text>
+            You have unassigned tasks. Add them to a sprint or drop them to
+            start the session.
+          </Text>
+        </HoverCard.Dropdown>
+      </HoverCard>
     </>
   );
 }

@@ -23,13 +23,14 @@ import { useDisclosure } from "@mantine/hooks";
 import { IconPlus } from "@tabler/icons-react";
 import { useStore } from "zustand";
 
-import { MOCK_PROJECTS, MOCK_TAGS } from "@/core/task-management/mock";
 import {
   Backlog,
   TaskForm,
   taskFormOpts,
   useBacklogQueryOptions,
   useBacklogStore,
+  useProjects,
+  useTags,
   useTaskForm,
 } from "@/ui/task-management";
 
@@ -61,9 +62,9 @@ const DEMO_PAGES = [
 ];
 
 export default function HomePage() {
-  const taskCount = useStore(
-    useBacklogStore,
-    (state) => Object.keys(state.tasks).length,
+  const { projects } = useProjects();
+  const taskCount = useStore(useBacklogStore, (state) =>
+    state.items.reduce((acc, task) => acc + (task.subtasks?.length || 1), 0),
   );
 
   const [isBacklogPanelOpen, backlogPanel] = useDisclosure();
@@ -122,7 +123,7 @@ export default function HomePage() {
               <Card.Section>
                 <ScrollArea scrollbars="x" scrollHideDelay={300}>
                   <Flex gap="md" p="md">
-                    {MOCK_PROJECTS.map((project) => (
+                    {projects.map((project) => (
                       <Tooltip key={project.id} label={project.name}>
                         <Avatar
                           // component={Link}
@@ -185,24 +186,24 @@ function BacklogPanel({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const store = useBacklogStore();
+  const backlogStore = useBacklogStore();
+  const { projects, createProject } = useProjects();
+  const { tags, createTag } = useTags();
 
   const { filters, filterItems, updateFilters, sort, sortFn, updateSort } =
     useBacklogQueryOptions();
 
   const tasks = useMemo(
-    () =>
-      filterItems(
-        Object.entries(store.tasks).map(([id, task]) => ({ id, ...task })),
-      ).sort(sortFn),
-    [store.tasks, filterItems, sortFn],
+    () => filterItems(backlogStore.items).sort(sortFn),
+    [backlogStore.items, filterItems, sortFn],
   );
+
   const [isAddingTask, taskAdder] = useDisclosure(false);
 
   const taskAdderForm = useTaskForm({
     ...taskFormOpts,
     onSubmit: ({ value, formApi }) => {
-      store.addTask(value);
+      backlogStore.addTask(value);
       formApi.reset();
       taskAdder.close();
     },
@@ -211,7 +212,7 @@ function BacklogPanel({
   return (
     <Drawer
       opened={isOpen}
-      size="sm"
+      size="md"
       position="right"
       closeOnEscape={!isAddingTask}
       withCloseButton={false}
@@ -231,10 +232,12 @@ function BacklogPanel({
           onFiltersUpdate={updateFilters}
           sort={sort}
           onSortUpdate={updateSort}
-          projects={MOCK_PROJECTS}
-          tags={MOCK_TAGS}
-          onUpdateTask={store.updateTask}
-          onDeleteTask={store.removeTask}
+          projects={projects}
+          tags={tags}
+          onUpdateTask={backlogStore.updateTask}
+          onDeleteTask={backlogStore.removeTask}
+          onCreateProject={createProject}
+          onCreateTag={createTag}
         />
         <Button
           variant="light"
@@ -263,8 +266,10 @@ function BacklogPanel({
           <Stack>
             <TaskForm
               form={taskAdderForm}
-              projects={MOCK_PROJECTS}
-              tags={MOCK_TAGS}
+              projects={projects}
+              tags={tags}
+              onAssignToNewProject={() => {}}
+              onAttachNewTag={() => {}}
             />
             <taskAdderForm.Subscribe
               selector={(state) => state.isValid && state.isDirty}

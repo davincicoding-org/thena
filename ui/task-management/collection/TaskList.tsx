@@ -6,6 +6,7 @@ import {
   Collapse,
   Divider,
   Flex,
+  Modal,
   Paper,
   PaperProps,
   Stack,
@@ -21,68 +22,158 @@ import {
   IconX,
 } from "@tabler/icons-react";
 
-import { hasSubtasks, Task } from "@/core/task-management";
-import { MOCK_PROJECTS, MOCK_TAGS } from "@/core/task-management/mock";
-import { cn } from "@/ui/utils";
-
-import { BuiltInTaskAction, TaskForm, TaskFormProps } from "../task/TaskForm";
-import { taskFormOpts, TaskFormValues, useTaskForm } from "../task/useTaskForm";
+import {
+  Project,
+  ProjectInput,
+  Tag,
+  TagInput,
+  Task,
+} from "@/core/task-management";
+import {
+  ProjectCreator,
+  TagCreator,
+  TaskForm,
+  taskFormOpts,
+  TaskFormProps,
+  TaskFormValues,
+  useTaskForm,
+} from "@/ui/task-management";
 
 export type TaskListProps = {
   items: Task[];
+  projects: Project[];
+  tags: Tag[];
   readOnly?: boolean;
   onUpdateTask: (taskId: Task["id"], updates: Partial<Task>) => void;
   onRemoveTask: (taskId: Task["id"]) => void;
   onAddTask: (task: Omit<Task, "id">) => void;
   onRefineTask?: (task: Task) => void;
+  onCreateProject: (
+    project: ProjectInput,
+    onCreate: (project: Project) => void,
+  ) => void;
+  onCreateTag: (tag: TagInput, onCreate: (tag: Tag) => void) => void;
 };
 
 export function TaskList({
   items,
+  projects,
+  tags,
   onUpdateTask,
   onRemoveTask,
   onAddTask,
   onRefineTask,
+  onCreateProject,
+  onCreateTag,
   ...paperProps
 }: TaskListProps & PaperProps) {
+  const [isCreatingProject, projectAdder] = useDisclosure(false);
+  const createProjectCallback = useRef<(project: Project) => void>(null);
+
+  const [isCreatingTag, tagAdder] = useDisclosure(false);
+  const createTagCallback = useRef<(tag: Tag) => void>(null);
+
   return (
-    <Paper
-      withBorder={items.length > 0}
-      className="transition-all"
-      p="sm"
-      {...paperProps}
-    >
-      <Stack>
-        {items.map((item) => (
-          <Item
-            key={item.id}
-            item={item}
-            onChange={(update) => onUpdateTask(item.id, update)}
-            projects={MOCK_PROJECTS}
-            tags={MOCK_TAGS}
-            actions={[
-              ...(onRefineTask
-                ? [
-                    {
-                      label: "Refine",
-                      onClick: () => onRefineTask(item),
-                    },
-                    "-" as BuiltInTaskAction,
-                  ]
-                : []),
-              "subtasks",
-              {
-                label: "Remove",
-                onClick: () => onRemoveTask(item.id),
-                color: "red",
-              },
-            ]}
-          />
-        ))}
-        <Divider className="first:hidden" />
-        <TaskAdder hasTasks={items.length > 0} onSubmit={onAddTask} />
-      </Stack>
-    </Paper>
+    <>
+      <Paper
+        withBorder={items.length > 0}
+        className="transition-all"
+        p="sm"
+        {...paperProps}
+      >
+        <Stack>
+          {items.map((item) => (
+            <Item
+              key={item.id}
+              item={item}
+              onChange={(update) => onUpdateTask(item.id, update)}
+              projects={projects}
+              tags={tags}
+              TaskActions={({ defaultActions }) => (
+                <>
+                  {onRefineTask && (
+                    <>
+                      <Button
+                        fullWidth
+                        variant="subtle"
+                        onClick={() => onRefineTask(item)}
+                      >
+                        Refine
+                      </Button>
+                      <Divider />
+                    </>
+                  )}
+                  {defaultActions}
+                  <Divider />
+
+                  <Button
+                    fullWidth
+                    color="red"
+                    variant="subtle"
+                    leftSection={<IconTrash size={16} />}
+                    onClick={() => onRemoveTask(item.id)}
+                  >
+                    Remove
+                  </Button>
+                </>
+              )}
+              onAssignToNewProject={(callback) => {
+                createProjectCallback.current = callback;
+                projectAdder.open();
+              }}
+              onAttachNewTag={(callback) => {
+                createTagCallback.current = callback;
+                tagAdder.open();
+              }}
+            />
+          ))}
+          <Divider className="first:hidden" />
+          <TaskAdder hasTasks={items.length > 0} onSubmit={onAddTask} />
+        </Stack>
+      </Paper>
+      <Modal
+        opened={isCreatingProject}
+        centered
+        withCloseButton={false}
+        transitionProps={{ transition: "pop" }}
+        onClose={() => {
+          projectAdder.close();
+          createProjectCallback.current = null;
+        }}
+      >
+        <ProjectCreator
+          onCreate={(values) => {
+            projectAdder.close();
+            onCreateProject(values, (project) => {
+              if (createProjectCallback.current === null) return;
+              createProjectCallback.current(project);
+              createProjectCallback.current = null;
+            });
+          }}
+        />
+      </Modal>
+      <Modal
+        opened={isCreatingTag}
+        centered
+        withCloseButton={false}
+        transitionProps={{ transition: "pop" }}
+        onClose={() => {
+          tagAdder.close();
+          createTagCallback.current = null;
+        }}
+      >
+        <TagCreator
+          onCreate={(values) => {
+            tagAdder.close();
+            onCreateTag(values, (tag) => {
+              if (createTagCallback.current === null) return;
+              createTagCallback.current(tag);
+              createTagCallback.current = null;
+            });
+          }}
+        />
+      </Modal>
+    </>
   );
 }
 

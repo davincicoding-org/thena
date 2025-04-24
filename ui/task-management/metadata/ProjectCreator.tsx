@@ -7,7 +7,6 @@ import {
   Divider,
   FileButton,
   Flex,
-  Paper,
   Popover,
   SimpleGrid,
   Stack,
@@ -17,184 +16,188 @@ import {
 import { useClickOutside, useDisclosure } from "@mantine/hooks";
 import { IconUpload } from "@tabler/icons-react";
 import { useForm } from "@tanstack/react-form";
-import { z } from "zod";
 
-import { colorsEnum, projectSchema } from "@/core/task-management";
+import {
+  colorsEnum,
+  ProjectInput,
+  projectInputSchema,
+} from "@/core/task-management";
 import { cn } from "@/ui/utils";
 
-const projectFormValueSchema = projectSchema.omit({ id: true });
-
-type ProjectFormValues = z.infer<typeof projectFormValueSchema>;
-
 export interface ProjectCreatorProps {
-  onCreate: (project: ProjectFormValues) => void;
-  fileUploader: (file: File) => Promise<string>;
+  onCreate: (project: ProjectInput) => void;
   className?: string;
 }
 
-export function ProjectCreator({
-  onCreate,
-  fileUploader,
-}: ProjectCreatorProps) {
+export function ProjectCreator({ onCreate }: ProjectCreatorProps) {
   const form = useForm({
     defaultValues: {
       name: "",
       description: "",
-    } as ProjectFormValues,
+    } as ProjectInput,
     validators: {
-      onChange: projectFormValueSchema,
+      onChange: projectInputSchema,
     },
-    onSubmit: ({ value }) => onCreate(value),
+    onSubmit: ({ value }) => {
+      onCreate(value);
+      form.reset();
+    },
   });
 
   const [isAvatarPanelOpen, avatarPanel] = useDisclosure(false);
   const avatarPanelRef = useClickOutside(() => avatarPanel.close());
 
-  const [isImageUploading, setIsImageUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string>();
 
   return (
-    <Paper p="md" shadow="xs" radius="md" withBorder>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          form.handleSubmit();
-        }}
-      >
-        <Stack gap="lg">
-          <Flex gap="md">
-            <Popover
-              opened={isAvatarPanelOpen}
-              position="bottom-start"
-              onClose={avatarPanel.close}
-            >
-              <Popover.Target>
-                <form.Subscribe
-                  selector={(state) => state.values}
-                  children={({ image, color, name }) => (
-                    <Avatar
-                      className="cursor-pointer"
-                      size={130}
-                      src={image}
-                      radius="md"
-                      color={color}
-                      name={name || "P"}
-                      onClick={avatarPanel.toggle}
-                    />
-                  )}
-                />
-              </Popover.Target>
-              <Popover.Dropdown ref={avatarPanelRef} p={0}>
-                <form.Field
-                  name="image"
-                  children={(field) => {
-                    const handleImageUpload = async (file: File | null) => {
-                      if (!file) return;
-                      setIsImageUploading(true);
-                      const imageUrl = await fileUploader(file);
-                      field.handleChange(imageUrl);
-                      setIsImageUploading(false);
-                      avatarPanel.close();
-                    };
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        form.handleSubmit();
+      }}
+    >
+      <Stack gap="lg">
+        <Flex gap="md">
+          <Popover
+            opened={isAvatarPanelOpen}
+            position="bottom-start"
+            onClose={avatarPanel.close}
+          >
+            <form.Subscribe
+              selector={(state) => state.values}
+              children={({ color, name }) => (
+                <Popover.Target>
+                  <Avatar
+                    className="cursor-pointer"
+                    size={130}
+                    src={imagePreview}
+                    radius="md"
+                    color={color}
+                    name={name || "P"}
+                    onClick={avatarPanel.toggle}
+                  />
+                </Popover.Target>
+              )}
+            />
 
-                    return (
-                      <>
-                        <FileButton
-                          onChange={handleImageUpload}
-                          accept="image/png,image/jpeg"
-                        >
-                          {(props) => (
-                            <Button
-                              {...props}
-                              fullWidth
-                              size="md"
-                              loading={isImageUploading}
-                              leftSection={<IconUpload size={20} />}
-                              variant="subtle"
-                              color="gray"
-                            >
-                              {field.state.value
-                                ? "Change image"
-                                : "Upload image"}
-                            </Button>
-                          )}
-                        </FileButton>
-                        {field.state.value && (
+            <Popover.Dropdown ref={avatarPanelRef} p={0}>
+              <form.Field
+                name="imageFile"
+                children={(field) => {
+                  const handleImageUpload = async (file: File | null) => {
+                    if (!file) return;
+                    field.handleChange(file);
+                    avatarPanel.close();
+                    const reader = new FileReader();
+                    reader.onload = () =>
+                      setImagePreview(reader.result as string);
+                    reader.readAsDataURL(file);
+                  };
+
+                  return (
+                    <>
+                      <FileButton
+                        onChange={handleImageUpload}
+                        accept="image/png,image/jpeg"
+                      >
+                        {(props) => (
                           <Button
+                            {...props}
                             fullWidth
                             size="md"
+                            leftSection={<IconUpload size={20} />}
                             variant="subtle"
-                            color="red"
-                            onClick={() => {
-                              field.handleChange(undefined);
-                              avatarPanel.close();
-                            }}
+                            color="gray"
                           >
-                            Remove image
+                            {field.state.value
+                              ? "Change image"
+                              : "Upload image"}
                           </Button>
                         )}
-                      </>
-                    );
-                  }}
-                />
-
-                <Divider />
-                <form.Field
-                  name="color"
-                  children={(field) => (
-                    <SimpleGrid cols={4} p="xs" className="gap-1!">
-                      {colorsEnum.options.map((color) => (
-                        <ActionIcon
-                          aria-label={`Select "${color}" as color`}
-                          size={36}
-                          key={color}
-                          variant="transparent"
-                          onClick={() => {
-                            field.handleChange(color);
-                            avatarPanel.close();
-                          }}
-                        >
-                          <Box
-                            bg={color}
-                            className={cn(
-                              "h-6 w-6 cursor-pointer rounded-full",
-                            )}
-                          />
-                        </ActionIcon>
-                      ))}
-                    </SimpleGrid>
-                  )}
-                />
-              </Popover.Dropdown>
-            </Popover>
-            <Stack>
+                      </FileButton>
+                    </>
+                  );
+                }}
+              />
               <form.Field
-                name="name"
+                name="image"
                 children={(field) => (
-                  <TextInput
-                    placeholder="Project name"
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                  />
+                  <Button
+                    fullWidth
+                    size="md"
+                    variant="subtle"
+                    color="red"
+                    onClick={() => {
+                      field.handleChange(undefined);
+                      avatarPanel.close();
+                    }}
+                  >
+                    Remove image
+                  </Button>
                 )}
               />
 
+              <Divider />
               <form.Field
-                name="description"
+                name="color"
                 children={(field) => (
-                  <Textarea
-                    placeholder="Description (optional)"
-                    rows={3}
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                  />
+                  <SimpleGrid cols={4} p="xs" className="gap-1!">
+                    {colorsEnum.options.map((color) => (
+                      <ActionIcon
+                        aria-label={`Select "${color}" as color`}
+                        size={36}
+                        key={color}
+                        variant="transparent"
+                        onClick={() => {
+                          field.handleChange(color);
+                          avatarPanel.close();
+                        }}
+                      >
+                        <Box
+                          bg={color}
+                          className={cn("h-6 w-6 cursor-pointer rounded-full")}
+                        />
+                      </ActionIcon>
+                    ))}
+                  </SimpleGrid>
                 )}
               />
-            </Stack>
-          </Flex>
-          {/* TODO: Disable button if form is not valid */}
-          <Button type="submit">Create Project</Button>
-        </Stack>
-      </form>
-    </Paper>
+            </Popover.Dropdown>
+          </Popover>
+          <Stack flex={1}>
+            <form.Field
+              name="name"
+              children={(field) => (
+                <TextInput
+                  placeholder="Project name"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                />
+              )}
+            />
+
+            <form.Field
+              name="description"
+              children={(field) => (
+                <Textarea
+                  placeholder="Description (optional)"
+                  rows={3}
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                />
+              )}
+            />
+          </Stack>
+        </Flex>
+        <form.Subscribe
+          selector={(state) => state.isValid && state.isDirty}
+          children={(isValid) => (
+            <Button type="submit" disabled={!isValid}>
+              Create Project
+            </Button>
+          )}
+        />
+      </Stack>
+    </form>
   );
 }

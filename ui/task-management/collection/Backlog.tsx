@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import {
   ActionIcon,
   Avatar,
@@ -14,6 +14,7 @@ import {
   Flex,
   HoverCard,
   Menu,
+  Modal,
   NavLink,
   PaperProps,
   ScrollArea,
@@ -22,6 +23,7 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import {
   IconAbc,
   IconCalendar,
@@ -44,18 +46,22 @@ import {
   BacklogSortOptions,
   BacklogTask,
   Project,
+  ProjectInput,
   Tag,
+  TagInput,
 } from "@/core/task-management";
 import { Panel } from "@/ui/components/Panel";
 import { useSyncInputState } from "@/ui/hooks/useSyncState";
 import {
   hasFiltersApplied,
+  ProjectCreator,
+  TagCreator,
   TaskForm,
   taskFormOpts,
+  TaskFormProps,
   TaskFormValues,
   useTaskForm,
 } from "@/ui/task-management";
-import { cn } from "@/ui/utils";
 
 import { BacklogQueryOptionsHookReturn } from "./useBacklogQueryOptions";
 
@@ -74,6 +80,11 @@ export interface BacklogProps {
     values: Partial<BacklogTask>,
   ) => void;
   onDeleteTask: (taskId: BacklogTask["id"]) => void;
+  onCreateProject: (
+    project: ProjectInput,
+    onCreate: (project: Project) => void,
+  ) => void;
+  onCreateTag: (tag: TagInput, onCreate: (tag: Tag) => void) => void;
 }
 
 export function Backlog({
@@ -86,10 +97,14 @@ export function Backlog({
   tags,
   onUpdateTask,
   onDeleteTask,
+  onCreateProject,
+  onCreateTag,
   ...paperProps
 }: BacklogProps & PaperProps) {
   const [searchValue, setSearchValue] = useSyncInputState(filters.search || "");
 
+  const [isCreatingProject, projectAdder] = useDisclosure(false);
+  const createProjectCallback = useRef<(project: Project) => void>(null);
   const resolveProject = useCallback(
     (projectId: string): Project =>
       projects.find((project) => project.id === projectId) || {
@@ -98,6 +113,9 @@ export function Backlog({
       },
     [projects],
   );
+
+  const [isCreatingTag, tagAdder] = useDisclosure(false);
+  const createTagCallback = useRef<(tag: Tag) => void>(null);
   const resolveTag = useCallback(
     (tagId: string): Tag =>
       tags.find((tag) => tag.id === tagId) || {
@@ -108,268 +126,330 @@ export function Backlog({
   );
 
   return (
-    <Panel
-      header={
-        <>
-          <Flex p="xs" gap={4}>
-            <TextInput
-              placeholder="Search"
-              leftSection={<IconSearch size={20} />}
-              value={searchValue}
-              mr="auto"
-              onChange={(e) => {
-                setSearchValue(e);
-                onFiltersUpdate({ search: e.target.value });
-              }}
-            />
-            {(projects.length > 0 || tags.length > 0) && (
-              <HoverCard
-                position="bottom-start"
-                withArrow
-                arrowPosition="center"
-                arrowSize={12}
-              >
-                <HoverCard.Target>
-                  <ActionIcon
-                    aria-label="Filter Tasks"
-                    size="36"
-                    color="gray"
-                    variant="subtle"
-                  >
-                    <IconFilter size={20} />
-                  </ActionIcon>
-                </HoverCard.Target>
-                <HoverCard.Dropdown p="xs">
-                  <Flex gap="sm">
-                    {projects.length > 0 && (
-                      <Fieldset
-                        legend="Projects"
-                        p={0}
-                        classNames={{ legend: "text-center" }}
-                      >
-                        <ScrollArea scrollbars="y" h={180}>
-                          {projects.map((project) => (
-                            <NavLink
-                              key={project.id}
-                              label={project.name}
-                              leftSection={
-                                <Avatar
-                                  color={project?.color}
-                                  src={project?.image}
-                                  size={24}
-                                  radius="xl"
-                                  name={project.name}
-                                  alt={project.name}
-                                />
-                              }
-                              component="button"
-                              active={filters.projectIds?.includes(project.id)}
-                              onClick={() => {
-                                onFiltersUpdate({
-                                  projectIds: filters.projectIds?.includes(
-                                    project.id,
-                                  )
-                                    ? filters.projectIds?.filter(
-                                        (id) => id !== project.id,
-                                      )
-                                    : [
-                                        ...(filters.projectIds || []),
-                                        project.id,
-                                      ],
-                                });
-                              }}
-                            />
-                          ))}
-                        </ScrollArea>
-                      </Fieldset>
-                    )}
-                    {tags.length > 0 && (
-                      <Fieldset
-                        legend="Tags"
-                        p={0}
-                        classNames={{ legend: "text-center" }}
-                      >
-                        <ScrollArea scrollbars="y" h={180}>
-                          {tags.map((tag) => (
-                            <NavLink
-                              key={tag.id}
-                              label={tag.name}
-                              leftSection={
-                                <Box
-                                  bg={tag.color || "gray"}
-                                  className="h-4 w-4 rounded-full"
-                                />
-                              }
-                              component="button"
-                              active={filters.tags?.includes(tag.id)}
-                              onClick={() => {
-                                onFiltersUpdate({
-                                  tags: filters.tags?.includes(tag.id)
-                                    ? filters.tags?.filter(
-                                        (id) => id !== tag.id,
-                                      )
-                                    : [...(filters.tags || []), tag.id],
-                                });
-                              }}
-                            />
-                          ))}
-                        </ScrollArea>
-                      </Fieldset>
-                    )}
-                  </Flex>
-                </HoverCard.Dropdown>
-              </HoverCard>
-            )}
-
-            <Menu>
-              <Menu.Target>
-                <Button
-                  leftSection={<SortDirectionIcon sort={sort.direction} />}
-                  variant="default"
-                  size="sm"
-                >
-                  {getSortByLabel(sort.sortBy)}
-                </Button>
-              </Menu.Target>
-              <Menu.Dropdown>
-                {BACKLOG_SORT_OPTIONS.sortBy.map((sortBy) => (
-                  <Menu.Item
-                    key={sortBy}
-                    color={sort.sortBy === sortBy ? "primary" : undefined}
-                    leftSection={<SortByIcon sortBy={sortBy} size={20} />}
-                    onClick={() => onSortUpdate({ sortBy })}
-                  >
-                    {getSortByLabel(sortBy)}
-                  </Menu.Item>
-                ))}
-                <Menu.Divider />
-                {BACKLOG_SORT_OPTIONS.direction.map((direction) => (
-                  <Menu.Item
-                    key={direction}
-                    color={sort.direction === direction ? "primary" : undefined}
-                    leftSection={
-                      <SortDirectionIcon sort={direction} size={20} />
-                    }
-                    onClick={() => onSortUpdate({ direction })}
-                  >
-                    {getSortDirectionLabel(direction)}
-                  </Menu.Item>
-                ))}
-              </Menu.Dropdown>
-            </Menu>
-          </Flex>
-          <Collapse
-            in={
-              Boolean(filters.projectIds?.length) ||
-              Boolean(filters.tags?.length)
-            }
-          >
-            <ScrollArea scrollbars="x" scrollHideDelay={300}>
-              <Flex gap="xs" p="sm" pt={0}>
-                {filters.projectIds?.map((projectId) => {
-                  const project = resolveProject(projectId);
-                  return (
-                    <Badge
-                      key={projectId}
-                      component="button"
-                      className="shrink-0 cursor-pointer!"
-                      color={project.color || "gray"}
-                      size="md"
-                      variant="light"
-                      autoContrast
-                      rightSection={<IconX size={12} />}
-                      onClick={() => {
-                        onFiltersUpdate({
-                          projectIds: filters.projectIds?.filter(
-                            (id) => id !== projectId,
-                          ),
-                        });
-                      }}
-                    >
-                      {project.name}
-                    </Badge>
-                  );
-                })}
-                <Divider
-                  orientation="vertical"
-                  color="neutral.2"
-                  className="first:hidden last:hidden"
-                />
-                {filters.tags?.map((tagId) => {
-                  const tag = resolveTag(tagId);
-                  return (
-                    <Badge
-                      key={tagId}
-                      component="button"
-                      className="shrink-0 cursor-pointer!"
-                      color={tag.color || "gray"}
-                      size="md"
-                      variant="light"
-                      autoContrast
-                      leftSection={<IconTag size={12} />}
-                      rightSection={<IconX size={12} />}
-                      onClick={() => {
-                        onFiltersUpdate({
-                          tags: filters.tags?.filter((id) => id !== tagId),
-                        });
-                      }}
-                    >
-                      {tag.name}
-                    </Badge>
-                  );
-                })}
-                <Space w={2} />
-              </Flex>
-            </ScrollArea>
-          </Collapse>
-        </>
-      }
-      {...paperProps}
-    >
-      {tasks.length > 0 ? (
-        <ScrollArea bg="neutral.8">
-          <Stack px="md" py="lg">
-            {tasks.map((task) => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                projects={projects}
-                tags={tags}
-                onUpdate={(values) => onUpdateTask(task.id, values)}
-                onDelete={() => onDeleteTask(task.id)}
+    <>
+      <Panel
+        header={
+          <>
+            <Flex p="xs" gap={4}>
+              <TextInput
+                placeholder="Search"
+                leftSection={<IconSearch size={20} />}
+                value={searchValue}
+                mr="auto"
+                onChange={(e) => {
+                  setSearchValue(e);
+                  onFiltersUpdate({ search: e.target.value });
+                }}
               />
-            ))}
-            <Text className="not-first:hidden" my="auto">
-              Your Backlog is empty
+              {(projects.length > 0 || tags.length > 0) && (
+                <HoverCard
+                  position="bottom-start"
+                  withArrow
+                  arrowPosition="center"
+                  arrowSize={12}
+                >
+                  <HoverCard.Target>
+                    <ActionIcon
+                      aria-label="Filter Tasks"
+                      size="36"
+                      color="gray"
+                      variant="subtle"
+                    >
+                      <IconFilter size={20} />
+                    </ActionIcon>
+                  </HoverCard.Target>
+                  <HoverCard.Dropdown p="xs">
+                    <Flex gap="sm">
+                      {projects.length > 0 && (
+                        <Fieldset
+                          legend="Projects"
+                          p={0}
+                          classNames={{ legend: "text-center" }}
+                        >
+                          <ScrollArea scrollbars="y" h={180}>
+                            {projects.map((project) => (
+                              <NavLink
+                                key={project.id}
+                                label={project.name}
+                                leftSection={
+                                  <Avatar
+                                    color={project?.color}
+                                    src={project?.image}
+                                    size={24}
+                                    radius="xl"
+                                    name={project.name}
+                                    alt={project.name}
+                                  />
+                                }
+                                component="button"
+                                active={filters.projectIds?.includes(
+                                  project.id,
+                                )}
+                                onClick={() => {
+                                  onFiltersUpdate({
+                                    projectIds: filters.projectIds?.includes(
+                                      project.id,
+                                    )
+                                      ? filters.projectIds?.filter(
+                                          (id) => id !== project.id,
+                                        )
+                                      : [
+                                          ...(filters.projectIds || []),
+                                          project.id,
+                                        ],
+                                  });
+                                }}
+                              />
+                            ))}
+                          </ScrollArea>
+                        </Fieldset>
+                      )}
+                      {tags.length > 0 && (
+                        <Fieldset
+                          legend="Tags"
+                          p={0}
+                          classNames={{ legend: "text-center" }}
+                        >
+                          <ScrollArea scrollbars="y" h={180}>
+                            {tags.map((tag) => (
+                              <NavLink
+                                key={tag.id}
+                                label={tag.name}
+                                leftSection={
+                                  <Box
+                                    bg={tag.color || "gray"}
+                                    className="h-4 w-4 rounded-full"
+                                  />
+                                }
+                                component="button"
+                                active={filters.tags?.includes(tag.id)}
+                                onClick={() => {
+                                  onFiltersUpdate({
+                                    tags: filters.tags?.includes(tag.id)
+                                      ? filters.tags?.filter(
+                                          (id) => id !== tag.id,
+                                        )
+                                      : [...(filters.tags || []), tag.id],
+                                  });
+                                }}
+                              />
+                            ))}
+                          </ScrollArea>
+                        </Fieldset>
+                      )}
+                    </Flex>
+                  </HoverCard.Dropdown>
+                </HoverCard>
+              )}
+
+              <Menu>
+                <Menu.Target>
+                  <Button
+                    leftSection={<SortDirectionIcon sort={sort.direction} />}
+                    variant="default"
+                    size="sm"
+                  >
+                    {getSortByLabel(sort.sortBy).short}
+                  </Button>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  {BACKLOG_SORT_OPTIONS.sortBy.map((sortBy) => (
+                    <Menu.Item
+                      key={sortBy}
+                      color={sort.sortBy === sortBy ? "primary" : undefined}
+                      leftSection={<SortByIcon sortBy={sortBy} size={20} />}
+                      onClick={() => onSortUpdate({ sortBy })}
+                    >
+                      {getSortByLabel(sortBy).full}
+                    </Menu.Item>
+                  ))}
+                  <Menu.Divider />
+                  {BACKLOG_SORT_OPTIONS.direction.map((direction) => (
+                    <Menu.Item
+                      key={direction}
+                      color={
+                        sort.direction === direction ? "primary" : undefined
+                      }
+                      leftSection={
+                        <SortDirectionIcon sort={direction} size={20} />
+                      }
+                      onClick={() => onSortUpdate({ direction })}
+                    >
+                      {getSortDirectionLabel(direction)}
+                    </Menu.Item>
+                  ))}
+                </Menu.Dropdown>
+              </Menu>
+            </Flex>
+            <Collapse
+              in={
+                Boolean(filters.projectIds?.length) ||
+                Boolean(filters.tags?.length)
+              }
+            >
+              <ScrollArea scrollbars="x" scrollHideDelay={300}>
+                <Flex gap="xs" p="sm" pt={0}>
+                  {filters.projectIds?.map((projectId) => {
+                    const project = resolveProject(projectId);
+                    return (
+                      <Badge
+                        key={projectId}
+                        component="button"
+                        className="shrink-0 cursor-pointer!"
+                        color={project.color || "gray"}
+                        size="md"
+                        variant="light"
+                        autoContrast
+                        rightSection={<IconX size={12} />}
+                        onClick={() => {
+                          onFiltersUpdate({
+                            projectIds: filters.projectIds?.filter(
+                              (id) => id !== projectId,
+                            ),
+                          });
+                        }}
+                      >
+                        {project.name}
+                      </Badge>
+                    );
+                  })}
+                  <Divider
+                    orientation="vertical"
+                    color="neutral.2"
+                    className="first:hidden last:hidden"
+                  />
+                  {filters.tags?.map((tagId) => {
+                    const tag = resolveTag(tagId);
+                    return (
+                      <Badge
+                        key={tagId}
+                        component="button"
+                        className="shrink-0 cursor-pointer!"
+                        color={tag.color || "gray"}
+                        size="md"
+                        variant="light"
+                        autoContrast
+                        leftSection={<IconTag size={12} />}
+                        rightSection={<IconX size={12} />}
+                        onClick={() => {
+                          onFiltersUpdate({
+                            tags: filters.tags?.filter((id) => id !== tagId),
+                          });
+                        }}
+                      >
+                        {tag.name}
+                      </Badge>
+                    );
+                  })}
+                  <Space w={2} />
+                </Flex>
+              </ScrollArea>
+            </Collapse>
+          </>
+        }
+        {...paperProps}
+      >
+        {tasks.length > 0 ? (
+          <ScrollArea bg="neutral.8">
+            <Stack px="md" py="lg">
+              {tasks.map((task) => (
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  projects={projects}
+                  tags={tags}
+                  onUpdate={(values) => onUpdateTask(task.id, values)}
+                  onDelete={() => onDeleteTask(task.id)}
+                  onAssignToNewProject={(callback) => {
+                    createProjectCallback.current = callback;
+                    projectAdder.open();
+                  }}
+                  onAttachNewTag={(callback) => {
+                    createTagCallback.current = callback;
+                    tagAdder.open();
+                  }}
+                />
+              ))}
+              <Text className="not-first:hidden" my="auto">
+                Your Backlog is empty
+              </Text>
+            </Stack>
+          </ScrollArea>
+        ) : (
+          <Center>
+            <Text opacity={0.5} size="xl">
+              {hasFiltersApplied(filters)
+                ? "No tasks match your filters"
+                : "Your Backlog is empty"}
             </Text>
-          </Stack>
-        </ScrollArea>
-      ) : (
-        <Center>
-          <Text opacity={0.5} size="xl">
-            {hasFiltersApplied(filters)
-              ? "No tasks match your filters"
-              : "Your Backlog is empty"}
-          </Text>
-        </Center>
-      )}
-    </Panel>
+          </Center>
+        )}
+      </Panel>
+      <Modal
+        opened={isCreatingProject}
+        centered
+        withCloseButton={false}
+        transitionProps={{ transition: "pop" }}
+        onClose={() => {
+          projectAdder.close();
+          createProjectCallback.current = null;
+        }}
+      >
+        <ProjectCreator
+          onCreate={(values) => {
+            projectAdder.close();
+            onCreateProject(values, (project) => {
+              if (createProjectCallback.current === null) return;
+              createProjectCallback.current(project);
+              createProjectCallback.current = null;
+            });
+          }}
+        />
+      </Modal>
+      <Modal
+        opened={isCreatingTag}
+        centered
+        withCloseButton={false}
+        transitionProps={{ transition: "pop" }}
+        onClose={() => {
+          tagAdder.close();
+          createTagCallback.current = null;
+        }}
+      >
+        <TagCreator
+          onCreate={(values) => {
+            tagAdder.close();
+            onCreateTag(values, (tag) => {
+              if (createTagCallback.current === null) return;
+              createTagCallback.current(tag);
+              createTagCallback.current = null;
+            });
+          }}
+        />
+      </Modal>
+    </>
   );
+}
+
+interface TaskItemProps
+  extends Pick<
+    TaskFormProps,
+    "projects" | "onAssignToNewProject" | "tags" | "onAttachNewTag"
+  > {
+  task: BacklogTask;
+  onUpdate: (values: Partial<BacklogTask>) => void;
+  onDelete: () => void;
 }
 
 function TaskItem({
   task,
-  projects,
-  tags,
   onUpdate,
   onDelete,
-}: {
-  task: BacklogTask;
-  projects: Project[];
-  tags: Tag[];
-  onUpdate: (values: Partial<BacklogTask>) => void;
-  onDelete: () => void;
-}) {
+  projects,
+  tags,
+  onAssignToNewProject,
+  onAttachNewTag,
+}: TaskItemProps) {
   const form = useTaskForm({
     ...taskFormOpts,
     defaultValues: task as TaskFormValues,
@@ -377,55 +457,63 @@ function TaskItem({
   });
 
   return (
-    <TaskForm
-      form={form}
-      projects={projects}
-      tags={tags}
-      primaryAction={
-        <form.Subscribe
-          selector={(state) => !isEqual(state.values, task)}
-          children={(hasChanged) => (
+    <Box>
+      <TaskForm
+        form={form}
+        projects={projects}
+        tags={tags}
+        TaskActions={({ defaultActions }) => (
+          <>
+            {defaultActions}
+            <Divider />
+            <Button
+              fullWidth
+              color="red"
+              variant="subtle"
+              justify="flex-start"
+              radius={0}
+              leftSection={<IconTrash size={16} />}
+              onClick={onDelete}
+            >
+              Delete
+            </Button>
+          </>
+        )}
+        onAssignToNewProject={onAssignToNewProject}
+        onAttachNewTag={onAttachNewTag}
+      />
+      <form.Subscribe
+        selector={(state) => !isEqual(state.values, task) && state.isValid}
+        children={(hasChanged) => (
+          <Collapse in={hasChanged} mt={4}>
             <Button
               ml="auto"
-              variant="outline"
-              size="compact-sm"
-              classNames={{
-                root: cn({
-                  "hidden!": !hasChanged,
-                }),
+              size="xs"
+              fullWidth
+              onClick={(e) => {
+                form.handleSubmit();
+                e.currentTarget.blur();
               }}
-              onClick={() => form.handleSubmit()}
             >
-              Save
+              Save Changes
             </Button>
-          )}
-        />
-      }
-      actions={[
-        "subtasks",
-        "-",
-        "tags",
-        "project",
-        "-",
-        {
-          label: "Delete",
-          color: "red",
-          leftSection: <IconTrash size={16} />,
-          onClick: onDelete,
-        },
-      ]}
-    />
+          </Collapse>
+        )}
+      />
+    </Box>
   );
 }
 
 // --------- Utility Functions ---------
 
-const getSortByLabel = (sort: BacklogSortOptions["sortBy"]) => {
+const getSortByLabel = (
+  sort: BacklogSortOptions["sortBy"],
+): { full: string; short?: string } => {
   switch (sort) {
     case "title":
-      return "Title";
+      return { full: "Title" };
     case "addedAt":
-      return "Date added";
+      return { full: "Date added", short: "Added" };
   }
 };
 

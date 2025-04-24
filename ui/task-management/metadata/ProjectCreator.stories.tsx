@@ -11,14 +11,6 @@ const meta = {
   },
   args: {
     onCreate: fn(),
-    fileUploader: async (file: File) => {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      });
-    },
   },
 } satisfies Meta<typeof ProjectCreator>;
 

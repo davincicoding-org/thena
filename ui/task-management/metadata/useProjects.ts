@@ -1,60 +1,73 @@
-import { useCallback, useState } from "react";
-import { nanoid } from "nanoid";
+import { useCallback, useMemo } from "react";
 
-import { Project } from "@/core/task-management";
-import { ExternalState } from "@/ui/utils";
+import { Project, ProjectInput } from "@/core/task-management";
+import { uploadImage } from "@/server/actions";
 
-export interface ProjectsHookOptions {
-  initialProjects?: Project[];
-  externalState?: ExternalState<Project[]>;
-}
+import { useProjectsStore } from "./useProjectsStore";
 
 export interface ProjectsHookReturn {
+  loading: boolean;
   projects: Project[];
-  createProject: (project: Omit<Project, "id">) => Project;
-  updateProject: (id: string, updates: Partial<Omit<Project, "id">>) => void;
-  deleteProject: (id: string) => void;
+  createProject: (
+    project: ProjectInput,
+    callback?: (project: Project) => void,
+  ) => void;
+  updateProject: (
+    projectId: Project["id"],
+    updates: Partial<Omit<Project, "id">>,
+  ) => void;
+  deleteProject: (projectId: Project["id"]) => void;
 }
 
 /**
  * Manages stored projects.
  */
 
-export function useProjects({
-  initialProjects = [],
-  externalState: [projects, setProjects] = useState(initialProjects),
-}: ProjectsHookOptions = {}): ProjectsHookReturn {
-  const createProject = useCallback(
-    (project: Omit<Project, "id">) => {
-      const newProject: Project = {
+export function useProjects(): ProjectsHookReturn {
+  const projectsStore = useProjectsStore();
+  const projects = useMemo(
+    () =>
+      Object.entries(projectsStore.pool).map(([id, project]) => ({
+        id,
         ...project,
-        id: nanoid(),
-      };
-      setProjects([...projects, newProject]);
-      return newProject;
+      })),
+    [projectsStore.pool],
+  );
+
+  const createProject = useCallback<ProjectsHookReturn["createProject"]>(
+    ({ imageFile, ...input }, callback) => {
+      projectsStore.addProject(input, async (project) => {
+        if (callback) callback?.(project);
+        if (imageFile) {
+          const url = await uploadImage("projects", project.id, imageFile);
+          projectsStore.updateProject(project.id, { image: url });
+          project.image = url;
+        }
+        // store project in backend
+      });
     },
-    [projects, setProjects],
+    [],
   );
 
   const updateProject = useCallback<ProjectsHookReturn["updateProject"]>(
-    (id, updates) => {
-      setProjects(
-        projects.map((project) =>
-          project.id === id ? { ...project, ...updates } : project,
-        ),
-      );
+    (projectId, updates) => {
+      projectsStore.updateProject(projectId, updates, (project) => {
+        // TODO update in backend
+      });
     },
-    [projects, setProjects],
+    [],
   );
 
   const deleteProject = useCallback<ProjectsHookReturn["deleteProject"]>(
-    (id) => {
-      setProjects(projects.filter((project) => project.id !== id));
+    (projectId) => {
+      projectsStore.removeProject(projectId);
+      // TODO delete in backend
     },
-    [projects, setProjects],
+    [],
   );
 
   return {
+    loading: !projectsStore.ready,
     projects,
     createProject,
     updateProject,
