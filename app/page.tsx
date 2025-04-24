@@ -125,8 +125,9 @@ export default function HomePage() {
                     {MOCK_PROJECTS.map((project) => (
                       <Tooltip key={project.id} label={project.name}>
                         <Avatar
-                          component={Link}
-                          href={`/projects/${project.id}`}
+                          // component={Link}
+                          // href={`/projects/${project.id}`}
+                          // aria-label={`Open "${project.name}" project`}
                           display="inline-block"
                           size="md"
                           radius="md"
@@ -134,10 +135,6 @@ export default function HomePage() {
                           alt={project.name}
                           color={project.color || "gray"}
                           name={project.name}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            alert("Coming soon!");
-                          }}
                         />
                       </Tooltip>
                     ))}
