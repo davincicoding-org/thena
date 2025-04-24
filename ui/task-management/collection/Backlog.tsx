@@ -159,6 +159,7 @@ export function Backlog({
                                   size={24}
                                   radius="xl"
                                   name={project.name}
+                                  alt={project.name}
                                 />
                               }
                               component="button"

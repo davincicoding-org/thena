@@ -131,6 +131,7 @@ export default function HomePage() {
                           size="md"
                           radius="md"
                           src={project.image}
+                          alt={project.name}
                           color={project.color || "gray"}
                           name={project.name}
                           onClick={(e) => {

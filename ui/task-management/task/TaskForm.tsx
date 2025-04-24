@@ -95,6 +95,7 @@ export const TaskForm = withTaskForm({
                         mr={4}
                         src={project.image}
                         name={project.name}
+                        alt={project.name}
                         size={32}
                         color={project.color || "gray"}
                       />
