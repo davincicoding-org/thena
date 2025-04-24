@@ -62,12 +62,7 @@ export function LiveSprint({
     : false;
 
   return (
-    <Paper
-      p="sm"
-      shadow="sm"
-      radius="md"
-      {...paperProps}
-    >
+    <Paper p="sm" shadow="sm" radius="md" {...paperProps}>
       <Collapse in={status === "running"} pb="md" animateOpacity>
         <Flex gap={4} align="center">
           <Progress
@@ -86,6 +81,7 @@ export function LiveSprint({
           {allowToPause && (
             <ActionIcon
               size="xs"
+              aria-label="Pause Session"
               variant="subtle"
               color="gray"
               onClick={onPause}
@@ -258,6 +254,7 @@ function TaskControlItem({
           </Button>,
           <Tooltip label="Skip Task" key="skip">
             <ActionIcon
+              aria-label="Skip Task"
               variant="subtle"
               size="md"
               color="yellow"

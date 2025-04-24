@@ -62,6 +62,7 @@ export function Chat({
         leftSection={isListening ? <Loader size="sm" /> : null}
         rightSection={
           <ActionIcon
+            aria-label={isListening ? "Stop Listening" : "Start Listening"}
             size="lg"
             radius="sm"
             color={isListening ? "red" : "gray"}

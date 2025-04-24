@@ -174,6 +174,7 @@ function SpeechConfig() {
             />
             {voiceExample && (
               <ActionIcon
+                aria-label="Speak Example"
                 size="input-sm"
                 variant="light"
                 color={isSpeaking ? "red" : undefined}

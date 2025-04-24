@@ -3,7 +3,6 @@ import {
   ActionIcon,
   Box,
   Button,
-  Card,
   Collapse,
   Divider,
   Flex,
@@ -115,7 +114,11 @@ export function SprintPanel({
             />
 
             <BoundOverlay.Trigger>
-              <ActionIcon variant="transparent" color="gray">
+              <ActionIcon
+                aria-label="Sprint Options"
+                variant="transparent"
+                color="gray"
+              >
                 <IconDotsVertical size={16} />
               </ActionIcon>
             </BoundOverlay.Trigger>

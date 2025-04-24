@@ -33,6 +33,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             color="gray"
             size="xl"
             ml="auto"
+            aria-label="Configuration"
             onClick={configModal.open}
           >
             <IconAdjustmentsHorizontal size={24} />

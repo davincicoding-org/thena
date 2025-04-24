@@ -127,6 +127,7 @@ export const TaskForm = withTaskForm({
                   {!readOnly && (
                     <Menu.Target>
                       <ActionIcon
+                        aria-label="Task Actions"
                         className={cn(
                           "opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100",
                         )}
@@ -277,6 +278,7 @@ export const TaskForm = withTaskForm({
                         {!readOnly && (
                           <Menu.Target>
                             <ActionIcon
+                              aria-label="Subtask Actions"
                               className="opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
                               variant="transparent"
                               color="gray"
@@ -401,6 +403,7 @@ function SubtaskAdder({
                 placeholder="New subtask"
                 rightSection={
                   <ActionIcon
+                    aria-label="Cancel"
                     variant="transparent"
                     color="gray"
                     onClick={handleCancel}

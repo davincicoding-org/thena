@@ -133,8 +133,9 @@ function TaskAdder({
         >
           New Task
         </Button>
-        <Tooltip label="COMING SOON">
+        <Tooltip label="Import from Backlog">
           <ActionIcon
+            aria-label="Import Tasks"
             className="transition-all"
             size={hasTasks ? 30 : 50}
             variant="default"
@@ -154,6 +155,7 @@ function TaskAdder({
         placeholder="New Task"
         rightSection={
           <ActionIcon
+            aria-label="Cancel"
             variant="transparent"
             color="gray"
             onClick={() => {

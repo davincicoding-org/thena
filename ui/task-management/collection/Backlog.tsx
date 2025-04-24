@@ -130,7 +130,12 @@ export function Backlog({
                 arrowSize={12}
               >
                 <HoverCard.Target>
-                  <ActionIcon size="36" color="gray" variant="subtle">
+                  <ActionIcon
+                    aria-label="Filter Tasks"
+                    size="36"
+                    color="gray"
+                    variant="subtle"
+                  >
                     <IconFilter size={20} />
                   </ActionIcon>
                 </HoverCard.Target>

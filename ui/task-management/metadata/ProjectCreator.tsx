@@ -144,6 +144,7 @@ export function ProjectCreator({
                     <SimpleGrid cols={4} p="xs" className="gap-1!">
                       {colorsEnum.options.map((color) => (
                         <ActionIcon
+                          aria-label={`Select "${color}" as color`}
                           size={36}
                           key={color}
                           variant="transparent"

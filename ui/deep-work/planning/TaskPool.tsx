@@ -97,6 +97,7 @@ export function TaskPool({
               </Text>
             )}
             <ActionIcon
+              aria-label="Abort Selection"
               size="lg"
               variant="subtle"
               color="red"
