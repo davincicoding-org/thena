@@ -1099,7 +1099,6 @@ describe("useSessionPlanner", () => {
           }),
         );
 
-        console.log(JSON.stringify(result.current.sprints[0]!.tasks, null, 2));
         // Verify subtasks were merged
         expect(result.current.sprints[0]!.tasks).toHaveLength(1);
         const taskWithMergedSubtasks = result.current.sprints[0]!.tasks![0]!;

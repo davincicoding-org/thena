@@ -12,7 +12,6 @@ import {
   Fieldset,
   Flex,
   Modal,
-  NumberFormatter,
   RingProgress,
   ScrollArea,
   Space,
@@ -29,7 +28,8 @@ import {
   Backlog,
   TaskForm,
   taskFormOpts,
-  useBacklogTasksStore,
+  useBacklogQueryOptions,
+  useBacklogStore,
   useTaskForm,
 } from "@/ui/task-management";
 
@@ -62,11 +62,11 @@ const DEMO_PAGES = [
 
 export default function HomePage() {
   const taskCount = useStore(
-    useBacklogTasksStore,
+    useBacklogStore,
     (state) => Object.keys(state.tasks).length,
   );
 
-  const [isBacklogPanelOpen, backlogPanel] = useDisclosure(true);
+  const [isBacklogPanelOpen, backlogPanel] = useDisclosure();
 
   return (
     <AppShell.Main display="grid">
@@ -110,13 +110,8 @@ export default function HomePage() {
               <Text className="text-2xl!" my="auto">
                 {taskCount === 0 && "No Tasks"}
                 {taskCount === 1 && "1 Task"}
-                {taskCount > 1 && (
-                  <NumberFormatter
-                    value={taskCount}
-                    thousandSeparator="'"
-                    suffix=" Tasks"
-                  />
-                )}
+                {taskCount > 1 &&
+                  `${taskCount > 100 ? "100+" : taskCount} Tasks`}
               </Text>
               <Space h="xs" />
               <Button variant="light" fullWidth onClick={backlogPanel.open}>
@@ -192,11 +187,17 @@ function BacklogPanel({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const store = useBacklogTasksStore();
+  const store = useBacklogStore();
+
+  const { filters, filterItems, updateFilters, sort, sortFn, updateSort } =
+    useBacklogQueryOptions();
 
   const tasks = useMemo(
-    () => Object.entries(store.tasks).map(([id, task]) => ({ id, ...task })),
-    [store.tasks],
+    () =>
+      filterItems(
+        Object.entries(store.tasks).map(([id, task]) => ({ id, ...task })),
+      ).sort(sortFn),
+    [store.tasks, filterItems, sortFn],
   );
   const [isAddingTask, taskAdder] = useDisclosure(false);
 
@@ -228,10 +229,10 @@ function BacklogPanel({
           flex={1}
           tasks={tasks}
           className="min-h-0"
-          filters={{}}
-          sort={{ direction: "desc", sortBy: "addedAt" }}
-          onFiltersUpdate={() => {}}
-          onSortUpdate={() => {}}
+          filters={filters}
+          onFiltersUpdate={updateFilters}
+          sort={sort}
+          onSortUpdate={updateSort}
           projects={MOCK_PROJECTS}
           tags={MOCK_TAGS}
           onUpdateTask={store.updateTask}

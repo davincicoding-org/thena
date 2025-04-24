@@ -124,27 +124,3 @@ export const useTaskStore = create<TaskState>()(
     ),
   ),
 );
-
-const x = createJSONStorage(() => ({
-  getItem: async (key) => {
-    const tasks: Record<string, unknown> = {};
-    await localTaskStorage.iterate((value, id) => {
-      tasks[id] = value;
-    });
-    return JSON.stringify({ tasks });
-  },
-  setItem: (key, value) => {
-    console.log("setItem", key, value);
-    const { state } = JSON.parse(value) as {
-      state: Pick<TaskState, "tasks">;
-    };
-
-    const entries = Object.entries(state.tasks);
-    return Promise.all(
-      entries.map(([id, task]) => localTaskStorage.setItem(id, task)),
-    );
-  },
-  removeItem: (key) => {
-    localTaskStorage.clear();
-  },
-}));

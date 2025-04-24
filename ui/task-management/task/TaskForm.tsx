@@ -109,7 +109,7 @@ export const TaskForm = withTaskForm({
                     children={(field) => (
                       <TextInput
                         size="md"
-                        mr="auto"
+                        flex={1}
                         readOnly={readOnly}
                         classNames={{
                           input: cn(
@@ -154,6 +154,7 @@ export const TaskForm = withTaskForm({
                                 key={tagId}
                                 className="shrink-0"
                                 color={tag.color || "gray"}
+                                autoContrast
                                 size="xs"
                               >
                                 {tag.name}
@@ -231,7 +232,6 @@ export const TaskForm = withTaskForm({
           mode="array"
           children={(field) => {
             const handleAddSubtask = (values: Omit<Subtask, "id">) => {
-              console.log(values);
               field.pushValue({
                 id: generateSubtaskId(
                   field.state.value?.map((subtask) => subtask.id),
@@ -369,7 +369,6 @@ function SubtaskAdder({
       onChange: baseTaskSchema.omit({ id: true }),
     },
     onSubmit: ({ value }) => {
-      console.log(value);
       onSubmit(value);
       form.reset();
     },

@@ -1,5 +1,5 @@
-export * from "./planner/SessionPlanner";
-export * from "./planner/useSprintPlanner";
+export * from "./planning/SessionPlanner";
+export * from "./planning/useSprintPlanner";
 
-export * from "./sprint/useSprint";
-export * from "./sprint/LiveSprint";
+export * from "./execution/useSprint";
+export * from "./execution/LiveSprint";

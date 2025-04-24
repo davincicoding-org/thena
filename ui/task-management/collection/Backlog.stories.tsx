@@ -4,7 +4,7 @@ import { fn } from "@storybook/test";
 import type { Meta, StoryObj } from "@storybook/react";
 
 import { Backlog, BacklogProps } from "./Backlog";
-import { useBacklog } from "./useBacklog";
+import { useBacklogQueryOptions } from "./useBacklogQueryOptions";
 
 const meta = {
   component: Backlog,
@@ -58,42 +58,42 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Interactive: Story = {
-  render: (args) => {
-    const [{ tasks, filters, sort }, updateArgs] = useArgs<BacklogProps>();
-    const backlog = useBacklog({
-      initialTasks: tasks,
-      externalTasksState: [
-        tasks,
-        (updates) =>
-          updateArgs({
-            tasks: typeof updates === "function" ? updates(tasks) : updates,
-          }),
-      ],
-      externalFiltersState: [
-        filters,
-        (updates) =>
-          updateArgs({
-            filters: typeof updates === "function" ? updates(filters) : updates,
-          }),
-      ],
-      externalSortState: [
-        sort,
-        (updates) =>
-          updateArgs({
-            sort: typeof updates === "function" ? updates(sort) : updates,
-          }),
-      ],
-    });
-    return (
-      <Backlog
-        {...args}
-        tasks={backlog.tasks}
-        filters={backlog.filters}
-        onFiltersUpdate={backlog.updateFilters}
-        sort={backlog.sort}
-        onSortUpdate={backlog.updateSort}
-      />
-    );
-  },
-};
+// FIXME
+// export const Interactive: Story = {
+//   render: (args) => {
+//     const [{ tasks, filters, sort }, updateArgs] = useArgs<BacklogProps>();
+//     const backlog = useBacklogQueryOptions({
+//       externalTasksState: [
+//         tasks,
+//         (updates) =>
+//           updateArgs({
+//             tasks: typeof updates === "function" ? updates(tasks) : updates,
+//           }),
+//       ],
+//       externalFiltersState: [
+//         filters,
+//         (updates) =>
+//           updateArgs({
+//             filters: typeof updates === "function" ? updates(filters) : updates,
+//           }),
+//       ],
+//       externalSortState: [
+//         sort,
+//         (updates) =>
+//           updateArgs({
+//             sort: typeof updates === "function" ? updates(sort) : updates,
+//           }),
+//       ],
+//     });
+//     return (
+//       <Backlog
+//         {...args}
+//         tasks={backlog.tasks}
+//         filters={backlog.filters}
+//         onFiltersUpdate={backlog.updateFilters}
+//         sort={backlog.sort}
+//         onSortUpdate={backlog.updateSort}
+//       />
+//     );
+//   },
+// };

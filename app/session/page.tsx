@@ -24,7 +24,7 @@ import {
   useSessionPlanner,
 } from "@/ui/deep-work";
 import { useDerivedStateUpdater, useTemporalState } from "@/ui/hooks";
-import { TaskList, useTaskList } from "@/ui/task-management";
+import { TaskList, useBacklogStore, useTaskList } from "@/ui/task-management";
 import { StateSetter } from "@/ui/utils";
 
 type Stage = "task-list" | "session-planner" | "session-runner";
@@ -65,6 +65,9 @@ export default function SessionPage() {
   });
 
   const router = useRouter();
+
+  const backlogStore = useBacklogStore();
+
   const [
     isDeleteModalOpen,
     { open: openDeleteModal, close: closeDeleteModal },
@@ -159,7 +162,15 @@ export default function SessionPage() {
           >
             Delete
           </Button>
-          <Button onClick={() => alert("COMING SOON")}>Move to Backlog</Button>
+          <Button
+            onClick={() => {
+              backlogStore.addTasks(tasks);
+              handleReset();
+              router.push("/");
+            }}
+          >
+            Move to Backlog
+          </Button>
         </SimpleGrid>
       </Modal>
     </AppShell.Main>

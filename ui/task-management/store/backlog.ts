@@ -4,7 +4,6 @@ import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 
 import { BacklogTask } from "@/core/task-management";
-import { StateSetter } from "@/ui/utils";
 
 // Define matcher function type
 export type TaskMatcher = (task: BacklogTask) => boolean;
@@ -36,7 +35,7 @@ const localTaskStorage = localForage.createInstance({
   version: 1,
 });
 
-export const useBacklogTasksStore = create<BacklogStoreState>()(
+export const useBacklogStore = create<BacklogStoreState>()(
   devtools(
     persist(
       (set, get) => ({
@@ -131,27 +130,3 @@ export const useBacklogTasksStore = create<BacklogStoreState>()(
     ),
   ),
 );
-
-const x = createJSONStorage(() => ({
-  getItem: async (key) => {
-    const tasks: Record<string, unknown> = {};
-    await localTaskStorage.iterate((value, id) => {
-      tasks[id] = value;
-    });
-    return JSON.stringify({ tasks });
-  },
-  setItem: (key, value) => {
-    console.log("setItem", key, value);
-    const { state } = JSON.parse(value) as {
-      state: Pick<BacklogStoreState, "tasks">;
-    };
-
-    const entries = Object.entries(state.tasks);
-    return Promise.all(
-      entries.map(([id, task]) => localTaskStorage.setItem(id, task)),
-    );
-  },
-  removeItem: (key) => {
-    localTaskStorage.clear();
-  },
-}));

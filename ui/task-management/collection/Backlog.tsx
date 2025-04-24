@@ -7,6 +7,7 @@ import {
   Badge,
   Box,
   Button,
+  Center,
   Collapse,
   Divider,
   Fieldset,
@@ -16,7 +17,9 @@ import {
   NavLink,
   PaperProps,
   ScrollArea,
+  Space,
   Stack,
+  Text,
   TextInput,
 } from "@mantine/core";
 import {
@@ -46,6 +49,7 @@ import {
 import { Panel } from "@/ui/components/Panel";
 import { useSyncInputState } from "@/ui/hooks/useSyncState";
 import {
+  hasFiltersApplied,
   TaskForm,
   taskFormOpts,
   TaskFormValues,
@@ -53,7 +57,7 @@ import {
 } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
-import { BacklogHookReturn } from "./useBacklog";
+import { BacklogQueryOptionsHookReturn } from "./useBacklogQueryOptions";
 
 dayjs.extend(relativeTime);
 
@@ -61,8 +65,8 @@ export interface BacklogProps {
   tasks: BacklogTask[];
   filters: BacklogFilters;
   sort: BacklogSortOptions;
-  onFiltersUpdate: BacklogHookReturn["updateFilters"];
-  onSortUpdate: BacklogHookReturn["updateSort"];
+  onFiltersUpdate: BacklogQueryOptionsHookReturn["updateFilters"];
+  onSortUpdate: BacklogQueryOptionsHookReturn["updateSort"];
   projects: Project[];
   tags: Tag[];
   onUpdateTask: (
@@ -262,10 +266,11 @@ export function Backlog({
                     <Badge
                       key={projectId}
                       component="button"
-                      className="cursor-pointer!"
+                      className="shrink-0 cursor-pointer!"
                       color={project.color || "gray"}
                       size="md"
                       variant="light"
+                      autoContrast
                       rightSection={<IconX size={12} />}
                       onClick={() => {
                         onFiltersUpdate({
@@ -279,7 +284,6 @@ export function Backlog({
                     </Badge>
                   );
                 })}
-
                 <Divider
                   orientation="vertical"
                   color="neutral.2"
@@ -291,10 +295,11 @@ export function Backlog({
                     <Badge
                       key={tagId}
                       component="button"
-                      className="cursor-pointer!"
+                      className="shrink-0 cursor-pointer!"
                       color={tag.color || "gray"}
                       size="md"
                       variant="light"
+                      autoContrast
                       leftSection={<IconTag size={12} />}
                       rightSection={<IconX size={12} />}
                       onClick={() => {
@@ -307,6 +312,7 @@ export function Backlog({
                     </Badge>
                   );
                 })}
+                <Space w={2} />
               </Flex>
             </ScrollArea>
           </Collapse>
@@ -314,20 +320,33 @@ export function Backlog({
       }
       {...paperProps}
     >
-      <ScrollArea bg="neutral.8">
-        <Stack px="md" py="lg">
-          {tasks.map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              projects={projects}
-              tags={tags}
-              onUpdate={(values) => onUpdateTask(task.id, values)}
-              onDelete={() => onDeleteTask(task.id)}
-            />
-          ))}
-        </Stack>
-      </ScrollArea>
+      {tasks.length > 0 ? (
+        <ScrollArea bg="neutral.8">
+          <Stack px="md" py="lg">
+            {tasks.map((task) => (
+              <TaskItem
+                key={task.id}
+                task={task}
+                projects={projects}
+                tags={tags}
+                onUpdate={(values) => onUpdateTask(task.id, values)}
+                onDelete={() => onDeleteTask(task.id)}
+              />
+            ))}
+            <Text className="not-first:hidden" my="auto">
+              Your Backlog is empty
+            </Text>
+          </Stack>
+        </ScrollArea>
+      ) : (
+        <Center>
+          <Text opacity={0.5} size="xl">
+            {hasFiltersApplied(filters)
+              ? "No tasks match your filters"
+              : "Your Backlog is empty"}
+          </Text>
+        </Center>
+      )}
     </Panel>
   );
 }
@@ -361,14 +380,13 @@ function TaskItem({
           selector={(state) => !isEqual(state.values, task)}
           children={(hasChanged) => (
             <Button
-              ml="xs"
+              ml="auto"
               variant="outline"
               size="compact-sm"
               classNames={{
-                root: cn(
-                  "transition-opacity",
-                  hasChanged ? "opacity-100" : "pointer-events-none opacity-0",
-                ),
+                root: cn({
+                  "hidden!": !hasChanged,
+                }),
               }}
               onClick={() => form.handleSubmit()}
             >
