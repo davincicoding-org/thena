@@ -32,6 +32,7 @@ const theme = createTheme({
     // }),
   },
   primaryColor: "primary",
+  primaryShade: 7,
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
