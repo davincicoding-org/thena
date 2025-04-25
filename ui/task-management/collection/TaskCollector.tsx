@@ -39,7 +39,7 @@ import {
   useTaskForm,
 } from "@/ui/task-management";
 
-export type TaskListProps = {
+export type TaskCollectorProps = {
   items: Task[];
   projects: Project[];
   tags: Tag[];
@@ -55,7 +55,7 @@ export type TaskListProps = {
   onCreateTag: (tag: TagInput, onCreate: (tag: Tag) => void) => void;
 };
 
-export function TaskList({
+export function TaskCollector({
   items,
   projects,
   tags,
@@ -66,7 +66,7 @@ export function TaskList({
   onCreateProject,
   onCreateTag,
   ...paperProps
-}: TaskListProps & PaperProps) {
+}: TaskCollectorProps & PaperProps) {
   const [isCreatingProject, projectAdder] = useDisclosure(false);
   const createProjectCallback = useRef<(project: Project) => void>(null);
 
@@ -189,7 +189,13 @@ function Item({
     ...taskFormOpts,
     defaultValues: item,
     onSubmit: ({ value }) => onChange(value),
+    listeners: {
+      onChange: ({ formApi }) => {
+        onChange(formApi.state.values);
+      },
+    },
   });
+
   return <TaskForm form={form} {...props} />;
 }
 

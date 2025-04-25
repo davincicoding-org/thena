@@ -3,7 +3,7 @@
 import { AppShell } from "@mantine/core";
 
 import {
-  TaskList,
+  TaskCollector,
   useProjects,
   useTags,
   useTaskList,
@@ -16,7 +16,7 @@ export default function TasksPage() {
 
   return (
     <AppShell.Main display="grid" className="items-center justify-center">
-      <TaskList
+      <TaskCollector
         w="90vw"
         maw={500}
         items={taskList.items}

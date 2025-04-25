@@ -15,7 +15,12 @@ import {
   Tabs,
   Text,
 } from "@mantine/core";
-import { useDisclosure, useHotkeys, useLocalStorage } from "@mantine/hooks";
+import {
+  useDebouncedCallback,
+  useDisclosure,
+  useHotkeys,
+  useLocalStorage,
+} from "@mantine/hooks";
 import { IconChevronRight } from "@tabler/icons-react";
 
 import { SprintPlan } from "@/core/deep-work";
@@ -27,7 +32,7 @@ import {
 } from "@/ui/deep-work";
 import { useDerivedStateUpdater, useTemporalState } from "@/ui/hooks";
 import {
-  TaskList,
+  TaskCollector,
   useBacklogStore,
   useProjects,
   useTags,
@@ -35,7 +40,7 @@ import {
 } from "@/ui/task-management";
 import { StateSetter } from "@/ui/utils";
 
-type Stage = "task-list" | "session-planner" | "session-runner";
+type Stage = "task-collector" | "session-planner" | "session-runner";
 
 export default function SessionPage() {
   const [localState, setLocalState, removeLocalState] = useLocalStorage<{
@@ -45,7 +50,7 @@ export default function SessionPage() {
   }>({
     key: "session-planner",
     defaultValue: {
-      stage: "task-list",
+      stage: "task-collector",
       tasks: [],
       sprints: initializeSprints(2),
     },
@@ -96,7 +101,7 @@ export default function SessionPage() {
     <AppShell.Main display="grid">
       <Center>
         <Tabs value={stage}>
-          <Tabs.Panel value="task-list">
+          <Tabs.Panel value="task-collector">
             <CollectTasks
               tasks={tasks}
               setTasks={setTasks}
@@ -194,14 +199,15 @@ function CollectTasks({
   setTasks: StateSetter<Task[]>;
   onComplete: () => void;
 }) {
+  const setTasksDebounced = useDebouncedCallback(setTasks, 1_000);
   const taskList = useTaskList({
-    externalState: [tasks, setTasks],
+    externalState: [tasks, setTasksDebounced],
   });
   const { projects, createProject } = useProjects();
   const { tags, createTag } = useTags();
   return (
     <>
-      <TaskList
+      <TaskCollector
         className="w-sm"
         items={taskList.items}
         projects={projects}

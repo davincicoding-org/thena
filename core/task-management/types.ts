@@ -44,6 +44,11 @@ export const taskSchema = baseTaskSchema.extend({
 });
 export type Task = z.infer<typeof taskSchema>;
 
+export const taskInputSchema = baseTaskSchema.omit({
+  id: true,
+});
+export type TaskInput = z.infer<typeof taskInputSchema>;
+
 /**
  * Task inside the backlog
  */

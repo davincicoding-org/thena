@@ -2,7 +2,7 @@ export * from "./task/TaskForm";
 export * from "./task/useTaskForm";
 2;
 export * from "./collection/useTaskList";
-export * from "./collection/TaskList";
+export * from "./collection/TaskCollector";
 
 export * from "./collection/Backlog";
 export * from "./collection/useBacklogQueryOptions";

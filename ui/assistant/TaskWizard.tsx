@@ -5,7 +5,7 @@ import { BoxProps, Button, Center, Flex, Stack } from "@mantine/core";
 import { taskManagerResponseSchema } from "@/ui/assistant/schema";
 import { useKeyHold } from "@/ui/hooks/useKeyHold";
 import {
-  TaskList,
+  TaskCollector,
   useProjects,
   useTags,
   useTaskList,
@@ -113,7 +113,7 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
         <Flex h="100%" direction="column" align="center">
           {tasks.length > 0 && (
             <Stack my="auto">
-              <TaskList
+              <TaskCollector
                 w="90vw"
                 maw={500}
                 items={tasks}

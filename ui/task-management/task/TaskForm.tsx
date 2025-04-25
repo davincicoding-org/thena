@@ -26,12 +26,7 @@ import {
   useCombobox,
 } from "@mantine/core";
 import { useDisclosure, useInputState } from "@mantine/hooks";
-import {
-  IconDotsVertical,
-  IconInfoCircle,
-  IconPlus,
-  IconX,
-} from "@tabler/icons-react";
+import { IconDotsVertical, IconPlus, IconX } from "@tabler/icons-react";
 import { Updater, useForm } from "@tanstack/react-form";
 import { nanoid } from "nanoid";
 

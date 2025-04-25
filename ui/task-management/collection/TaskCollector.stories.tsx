@@ -4,10 +4,10 @@ import { fn } from "@storybook/test";
 import type { Meta, StoryObj } from "@storybook/react";
 import { MOCK_PROJECTS, MOCK_TAGS } from "@/core/task-management/mock";
 
-import { TaskList, TaskListProps } from "./TaskList";
+import { TaskCollector, TaskCollectorProps } from "./TaskCollector";
 
 const meta = {
-  component: TaskList,
+  component: TaskCollector,
   parameters: {
     layout: "centered",
   },
@@ -49,7 +49,7 @@ const meta = {
     onCreateProject: fn(),
     onCreateTag: fn(),
   },
-} satisfies Meta<typeof TaskList>;
+} satisfies Meta<typeof TaskCollector>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -66,9 +66,9 @@ export const Showcase: Story = {
     projects,
     tags,
   }) => {
-    const [, updateArgs] = useArgs<TaskListProps>();
+    const [, updateArgs] = useArgs<TaskCollectorProps>();
     return (
-      <TaskList
+      <TaskCollector
         items={items}
         projects={projects}
         tags={tags}
