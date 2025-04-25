@@ -10,13 +10,11 @@
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
-  "editor.rulers": [100],
   "editor.tabSize": 2,
   "editor.quickSuggestions": {
     "strings": true
   },
   "editor.wordWrap": "on",
-  "editor.suggest.": "recentlyUsed",
   "javascript.preferences.importModuleSpecifier": "non-relative",
   "typescript.preferences.importModuleSpecifier": "non-relative",
   "typescript.suggest.autoImports": true,
@@ -28,7 +26,6 @@
     "package.json": "pnpm-lock.yaml"
   },
   "explorer.fileNesting.expand": false,
-
   "eslint.validate": [
     "javascript",
     "javascriptreact",

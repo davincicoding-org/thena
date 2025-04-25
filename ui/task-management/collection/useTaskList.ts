@@ -1,14 +1,10 @@
 import { Dispatch, SetStateAction, useCallback, useState } from "react";
-import { nanoid } from "nanoid";
 
-import { Subtask, Task } from "@/core/task-management";
-import { ExternalState } from "@/ui/utils";
-
-export type SubtaskInput = Omit<Subtask, "id">;
-export type TaskInput = Omit<Task, "id"> & { subtasks?: SubtaskInput[] };
+import { Task, TaskInput } from "@/core/task-management";
+import { createUniqueId, ExternalState } from "@/ui/utils";
 
 export interface TaskListHookOptions {
-  initialTasks?: Task[];
+  initialItems?: Task[];
   externalState?: ExternalState<Task[]>;
 }
 
@@ -20,215 +16,87 @@ export interface TaskListHookReturn {
   // Task operations
   addTask: (task: TaskInput) => void;
   addTasks: (tasks: TaskInput[]) => void;
-  updateTask: (id: string, updates: Partial<TaskInput>) => void;
-  removeTask: (id: string) => void;
-  removeTasks: (ids: string[]) => void;
-
-  // Subtask operations
-  addSubtask: (taskId: string, subtask: SubtaskInput) => void;
-  addSubtasks: (taskId: string, subtasks: SubtaskInput[]) => void;
-  updateSubtask: (
-    taskId: string,
-    subtaskId: string,
-    updates: Partial<SubtaskInput>,
-  ) => void;
-  removeSubtask: (taskId: string, subtaskId: string) => void;
-  removeSubtasks: (taskId: string, subtaskIds: string[]) => void;
+  updateTask: (taskId: Task["id"], updates: Partial<TaskInput>) => void;
+  removeTask: (taskId: Task["id"]) => void;
+  removeTasks: (taskIds: Task["id"][]) => void;
 }
 
 /**
- * Manages a local, temporary list of tasks in a task list.
- * Tasks (and subtasks) can be added, removed, edited, and batch‑operated with undo/redo support.
+ * Manages a list of tasks.
+ * Tasks can be added, removed, edited, and batch‑operated.
  */
 export function useTaskList({
-  initialTasks = [],
-  externalState: [tasks, setTasks] = useState(initialTasks),
+  initialItems = [],
+  externalState: [items, setItems] = useState(initialItems),
 }: TaskListHookOptions = {}): TaskListHookReturn {
-  // Use the useUndo hook for managing tasks with history
+  const generateTaskID = (existingItems: Task[]) =>
+    createUniqueId(
+      Object.fromEntries(existingItems.map((item) => [item.id, null])),
+    );
 
   /**
    * Add a single task
    */
   const addTask = useCallback<TaskListHookReturn["addTask"]>(
-    (task) => {
-      setTasks([...tasks, { ...task, id: nanoid() }]);
-    },
-    [tasks, setTasks],
+    (task) =>
+      setItems((prev) => [...prev, { ...task, id: generateTaskID(prev) }]),
+    [],
   );
 
   /**
    * Add multiple tasks
    */
   const addTasks = useCallback<TaskListHookReturn["addTasks"]>(
-    (newTasks) => {
-      setTasks([
-        ...tasks,
-        ...newTasks.map((task) => ({ ...task, id: nanoid() })),
-      ]);
-    },
-    [tasks, setTasks],
+    (tasks) =>
+      setItems((prev) =>
+        tasks.reduce<Task[]>(
+          (acc, task) => [...acc, { ...task, id: generateTaskID(acc) }],
+          [...prev],
+        ),
+      ),
+    [],
   );
 
   /**
    * Update an existing task
    */
   const updateTask = useCallback<TaskListHookReturn["updateTask"]>(
-    (id, updates) => {
-      setTasks(
-        tasks.map((task: Task) =>
-          task.id === id ? { ...task, ...updates } : task,
+    (taskId, updates) =>
+      setItems((prev) =>
+        prev.map((task: Task) =>
+          task.id === taskId ? { ...task, ...updates } : task,
         ),
-      );
-    },
-    [tasks, setTasks],
+      ),
+    [],
   );
 
   /**
    * Remove a single task
    */
   const removeTask = useCallback<TaskListHookReturn["removeTask"]>(
-    (id) => {
-      setTasks(tasks.filter((task: Task) => task.id !== id));
-    },
-    [tasks, setTasks],
+    (taskId) =>
+      setItems((prev) => prev.filter((task: Task) => task.id !== taskId)),
+    [],
   );
 
   /**
    * Remove multiple tasks
    */
   const removeTasks = useCallback<TaskListHookReturn["removeTasks"]>(
-    (ids) => {
-      setTasks(tasks.filter((task: Task) => !ids.includes(task.id)));
-    },
-    [tasks, setTasks],
-  );
-
-  /**
-   * Add a subtask to a task
-   */
-  const addSubtask = useCallback<TaskListHookReturn["addSubtask"]>(
-    (taskId, subtask) => {
-      setTasks(
-        tasks.map((task: Task) => {
-          if (task.id === taskId) {
-            const subtasks = task.subtasks || [];
-            return {
-              ...task,
-              subtasks: [...subtasks, { ...subtask, id: nanoid() }],
-            };
-          }
-          return task;
-        }),
-      );
-    },
-    [tasks, setTasks],
-  );
-
-  /**
-   * Add multiple subtasks to a task
-   */
-  const addSubtasks = useCallback<TaskListHookReturn["addSubtasks"]>(
-    (taskId, subtasks) => {
-      setTasks(
-        tasks.map((task: Task) => {
-          if (task.id === taskId) {
-            const existingSubtasks = task.subtasks || [];
-            return {
-              ...task,
-              subtasks: [
-                ...existingSubtasks,
-                ...subtasks.map((subtask) => ({
-                  ...subtask,
-                  id: nanoid(),
-                })),
-              ],
-            };
-          }
-          return task;
-        }),
-      );
-    },
-    [tasks, setTasks],
-  );
-
-  /**
-   * Update a subtask
-   */
-  const updateSubtask = useCallback<TaskListHookReturn["updateSubtask"]>(
-    (taskId, subtaskId, updates) => {
-      setTasks(
-        tasks.map((task: Task) => {
-          if (task.id === taskId && task.subtasks) {
-            return {
-              ...task,
-              subtasks: task.subtasks.map((subtask) =>
-                subtask.id === subtaskId ? { ...subtask, ...updates } : subtask,
-              ),
-            };
-          }
-          return task;
-        }),
-      );
-    },
-    [tasks, setTasks],
-  );
-
-  /**
-   * Remove a subtask
-   */
-  const removeSubtask = useCallback<TaskListHookReturn["removeSubtask"]>(
-    (taskId, subtaskId) => {
-      setTasks(
-        tasks.map((task: Task) => {
-          if (task.id === taskId && task.subtasks) {
-            return {
-              ...task,
-              subtasks: task.subtasks.filter(
-                (subtask) => subtask.id !== subtaskId,
-              ),
-            };
-          }
-          return task;
-        }),
-      );
-    },
-    [tasks, setTasks],
-  );
-
-  /**
-   * Remove multiple subtasks
-   */
-  const removeSubtasks = useCallback<TaskListHookReturn["removeSubtasks"]>(
-    (taskId, subtaskIds) => {
-      setTasks(
-        tasks.map((task: Task) => {
-          if (task.id === taskId && task.subtasks) {
-            return {
-              ...task,
-              subtasks: task.subtasks.filter(
-                (subtask) => !subtaskIds.includes(subtask.id),
-              ),
-            };
-          }
-          return task;
-        }),
-      );
-    },
-    [tasks, setTasks],
+    (taskIds) =>
+      setItems((prev) =>
+        prev.filter((task: Task) => !taskIds.includes(task.id)),
+      ),
+    [],
   );
 
   return {
-    items: tasks,
-    setItems: setTasks,
+    items,
+    setItems,
     addTask,
     addTasks,
     updateTask,
     removeTask,
     removeTasks,
-    addSubtask,
-    addSubtasks,
-    updateSubtask,
-    removeSubtask,
-    removeSubtasks,
   };
 }

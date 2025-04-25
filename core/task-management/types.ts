@@ -44,7 +44,7 @@ export const taskSchema = baseTaskSchema.extend({
 });
 export type Task = z.infer<typeof taskSchema>;
 
-export const taskInputSchema = baseTaskSchema.omit({
+export const taskInputSchema = taskSchema.omit({
   id: true,
 });
 export type TaskInput = z.infer<typeof taskInputSchema>;

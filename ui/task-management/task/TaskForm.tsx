@@ -1,6 +1,7 @@
 import {
   Fragment,
   FunctionComponent,
+  HTMLAttributes,
   ReactElement,
   ReactNode,
   useEffect,
@@ -53,7 +54,7 @@ import { taskFormOpts, withTaskForm } from "./useTaskForm";
 type TaskActionsComponent = FunctionComponent<{ defaultActions: ReactNode }>;
 
 export type TaskFormProps = {
-  containerProps?: PaperProps;
+  containerProps?: PaperProps & HTMLAttributes<HTMLDivElement>;
   projects: Project[];
   onAssignToNewProject: (onCreated: (project: Project) => void) => void;
   tags: Tag[];
@@ -69,8 +70,8 @@ export const TaskForm = withTaskForm({
     form,
     containerProps,
     projects,
-    tags,
     onAssignToNewProject,
+    tags,
     onAttachNewTag,
     readOnly,
     TaskActions = (({ defaultActions }) =>
@@ -114,11 +115,14 @@ export const TaskForm = withTaskForm({
         />
         <form.Field
           name="tags"
-          children={(tagField) => (
+          children={(tagFields) => (
             <TagSelector
-              value={tagField.state.value}
+              value={tagFields.state.value}
               tags={tags}
-              onChange={tagField.handleChange}
+              onChange={tagFields.handleChange}
+              onCreate={() =>
+                onAttachNewTag((tag) => tagFields.handleChange([tag.id]))
+              }
             />
           )}
         />
@@ -200,18 +204,21 @@ export const TaskForm = withTaskForm({
             };
             return (
               <>
-                {subtasksField.state.value?.map((subtask, index) => (
-                  <Fragment key={subtask.id}>
-                    <Divider />
-                    <SubtaskForm
-                      form={form}
-                      index={index}
-                      tags={tags}
-                      onRemove={() => subtasksField.removeValue(index)}
-                    />
-                  </Fragment>
-                ))}
-
+                <Box>
+                  {subtasksField.state.value?.map((subtask, index) => (
+                    <Fragment key={subtask.id}>
+                      <Divider />
+                      <SubtaskForm
+                        form={form}
+                        index={index}
+                        readOnly={readOnly}
+                        tags={tags}
+                        onRemove={() => subtasksField.removeValue(index)}
+                        onAttachNewTag={onAttachNewTag}
+                      />
+                    </Fragment>
+                  ))}
+                </Box>
                 <SubtaskAdder
                   visible={isAddingSubtask}
                   onSubmit={handleAddSubtask}
@@ -363,7 +370,7 @@ const TaskHeader = withTaskForm({
   },
 });
 
-type SubtaskFormProps = Pick<TaskFormProps, "readOnly"> & {
+type SubtaskFormProps = Pick<TaskFormProps, "readOnly" | "onAttachNewTag"> & {
   index: number;
   tags: Tag[];
   onRemove: () => void;
@@ -372,7 +379,7 @@ type SubtaskFormProps = Pick<TaskFormProps, "readOnly"> & {
 const SubtaskForm = withTaskForm({
   ...taskFormOpts,
   props: {} as SubtaskFormProps,
-  render: ({ form, readOnly, index, tags, onRemove }) => {
+  render: ({ form, readOnly, index, tags, onRemove, onAttachNewTag }) => {
     return (
       <Popover
         position="bottom-end"
@@ -392,7 +399,7 @@ const SubtaskForm = withTaskForm({
                     "h-7! min-h-0! truncate bg-transparent! px-1.5! not-focus:border-transparent! read-only:border-transparent!",
                   ),
                 }}
-                value={subField.state.value}
+                value={subField.state.value || ""}
                 readOnly={readOnly}
                 onChange={(e) => subField.handleChange(e.target.value)}
                 error={subField.state.meta.errors.length > 0}
@@ -493,6 +500,9 @@ const SubtaskForm = withTaskForm({
                 value={tagsField.state.value}
                 tags={tags}
                 onChange={tagsField.handleChange}
+                onCreate={() =>
+                  onAttachNewTag((tag) => tagsField.handleChange([tag.id]))
+                }
               />
             )}
           />
@@ -606,6 +616,7 @@ function ProjectAssigner({
         onChange(val);
         projectsCombobox.closeDropdown();
       }}
+      withinPortal={false}
     >
       <Combobox.Target withAriaAttributes={false}>
         {value ? (
@@ -667,10 +678,12 @@ function TagSelector({
   value,
   tags,
   onChange,
+  onCreate,
 }: {
   value: Tag["id"][] | undefined;
   tags: Tag[];
   onChange: (updater: Updater<Tag["id"][] | undefined>) => void;
+  onCreate: () => void;
 }) {
   const [search, setSearch] = useInputState("");
   const combobox = useCombobox({
@@ -688,7 +701,7 @@ function TagSelector({
     .filter((tag) => value?.includes(tag.id))
     .map((tag) => (
       <Combobox.Option value={tag.id} key={tag.id} my={2} selected>
-        <TagBadge tag={tag} />
+        <TagBadge tag={tag} className="cursor-pointer!" />
       </Combobox.Option>
     ));
 
@@ -699,7 +712,7 @@ function TagSelector({
     })
     .map((tag) => (
       <Combobox.Option value={tag.id} key={tag.id} my={2} color="blue">
-        <TagBadge tag={tag} />
+        <TagBadge tag={tag} className="cursor-pointer!" />
       </Combobox.Option>
     ))
     .slice(0, 5);
@@ -715,7 +728,12 @@ function TagSelector({
   };
 
   return (
-    <Combobox store={combobox} width={150} onOptionSubmit={handleValueSelect}>
+    <Combobox
+      store={combobox}
+      width={150}
+      onOptionSubmit={handleValueSelect}
+      withinPortal={false}
+    >
       <Combobox.Target withAriaAttributes={false}>
         <Button
           variant="subtle"
@@ -748,6 +766,9 @@ function TagSelector({
             <Combobox.Empty>Nothing found</Combobox.Empty>
           )}
         </Combobox.Options>
+        <Button variant="subtle" fullWidth onClick={onCreate}>
+          Create New Tag
+        </Button>
       </Combobox.Dropdown>
     </Combobox>
   );
@@ -865,6 +886,7 @@ function PriorityMenu({
     </Menu>
   );
 }
+
 function ComplexityMenu({
   value,
   onChange,

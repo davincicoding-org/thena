@@ -48,6 +48,8 @@ const meta = {
     onRefineTask: fn(),
     onCreateProject: fn(),
     onCreateTag: fn(),
+    onRequestToPullFromBacklog: fn(),
+    allowPullFromBacklog: true,
   },
 } satisfies Meta<typeof TaskCollector>;
 
@@ -63,6 +65,8 @@ export const Showcase: Story = {
     onRefineTask,
     onCreateProject,
     onCreateTag,
+    allowPullFromBacklog,
+    onRequestToPullFromBacklog,
     projects,
     tags,
   }) => {
@@ -70,8 +74,6 @@ export const Showcase: Story = {
     return (
       <TaskCollector
         items={items}
-        projects={projects}
-        tags={tags}
         onAddTask={(task) => {
           updateArgs({
             items: [...items, { ...task, id: Date.now().toString() }],
@@ -93,8 +95,12 @@ export const Showcase: Story = {
           onRemoveTask(id);
         }}
         onRefineTask={onRefineTask}
+        projects={projects}
         onCreateProject={onCreateProject}
+        tags={tags}
         onCreateTag={onCreateTag}
+        allowPullFromBacklog={allowPullFromBacklog}
+        onRequestToPullFromBacklog={onRequestToPullFromBacklog}
       />
     );
   },

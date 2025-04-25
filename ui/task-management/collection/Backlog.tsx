@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   ActionIcon,
   Avatar,
@@ -16,6 +16,7 @@ import {
   Menu,
   Modal,
   NavLink,
+  Paper,
   PaperProps,
   ScrollArea,
   Space,
@@ -47,8 +48,10 @@ import {
   BacklogTask,
   Project,
   ProjectInput,
+  Subtask,
   Tag,
   TagInput,
+  TaskInput,
 } from "@/core/task-management";
 import { Panel } from "@/ui/components/Panel";
 import { useSyncInputState } from "@/ui/hooks/useSyncState";
@@ -59,15 +62,16 @@ import {
   TaskForm,
   taskFormOpts,
   TaskFormProps,
-  TaskFormValues,
   useTaskForm,
 } from "@/ui/task-management";
+import { cn } from "@/ui/utils";
 
 import { BacklogQueryOptionsHookReturn } from "./useBacklogQueryOptions";
 
 dayjs.extend(relativeTime);
 
 export interface BacklogProps {
+  mode: "select" | "edit";
   tasks: BacklogTask[];
   filters: BacklogFilters;
   sort: BacklogSortOptions;
@@ -75,19 +79,21 @@ export interface BacklogProps {
   onSortUpdate: BacklogQueryOptionsHookReturn["updateSort"];
   projects: Project[];
   tags: Tag[];
-  onUpdateTask: (
+  onUpdateTask?: (
     taskId: BacklogTask["id"],
     values: Partial<BacklogTask>,
   ) => void;
-  onDeleteTask: (taskId: BacklogTask["id"]) => void;
-  onCreateProject: (
+  onDeleteTask?: (taskId: BacklogTask["id"]) => void;
+  onCreateProject?: (
     project: ProjectInput,
     onCreate: (project: Project) => void,
   ) => void;
-  onCreateTag: (tag: TagInput, onCreate: (tag: Tag) => void) => void;
+  onCreateTag?: (tag: TagInput, onCreate: (tag: Tag) => void) => void;
+  onTaskSelectionChange?: (tasks: BacklogTask[]) => void;
 }
 
 export function Backlog({
+  mode,
   filters,
   sort,
   tasks,
@@ -99,6 +105,7 @@ export function Backlog({
   onDeleteTask,
   onCreateProject,
   onCreateTag,
+  onTaskSelectionChange,
   ...paperProps
 }: BacklogProps & PaperProps) {
   const [searchValue, setSearchValue] = useSyncInputState(filters.search || "");
@@ -124,6 +131,24 @@ export function Backlog({
       },
     [tags],
   );
+
+  const [selectedTaskIds, setSelectedTaskIds] = useState<BacklogTask["id"][]>(
+    [],
+  );
+  const isTaskSelected = (taskId: BacklogTask["id"]) =>
+    selectedTaskIds.includes(taskId);
+
+  const handleToggleTaskSelection = (taskId: BacklogTask["id"]) => {
+    setSelectedTaskIds((prev) => {
+      const nextSelection = prev.includes(taskId)
+        ? prev.filter((id) => id !== taskId)
+        : [...prev, taskId];
+      onTaskSelectionChange?.(
+        tasks.filter((task) => nextSelection.includes(task.id)),
+      );
+      return nextSelection;
+    });
+  };
 
   return (
     <>
@@ -355,11 +380,12 @@ export function Backlog({
               {tasks.map((task) => (
                 <TaskItem
                   key={task.id}
+                  mode={mode}
                   task={task}
                   projects={projects}
                   tags={tags}
-                  onUpdate={(values) => onUpdateTask(task.id, values)}
-                  onDelete={() => onDeleteTask(task.id)}
+                  onUpdate={(values) => onUpdateTask?.(task.id, values)}
+                  onDelete={() => onDeleteTask?.(task.id)}
                   onAssignToNewProject={(callback) => {
                     createProjectCallback.current = callback;
                     projectAdder.open();
@@ -368,6 +394,8 @@ export function Backlog({
                     createTagCallback.current = callback;
                     tagAdder.open();
                   }}
+                  selected={isTaskSelected(task.id)}
+                  onToggleSelection={() => handleToggleTaskSelection(task.id)}
                 />
               ))}
               <Text className="not-first:hidden" my="auto">
@@ -398,7 +426,7 @@ export function Backlog({
         <ProjectCreator
           onCreate={(values) => {
             projectAdder.close();
-            onCreateProject(values, (project) => {
+            onCreateProject?.(values, (project) => {
               if (createProjectCallback.current === null) return;
               createProjectCallback.current(project);
               createProjectCallback.current = null;
@@ -419,7 +447,7 @@ export function Backlog({
         <TagCreator
           onCreate={(values) => {
             tagAdder.close();
-            onCreateTag(values, (tag) => {
+            onCreateTag?.(values, (tag) => {
               if (createTagCallback.current === null) return;
               createTagCallback.current(tag);
               createTagCallback.current = null;
@@ -436,30 +464,50 @@ interface TaskItemProps
     TaskFormProps,
     "projects" | "onAssignToNewProject" | "tags" | "onAttachNewTag"
   > {
+  mode: "select" | "edit";
   task: BacklogTask;
-  onUpdate: (values: Partial<BacklogTask>) => void;
-  onDelete: () => void;
+  selected?: boolean;
+  onToggleSelection: () => void;
+  onUpdate?: (values: Partial<BacklogTask>) => void;
+  onDelete?: () => void;
 }
 
 function TaskItem({
+  mode,
   task,
   onUpdate,
   onDelete,
   projects,
   tags,
+  selected,
   onAssignToNewProject,
   onAttachNewTag,
+  onToggleSelection,
 }: TaskItemProps) {
   const form = useTaskForm({
     ...taskFormOpts,
-    defaultValues: task as TaskFormValues,
-    onSubmit: ({ value }) => onUpdate(value),
+    defaultValues: task as TaskInput,
+    onSubmit: ({ value }) => onUpdate?.(value),
   });
 
   return (
     <Box>
       <TaskForm
         form={form}
+        containerProps={
+          mode === "select"
+            ? {
+                className: cn(
+                  "cursor-pointer outline! transition-all [&_*]:cursor-pointer!",
+                  selected
+                    ? "outline-[var(--mantine-primary-color-filled)]!"
+                    : "outline-transparent! hover:outline! hover:outline-current!",
+                ),
+                onClick: onToggleSelection,
+              }
+            : undefined
+        }
+        readOnly={mode !== "edit"}
         projects={projects}
         tags={tags}
         TaskActions={({ defaultActions }) => (

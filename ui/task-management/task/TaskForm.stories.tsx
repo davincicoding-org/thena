@@ -4,14 +4,15 @@ import { action } from "@storybook/addon-actions";
 import { fn } from "@storybook/test";
 
 import type { Meta, StoryObj } from "@storybook/react";
+import { TaskInput } from "@/core/task-management";
 import { MOCK_PROJECTS, MOCK_TAGS } from "@/core/task-management/mock";
 
 import { TaskForm, TaskFormProps } from "./TaskForm";
-import { taskFormOpts, TaskFormValues, useTaskForm } from "./useTaskForm";
+import { taskFormOpts, useTaskForm } from "./useTaskForm";
 
 interface PlaygroundProps extends TaskFormProps {
-  initialValues: TaskFormValues;
-  onSubmit: (values: TaskFormValues) => void;
+  initialValues: TaskInput;
+  onSubmit: (values: TaskInput) => void;
 }
 const Playground = ({ initialValues, onSubmit, ...props }: PlaygroundProps) => {
   const form = useTaskForm({

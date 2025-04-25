@@ -10,7 +10,6 @@ export type TaskMatcher = (task: BacklogTask) => boolean;
 interface BacklogStoreState {
   // Task data - storing tasks without redundant IDs
   pool: Record<string, Omit<BacklogTask, "id">>;
-  items: BacklogTask[];
   ready: boolean;
 
   // Mutation actions
@@ -25,15 +24,11 @@ interface BacklogStoreState {
   updateTask: (
     taskId: BacklogTask["id"],
     update: Partial<Omit<BacklogTask, "id">>,
+    callback?: (task: BacklogTask) => void,
   ) => void;
   removeTask: (taskId: BacklogTask["id"]) => void;
+  removeTasks: (taskIds: BacklogTask["id"][]) => void;
 }
-
-const fromPool = (pool: Record<string, Omit<BacklogTask, "id">>) =>
-  Object.entries(pool).map(([id, task]) => ({
-    ...task,
-    id,
-  }));
 
 export const useBacklogStore = create<BacklogStoreState>()(
   devtools(
@@ -52,14 +47,11 @@ export const useBacklogStore = create<BacklogStoreState>()(
 
             callback?.({ ...populatedTask, id });
 
-            const updatedPool = {
-              ...state.pool,
-              [id]: populatedTask,
-            };
-
             return {
-              pool: updatedPool,
-              items: fromPool(updatedPool),
+              pool: {
+                ...state.pool,
+                [id]: populatedTask,
+              },
             };
           }),
         addTasks: (tasks, callback) => {
@@ -82,27 +74,24 @@ export const useBacklogStore = create<BacklogStoreState>()(
               })),
             );
 
-            const updatedPool = { ...state.pool, ...newTasks };
-
             return {
-              pool: updatedPool,
-              items: fromPool(updatedPool),
+              pool: { ...state.pool, ...newTasks },
             };
           });
         },
-        updateTask: (taskId, updates) => {
+        updateTask: (taskId, updates, callback) => {
           set((state) => {
             const existingTask = state.pool[taskId];
             if (!existingTask) return state;
 
-            const updatedPool = {
-              ...state.pool,
-              [taskId]: { ...existingTask, ...updates },
-            };
+            const updatedTask = { ...existingTask, ...updates };
+            callback?.({ id: taskId, ...updatedTask });
 
             return {
-              pool: updatedPool,
-              items: fromPool(updatedPool),
+              pool: {
+                ...state.pool,
+                [taskId]: updatedTask,
+              },
             };
           });
         },
@@ -112,9 +101,16 @@ export const useBacklogStore = create<BacklogStoreState>()(
 
             return {
               pool: remainingTasks,
-              items: fromPool(remainingTasks),
             };
           });
+        },
+        removeTasks: (taskIds) => {
+          set((state) => ({
+            pool: taskIds.reduce<BacklogStoreState["pool"]>((_acc, taskId) => {
+              const { [taskId]: _removedTask, ...remainingTasks } = state.pool;
+              return remainingTasks;
+            }, state.pool),
+          }));
         },
       }),
       {
@@ -122,7 +118,7 @@ export const useBacklogStore = create<BacklogStoreState>()(
         storage: {
           getItem: async (name) => {
             const value = await localDB.getItem(name);
-            if (!value) return { state: { pool: {}, items: [], ready: true } };
+            if (!value) return { state: { pool: {}, ready: true } };
 
             const pool = JSON.parse(
               value as string,
@@ -131,7 +127,6 @@ export const useBacklogStore = create<BacklogStoreState>()(
               state: {
                 pool,
                 ready: true,
-                items: fromPool(pool),
               },
             };
           },

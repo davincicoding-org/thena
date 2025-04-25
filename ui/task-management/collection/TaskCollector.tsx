@@ -21,6 +21,8 @@ import {
   IconTrash,
   IconX,
 } from "@tabler/icons-react";
+import { useForm } from "@tanstack/react-form";
+import { z } from "zod";
 
 import {
   Project,
@@ -28,45 +30,63 @@ import {
   Tag,
   TagInput,
   Task,
+  TaskInput,
+  taskInputSchema,
+  taskSchema,
 } from "@/core/task-management";
 import {
   ProjectCreator,
   TagCreator,
   TaskForm,
-  taskFormOpts,
   TaskFormProps,
-  TaskFormValues,
   useTaskForm,
 } from "@/ui/task-management";
 
 export type TaskCollectorProps = {
   items: Task[];
-  projects: Project[];
-  tags: Tag[];
-  readOnly?: boolean;
   onUpdateTask: (taskId: Task["id"], updates: Partial<Task>) => void;
   onRemoveTask: (taskId: Task["id"]) => void;
   onAddTask: (task: Omit<Task, "id">) => void;
   onRefineTask?: (task: Task) => void;
+  projects: Project[];
   onCreateProject: (
     project: ProjectInput,
     onCreate: (project: Project) => void,
   ) => void;
+  tags: Tag[];
   onCreateTag: (tag: TagInput, onCreate: (tag: Tag) => void) => void;
+  allowPullFromBacklog?: boolean;
+  onRequestToPullFromBacklog?: () => void;
 };
 
 export function TaskCollector({
   items,
-  projects,
-  tags,
   onUpdateTask,
   onRemoveTask,
   onAddTask,
   onRefineTask,
+  tags,
   onCreateProject,
+  projects,
   onCreateTag,
+  allowPullFromBacklog,
+  onRequestToPullFromBacklog,
   ...paperProps
 }: TaskCollectorProps & PaperProps) {
+  const form = useForm({
+    defaultValues: {
+      items,
+    },
+    validators: {
+      onChange: z.object({
+        items: z.array(taskSchema),
+      }),
+      onMount: z.object({
+        items: z.array(taskSchema),
+      }),
+    },
+  });
+
   const [isCreatingProject, projectAdder] = useDisclosure(false);
   const createProjectCallback = useRef<(project: Project) => void>(null);
 
@@ -82,55 +102,84 @@ export function TaskCollector({
         {...paperProps}
       >
         <Stack>
-          {items.map((item) => (
-            <Item
-              key={item.id}
-              item={item}
-              onChange={(update) => onUpdateTask(item.id, update)}
-              projects={projects}
-              tags={tags}
-              TaskActions={({ defaultActions }) => (
-                <>
-                  {onRefineTask && (
-                    <>
-                      <Button
-                        fullWidth
-                        variant="subtle"
-                        onClick={() => onRefineTask(item)}
-                      >
-                        Refine
-                      </Button>
-                      <Divider />
-                    </>
-                  )}
-                  {defaultActions}
-                  <Divider />
-
-                  <Button
-                    fullWidth
-                    color="red"
-                    variant="subtle"
-                    leftSection={<IconTrash size={16} />}
-                    onClick={() => onRemoveTask(item.id)}
-                  >
-                    Remove
-                  </Button>
-                </>
-              )}
-              onAssignToNewProject={(callback) => {
-                createProjectCallback.current = callback;
-                projectAdder.open();
-              }}
-              onAttachNewTag={(callback) => {
-                createTagCallback.current = callback;
-                tagAdder.open();
-              }}
-            />
-          ))}
+          <form.Field
+            name="items"
+            mode="array"
+            children={(itemsField) => (
+              <>
+                {itemsField.state.value.map((item, index) => (
+                  <form.Field
+                    key={item.id}
+                    name={`items[${index}]`}
+                    children={(itemField) => (
+                      <>
+                        <form.Field
+                          name={`items[${index}].id`}
+                          defaultValue={item.id}
+                          children={() => null}
+                        />
+                        <Item
+                          item={itemField.state.value}
+                          onChange={(update) => {
+                            itemField.handleChange({ id: item.id, ...update });
+                            //  MAYBE: needed for backlog task updates?
+                            // onUpdateTask(item.id, update);
+                          }}
+                          projects={projects}
+                          tags={tags}
+                          TaskActions={({ defaultActions }) => (
+                            <>
+                              {onRefineTask && (
+                                <>
+                                  <Button
+                                    fullWidth
+                                    variant="subtle"
+                                    onClick={() => onRefineTask(item)}
+                                  >
+                                    Refine
+                                  </Button>
+                                  <Divider />
+                                </>
+                              )}
+                              {defaultActions}
+                              <Divider />
+                              <Button
+                                fullWidth
+                                color="red"
+                                variant="subtle"
+                                leftSection={<IconTrash size={16} />}
+                                onClick={() => onRemoveTask(item.id)}
+                              >
+                                Remove
+                              </Button>
+                            </>
+                          )}
+                          onAssignToNewProject={(callback) => {
+                            createProjectCallback.current = callback;
+                            projectAdder.open();
+                          }}
+                          onAttachNewTag={(callback) => {
+                            createTagCallback.current = callback;
+                            tagAdder.open();
+                          }}
+                        />
+                      </>
+                    )}
+                  />
+                ))}
+              </>
+            )}
+          />
           <Divider className="first:hidden" />
-          <TaskAdder hasTasks={items.length > 0} onSubmit={onAddTask} />
+          <TaskAdder
+            hasTasks={items.length > 0}
+            onSubmit={onAddTask}
+            allowPullFromBacklog={allowPullFromBacklog}
+            onRequestToPullFromBacklog={onRequestToPullFromBacklog}
+          />
         </Stack>
       </Paper>
+
       <Modal
         opened={isCreatingProject}
         centered
@@ -182,12 +231,15 @@ function Item({
   onChange,
   ...props
 }: {
-  item: TaskFormValues;
-  onChange: (update: TaskFormValues) => void;
+  item: TaskInput;
+  onChange: (update: TaskInput) => void;
 } & TaskFormProps) {
   const form = useTaskForm({
-    ...taskFormOpts,
     defaultValues: item,
+    validators: {
+      onChange: taskInputSchema,
+      onMount: taskInputSchema,
+    },
     onSubmit: ({ value }) => onChange(value),
     listeners: {
       onChange: ({ formApi }) => {
@@ -199,13 +251,21 @@ function Item({
   return <TaskForm form={form} {...props} />;
 }
 
+interface TaskAdderProps
+  extends Pick<
+    TaskCollectorProps,
+    "allowPullFromBacklog" | "onRequestToPullFromBacklog"
+  > {
+  hasTasks: boolean;
+  onSubmit: (task: Omit<Task, "id">) => void;
+}
+
 function TaskAdder({
   hasTasks,
   onSubmit,
-}: {
-  hasTasks: boolean;
-  onSubmit: (task: Omit<Task, "id">) => void;
-}) {
+  allowPullFromBacklog,
+  onRequestToPullFromBacklog,
+}: TaskAdderProps) {
   const [visible, { open, close }] = useDisclosure(false);
 
   const [title, setTitle] = useInputState("");
@@ -230,17 +290,19 @@ function TaskAdder({
         >
           New Task
         </Button>
-        <Tooltip label="Import from Backlog">
-          <ActionIcon
-            aria-label="Import Tasks"
-            className="transition-all"
-            size={hasTasks ? 30 : 50}
-            variant="default"
-            onClick={() => alert("COMING SOON")}
-          >
-            <IconFileImport size="60%" />
-          </ActionIcon>
-        </Tooltip>
+        {allowPullFromBacklog && (
+          <Tooltip label="Pull Tasks from Backlog">
+            <ActionIcon
+              aria-label="Pull Tasks from Backlog"
+              className="transition-all"
+              size={hasTasks ? 30 : 50}
+              variant="default"
+              onClick={onRequestToPullFromBacklog}
+            >
+              <IconFileImport size="60%" />
+            </ActionIcon>
+          </Tooltip>
+        )}
       </Flex>
     );
 

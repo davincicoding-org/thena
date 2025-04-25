@@ -19,6 +19,7 @@ export default function TasksPage() {
       <TaskCollector
         w="90vw"
         maw={500}
+        allowPullFromBacklog={true}
         items={taskList.items}
         projects={projects}
         tags={tags}

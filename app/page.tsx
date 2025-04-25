@@ -8,7 +8,6 @@ import {
   Button,
   Card,
   Center,
-  Drawer,
   Fieldset,
   Flex,
   Modal,
@@ -23,12 +22,13 @@ import { useDisclosure } from "@mantine/hooks";
 import { IconPlus } from "@tabler/icons-react";
 import { useStore } from "zustand";
 
+import { SidePanel } from "@/ui/components/SidePanel";
 import {
   Backlog,
   TaskForm,
   taskFormOpts,
+  useBacklog,
   useBacklogQueryOptions,
-  useBacklogStore,
   useProjects,
   useTags,
   useTaskForm,
@@ -63,8 +63,10 @@ const DEMO_PAGES = [
 
 export default function HomePage() {
   const { projects } = useProjects();
-  const taskCount = useStore(useBacklogStore, (state) =>
-    state.items.reduce((acc, task) => acc + (task.subtasks?.length || 1), 0),
+  const { tasks } = useBacklog();
+  const taskCount = useMemo(
+    () => tasks.reduce((acc, task) => acc + (task.subtasks?.length || 1), 0),
+    [tasks],
   );
 
   const [isBacklogPanelOpen, backlogPanel] = useDisclosure();
@@ -186,7 +188,7 @@ function BacklogPanel({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const backlogStore = useBacklogStore();
+  const backlog = useBacklog();
   const { projects, createProject } = useProjects();
   const { tags, createTag } = useTags();
 
@@ -194,8 +196,8 @@ function BacklogPanel({
     useBacklogQueryOptions();
 
   const tasks = useMemo(
-    () => filterItems(backlogStore.items).sort(sortFn),
-    [backlogStore.items, filterItems, sortFn],
+    () => filterItems(backlog.tasks).sort(sortFn),
+    [backlog.tasks, filterItems, sortFn],
   );
 
   const [isAddingTask, taskAdder] = useDisclosure(false);
@@ -203,28 +205,17 @@ function BacklogPanel({
   const taskAdderForm = useTaskForm({
     ...taskFormOpts,
     onSubmit: ({ value, formApi }) => {
-      backlogStore.addTask(value);
+      backlog.addTask(value);
       formApi.reset();
       taskAdder.close();
     },
   });
 
   return (
-    <Drawer
-      opened={isOpen}
-      size="md"
-      position="right"
-      closeOnEscape={!isAddingTask}
-      withCloseButton={false}
-      offset={24}
-      radius="md"
-      classNames={{
-        body: "h-full",
-      }}
-      onClose={onClose}
-    >
+    <SidePanel opened={isOpen} closeOnEscape={!isAddingTask} onClose={onClose}>
       <Flex className="h-full" direction="column" gap="md">
         <Backlog
+          mode="edit"
           flex={1}
           tasks={tasks}
           className="min-h-0"
@@ -234,8 +225,8 @@ function BacklogPanel({
           onSortUpdate={updateSort}
           projects={projects}
           tags={tags}
-          onUpdateTask={backlogStore.updateTask}
-          onDeleteTask={backlogStore.removeTask}
+          onUpdateTask={backlog.updateTask}
+          onDeleteTask={backlog.deleteTask}
           onCreateProject={createProject}
           onCreateTag={createTag}
         />
@@ -283,6 +274,6 @@ function BacklogPanel({
           </Stack>
         </form>
       </Modal>
-    </Drawer>
+    </SidePanel>
   );
 }
