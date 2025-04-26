@@ -11,8 +11,14 @@ export type StateSetter<S> = Dispatch<SetStateAction<S>>;
 
 export type ExternalState<S> = [S, StateSetter<S>];
 
-export const createUniqueId = (excluded: Record<string, unknown>): string => {
+export const createUniqueId = (
+  excluded: Record<string, unknown> | Array<{ id: string }>,
+): string => {
   const id = nanoid();
-  if (excluded[id]) return createUniqueId(excluded);
+  const isColliding = Array.isArray(excluded)
+    ? excluded.some((item) => item.id === id)
+    : excluded[id];
+
+  if (isColliding) return createUniqueId(excluded);
   return id;
 };

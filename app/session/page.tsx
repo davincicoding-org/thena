@@ -10,6 +10,7 @@ import {
   Center,
   Flex,
   HoverCard,
+  LoadingOverlay,
   Menu,
   Modal,
   SimpleGrid,
@@ -26,14 +27,14 @@ import {
 import { IconChevronRight } from "@tabler/icons-react";
 
 import { SprintPlan } from "@/core/deep-work";
-import { Task } from "@/core/task-management";
+import { Task, taskSchema } from "@/core/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
 import {
   initializeSprints,
   SessionPlanner,
   useSessionPlanner,
 } from "@/ui/deep-work";
-import { useDerivedStateUpdater, useTemporalState } from "@/ui/hooks";
+import { useLocalStorageSync } from "@/ui/hooks/useLocalStorageSync";
 import {
   Backlog,
   TaskCollector,
@@ -50,44 +51,33 @@ type Stage = "task-collector" | "session-planner" | "session-runner";
 export default function SessionPage() {
   const router = useRouter();
 
+  const taskList = useTaskList({});
+  const { initialized } = useLocalStorageSync({
+    key: "session-task-list",
+    state: taskList.tasks,
+    schema: taskSchema.array(),
+    read: (tasks) => tasks && taskList.setTasks(tasks),
+  });
+
   const [localState, setLocalState, removeLocalState] = useLocalStorage<{
     stage: Stage;
-    tasks: Task[];
     sprints: SprintPlan[];
   }>({
     key: "session-planner",
     defaultValue: {
       stage: "task-collector",
-      tasks: [],
       sprints: initializeSprints(2),
     },
   });
 
-  // FIXME: Taks get pulled from backlog -> user undos action -> pulled tasks are permanently deleted
-  const [{ stage, tasks, sprints }, setState, history] = useTemporalState({
-    externalState: [localState, setLocalState],
-  });
-
   useHotkeys([
-    ["mod+z", history.undo],
-    ["mod+shift+z", history.redo],
+    ["mod+z", taskList.history.undo],
+    ["mod+shift+z", taskList.history.redo],
   ]);
 
-  // ------- Tasks -------
+  // ------- Task List -------
 
-  const setTasks = useDerivedStateUpdater(setState, {
-    get: ({ tasks }) => tasks,
-    set: (prev, tasks) => ({ ...prev, tasks }),
-  });
-
-  const setTasksDebounced = useDebouncedCallback<StateSetter<Task[]>>(
-    setTasks,
-    1_000,
-  );
-
-  const taskList = useTaskList({
-    externalState: [tasks, setTasksDebounced],
-  });
+  const updateTask = useDebouncedCallback(taskList.updateTask, 1_000);
 
   const { projects, createProject } = useProjects();
   const { tags, createTag } = useTags();
@@ -105,11 +95,6 @@ export default function SessionPage() {
 
   // ------- Sprints -------
 
-  const setSprints = useDerivedStateUpdater(setState, {
-    get: ({ sprints }) => sprints,
-    set: (prev, sprints) => ({ ...prev, sprints }),
-  });
-
   // ------- Abort -------
 
   const [
@@ -119,11 +104,11 @@ export default function SessionPage() {
 
   const handleReset = () => {
     removeLocalState();
-    history.reset();
+    taskList.history.reset();
   };
 
   const handleDelete = () => {
-    if (tasks.length > 0) return openDeleteModal();
+    if (taskList.tasks.length > 0) return openDeleteModal();
     handleReset();
     router.push("/");
   };
@@ -131,13 +116,14 @@ export default function SessionPage() {
   return (
     <>
       <AppShell.Main display="grid">
+        <LoadingOverlay loaderProps={{ type: "dots" }} visible={!initialized} />
         <Center>
-          <Tabs value={stage}>
+          <Tabs value={localState.stage}>
             <Tabs.Panel value="task-collector">
               <TaskCollector
                 className="w-sm"
-                items={taskList.items}
-                onUpdateTask={taskList.updateTask}
+                items={taskList.tasks}
+                onUpdateTask={updateTask}
                 onRemoveTask={taskList.removeTask}
                 onAddTask={taskList.addTask}
                 projects={projects}
@@ -152,11 +138,14 @@ export default function SessionPage() {
                 right={24}
                 bottom={24}
                 size="lg"
-                disabled={tasks.length === 0}
+                disabled={taskList.tasks.length === 0}
                 rightSection={<IconChevronRight />}
                 onClick={() => {
-                  setState((prev) => ({ ...prev, stage: "session-planner" }));
-                  history.reset();
+                  setLocalState((prev) => ({
+                    ...prev,
+                    stage: "session-planner",
+                  }));
+                  taskList.history.reset();
                 }}
               >
                 Plan Session
@@ -164,11 +153,11 @@ export default function SessionPage() {
             </Tabs.Panel>
             <Tabs.Panel value="session-planner">
               <PlanSession
-                tasks={tasks}
-                sprints={sprints}
-                setSprints={setSprints}
+                tasks={taskList.tasks}
+                sprints={localState.sprints}
+                setSprints={console.log}
                 onComplete={(sprints) => {
-                  setState((prev) => ({
+                  setLocalState((prev) => ({
                     ...prev,
                     sprints,
                     stage: "session-runner",
@@ -230,7 +219,7 @@ export default function SessionPage() {
           </Button>
           <Button
             onClick={() => {
-              backlog.addTasks(tasks);
+              taskList.addTasks(taskList.tasks);
               handleReset();
               router.push("/");
             }}
@@ -265,10 +254,19 @@ export default function SessionPage() {
             disabled={tasksToPullFromBacklog.length === 0}
             fullWidth
             onClick={() => {
-              taskList.addTasks(tasksToPullFromBacklog);
-              backlog.deleteTasks(tasksToPullFromBacklog.map(({ id }) => id));
-              // QUICKFIX: Since history backlog state is not tracked, we need to reset the history to disable undo
-              history.reset();
+              taskList.addTasks(tasksToPullFromBacklog, {
+                apply: () => {
+                  console.log("Delete tasks from backlog");
+                  backlog.deleteTasks(
+                    tasksToPullFromBacklog.map(({ id }) => id),
+                  );
+                },
+                revert: () => {
+                  console.log("Add tasks back to backlog");
+                  backlog.addTasks(tasksToPullFromBacklog);
+                },
+              });
+
               setTasksToPullFromBacklog([]);
               backlogPanel.close();
             }}

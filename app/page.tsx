@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import Link from "next/link";
 import {
   AppShell,
@@ -10,6 +10,7 @@ import {
   Card,
   Center,
   Collapse,
+  Divider,
   Fieldset,
   Flex,
   RingProgress,
@@ -17,15 +18,16 @@ import {
   Space,
   Stack,
   Text,
+  TextInput,
   Tooltip,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconPlus } from "@tabler/icons-react";
 
+import { TaskInput } from "@/core/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
 import {
   Backlog,
-  TaskForm,
   taskFormOpts,
   useBacklog,
   useBacklogQueryOptions,
@@ -70,7 +72,6 @@ export default function HomePage() {
   );
 
   const [isBacklogPanelOpen, backlogPanel] = useDisclosure();
-
   return (
     <AppShell.Main display="grid">
       <Center>
@@ -202,24 +203,13 @@ function BacklogPanel({
 
   // ------- Task Adder -------
 
-  const [isAddingTask, taskAdder] = useDisclosure(false);
-
-  const taskAdderForm = useTaskForm({
-    ...taskFormOpts,
-    onSubmit: ({ value, formApi }) => {
-      backlog.addTask(value);
-      formApi.reset();
-      taskAdder.close();
-    },
-  });
-
   return (
-    <SidePanel opened={isOpen} closeOnEscape={!isAddingTask} onClose={onClose}>
+    // TODO: Make side panel close on escape. Setting closeOnEscape={false} is a workaround, because pressing escape on the task adder form would the side panel.
+    <SidePanel opened={isOpen} closeOnEscape={false} onClose={onClose}>
       <Flex className="h-full" direction="column" gap="md">
         <Backlog
           mode="edit"
           flex={1}
-          mb="md"
           tasks={tasks}
           className="min-h-0"
           filters={filters}
@@ -233,54 +223,86 @@ function BacklogPanel({
           onCreateProject={createProject}
           onCreateTag={createTag}
         />
-        <Box>
-          <Collapse in={!isAddingTask}>
-            <Button
-              variant="light"
-              fullWidth
-              leftSection={<IconPlus />}
-              onClick={taskAdder.open}
-            >
-              New Task
-            </Button>
-          </Collapse>
-
-          <Collapse in={isAddingTask}>
-            <Fieldset
-              classNames={{ legend: "text-center" }}
-              legend="New Task"
-              p="sm"
-              onMouseLeave={taskAdder.close}
-            >
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  taskAdderForm.handleSubmit();
-                }}
-              >
-                <Stack>
-                  <TaskForm
-                    form={taskAdderForm}
-                    projects={projects}
-                    tags={tags}
-                    onAssignToNewProject={() => {}}
-                    onAttachNewTag={() => {}}
-                  />
-                  <taskAdderForm.Subscribe
-                    selector={(state) => state.isValid && state.isDirty}
-                  >
-                    {(canSubmit) => (
-                      <Button fullWidth disabled={!canSubmit} type="submit">
-                        Create Task
-                      </Button>
-                    )}
-                  </taskAdderForm.Subscribe>
-                </Stack>
-              </form>
-            </Fieldset>
-          </Collapse>
-        </Box>
+        <Divider className="-mx-4" />
+        <BacklogTaskAdder onSubmit={backlog.addTask} />
       </Flex>
     </SidePanel>
+  );
+}
+
+function BacklogTaskAdder({
+  onSubmit,
+}: {
+  onSubmit: (task: TaskInput) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [isAdding, { open: showForm, close: hideForm }] = useDisclosure(false);
+
+  const form = useTaskForm({
+    ...taskFormOpts,
+    onSubmit: ({ value, formApi }) => {
+      onSubmit({ title: value.title });
+      formApi.reset();
+      hideForm();
+    },
+  });
+
+  return (
+    <Box>
+      <Collapse in={!isAdding}>
+        <Button
+          variant="light"
+          fullWidth
+          leftSection={<IconPlus />}
+          onClick={(e) => {
+            e.currentTarget.blur();
+            showForm();
+            setTimeout(() => inputRef.current?.focus(), 100);
+          }}
+        >
+          New Task
+        </Button>
+      </Collapse>
+
+      <Collapse in={isAdding}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            form.handleSubmit();
+          }}
+        >
+          <Stack gap="sm">
+            <form.Field name="title">
+              {(titleField) => (
+                <TextInput
+                  ref={inputRef}
+                  placeholder="New Task"
+                  value={titleField.state.value}
+                  onChange={(e) => titleField.handleChange(e.target.value)}
+                  onBlur={hideForm}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      e.currentTarget.blur();
+                    }
+                  }}
+                />
+              )}
+            </form.Field>
+
+            <form.Subscribe
+              selector={(state) => state.isValid && state.isDirty}
+            >
+              {(canSubmit) => (
+                <Button fullWidth disabled={!canSubmit} type="submit">
+                  Create Task
+                </Button>
+              )}
+            </form.Subscribe>
+          </Stack>
+        </form>
+      </Collapse>
+    </Box>
   );
 }

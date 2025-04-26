@@ -122,8 +122,7 @@ export function TaskCollector({
                           item={itemField.state.value}
                           onChange={(update) => {
                             itemField.handleChange({ id: item.id, ...update });
-                            //  MAYBE: needed for backlog task updates?
-                            // onUpdateTask(item.id, update);
+                            onUpdateTask(item.id, update);
                           }}
                           projects={projects}
                           tags={tags}

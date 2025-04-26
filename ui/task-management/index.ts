@@ -1,6 +1,6 @@
 export * from "./task/TaskForm";
 export * from "./task/useTaskForm";
-2;
+
 export * from "./collection/useTaskList";
 export * from "./collection/TaskCollector";
 

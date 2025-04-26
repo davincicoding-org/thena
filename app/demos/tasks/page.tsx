@@ -12,7 +12,7 @@ import {
 export default function TasksPage() {
   const { projects, createProject } = useProjects();
   const { tags, createTag } = useTags();
-  const taskList = useTaskList();
+  const { tasks, addTask, updateTask, removeTask } = useTaskList();
 
   return (
     <AppShell.Main display="grid" className="items-center justify-center">
@@ -20,12 +20,12 @@ export default function TasksPage() {
         w="90vw"
         maw={500}
         allowPullFromBacklog={true}
-        items={taskList.items}
+        items={tasks}
         projects={projects}
         tags={tags}
-        onUpdateTask={taskList.updateTask}
-        onRemoveTask={taskList.removeTask}
-        onAddTask={taskList.addTask}
+        onUpdateTask={(taskId, updates) => updateTask(taskId, updates)}
+        onRemoveTask={(taskId) => removeTask(taskId)}
+        onAddTask={(task) => addTask(task)}
         onCreateProject={createProject}
         onCreateTag={createTag}
       />

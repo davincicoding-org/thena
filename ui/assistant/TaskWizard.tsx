@@ -34,13 +34,7 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
     lang: speech.lang,
   });
 
-  const {
-    items: tasks,
-    setItems: setTasks,
-    addTask,
-    updateTask,
-    removeTask,
-  } = useTaskList();
+  const { tasks, setTasks, addTask, updateTask, removeTask } = useTaskList();
   const { projects, createProject } = useProjects();
   const { tags, createTag } = useTags();
 
@@ -98,13 +92,13 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
 
   return (
     <Center inline {...boxProps}>
+      // FIXME: Tasks are never undefined
       {tasks === undefined ? (
         <Button
           variant="outline"
           size="lg"
           onClick={() => {
             speak("What do you want to accomplish today?");
-            setTasks([]);
           }}
         >
           Start
@@ -119,9 +113,9 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
                 items={tasks}
                 projects={projects}
                 tags={tags}
-                onUpdateTask={updateTask}
-                onRemoveTask={removeTask}
-                onAddTask={addTask}
+                onUpdateTask={(taskId, updates) => updateTask(taskId, updates)}
+                onRemoveTask={(taskId) => removeTask(taskId)}
+                onAddTask={(task) => addTask(task)}
                 onRefineTask={(task) => {
                   chat.append({
                     role: "user",
