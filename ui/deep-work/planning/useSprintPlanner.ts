@@ -3,7 +3,7 @@ import { nanoid } from "nanoid";
 
 import { SprintPlan, TaskSelection } from "@/core/deep-work";
 import { hasSubtasks, Subtask, Task } from "@/core/task-management";
-import { ExternalState as InjectedState } from "@/ui/utils";
+import { ExternalState as InjectedState, StateSetter } from "@/ui/utils";
 
 export const DEFAULT_OPTIONS = {
   initialSprints: 0,
@@ -17,7 +17,6 @@ export interface SessionPlannerHookOptions {
   sprintDuration?: number;
   /** Error callback for handling errors without throwing */
   onError?: (error: SprintPlannerError) => void;
-  externalState?: InjectedState<SprintPlan[]>;
 }
 
 // const toMinimalTasks = (tasks: Task[]): TaskSelection[] =>
@@ -29,6 +28,8 @@ export interface SessionPlannerHookOptions {
 export interface SessionPlannerHookReturn {
   /** All current Sprint plans (with populated tasks) */
   sprints: SprintPlan[];
+
+  setSprints: StateSetter<SprintPlan[]>;
 
   /** Tasks not yet assigned to any Sprint */
   unassignedTasks: Task[];
@@ -105,12 +106,13 @@ export function useSessionPlanner(
   {
     initialSprints = DEFAULT_OPTIONS.initialSprints,
     sprintDuration = DEFAULT_OPTIONS.sprintDuration,
-    externalState: [sprints, setSprints] = useState<SprintPlan[]>(
-      initializeSprints(initialSprints, sprintDuration),
-    ),
     onError,
   }: SessionPlannerHookOptions = DEFAULT_OPTIONS,
 ): SessionPlannerHookReturn {
+  const [sprints, setSprints] = useState<SprintPlan[]>(
+    initializeSprints(initialSprints, sprintDuration),
+  );
+
   const unassignedTasks = useMemo(() => {
     const assignedTasks = mergeTasks(sprints.flatMap((sprint) => sprint.tasks));
 
@@ -494,6 +496,7 @@ export function useSessionPlanner(
 
   return {
     sprints,
+    setSprints,
     unassignedTasks,
     addSprint,
     addSprints,

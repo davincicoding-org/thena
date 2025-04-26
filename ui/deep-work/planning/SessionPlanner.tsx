@@ -105,10 +105,10 @@ export function SessionPlanner({
         </Flex>
       }
     >
-      <Flex className="min-h-0 overflow-clip">
+      <Flex className="min-h-0 min-w-0 overflow-clip">
         <ScrollArea
           scrollbars="x"
-          flex={1}
+          className="w-full grow-0"
           viewportRef={(ref) => {
             if (!ref) return;
             const child = ref.children.item(0) as HTMLElement;
