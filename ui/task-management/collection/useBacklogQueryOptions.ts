@@ -20,7 +20,7 @@ export interface BacklogHookOptions {
 
 export interface BacklogQueryOptionsHookReturn {
   filters: BacklogFilters;
-  filterItems: (tasks: BacklogTask[]) => BacklogTask[];
+  filterTasks: (tasks: BacklogTask[]) => BacklogTask[];
   updateFilters: (updates: Partial<BacklogFilters>) => void;
   sort: BacklogSortOptions;
   sortFn: (a: BacklogTask, b: BacklogTask) => number;
@@ -50,7 +50,7 @@ export function useBacklogQueryOptions({
     [setOptions],
   );
 
-  const filterItems = useCallback<BacklogQueryOptionsHookReturn["filterItems"]>(
+  const filterTasks = useCallback<BacklogQueryOptionsHookReturn["filterTasks"]>(
     (items) => {
       if (!hasFiltersApplied(filters)) return items;
 
@@ -110,7 +110,7 @@ export function useBacklogQueryOptions({
 
   return {
     filters,
-    filterItems,
+    filterTasks,
     updateFilters,
     sort,
     sortFn,

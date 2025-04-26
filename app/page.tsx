@@ -5,12 +5,13 @@ import Link from "next/link";
 import {
   AppShell,
   Avatar,
+  Box,
   Button,
   Card,
   Center,
+  Collapse,
   Fieldset,
   Flex,
-  Modal,
   RingProgress,
   ScrollArea,
   Space,
@@ -20,7 +21,6 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconPlus } from "@tabler/icons-react";
-import { useStore } from "zustand";
 
 import { SidePanel } from "@/ui/components/SidePanel";
 import {
@@ -192,13 +192,15 @@ function BacklogPanel({
   const { projects, createProject } = useProjects();
   const { tags, createTag } = useTags();
 
-  const { filters, filterItems, updateFilters, sort, sortFn, updateSort } =
+  const { filters, filterTasks, updateFilters, sort, sortFn, updateSort } =
     useBacklogQueryOptions();
 
   const tasks = useMemo(
-    () => filterItems(backlog.tasks).sort(sortFn),
-    [backlog.tasks, filterItems, sortFn],
+    () => filterTasks(backlog.tasks).sort(sortFn),
+    [backlog.tasks, filterTasks, sortFn],
   );
+
+  // ------- Task Adder -------
 
   const [isAddingTask, taskAdder] = useDisclosure(false);
 
@@ -217,6 +219,7 @@ function BacklogPanel({
         <Backlog
           mode="edit"
           flex={1}
+          mb="md"
           tasks={tasks}
           className="min-h-0"
           filters={filters}
@@ -230,50 +233,54 @@ function BacklogPanel({
           onCreateProject={createProject}
           onCreateTag={createTag}
         />
-        <Button
-          variant="light"
-          fullWidth
-          leftSection={<IconPlus />}
-          onClick={taskAdder.open}
-        >
-          New Task
-        </Button>
-      </Flex>
-      <Modal
-        size="xs"
-        centered
-        radius="md"
-        withCloseButton={false}
-        transitionProps={{ transition: "pop" }}
-        opened={isAddingTask}
-        onClose={taskAdder.close}
-      >
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            taskAdderForm.handleSubmit();
-          }}
-        >
-          <Stack>
-            <TaskForm
-              form={taskAdderForm}
-              projects={projects}
-              tags={tags}
-              onAssignToNewProject={() => {}}
-              onAttachNewTag={() => {}}
-            />
-            <taskAdderForm.Subscribe
-              selector={(state) => state.isValid && state.isDirty}
+        <Box>
+          <Collapse in={!isAddingTask}>
+            <Button
+              variant="light"
+              fullWidth
+              leftSection={<IconPlus />}
+              onClick={taskAdder.open}
             >
-              {(canSubmit) => (
-                <Button fullWidth disabled={!canSubmit} type="submit">
-                  Create Task
-                </Button>
-              )}
-            </taskAdderForm.Subscribe>
-          </Stack>
-        </form>
-      </Modal>
+              New Task
+            </Button>
+          </Collapse>
+
+          <Collapse in={isAddingTask}>
+            <Fieldset
+              classNames={{ legend: "text-center" }}
+              legend="New Task"
+              p="sm"
+              onMouseLeave={taskAdder.close}
+            >
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  taskAdderForm.handleSubmit();
+                }}
+              >
+                <Stack>
+                  <TaskForm
+                    form={taskAdderForm}
+                    projects={projects}
+                    tags={tags}
+                    onAssignToNewProject={() => {}}
+                    onAttachNewTag={() => {}}
+                  />
+                  <taskAdderForm.Subscribe
+                    selector={(state) => state.isValid && state.isDirty}
+                  >
+                    {(canSubmit) => (
+                      <Button fullWidth disabled={!canSubmit} type="submit">
+                        Create Task
+                      </Button>
+                    )}
+                  </taskAdderForm.Subscribe>
+                </Stack>
+              </form>
+            </Fieldset>
+          </Collapse>
+        </Box>
+      </Flex>
     </SidePanel>
   );
 }

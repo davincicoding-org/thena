@@ -93,10 +93,10 @@ export default function SessionPage() {
   const { tags, createTag } = useTags();
 
   const backlog = useBacklog();
-  const backlogQuery = useBacklogQueryOptions();
+  const { filterTasks, ...backlogQueryoptions } = useBacklogQueryOptions();
   const backlogTasks = useMemo(
-    () => backlogQuery.filterItems(backlog.tasks),
-    [backlog.tasks, backlogQuery.filterItems],
+    () => filterTasks(backlog.tasks),
+    [backlog.tasks, filterTasks],
   );
   const [isBacklogPanelOpen, backlogPanel] = useDisclosure();
   const [tasksToPullFromBacklog, setTasksToPullFromBacklog] = useState<Task[]>(
@@ -253,12 +253,12 @@ export default function SessionPage() {
             className="min-h-0"
             mode="select"
             tasks={backlogTasks}
-            filters={backlogQuery.filters}
-            sort={backlogQuery.sort}
+            filters={backlogQueryoptions.filters}
+            sort={backlogQueryoptions.sort}
             projects={projects}
             tags={tags}
-            onFiltersUpdate={backlogQuery.updateFilters}
-            onSortUpdate={backlogQuery.updateSort}
+            onFiltersUpdate={backlogQueryoptions.updateFilters}
+            onSortUpdate={backlogQueryoptions.updateSort}
             onTaskSelectionChange={setTasksToPullFromBacklog}
           />
           <Button
@@ -281,18 +281,6 @@ export default function SessionPage() {
       </SidePanel>
     </>
   );
-}
-
-function CollectTasks({
-  tasks,
-  setTasks,
-  onComplete,
-}: {
-  tasks: Task[];
-  setTasks: StateSetter<Task[]>;
-  onComplete: () => void;
-}) {
-  return <></>;
 }
 
 function PlanSession({
