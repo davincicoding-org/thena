@@ -18,8 +18,8 @@ import {
 } from "@mantine/core";
 import { IconClock, IconDotsVertical } from "@tabler/icons-react";
 
-import { SprintPlan, TaskSelection } from "@/core/deep-work";
-import { hasSubtasks } from "@/core/task-management";
+import { SprintPlan } from "@/core/deep-work";
+import { hasSubtasks, TaskSelection } from "@/core/task-management";
 import { BoundOverlay } from "@/ui/components/BoundOverlay";
 import { Panel } from "@/ui/components/Panel";
 import { cn } from "@/ui/utils";

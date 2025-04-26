@@ -1,9 +1,16 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { nanoid } from "nanoid";
 
-import { SprintPlan, TaskSelection } from "@/core/deep-work";
-import { hasSubtasks, Subtask, Task } from "@/core/task-management";
-import { ExternalState as InjectedState, StateSetter } from "@/ui/utils";
+import { SprintPlan } from "@/core/deep-work";
+import {
+  hasSubtasks,
+  mergeTasks,
+  Task,
+  TaskSelection,
+} from "@/core/task-management";
+import { StateSetter } from "@/ui/utils";
+
+import { SprintsReducerError, useSprintsReducer } from "./useSprintsReducer";
 
 export const DEFAULT_OPTIONS = {
   initialSprints: 0,
@@ -16,14 +23,8 @@ export interface SessionPlannerHookOptions {
   /** Default duration for new Sprints */
   sprintDuration?: number;
   /** Error callback for handling errors without throwing */
-  onError?: (error: SprintPlannerError) => void;
+  onError?: (error: SprintsReducerError) => void;
 }
-
-// const toMinimalTasks = (tasks: Task[]): TaskSelection[] =>
-//   tasks.map((task) => ({
-//     taskId: task.id,
-//     subtasks: task.subtasks?.map((subtask) => subtask.id),
-//   }));
 
 export interface SessionPlannerHookReturn {
   /** All current Sprint plans (with populated tasks) */
@@ -109,7 +110,12 @@ export function useSessionPlanner(
     onError,
   }: SessionPlannerHookOptions = DEFAULT_OPTIONS,
 ): SessionPlannerHookReturn {
-  const [sprints, setSprints] = useState<SprintPlan[]>(
+  const [sprints, dispatch] = useSprintsReducer(
+    {
+      taskPool,
+      sprintDuration,
+      onError,
+    },
     initializeSprints(initialSprints, sprintDuration),
   );
 
@@ -139,359 +145,63 @@ export function useSessionPlanner(
     }, []);
   }, [taskPool, sprints]);
 
-  // const initialize: SessionPlannerHookReturn["initialize"] = ({
-  //   initialSprints: sprintCount = DEFAULT_OPTIONS.initialSprints,
-  //   sprintDuration = DEFAULT_OPTIONS.sprintDuration,
-  // }) =>
-  //   setSprints(
-  //     Array.from(
-  //       { length: sprintCount },
-  //       (): MinimalSprint => ({
-  //         id: nanoid(),
-  //         duration: sprintDuration,
-  //         tasks: [],
-  //       }),
-  //     ),
-  //   );
-
-  // ------ Helpers ------
-  const handleError = (
-    code: SprintPlannerErrorCode,
-    action: SprintPlannerAction,
-    details?: Record<string, unknown>,
-  ) => {
-    onError?.({
-      code,
-      action,
-      details,
-    });
-    return false; // Return false to indicate an error occurred
+  const setSprints: StateSetter<SprintPlan[]> = (value) => {
+    const newSprints = typeof value === "function" ? value(sprints) : value;
+    dispatch({ type: "SET_SPRINTS", payload: { sprints: newSprints } });
   };
 
-  // ------ Sprint Management ------
-
-  const resolveTask = (taskSelection: TaskSelection) => {
-    const fullTask = taskPool.find((t) => t.id === taskSelection.taskId);
-    if (!fullTask) return null;
-
-    // If there are no subtask selections, return the full task
-    if (!taskSelection.subtasks?.length) return fullTask;
-
-    // If there are subtask selections, filter the subtasks
-    if (fullTask.subtasks?.length)
-      return {
-        ...fullTask,
-        subtasks: fullTask.subtasks.filter((subtask) =>
-          taskSelection.subtasks?.includes(subtask.id),
-        ),
-      };
-
-    // If the task doesn't have subtasks but we have subtask selections
-    // (shouldn't happen), return the full task
-    return fullTask;
-  };
-
-  const addSprint: SessionPlannerHookReturn["addSprint"] = ({
-    duration = sprintDuration,
-    tasks = [],
-  }) => {
-    // TODO: Validate task (and its subtasks) are not assigned yet
-
-    setSprints((prev) => [
-      ...prev,
-      {
-        id: nanoid(),
-        duration,
-        tasks: tasks.reduce<Task[]>((acc, task) => {
-          const resolvedTask = resolveTask(task);
-          if (!resolvedTask) return acc;
-          return [...acc, resolvedTask];
-        }, []),
-      },
-    ]);
+  const addSprint: SessionPlannerHookReturn["addSprint"] = (sprintToAdd) => {
+    dispatch({ type: "ADD_SPRINT", payload: sprintToAdd });
   };
 
   const addSprints: SessionPlannerHookReturn["addSprints"] = (sprintsToAdd) => {
-    // TODO check if tasks are valid
-    setSprints((prev) => [
-      ...prev,
-      ...sprintsToAdd.map(({ duration = sprintDuration, tasks = [] }) => ({
-        id: nanoid(),
-        duration,
-        tasks: tasks.reduce<Task[]>((acc, task) => {
-          const resolvedTask = resolveTask(task);
-          if (!resolvedTask) return acc;
-          return [...acc, resolvedTask];
-        }, []),
-      })),
-    ]);
+    dispatch({ type: "ADD_SPRINTS", payload: { sprints: sprintsToAdd } });
   };
 
   const updateSprint: SessionPlannerHookReturn["updateSprint"] = (
     sprintId,
     updates,
-  ) =>
-    setSprints((prev) => {
-      if (!sprintExists(sprintId, prev)) {
-        handleError("SPRINT_NOT_FOUND", "updateSprint", { sprintId });
-        return prev;
-      }
-
-      return prev.map((sprint) => {
-        if (sprint.id !== sprintId) return sprint;
-
-        return { ...sprint, ...updates };
-      });
-    });
+  ) => {
+    dispatch({ type: "UPDATE_SPRINT", payload: { sprintId, updates } });
+  };
 
   const reorderSprints: SessionPlannerHookReturn["reorderSprints"] = (
     sprintIds,
   ) => {
-    setSprints((currentSprints) => {
-      // Verify all sprint IDs exist
-      const invalidSprintIds = sprintIds.filter(
-        (id) => !sprintExists(id, currentSprints),
-      );
-      if (invalidSprintIds.length) {
-        invalidSprintIds.forEach((id) =>
-          handleError("SPRINT_NOT_FOUND", "reorderSprints", {
-            sprintId: id,
-          }),
-        );
-        return currentSprints;
-      }
+    dispatch({ type: "REORDER_SPRINTS", payload: { sprintIds } });
+  };
 
-      // Verify all sprints are included in the update
-      const missingSprintIds = currentSprints.reduce<SprintPlan["id"][]>(
-        (acc, sprint) => {
-          if (sprintIds.includes(sprint.id)) return acc;
-          return [...acc, sprint.id];
-        },
-        [],
-      );
+  const dropSprint: SessionPlannerHookReturn["dropSprint"] = (sprintId) => {
+    dispatch({ type: "DROP_SPRINT", payload: { sprintId } });
+  };
 
-      // If we're not rearranging all sprints, do nothing
-      if (missingSprintIds.length) {
-        missingSprintIds.forEach((id) =>
-          handleError("SPRINT_NOT_PROVIDED", "reorderSprints", {
-            sprintId: id,
-          }),
-        );
-        return currentSprints;
-      }
+  const assignTask: SessionPlannerHookReturn["assignTask"] = (options) => {
+    dispatch({ type: "ASSIGN_TASK", payload: options });
+  };
 
-      return [...currentSprints].sort((a, b) => {
-        const aIndex = sprintIds.indexOf(a.id);
-        const bIndex = sprintIds.indexOf(b.id);
-        return aIndex - bIndex;
-      });
-    });
+  const assignTasks: SessionPlannerHookReturn["assignTasks"] = (options) => {
+    dispatch({ type: "ASSIGN_TASKS", payload: options });
+  };
+
+  const unassignTask: SessionPlannerHookReturn["unassignTask"] = (options) => {
+    dispatch({ type: "UNASSIGN_TASK", payload: options });
+  };
+
+  const unassignTasks: SessionPlannerHookReturn["unassignTasks"] = (
+    options,
+  ) => {
+    dispatch({ type: "UNASSIGN_TASKS", payload: options });
+  };
+
+  const moveTasks: SessionPlannerHookReturn["moveTasks"] = (options) => {
+    dispatch({ type: "MOVE_TASKS", payload: options });
   };
 
   const reorderSprintTasks: SessionPlannerHookReturn["reorderSprintTasks"] = (
     sprintId,
     taskIds,
   ) => {
-    if (!taskIds.length) return;
-
-    setSprints((prev) => {
-      const sprintToAdjust = findSprint(sprintId, prev);
-      if (!sprintToAdjust) {
-        handleError("SPRINT_NOT_FOUND", "reorderSprintTasks", {
-          sprintId,
-        });
-        return prev;
-      }
-
-      const missingTaskIds = sprintToAdjust.tasks.reduce<Task["id"][]>(
-        (acc, task) => {
-          if (taskIds.includes(task.id)) return acc;
-          return [...acc, task.id];
-        },
-        [],
-      );
-
-      if (missingTaskIds.length > 0) {
-        missingTaskIds.forEach((id) =>
-          handleError("TASK_NOT_PROVIDED", "reorderSprintTasks", {
-            sprintId,
-            taskId: id,
-          }),
-        );
-        return prev;
-      }
-
-      return prev.map((sprint) => {
-        if (sprint.id !== sprintId) return sprint;
-
-        return {
-          ...sprint,
-          tasks: [...sprint.tasks].sort((a, b) => {
-            const aIndex = taskIds.indexOf(a.id);
-            const bIndex = taskIds.indexOf(b.id);
-            return aIndex - bIndex;
-          }),
-        };
-      });
-    });
-  };
-
-  const dropSprint: SessionPlannerHookReturn["dropSprint"] = (sprintId) =>
-    setSprints((currentSprints) =>
-      currentSprints.filter((sprint) => sprint.id !== sprintId),
-    );
-
-  // ------ Task Assignment ------
-
-  // Compute unassigned tasks as a derived value
-
-  const assignTask: SessionPlannerHookReturn["assignTask"] = ({
-    sprintId,
-    task,
-  }) => {
-    setSprints((prevSprints) => {
-      if (!sprintExists(sprintId, prevSprints)) {
-        handleError("SPRINT_NOT_FOUND", "assignTask", { sprintId });
-        return prevSprints;
-      }
-
-      const resolvedTask = resolveTask(task);
-      // TODO: Handle error
-      if (!resolvedTask) return prevSprints;
-
-      // TODO: Validate task (and its subtasks) are not assigned yet
-
-      return prevSprints.map((sprint) => {
-        if (sprint.id !== sprintId) return sprint;
-
-        return {
-          ...sprint,
-          tasks: mergeTasks([...sprint.tasks, resolvedTask]),
-        };
-      });
-    });
-  };
-
-  const assignTasks: SessionPlannerHookReturn["assignTasks"] = ({
-    sprintId,
-    tasks,
-  }) => {
-    setSprints((prevSprints) => {
-      if (!sprintExists(sprintId, prevSprints)) {
-        handleError("SPRINT_NOT_FOUND", "assignTasks", { sprintId });
-        return prevSprints;
-      }
-
-      const resolvedTasks = tasks.reduce<Task[]>((acc, task) => {
-        const resolvedTask = resolveTask(task);
-        // TODO: Handle error
-        if (!resolvedTask) return acc;
-        return [...acc, resolvedTask];
-      }, []);
-
-      // TODO: Validate tasks (and their subtasks) are not assigned yet
-
-      return prevSprints.map((sprint) => {
-        if (sprint.id !== sprintId) return sprint;
-
-        return {
-          ...sprint,
-          tasks: mergeTasks([...sprint.tasks, ...resolvedTasks]),
-        };
-      });
-    });
-  };
-
-  const unassignTask: SessionPlannerHookReturn["unassignTask"] = ({
-    sprintId,
-    task,
-  }) => {
-    setSprints((prevSprints) => {
-      if (!sprintExists(sprintId, prevSprints)) {
-        handleError("SPRINT_NOT_FOUND", "unassignTask", { sprintId });
-        return prevSprints;
-      }
-
-      return prevSprints.map((sprint) => {
-        if (sprint.id !== sprintId) return sprint;
-
-        return {
-          ...sprint,
-          tasks: excludeTask([...sprint.tasks], task),
-        };
-      });
-    });
-  };
-
-  const unassignTasks: SessionPlannerHookReturn["unassignTasks"] = ({
-    sprintId,
-    tasks,
-  }) => {
-    setSprints((prevSprints) => {
-      if (!sprintExists(sprintId, prevSprints)) {
-        handleError("SPRINT_NOT_FOUND", "unassignTasks", { sprintId });
-        return prevSprints;
-      }
-
-      return prevSprints.map((sprint) => {
-        if (sprint.id !== sprintId) return sprint;
-
-        return {
-          ...sprint,
-          tasks: tasks.reduce<Task[]>(
-            (acc, task) => excludeTask([...acc], task),
-            sprint.tasks,
-          ),
-        };
-      });
-    });
-  };
-
-  const moveTasks: SessionPlannerHookReturn["moveTasks"] = ({
-    fromSprintId,
-    toSprintId,
-    tasks,
-  }) => {
-    setSprints((prev) => {
-      if (!sprintExists(fromSprintId, prev)) {
-        handleError("SPRINT_NOT_FOUND", "moveTasks", { fromSprintId });
-        return prev;
-      }
-
-      if (!sprintExists(toSprintId, prev)) {
-        handleError("SPRINT_NOT_FOUND", "moveTasks", { toSprintId });
-        return prev;
-      }
-
-      const resolvedTasks = tasks.reduce<Task[]>((acc, task) => {
-        const resolvedTask = resolveTask(task);
-        // TODO: Handle error
-        if (!resolvedTask) return acc;
-        return [...acc, resolvedTask];
-      }, []);
-
-      return prev.map((sprint) => {
-        // Remove tasks from source sprint
-        if (sprint.id === fromSprintId)
-          return {
-            ...sprint,
-            tasks: tasks.reduce<Task[]>(
-              (acc, task) => excludeTask([...acc], task),
-              sprint.tasks,
-            ),
-          };
-
-        // Add tasks to destination sprint
-        if (sprint.id === toSprintId)
-          return {
-            ...sprint,
-            tasks: mergeTasks([...sprint.tasks, ...resolvedTasks]),
-          };
-
-        // Leave other sprints unchanged
-        return sprint;
-      });
-    });
+    dispatch({ type: "REORDER_SPRINT_TASKS", payload: { sprintId, taskIds } });
   };
 
   return {
@@ -512,7 +222,7 @@ export function useSessionPlanner(
   };
 }
 
-// ------ Utility Functions ------
+// MARK: Utility Functions
 
 export const initializeSprints = (
   sprintCount: number,
@@ -526,139 +236,3 @@ export const initializeSprints = (
       tasks: [],
     }),
   );
-
-const findSprint = (
-  sprintId: string,
-  sprints: SprintPlan[],
-): SprintPlan | null =>
-  sprints.find((sprint) => sprint.id === sprintId) ?? null;
-
-const sprintExists = (sprintId: string, sprints: SprintPlan[]): boolean =>
-  sprints.some((sprint) => sprint.id === sprintId);
-
-const validateTaskSelections = (selections: TaskSelection[], tasks: Task[]) =>
-  selections.reduce<{
-    validTaskSelections: TaskSelection[];
-    invalidTaskSelections: TaskSelection[];
-  }>(
-    (acc, selection) => {
-      const availableTask = tasks.find((t) => t.id === selection.taskId);
-      if (!availableTask)
-        return {
-          ...acc,
-          invalidTaskSelections: [...acc.invalidTaskSelections, selection],
-        };
-
-      if (!hasSubtasks(availableTask) || !hasSubtasks(selection))
-        return {
-          ...acc,
-          validTaskSelections: [...acc.validTaskSelections, selection],
-        };
-
-      if (
-        selection.subtasks?.some(
-          (subtaskId) =>
-            !availableTask.subtasks?.some(
-              (availableSubtask) => availableSubtask.id === subtaskId,
-            ),
-        )
-      )
-        return {
-          ...acc,
-          invalidTaskSelections: [
-            ...acc.invalidTaskSelections,
-            {
-              ...selection,
-              subtasks: selection.subtasks?.filter(
-                (subtaskId) =>
-                  !availableTask.subtasks.some(
-                    (availableSubtask) => availableSubtask.id === subtaskId,
-                  ),
-              ),
-            },
-          ],
-        };
-
-      return {
-        ...acc,
-        validTaskSelections: [...acc.validTaskSelections, selection],
-      };
-    },
-    { validTaskSelections: [], invalidTaskSelections: [] },
-  );
-
-export const mergeTasks = (tasks: Task[]): Task[] =>
-  tasks.reduce<Task[]>((acc, task) => {
-    const existingTask = acc.find((prevTask) => prevTask.id === task.id);
-    if (!existingTask) return [...acc, task];
-    if (!hasSubtasks(task) || !hasSubtasks(existingTask)) return acc;
-
-    return acc.map<Task>((prevTask) => {
-      if (prevTask.id !== task.id) return prevTask;
-      if (!hasSubtasks(prevTask)) return prevTask;
-
-      return {
-        ...prevTask,
-        subtasks: task.subtasks.reduce<Subtask[]>((acc, subtask) => {
-          const isSubtaskAlreadyInList = acc.some(
-            (subtaskInList) => subtaskInList.id === subtask.id,
-          );
-          if (isSubtaskAlreadyInList) return acc;
-          return [...acc, subtask];
-        }, prevTask.subtasks),
-      };
-    });
-  }, []);
-
-export const excludeTask = (
-  tasks: Task[],
-  taskToExclude: TaskSelection,
-): Task[] =>
-  tasks.reduce<Task[]>((acc, task) => {
-    if (task.id !== taskToExclude.taskId) return [...acc, task];
-
-    if (!hasSubtasks(task) || !hasSubtasks(taskToExclude)) return acc;
-
-    const taskWithRemainingSubtasks = {
-      ...task,
-      subtasks: task.subtasks.filter((subtask) =>
-        taskToExclude.subtasks.every(
-          (subtaskToExclude) => subtask.id !== subtaskToExclude,
-        ),
-      ),
-    };
-
-    if (taskWithRemainingSubtasks.subtasks.length)
-      return [...acc, taskWithRemainingSubtasks];
-
-    return acc;
-  }, []);
-
-// ------ Error Handling ------
-
-export type SprintPlannerErrorCode =
-  | "SPRINT_NOT_FOUND"
-  | "SPRINT_NOT_PROVIDED"
-  | "TASK_NOT_FOUND"
-  | "TASK_NOT_PROVIDED"
-  | "SUBTASK_NOT_FOUND"
-  | "INVALID_TASK_SELECTION";
-
-export type SprintPlannerAction =
-  | "updateSprint"
-  | "assignTask"
-  | "assignTasks"
-  | "unassignTask"
-  | "unassignTasks"
-  | "moveTasks"
-  | "reorderSprints"
-  | "reorderSprintTasks"
-  | "dropSprint"
-  | "addSprint"
-  | "addSprints";
-
-export interface SprintPlannerError {
-  code: SprintPlannerErrorCode;
-  action: SprintPlannerAction;
-  details?: Record<string, unknown>;
-}

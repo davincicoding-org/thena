@@ -1,7 +1,11 @@
 import { useCallback, useState } from "react";
 
-import { SubtaskReference, TaskSelection } from "@/core/deep-work";
-import { hasSubtasks, Task } from "@/core/task-management";
+import {
+  hasSubtasks,
+  SubtaskReference,
+  Task,
+  TaskSelection,
+} from "@/core/task-management";
 
 export interface TaskSelectionHookRetrun {
   selection: TaskSelection[];

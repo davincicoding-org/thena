@@ -10,8 +10,8 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 
-import { SprintPlan, TaskSelection } from "@/core/deep-work";
-import { Task } from "@/core/task-management";
+import { SprintPlan } from "@/core/deep-work";
+import { Task, TaskSelection } from "@/core/task-management";
 import { Panel } from "@/ui/components/Panel";
 import { cn } from "@/ui/utils";
 

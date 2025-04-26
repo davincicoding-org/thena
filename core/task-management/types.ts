@@ -49,6 +49,21 @@ export const taskInputSchema = taskSchema.omit({
 });
 export type TaskInput = z.infer<typeof taskInputSchema>;
 
+export interface SubtaskReference {
+  taskId: string;
+  subtaskId: string;
+}
+
+export interface TaskReference {
+  taskId: string;
+  subtaskId?: string;
+}
+
+export interface TaskSelection {
+  taskId: string;
+  subtasks?: string[];
+}
+
 /**
  * Task inside the backlog
  */

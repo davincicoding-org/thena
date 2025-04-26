@@ -1,13 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import {
-  SprintPlan,
-  SprintStatus,
-  TaskReference,
-  TaskRun,
-  WithRun,
-} from "@/core/deep-work";
-import { hasSubtasks } from "@/core/task-management";
+import { SprintPlan, SprintStatus, TaskRun, WithRun } from "@/core/deep-work";
+import { hasSubtasks, TaskReference } from "@/core/task-management";
 
 interface SprintRun {
   duration: number;

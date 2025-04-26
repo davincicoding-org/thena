@@ -18,8 +18,8 @@ import {
   IconPlayerPause,
 } from "@tabler/icons-react";
 
-import type { SprintStatus, TaskReference, TaskRun } from "@/core/deep-work";
-import { hasSubtasks } from "@/core/task-management";
+import type { SprintStatus, TaskRun } from "@/core/deep-work";
+import { hasSubtasks, TaskReference } from "@/core/task-management";
 import { BoundOverlay } from "@/ui/components/BoundOverlay";
 import { cn } from "@/ui/utils";
 
