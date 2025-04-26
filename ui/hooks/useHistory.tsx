@@ -5,15 +5,19 @@ export type ActionSideEffect = {
   revert?: () => void;
 };
 
+export interface HistoryEvent<Action> {
+  event: "push" | "undo" | "redo";
+  // Push: The action that was pushed
+  // Undo: The action that was undone
+  // Redo: The action that was redone
+  action: Action;
+}
+
 export interface HistoryHookOptions<State, Action> {
   currentState: State;
   dispatch: (action: Action) => void;
-  onNavigated: (state: {
-    event: "undo" | "redo";
-    // The action that was undone or redone
-    action: Action;
-    state: State;
-  }) => void;
+  onRestoreState: (state: State) => void;
+  onNavigated?: (event: HistoryEvent<Action>) => void;
 }
 
 export interface HistoryHookReturn<Action> {
@@ -26,6 +30,7 @@ export interface HistoryHookReturn<Action> {
 export function useHistory<State, Action>({
   currentState,
   dispatch,
+  onRestoreState,
   onNavigated,
 }: HistoryHookOptions<State, Action>): HistoryHookReturn<Action> {
   const pastStack = useRef<
@@ -57,6 +62,7 @@ export function useHistory<State, Action>({
       restore: sideEffect?.revert,
     });
     dispatch(action);
+    onNavigated?.({ event: "push", action });
   };
 
   const undo: HistoryHookReturn<Action>["undo"] = () => {
@@ -71,10 +77,10 @@ export function useHistory<State, Action>({
       action: prev.nextAction,
       sideEffect: nextSideEffect,
     });
-    onNavigated({
+    onRestoreState(prevState);
+    onNavigated?.({
       event: "undo",
       action: prev.nextAction,
-      state: prevState,
     });
   };
 
@@ -85,7 +91,8 @@ export function useHistory<State, Action>({
     const { sideEffect, state: nextState, action } = next;
 
     if (sideEffect) sideEffect.apply();
-    onNavigated({ event: "redo", action, state: nextState });
+    onRestoreState(nextState);
+    onNavigated?.({ event: "redo", action });
   };
 
   const reset: HistoryHookReturn<Action>["reset"] = () => {

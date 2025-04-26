@@ -1,6 +1,7 @@
 import { Task, TaskInput } from "@/core/task-management";
 import {
   ActionSideEffect,
+  HistoryEvent,
   HistoryHookReturn,
   useHistory,
 } from "@/ui/hooks/useHistory";
@@ -9,6 +10,7 @@ import { TaskListAction, useTaskListReducer } from "./useTaskListReducer";
 
 export interface TaskListHookOptions {
   initialTasks?: Task[];
+  onAction?: (event: HistoryEvent<TaskListAction>) => void;
 }
 
 export interface TaskListHookReturn {
@@ -40,9 +42,8 @@ export function useTaskList(
   const { push: pushAction, ...history } = useHistory({
     currentState: currentTasks,
     dispatch,
-    onNavigated: ({ event, action, state }) => {
-      console.log(event, action, state);
-    },
+    onRestoreState: (tasks) => dispatch({ type: "set", tasks }),
+    onNavigated: options.onAction,
   });
 
   // ------- Action Handlers -------

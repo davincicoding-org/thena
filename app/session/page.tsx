@@ -24,10 +24,11 @@ import {
   useHotkeys,
   useLocalStorage,
 } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
 import { IconChevronRight } from "@tabler/icons-react";
 
 import { SprintPlan } from "@/core/deep-work";
-import { Task, taskSchema } from "@/core/task-management";
+import { BacklogTask, Task, taskSchema } from "@/core/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
 import {
   initializeSprints,
@@ -85,13 +86,13 @@ export default function SessionPage() {
   const backlog = useBacklog();
   const { filterTasks, ...backlogQueryoptions } = useBacklogQueryOptions();
   const backlogTasks = useMemo(
-    () => filterTasks(backlog.tasks),
-    [backlog.tasks, filterTasks],
+    () => filterTasks(backlog.tasks).sort(backlogQueryoptions.sortFn),
+    [backlog.tasks, filterTasks, backlogQueryoptions.sortFn],
   );
   const [isBacklogPanelOpen, backlogPanel] = useDisclosure();
-  const [tasksToPullFromBacklog, setTasksToPullFromBacklog] = useState<Task[]>(
-    [],
-  );
+  const [tasksToPullFromBacklog, setTasksToPullFromBacklog] = useState<
+    BacklogTask["id"][]
+  >([]);
 
   // ------- Sprints -------
 
@@ -248,22 +249,34 @@ export default function SessionPage() {
             tags={tags}
             onFiltersUpdate={backlogQueryoptions.updateFilters}
             onSortUpdate={backlogQueryoptions.updateSort}
-            onTaskSelectionChange={setTasksToPullFromBacklog}
+            selectedTasks={tasksToPullFromBacklog}
+            onToggleTaskSelection={(taskId) =>
+              setTasksToPullFromBacklog((prev) =>
+                prev.includes(taskId)
+                  ? prev.filter((id) => id !== taskId)
+                  : [...prev, taskId],
+              )
+            }
           />
           <Button
             disabled={tasksToPullFromBacklog.length === 0}
             fullWidth
             onClick={() => {
-              taskList.addTasks(tasksToPullFromBacklog, {
+              const tasks = backlog.tasks.filter((task) =>
+                tasksToPullFromBacklog.includes(task.id),
+              );
+              taskList.addTasks(tasks, {
                 apply: () => {
-                  console.log("Delete tasks from backlog");
-                  backlog.deleteTasks(
-                    tasksToPullFromBacklog.map(({ id }) => id),
-                  );
+                  backlog.deleteTasks(tasksToPullFromBacklog);
                 },
                 revert: () => {
-                  console.log("Add tasks back to backlog");
-                  backlog.addTasks(tasksToPullFromBacklog);
+                  notifications.show({
+                    message: "Moved Tasks Back to Backlog",
+                    color: "green",
+                    autoClose: 5000,
+                    position: "bottom-center",
+                  });
+                  backlog.addTasks(tasks);
                 },
               });
 

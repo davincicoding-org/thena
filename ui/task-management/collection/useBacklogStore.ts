@@ -39,43 +39,52 @@ export const useBacklogStore = create<BacklogStoreState>()(
         ready: false,
         addTask: (task, callback) =>
           set((state) => {
-            const id = createUniqueId(state.pool);
-            const populatedTask = {
+            const newTask = {
               ...task,
+              id: createUniqueId(state.pool),
               addedAt: new Date().toISOString(),
             };
 
-            callback?.({ ...populatedTask, id });
+            callback?.(newTask);
+
+            const { id, ...taskData } = newTask;
 
             return {
               pool: {
                 ...state.pool,
-                [id]: populatedTask,
+                [id]: taskData,
               },
             };
           }),
         addTasks: (tasks, callback) => {
           set((state) => {
-            const newTasks = tasks.reduce<BacklogStoreState["pool"]>(
-              (acc, task) => ({
-                ...acc,
-                [createUniqueId({
+            const newTasks = tasks.reduce<Record<string, BacklogTask>>(
+              (acc, task) => {
+                const id = createUniqueId({
                   ...acc,
                   ...state.pool,
-                })]: { addedAt: new Date().toISOString(), ...task },
-              }),
+                });
+
+                return {
+                  ...acc,
+                  [createUniqueId({
+                    ...acc,
+                    ...state.pool,
+                  })]: { ...task, addedAt: new Date().toISOString(), id },
+                };
+              },
               {},
             );
 
-            callback?.(
-              Object.entries(newTasks).map(([id, task]) => ({
-                ...task,
-                id,
-              })),
-            );
+            callback?.(Object.values(newTasks));
 
             return {
-              pool: { ...state.pool, ...newTasks },
+              pool: {
+                ...state.pool,
+                ...Object.fromEntries(
+                  Object.values(newTasks).map(({ id, ...task }) => [id, task]),
+                ),
+              },
             };
           });
         },
@@ -97,7 +106,7 @@ export const useBacklogStore = create<BacklogStoreState>()(
         },
         removeTask: (taskId) => {
           set((state) => {
-            const { [taskId]: _, ...remainingTasks } = state.pool;
+            const { [taskId]: _removedTask, ...remainingTasks } = state.pool;
 
             return {
               pool: remainingTasks,

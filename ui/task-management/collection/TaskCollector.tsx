@@ -146,10 +146,11 @@ export function TaskCollector({
                                 fullWidth
                                 color="red"
                                 variant="subtle"
+                                justify="flex-start"
                                 leftSection={<IconTrash size={16} />}
                                 onClick={() => onRemoveTask(item.id)}
                               >
-                                Remove
+                                Delete
                               </Button>
                             </>
                           )}

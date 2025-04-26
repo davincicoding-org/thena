@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActionIcon,
   Avatar,
@@ -91,7 +91,8 @@ export interface BacklogProps {
     onCreate: (project: Project) => void,
   ) => void;
   onCreateTag?: (tag: TagInput, onCreate: (tag: Tag) => void) => void;
-  onTaskSelectionChange?: (tasks: BacklogTask[]) => void;
+  selectedTasks?: BacklogTask["id"][];
+  onToggleTaskSelection?: (task: BacklogTask["id"]) => void;
 }
 
 export function Backlog({
@@ -107,7 +108,8 @@ export function Backlog({
   onDeleteTask,
   onCreateProject,
   onCreateTag,
-  onTaskSelectionChange,
+  selectedTasks,
+  onToggleTaskSelection,
   ...paperProps
 }: BacklogProps & PaperProps) {
   const [isCreatingProject, projectAdder] = useDisclosure(false);
@@ -115,24 +117,6 @@ export function Backlog({
 
   const [isCreatingTag, tagAdder] = useDisclosure(false);
   const createTagCallback = useRef<(tag: Tag) => void>(null);
-
-  const [selectedTaskIds, setSelectedTaskIds] = useState<BacklogTask["id"][]>(
-    [],
-  );
-  const isTaskSelected = (taskId: BacklogTask["id"]) =>
-    selectedTaskIds.includes(taskId);
-
-  const handleToggleTaskSelection = (taskId: BacklogTask["id"]) => {
-    setSelectedTaskIds((prev) => {
-      const nextSelection = prev.includes(taskId)
-        ? prev.filter((id) => id !== taskId)
-        : [...prev, taskId];
-      onTaskSelectionChange?.(
-        tasks.filter((task) => nextSelection.includes(task.id)),
-      );
-      return nextSelection;
-    });
-  };
 
   return (
     <>
@@ -169,8 +153,8 @@ export function Backlog({
                     createTagCallback.current = callback;
                     tagAdder.open();
                   }}
-                  selected={isTaskSelected(task.id)}
-                  onToggleSelection={() => handleToggleTaskSelection(task.id)}
+                  selected={selectedTasks?.includes(task.id)}
+                  onToggleSelection={() => onToggleTaskSelection?.(task.id)}
                 />
               ))}
               <Text className="not-first:hidden" my="auto">
@@ -515,7 +499,6 @@ function TaskItem({
     defaultValues: task as TaskInput,
     onSubmit: ({ value }) => onUpdate?.(value),
   });
-
   return (
     <Box>
       <TaskForm
