@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ActionIcon, AppShell, Flex, Modal, Text } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { IconAdjustmentsHorizontal } from "@tabler/icons-react";
+import { IconAdjustmentsHorizontal, IconBug } from "@tabler/icons-react";
 
 import { Configuration } from "@/ui/misc/Configuration";
 import { cn } from "@/ui/utils";
@@ -33,6 +33,18 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             color="gray"
             size="xl"
             ml="auto"
+            aria-label="Known Issues"
+            component={Link}
+            target="_blank"
+            href="https://app.gitbook.com/o/kPy0ezRDHB6tfpc9Csxy/s/dmh3WVogFloLqlQiuGx7/dev/known-issues"
+          >
+            <IconBug size={24} />
+          </ActionIcon>
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            size="xl"
+            // ml="auto"
             aria-label="Configuration"
             onClick={configModal.open}
           >
