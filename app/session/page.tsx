@@ -21,10 +21,10 @@ import {
   useDebouncedCallback,
   useDisclosure,
   useHotkeys,
-  useLocalStorage,
 } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { IconChevronRight } from "@tabler/icons-react";
+import { z } from "zod";
 
 import { sprintPlanSchema } from "@/core/deep-work";
 import { BacklogTask, taskSchema } from "@/core/task-management";
@@ -40,30 +40,49 @@ import {
   useTags,
   useTaskList,
 } from "@/ui/task-management";
+import { cn } from "@/ui/utils";
 
-type Stage = "task-collector" | "session-planner" | "session-runner";
+const stageEnumSchema = z.enum([
+  "task-collector",
+  "session-planner",
+  "session-runner",
+]);
+type Stage = z.infer<typeof stageEnumSchema>;
 
 export default function SessionPage() {
   const router = useRouter();
 
-  const [localState, setLocalState, removeLocalState] = useLocalStorage<{
-    stage: Stage;
-  }>({
-    key: "session-planner",
-    defaultValue: {
+  // State
+
+  const [stage, setStage] = useState<Stage>();
+
+  const taskList = useTaskList();
+
+  const sessionPlanner = useSessionPlanner(taskList.tasks, {
+    initialSprints: 3,
+  });
+
+  const localStorageSync = useLocalStorageSync({
+    key: "session-page",
+    state: {
       stage: "task-collector",
+      tasks: taskList.tasks,
+      sprints: sessionPlanner.sprints,
+    },
+    schema: z.object({
+      stage: stageEnumSchema,
+      tasks: taskSchema.array(),
+      sprints: sprintPlanSchema.array(),
+    }),
+    read: (storedState) => {
+      if (storedState === null) return setStage("task-collector");
+      setStage(storedState.stage);
+      taskList.setTasks(storedState.tasks);
+      sessionPlanner.setSprints(storedState.sprints);
     },
   });
 
-  // ------- Task List -------
-
-  const taskList = useTaskList({});
-  const taskListSync = useLocalStorageSync({
-    key: "session-task-list",
-    state: taskList.tasks,
-    schema: taskSchema.array(),
-    read: (tasks) => tasks && taskList.setTasks(tasks),
-  });
+  // MARK: Tasks
 
   const updateTask = useDebouncedCallback(taskList.updateTask, 1_000);
 
@@ -81,18 +100,6 @@ export default function SessionPage() {
     BacklogTask["id"][]
   >([]);
 
-  // ------- Sprints -------
-
-  const sessionPlanner = useSessionPlanner(taskList.tasks, {
-    initialSprints: 3,
-  });
-  const sessionPlannerSync = useLocalStorageSync({
-    key: "session-sprint-plans",
-    state: sessionPlanner.sprints,
-    schema: sprintPlanSchema.array(),
-    read: (sprints) => sprints && sessionPlanner.setSprints(sprints),
-  });
-
   // ------- User Actions -------
 
   useHotkeys([
@@ -106,7 +113,7 @@ export default function SessionPage() {
   ] = useDisclosure(false);
 
   const handleReset = () => {
-    removeLocalState();
+    localStorageSync.clear();
     taskList.history.reset();
   };
 
@@ -118,13 +125,13 @@ export default function SessionPage() {
 
   return (
     <>
+      <LoadingOverlay
+        loaderProps={{ type: "dots" }}
+        visible={!localStorageSync.initialized}
+      />
       <AppShell.Main display="flex" className="h-full flex-col">
-        <Tabs value={localState.stage} m="auto" className="w-full min-w-0">
+        <Tabs value={stage} m="auto" className="w-full min-w-0">
           <Tabs.Panel value="task-collector">
-            <LoadingOverlay
-              loaderProps={{ type: "dots" }}
-              visible={!taskListSync.initialized}
-            />
             <TaskCollector
               className="mx-auto w-sm"
               items={taskList.tasks}
@@ -140,11 +147,6 @@ export default function SessionPage() {
             />
           </Tabs.Panel>
           <Tabs.Panel value="session-planner" px="lg">
-            <LoadingOverlay
-              loaderProps={{ type: "dots" }}
-              visible={!sessionPlannerSync.initialized}
-            />
-
             <SessionPlanner
               className="mx-auto max-h-[70dvh] min-h-[400px] w-fit"
               sprints={sessionPlanner.sprints}
@@ -160,7 +162,13 @@ export default function SessionPage() {
           <Tabs.Panel value="session-runner">COMING SOON</Tabs.Panel>
         </Tabs>
 
-        <Flex p="lg">
+        <Flex
+          p="lg"
+          justify="space-between"
+          className={cn("transition-transform duration-500", {
+            "translate-y-full": stage === undefined,
+          })}
+        >
           <Menu position="top-start">
             <Menu.Target>
               <Button variant="outline" color="gray">
@@ -177,22 +185,20 @@ export default function SessionPage() {
               </Menu.Item>
             </Menu.Dropdown>
           </Menu>
-          {localState.stage === "task-collector" && (
+
+          {stage === "task-collector" && (
             <Button
               disabled={taskList.tasks.length === 0}
               rightSection={<IconChevronRight />}
               onClick={() => {
-                setLocalState((prev) => ({
-                  ...prev,
-                  stage: "session-planner",
-                }));
+                setStage("session-planner");
                 taskList.history.reset();
               }}
             >
               Plan Session
             </Button>
           )}
-          {localState.stage === "session-planner" && (
+          {stage === "session-planner" && (
             <HoverCard
               disabled={sessionPlanner.unassignedTasks.length === 0}
               position="top-end"
@@ -202,12 +208,7 @@ export default function SessionPage() {
                   <Button
                     rightSection={<IconChevronRight />}
                     disabled={sessionPlanner.unassignedTasks.length > 0}
-                    onClick={() =>
-                      setLocalState((prev) => ({
-                        ...prev,
-                        stage: "session-runner",
-                      }))
-                    }
+                    onClick={() => setStage("session-runner")}
                   >
                     Start Session
                   </Button>

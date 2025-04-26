@@ -27,5 +27,7 @@ export function useLocalStorageSync<Schema extends ZodSchema>({
     localStorage.setItem(key, JSON.stringify(state));
   }, [state]);
 
-  return { initialized };
+  const clear = () => localStorage.removeItem(key);
+
+  return { initialized, clear };
 }
