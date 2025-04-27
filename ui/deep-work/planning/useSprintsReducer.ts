@@ -15,6 +15,7 @@ type SprintPlannerAction =
   | {
       type: "ADD_SPRINT";
       payload: { duration?: number; tasks?: TaskSelection[] };
+      callback?: (sprintId: SprintPlan["id"]) => void;
     }
   | {
       type: "ADD_SPRINTS";
@@ -127,10 +128,12 @@ export function useSprintsReducer(
       case "ADD_SPRINT": {
         const { duration = sprintDuration, tasks = [] } = action.payload;
 
+        const newSprintId = nanoid();
+        action.callback?.(newSprintId);
         return [
           ...state,
           {
-            id: nanoid(),
+            id: newSprintId,
             duration,
             tasks: tasks.reduce<Task[]>((acc, task) => {
               const resolvedTask = resolveTask(task);

@@ -65,7 +65,7 @@ export default function SessionPage() {
   const localStorageSync = useLocalStorageSync({
     key: "session-page",
     state: {
-      stage: "task-collector",
+      stage: stage ?? "task-collector",
       tasks: taskList.tasks,
       sprints: sessionPlanner.sprints,
     },
@@ -155,7 +155,7 @@ export default function SessionPage() {
               className="mx-auto max-h-[70dvh] min-h-[400px] w-fit"
               sprints={sessionPlanner.sprints}
               unassignedTasks={sessionPlanner.unassignedTasks}
-              onAddSprint={() => sessionPlanner.addSprint({})}
+              onAddSprint={(callback) => sessionPlanner.addSprint({}, callback)}
               onDropSprint={sessionPlanner.dropSprint}
               onSprintChange={sessionPlanner.updateSprint}
               onAssignTasksToSprint={sessionPlanner.assignTasks}

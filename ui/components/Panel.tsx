@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, Ref } from "react";
 import { Card, CardProps, Divider, Paper, PaperProps } from "@mantine/core";
 
 import { cn } from "@/ui/utils";
@@ -6,6 +6,7 @@ import { cn } from "@/ui/utils";
 export interface PanelProps {
   header: ReactNode;
   headerProps?: CardProps;
+  ref?: Ref<HTMLDivElement>;
   children: ReactNode;
 }
 

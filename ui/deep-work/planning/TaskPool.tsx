@@ -81,7 +81,11 @@ export function TaskPool({
       withBorder
       display="grid"
       bg="neutral.8"
-      className={cn("h-full min-w-48 grid-rows-[auto_1fr]", props.className)}
+      radius="md"
+      className={cn(
+        "h-full min-w-48 grid-rows-[auto_1fr] overflow-clip",
+        props.className,
+      )}
       {...props}
     >
       <Collapse in={selectionEnabled} pos="sticky" top={0}>
@@ -104,9 +108,12 @@ export function TaskPool({
               aria-label="Abort Selection"
               size="lg"
               variant="subtle"
-              color="red"
+              color="gray"
               className="-my-2 -mr-1"
-              onClick={handleAbortSelection}
+              onClick={(e) => {
+                e.currentTarget.blur();
+                handleAbortSelection();
+              }}
             >
               <IconX size={20} />
             </ActionIcon>

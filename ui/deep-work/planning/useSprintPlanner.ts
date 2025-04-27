@@ -39,10 +39,13 @@ export interface SessionPlannerHookReturn {
   // initialize: (options: SessionPlannerHookOptions) => void;
 
   /** Add a new empty Sprint, using optional duration */
-  addSprint: (sprintToAdd: {
-    duration?: number;
-    tasks?: TaskSelection[];
-  }) => void;
+  addSprint: (
+    sprintToAdd: {
+      duration?: number;
+      tasks?: TaskSelection[];
+    },
+    callback?: (sprintId: SprintPlan["id"]) => void,
+  ) => void;
 
   /** Add multiple Sprints at once */
   addSprints: (
@@ -150,8 +153,11 @@ export function useSessionPlanner(
     dispatch({ type: "SET_SPRINTS", payload: { sprints: newSprints } });
   };
 
-  const addSprint: SessionPlannerHookReturn["addSprint"] = (sprintToAdd) => {
-    dispatch({ type: "ADD_SPRINT", payload: sprintToAdd });
+  const addSprint: SessionPlannerHookReturn["addSprint"] = (
+    sprintToAdd,
+    callback,
+  ) => {
+    dispatch({ type: "ADD_SPRINT", payload: sprintToAdd, callback });
   };
 
   const addSprints: SessionPlannerHookReturn["addSprints"] = (sprintsToAdd) => {

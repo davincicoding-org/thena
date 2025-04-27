@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, useRef } from "react";
 import {
   ActionIcon,
   Box,
@@ -32,7 +32,7 @@ export interface SprintPanelProps {
   sprintOptions: { id: string; title: string }[];
   onDrop: () => void;
   onDurationChange: (duration: number) => void;
-  onAddTasks: () => void;
+  onAddTasks: (el: HTMLDivElement) => void;
   onUnassignTask: (task: TaskSelection) => void;
   onMoveTasks: (options: {
     toSprintId: string;
@@ -57,9 +57,13 @@ export function SprintPanel({
   const otherSprints = sprintOptions.filter(
     (option) => option.id !== sprint.id,
   );
+
+  const panelRef = useRef<HTMLDivElement>(null);
+
   return (
     <Panel
       key={sprint.id}
+      ref={panelRef}
       header={
         <BoundOverlay
           overlayProps={{
@@ -90,7 +94,10 @@ export function SprintPanel({
 
             <NumberInput
               ml="auto"
-              className="-my-1 -mr-1 shrink-0"
+              className="-my-1 -mr-1 shrink-0 not-focus-within:cursor-pointer"
+              classNames={{
+                input: cn("not-focus:cursor-pointer!"),
+              }}
               hideControls
               disabled={disabled}
               leftSection={<IconClock size={16} />}
@@ -256,10 +263,13 @@ export function SprintPanel({
           <Collapse in={canAddTasks && sprint.tasks.length > 0}>
             <Button
               disabled={disabled}
-              variant="default"
+              variant="light"
               fullWidth
               size="xs"
-              onClick={onAddTasks}
+              onClick={() => {
+                if (!panelRef.current) return;
+                onAddTasks(panelRef.current);
+              }}
             >
               Assign Tasks
             </Button>
@@ -272,7 +282,10 @@ export function SprintPanel({
                   disabled={disabled}
                   variant="outline"
                   fullWidth
-                  onClick={onAddTasks}
+                  onClick={() => {
+                    if (!panelRef.current) return;
+                    onAddTasks(panelRef.current);
+                  }}
                 >
                   Assign Tasks
                 </Button>
