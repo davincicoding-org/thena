@@ -230,6 +230,7 @@ function BacklogPanel({
   );
 }
 
+// TODO Align with TaskCollector
 function BacklogTaskAdder({
   onSubmit,
 }: {
@@ -253,6 +254,7 @@ function BacklogTaskAdder({
         <Button
           variant="light"
           fullWidth
+          size="md"
           leftSection={<IconPlus />}
           onClick={(e) => {
             e.currentTarget.blur();
@@ -276,6 +278,7 @@ function BacklogTaskAdder({
               {(titleField) => (
                 <TextInput
                   ref={inputRef}
+                  size="md"
                   placeholder="New Task"
                   value={titleField.state.value}
                   onChange={(e) => titleField.handleChange(e.target.value)}

@@ -114,12 +114,18 @@ export const useBacklogStore = create<BacklogStoreState>()(
           });
         },
         removeTasks: (taskIds) => {
-          set((state) => ({
-            pool: taskIds.reduce<BacklogStoreState["pool"]>((_acc, taskId) => {
-              const { [taskId]: _removedTask, ...remainingTasks } = state.pool;
-              return remainingTasks;
-            }, state.pool),
-          }));
+          set((state) => {
+            const result = Object.fromEntries(
+              Object.entries(state.pool).filter(
+                ([id]) => !taskIds.includes(id),
+              ),
+            );
+
+            console.log("removeTasks", { state, taskIds, result });
+            return {
+              pool: result,
+            };
+          });
         },
       }),
       {

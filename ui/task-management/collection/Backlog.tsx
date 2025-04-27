@@ -17,6 +17,7 @@ import {
   Modal,
   NavLink,
   PaperProps,
+  Popover,
   ScrollArea,
   Space,
   Stack,
@@ -121,6 +122,7 @@ export function Backlog({
       <Panel
         header={
           <BacklogHeader
+            disabled={tasks.length === 0}
             filters={filters}
             onFiltersUpdate={onFiltersUpdate}
             projects={projects}
@@ -227,8 +229,12 @@ interface BacklogHeaderProps
     | "tags"
     | "sort"
     | "onSortUpdate"
-  > {}
+  > {
+  disabled?: boolean;
+}
+
 function BacklogHeader({
+  disabled,
   filters,
   onFiltersUpdate,
   projects,
@@ -263,6 +269,7 @@ function BacklogHeader({
           placeholder="Search"
           leftSection={<IconSearch size={20} />}
           value={searchValue}
+          disabled={disabled}
           mr="auto"
           onChange={(e) => {
             setSearchValue(e);
@@ -270,23 +277,24 @@ function BacklogHeader({
           }}
         />
         {(projects.length > 0 || tags.length > 0) && (
-          <HoverCard
+          <Popover
             position="bottom-start"
             withArrow
             arrowPosition="center"
             arrowSize={12}
           >
-            <HoverCard.Target>
+            <Popover.Target>
               <ActionIcon
                 aria-label="Filter Tasks"
                 size="36"
                 color="gray"
                 variant="subtle"
+                disabled={disabled}
               >
                 <IconFilter size={20} />
               </ActionIcon>
-            </HoverCard.Target>
-            <HoverCard.Dropdown p="xs">
+            </Popover.Target>
+            <Popover.Dropdown p="xs">
               <Flex gap="sm">
                 {projects.length > 0 && (
                   <Fieldset
@@ -359,16 +367,19 @@ function BacklogHeader({
                   </Fieldset>
                 )}
               </Flex>
-            </HoverCard.Dropdown>
-          </HoverCard>
+            </Popover.Dropdown>
+          </Popover>
         )}
 
         <Menu>
           <Menu.Target>
             <Button
-              leftSection={<SortDirectionIcon sort={sort.direction} />}
+              leftSection={
+                <SortDirectionIcon size={20} sort={sort.direction} />
+              }
               variant="default"
               size="sm"
+              disabled={disabled}
             >
               {getSortByLabel(sort.sortBy).short}
             </Button>

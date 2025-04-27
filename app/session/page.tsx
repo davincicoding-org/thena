@@ -255,7 +255,7 @@ export default function SessionPage() {
           </Button>
           <Button
             onClick={() => {
-              taskList.addTasks(taskList.tasks);
+              backlog.addTasks(taskList.tasks);
               handleReset();
               router.push("/");
             }}
@@ -302,6 +302,7 @@ export default function SessionPage() {
               );
               taskList.addTasks(tasks, {
                 apply: () => {
+                  console.log("backlog.deleteTasks", tasksToPullFromBacklog);
                   backlog.deleteTasks(tasksToPullFromBacklog);
                 },
                 revert: () => {
