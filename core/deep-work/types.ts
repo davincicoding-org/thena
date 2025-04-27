@@ -20,4 +20,11 @@ export interface TaskRun extends WithRun<Task> {
   subtasks?: WithRun<Subtask>[];
 }
 
-export type SprintStatus = "idle" | "running" | "paused" | "completed";
+export type SprintStatus = "idle" | "running" | "paused" | "over" | "completed";
+
+export interface FocusSessionBreak {
+  duration: number;
+  timeElapsed: number;
+}
+
+export type FocusSessionStatus = "sprint" | "break" | "finished";

@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { AppShell, Box } from "@mantine/core";
 
-import { LiveSprint, useSprint } from "@/ui/deep-work";
+import { SprintWidget, useSprint } from "@/ui/deep-work";
 import { cn } from "@/ui/utils";
 
 export default function SessionPage() {
@@ -39,7 +39,7 @@ export default function SessionPage() {
         videoRef.current?.play();
       },
     },
-  );
+  )!;
 
   return (
     <AppShell.Main display="grid">
@@ -66,7 +66,7 @@ export default function SessionPage() {
           />
         </video>
 
-        <LiveSprint
+        <SprintWidget
           className={cn(
             "absolute bg-neutral-700/50! backdrop-blur-sm transition-all duration-1000",
             sprint.status === "idle"
@@ -86,6 +86,7 @@ export default function SessionPage() {
           onCompleteTask={sprint.completeTask}
           onSkipTask={sprint.skipTask}
           onRunTaskManually={sprint.runTaskManually}
+          onFinish={() => alert("Sprint finished")}
         />
       </Box>
     </AppShell.Main>

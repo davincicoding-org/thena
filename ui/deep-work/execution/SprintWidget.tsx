@@ -23,7 +23,7 @@ import { hasSubtasks, TaskReference } from "@/core/task-management";
 import { BoundOverlay } from "@/ui/components/BoundOverlay";
 import { cn } from "@/ui/utils";
 
-export interface LiveSprintProps {
+export interface SprintWidgetProps {
   duration: number;
   timeElapsed: number;
   warnBeforeTimeRunsOut: number;
@@ -37,8 +37,9 @@ export interface LiveSprintProps {
   onRunTaskManually: (task: TaskReference) => void;
   onPause: () => void;
   onResume: () => void;
+  onFinish: () => void;
 }
-export function LiveSprint({
+export function SprintWidget({
   duration,
   timeElapsed,
   warnBeforeTimeRunsOut,
@@ -46,14 +47,15 @@ export function LiveSprint({
   currentTask,
   status,
   allowToPause = false,
-  onStart: onStartSession,
+  onStart,
   onCompleteTask,
   onSkipTask,
   onRunTaskManually,
   onPause,
   onResume,
+  onFinish,
   ...paperProps
-}: LiveSprintProps & PaperProps) {
+}: SprintWidgetProps & PaperProps) {
   const isTimeUp = timeElapsed >= duration;
   const warningThreshold =
     warnBeforeTimeRunsOut && Math.max(duration - warnBeforeTimeRunsOut, 0);
@@ -63,7 +65,11 @@ export function LiveSprint({
 
   return (
     <Paper p="sm" shadow="sm" radius="md" {...paperProps}>
-      <Collapse in={status === "running"} pb="md" animateOpacity>
+      <Collapse
+        in={status === "running" || status === "over"}
+        pb="md"
+        animateOpacity
+      >
         <Flex gap={4} align="center">
           <Progress
             flex={1}
@@ -78,10 +84,10 @@ export function LiveSprint({
             }}
             value={(timeElapsed / duration) * 100}
           />
-          {allowToPause && (
+          {allowToPause && status !== "over" && (
             <ActionIcon
               size="xs"
-              aria-label="Pause Session"
+              aria-label="Pause Sprint"
               variant="subtle"
               color="gray"
               onClick={onPause}
@@ -107,18 +113,25 @@ export function LiveSprint({
         ))}
       </Paper>
       <Collapse in={status === "idle"} pt="md" animateOpacity>
-        <Button fullWidth onClick={onStartSession}>
-          Start Session
+        <Button fullWidth onClick={onStart}>
+          Start Sprint
         </Button>
       </Collapse>
       <Collapse in={status === "paused"} pt="md" animateOpacity>
         <Button fullWidth onClick={onResume}>
-          Resume Session
+          Resume Sprint
+        </Button>
+      </Collapse>
+      <Collapse in={status === "over"} pt="md" animateOpacity>
+        <Button fullWidth onClick={onFinish}>
+          Finish Sprint
         </Button>
       </Collapse>
     </Paper>
   );
 }
+
+// MARK: Task Item
 
 interface TaskItemProps {
   task: TaskRun;
@@ -190,6 +203,8 @@ function TaskItem({
     />
   );
 }
+
+// MARK: Task Control Item
 
 type TaskStatus = "completed" | "skipped" | "active" | "upcoming";
 

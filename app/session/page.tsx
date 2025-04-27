@@ -29,7 +29,12 @@ import { z } from "zod";
 import { sprintPlanSchema } from "@/core/deep-work";
 import { BacklogTask, taskSchema } from "@/core/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
-import { SessionPlanner, useSessionPlanner } from "@/ui/deep-work";
+import {
+  FocusSession,
+  SessionPlanner,
+  useSessionPlanner,
+} from "@/ui/deep-work";
+import { useFocusSession } from "@/ui/deep-work/execution/useFocusSession";
 import { useLocalStorageSync } from "@/ui/hooks/useLocalStorageSync";
 import {
   Backlog,
@@ -42,45 +47,38 @@ import {
 } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
-const stageEnumSchema = z.enum([
-  "task-collector",
-  "session-planner",
-  "session-runner",
-]);
-type Stage = z.infer<typeof stageEnumSchema>;
-
 export default function SessionPage() {
   const router = useRouter();
 
   // MARK: State
 
-  const [stage, setStage] = useState<Stage>();
+  const [stage, setStage] = useState<"task-collector" | "session-planner">();
 
   const taskList = useTaskList();
 
-  const sessionPlanner = useSessionPlanner(taskList.tasks, {
-    initialSprints: 3,
-  });
+  const sessionPlanner = useSessionPlanner(taskList.tasks);
 
   const localStorageSync = useLocalStorageSync({
     key: "session-page",
     state: {
-      stage: stage ?? "task-collector",
       tasks: taskList.tasks,
       sprints: sessionPlanner.sprints,
     },
     schema: z.object({
-      stage: stageEnumSchema,
       tasks: taskSchema.array(),
       sprints: sprintPlanSchema.array(),
     }),
     read: (storedState) => {
       if (storedState === null) return setStage("task-collector");
-      setStage(storedState.stage);
       taskList.setTasks(storedState.tasks);
       sessionPlanner.setSprints(storedState.sprints);
+      if (storedState.sprints.length > 0) return setStage("session-planner");
+
+      return setStage("task-collector");
     },
   });
+
+  const [isSessionModalOpen, sessionModal] = useDisclosure(false);
 
   // MARK: Tasks
 
@@ -100,7 +98,25 @@ export default function SessionPage() {
     BacklogTask["id"][]
   >([]);
 
+  // MARK: Focus Session
+
+  const focusSession = useFocusSession({
+    breakDuration: { minutes: 1 },
+  });
+
   // MARK: User Actions
+
+  const handleCompleteTaskCollection = () => {
+    if (sessionPlanner.sprints.length === 0)
+      sessionPlanner.addSprints([{}, {}]);
+    setStage("session-planner");
+    taskList.history.reset();
+  };
+
+  const handleStartSession = () => {
+    focusSession.initialize({ sprints: sessionPlanner.sprints });
+    sessionModal.open();
+  };
 
   useHotkeys([
     ["mod+z", taskList.history.undo],
@@ -163,7 +179,6 @@ export default function SessionPage() {
               onMoveTasks={sessionPlanner.moveTasks}
             />
           </Tabs.Panel>
-          <Tabs.Panel value="session-runner">COMING SOON</Tabs.Panel>
         </Tabs>
 
         <Flex
@@ -196,10 +211,7 @@ export default function SessionPage() {
               size="md"
               disabled={taskList.tasks.length === 0}
               rightSection={<IconChevronRight />}
-              onClick={() => {
-                setStage("session-planner");
-                taskList.history.reset();
-              }}
+              onClick={handleCompleteTaskCollection}
             >
               Plan Session
             </Button>
@@ -215,7 +227,7 @@ export default function SessionPage() {
                     size="md"
                     rightSection={<IconChevronRight />}
                     disabled={sessionPlanner.unassignedTasks.length > 0}
-                    onClick={() => setStage("session-runner")}
+                    onClick={handleStartSession}
                   >
                     Start Session
                   </Button>
@@ -231,6 +243,23 @@ export default function SessionPage() {
           )}
         </Flex>
       </AppShell.Main>
+
+      <Modal.Root
+        opened={isSessionModalOpen}
+        fullScreen
+        transitionProps={{ transition: "pop" }}
+        onClose={sessionModal.close}
+      >
+        <Modal.Content>
+          <FocusSession
+            currentSprint={focusSession.currentSprint}
+            sessionBreak={focusSession.sessionBreak}
+            status={focusSession.status}
+            onFinishSprint={focusSession.finishSprint}
+            onFinishBreak={focusSession.finishBreak}
+          />
+        </Modal.Content>
+      </Modal.Root>
 
       <Modal
         centered

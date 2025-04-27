@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { SprintPlan, SprintStatus, TaskRun, WithRun } from "@/core/deep-work";
 import { hasSubtasks, TaskReference } from "@/core/task-management";
@@ -24,15 +24,16 @@ export interface SprintHookOptions {
 }
 
 export function useSprint(
-  plan: SprintPlan,
+  plan: SprintPlan | undefined,
   options: SprintHookOptions,
-): SprintRun {
+): SprintRun | undefined {
   const [status, setStatus] = useState<SprintStatus>("idle");
   const [taskRuns, setTaskRuns] = useState<WithRun<TaskReference>[]>([]);
   const [currentTask, setCurrentTask] = useState<TaskReference>();
   const [timeElapsed, setTimeElapsed] = useState(0);
 
   useEffect(() => {
+    if (!plan) return;
     setStatus("idle");
     setCurrentTask(undefined);
     setTaskRuns(
@@ -51,7 +52,7 @@ export function useSprint(
       }),
     );
     setTimeElapsed(0);
-  }, [plan.id]);
+  }, [plan]);
 
   useEffect(() => {
     if (status !== "running") return;
@@ -61,7 +62,17 @@ export function useSprint(
     return () => clearInterval(timer);
   }, [status]);
 
-  const tasks = useMemo((): SprintRun["tasks"] => {
+  useEffect(() => {
+    if (!plan) return;
+    if (status !== "running") return;
+    if (timeElapsed < plan.duration) return;
+    setStatus("over");
+  }, [timeElapsed, plan]);
+
+  if (!plan) return undefined;
+
+  const tasks = ((): SprintRun["tasks"] => {
+    if (!plan) return [];
     return plan.tasks.map((task) => {
       const taskRun = taskRuns.find(
         (run) => run.taskId === task.id && run.subtaskId === undefined,
@@ -87,9 +98,9 @@ export function useSprint(
         }),
       };
     });
-  }, [taskRuns, plan.tasks]);
+  })();
 
-  const start = useCallback<SprintRun["start"]>(() => {
+  const start: SprintRun["start"] = () => {
     const [firstTask] = taskRuns;
     if (!firstTask) return;
     setStatus("running");
@@ -98,103 +109,97 @@ export function useSprint(
       taskId: firstTask.taskId,
       subtaskId: firstTask.subtaskId,
     });
-  }, [options.onStart, taskRuns]);
+  };
 
-  const pause = useCallback<SprintRun["pause"]>(() => {
+  const pause: SprintRun["pause"] = () => {
     setStatus("paused");
     options.onPause?.();
-  }, [options.onPause]);
+  };
 
-  const resume = useCallback<SprintRun["resume"]>(() => {
+  const resume: SprintRun["resume"] = () => {
     setStatus("running");
     options.onResume?.();
-  }, [options.onResume]);
+  };
 
-  const completeTask = useCallback<SprintRun["completeTask"]>(
-    ({ taskId, subtaskId }) =>
-      setTaskRuns((prev) => {
-        const taskRunIndex = prev.findIndex(
-          (run) => run.taskId === taskId && run.subtaskId === subtaskId,
-        );
+  const completeTask: SprintRun["completeTask"] = ({ taskId, subtaskId }) =>
+    setTaskRuns((prev) => {
+      const taskRunIndex = prev.findIndex(
+        (run) => run.taskId === taskId && run.subtaskId === subtaskId,
+      );
 
-        const nextTask = prev.find((run, index) => {
-          if (index <= taskRunIndex) return false;
-          if (run.completedAt) return false;
-          if (run.skipped) return false;
-          return true;
-        });
-
-        if (nextTask) {
-          setCurrentTask(nextTask);
-        } else {
-          setCurrentTask(undefined);
-          setStatus("completed");
-        }
-
-        return prev.map((run, index) =>
-          index === taskRunIndex ? { ...run, completedAt: Date.now() } : run,
-        );
-      }),
-    [timeElapsed],
-  );
-
-  const skipTask = useCallback<SprintRun["skipTask"]>(
-    ({ taskId, subtaskId }) =>
-      setTaskRuns((prev) => {
-        const taskRunIndex = prev.findIndex(
-          (run) => run.taskId === taskId && run.subtaskId === subtaskId,
-        );
-
-        const nextTask = prev.find((run, index) => {
-          if (index <= taskRunIndex) return false;
-          if (run.completedAt) return false;
-          if (run.skipped) return false;
-          return true;
-        });
-
-        if (nextTask) {
-          setCurrentTask(nextTask);
-        } else {
-          setCurrentTask(undefined);
-          setStatus("completed");
-        }
-
-        return prev.map((run, index) =>
-          index === taskRunIndex ? { ...run, skipped: true } : run,
-        );
-      }),
-    [timeElapsed],
-  );
-
-  const runTaskManually = useCallback<SprintRun["runTaskManually"]>(
-    ({ taskId, subtaskId }) => {
-      setTaskRuns((prev) => {
-        const taskIndex = prev.findIndex(
-          (run) => run.taskId === taskId && run.subtaskId === subtaskId,
-        );
-
-        return prev.map((run, index) => {
-          if (index > taskIndex) return run;
-          if (index === taskIndex) {
-            return {
-              ...run,
-              skipped: undefined,
-            };
-          }
-
-          if (run.completedAt) return run;
-
-          return {
-            ...run,
-            skipped: true,
-          };
-        });
+      const nextTask = prev.find((run, index) => {
+        if (index <= taskRunIndex) return false;
+        if (run.completedAt) return false;
+        if (run.skipped) return false;
+        return true;
       });
 
-      setCurrentTask({ taskId, subtaskId });
-    },
-    [],
-  );
+      if (nextTask) {
+        setCurrentTask(nextTask);
+      } else {
+        setCurrentTask(undefined);
+        setStatus("completed");
+      }
+
+      return prev.map((run, index) =>
+        index === taskRunIndex ? { ...run, completedAt: Date.now() } : run,
+      );
+    });
+
+  const skipTask: SprintRun["skipTask"] = ({ taskId, subtaskId }) =>
+    setTaskRuns((prev) => {
+      const taskRunIndex = prev.findIndex(
+        (run) => run.taskId === taskId && run.subtaskId === subtaskId,
+      );
+
+      const nextTask = prev.find((run, index) => {
+        if (index <= taskRunIndex) return false;
+        if (run.completedAt) return false;
+        if (run.skipped) return false;
+        return true;
+      });
+
+      if (nextTask) {
+        setCurrentTask(nextTask);
+      } else {
+        setCurrentTask(undefined);
+        setStatus("completed");
+      }
+
+      return prev.map((run, index) =>
+        index === taskRunIndex ? { ...run, skipped: true } : run,
+      );
+    });
+
+  const runTaskManually: SprintRun["runTaskManually"] = ({
+    taskId,
+    subtaskId,
+  }) => {
+    setTaskRuns((prev) => {
+      const taskIndex = prev.findIndex(
+        (run) => run.taskId === taskId && run.subtaskId === subtaskId,
+      );
+
+      return prev.map((run, index) => {
+        if (index > taskIndex) return run;
+        if (index === taskIndex) {
+          return {
+            ...run,
+            skipped: undefined,
+          };
+        }
+
+        if (run.completedAt) return run;
+
+        return {
+          ...run,
+          skipped: true,
+        };
+      });
+    });
+
+    setCurrentTask({ taskId, subtaskId });
+  };
 
   return {
     status,

@@ -2,11 +2,11 @@ import { fn } from "@storybook/test";
 
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { LiveSprint, LiveSprintProps } from "./LiveSprint";
+import { SprintWidget } from "./SprintWidget";
 import { useSprint } from "./useSprint";
 
 const meta = {
-  component: LiveSprint,
+  component: SprintWidget,
   parameters: {
     layout: "centered",
   },
@@ -21,8 +21,9 @@ const meta = {
     onRunTaskManually: fn(),
     onPause: fn(),
     onResume: fn(),
+    onFinish: fn(),
   },
-} satisfies Meta<typeof LiveSprint>;
+} satisfies Meta<typeof SprintWidget>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
@@ -83,9 +84,10 @@ export const Showcase: Story = {
         onPause: args.onPause,
         onResume: args.onResume,
       },
-    );
+    )!;
+
     return (
-      <LiveSprint
+      <SprintWidget
         {...args}
         tasks={sprint.tasks}
         status={sprint.status}
