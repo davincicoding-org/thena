@@ -1,6 +1,12 @@
 import { z } from "zod";
 
-import { Subtask, Task, taskSchema } from "@/core/task-management";
+import {
+  Subtask,
+  Task,
+  taskSchema,
+  TaskSelection,
+  taskSelectionSchema,
+} from "@/core/task-management";
 
 export const sprintPlanSchema = z.object({
   id: z.string(),
@@ -8,6 +14,11 @@ export const sprintPlanSchema = z.object({
   tasks: z.array(taskSchema),
 });
 export type SprintPlan = z.infer<typeof sprintPlanSchema>;
+
+export const minimalSprintPlanSchema = sprintPlanSchema.extend({
+  tasks: taskSelectionSchema.array(),
+});
+export type MinimalSprintPlan = z.infer<typeof minimalSprintPlanSchema>;
 
 export type WithRun<T> = T & {
   completedAt?: number;

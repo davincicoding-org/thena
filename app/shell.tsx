@@ -21,9 +21,12 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             size="xl"
             component={Link}
             href="/"
-            className={cn("select-none", {
-              "pointer-events-none": pathname === "/",
-            })}
+            className={cn(
+              "transition-colors select-none hover:text-[var(--mantine-primary-color-filled)]!",
+              {
+                "pointer-events-none": pathname === "/",
+              },
+            )}
           >
             ConcentrAID
           </Text>

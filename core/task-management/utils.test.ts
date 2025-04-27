@@ -1,134 +1,115 @@
 import { describe, expect, it } from "vitest";
 
-import { excludeTask, mergeTasks } from "@/core/task-management/utils";
+import {
+  excludeTaskSelection,
+  mergeTaskSelections,
+} from "@/core/task-management/utils";
 
 describe("task-management utilities", () => {
-  describe("mergeTasks", () => {
+  describe("mergeTaskSelections", () => {
     it("should merge tasks", () => {
-      const mergedTasks = mergeTasks([
-        { id: "1", title: "Task 1" },
+      const mergedTasks = mergeTaskSelections([
+        { taskId: "1" },
         {
-          id: "2",
-          title: "Task 2",
-          subtasks: [
-            { id: "1", title: "Subtask 1" },
-            { id: "2", title: "Subtask 2" },
-          ],
+          taskId: "2",
+          subtaskIds: ["1", "2"],
         },
       ]);
       expect(mergedTasks).toHaveLength(2);
-      expect(mergedTasks[0]!.id).toBe("1");
-      expect(mergedTasks[0]!.subtasks).toBeUndefined();
-      expect(mergedTasks[1]!.id).toBe("2");
-      expect(mergedTasks[1]!.subtasks).toHaveLength(2);
-      expect(mergedTasks[1]!.subtasks![0]!.id).toBe("1");
-      expect(mergedTasks[1]!.subtasks![1]!.id).toBe("2");
+      expect(mergedTasks[0]!.taskId).toBe("1");
+      expect(mergedTasks[0]!.subtaskIds).toBeUndefined();
+      expect(mergedTasks[1]!.taskId).toBe("2");
+      expect(mergedTasks[1]!.subtaskIds).toHaveLength(2);
+      expect(mergedTasks[1]!.subtaskIds![0]).toBe("1");
+      expect(mergedTasks[1]!.subtaskIds![1]).toBe("2");
     });
 
     it("should remove duplicates", () => {
-      const mergedTasks = mergeTasks([
-        { id: "1", title: "Task 1" },
-        { id: "1", title: "Task 1" },
+      const mergedTasks = mergeTaskSelections([
+        { taskId: "1" },
+        { taskId: "1" },
       ]);
       expect(mergedTasks).toHaveLength(1);
-      expect(mergedTasks[0]!.id).toBe("1");
-      expect(mergedTasks[0]!.subtasks).toBeUndefined();
+      expect(mergedTasks[0]!.taskId).toBe("1");
+      expect(mergedTasks[0]!.subtaskIds).toBeUndefined();
     });
 
     it("should merge subtasks", () => {
-      const mergedTasks = mergeTasks([
+      const mergedTasks = mergeTaskSelections([
         {
-          id: "1",
-          title: "Task 1",
-          subtasks: [
-            { id: "1", title: "Subtask 1" },
-            { id: "2", title: "Subtask 2" },
-          ],
+          taskId: "1",
+          subtaskIds: ["1", "2"],
         },
         {
-          id: "1",
-          title: "Task 1",
-          subtasks: [{ id: "3", title: "Subtask 3" }],
+          taskId: "1",
+          subtaskIds: ["3"],
         },
       ]);
       expect(mergedTasks).toHaveLength(1);
-      expect(mergedTasks[0]!.id).toBe("1");
-      expect(mergedTasks[0]!.subtasks).toHaveLength(3);
-      expect(mergedTasks[0]!.subtasks![0]!.id).toBe("1");
-      expect(mergedTasks[0]!.subtasks![1]!.id).toBe("2");
-      expect(mergedTasks[0]!.subtasks![2]!.id).toBe("3");
+      expect(mergedTasks[0]!.taskId).toBe("1");
+      expect(mergedTasks[0]!.subtaskIds).toHaveLength(3);
+      expect(mergedTasks[0]!.subtaskIds![0]).toBe("1");
+      expect(mergedTasks[0]!.subtaskIds![1]).toBe("2");
+      expect(mergedTasks[0]!.subtaskIds![2]).toBe("3");
     });
     it("should remove subtasks duplicates", () => {
-      const mergedTasks = mergeTasks([
+      const mergedTasks = mergeTaskSelections([
         {
-          id: "1",
-          title: "Task 1",
-          subtasks: [
-            { id: "1", title: "Subtask 1" },
-            { id: "2", title: "Subtask 2" },
-          ],
+          taskId: "1",
+          subtaskIds: ["1", "2"],
         },
         {
-          id: "1",
-          title: "Task 1",
-          subtasks: [{ id: "2", title: "Subtask 2" }],
+          taskId: "1",
+          subtaskIds: ["2"],
         },
       ]);
       expect(mergedTasks).toHaveLength(1);
-      expect(mergedTasks[0]!.id).toBe("1");
-      expect(mergedTasks[0]!.subtasks).toHaveLength(2);
-      expect(mergedTasks[0]!.subtasks![0]!.id).toBe("1");
-      expect(mergedTasks[0]!.subtasks![1]!.id).toBe("2");
+      expect(mergedTasks[0]!.taskId).toBe("1");
+      expect(mergedTasks[0]!.subtaskIds).toHaveLength(2);
+      expect(mergedTasks[0]!.subtaskIds![0]).toBe("1");
+      expect(mergedTasks[0]!.subtaskIds![1]).toBe("2");
     });
   });
 
-  describe("excludeTask", () => {
+  describe("excludeTaskSelection", () => {
     it("should exclude task", () => {
-      const result = excludeTask(
+      const result = excludeTaskSelection(
         [
-          { id: "1", title: "Task 1" },
+          { taskId: "1" },
           {
-            id: "2",
-            title: "Task 2",
-            subtasks: [
-              { id: "1", title: "Subtask 1" },
-              { id: "2", title: "Subtask 2" },
-            ],
+            taskId: "2",
+            subtaskIds: ["1", "2"],
           },
         ],
         { taskId: "1" },
       );
       expect(result).toHaveLength(1);
-      expect(result[0]!.id).toBe("2");
-      expect(result[0]!.subtasks).toHaveLength(2);
-      expect(result[0]!.subtasks![0]!.id).toBe("1");
-      expect(result[0]!.subtasks![1]!.id).toBe("2");
+      expect(result[0]!.taskId).toBe("2");
+      expect(result[0]!.subtaskIds).toHaveLength(2);
+      expect(result[0]!.subtaskIds![0]).toBe("1");
+      expect(result[0]!.subtaskIds![1]).toBe("2");
     });
 
     it("should exclude subtasks", () => {
-      const result = excludeTask(
+      const result = excludeTaskSelection(
         [
-          { id: "1", title: "Task 1" },
+          { taskId: "1" },
           {
-            id: "2",
-            title: "Task 2",
-            subtasks: [
-              { id: "1", title: "Subtask 1" },
-              { id: "2", title: "Subtask 2" },
-            ],
+            taskId: "2",
+            subtaskIds: ["1", "2"],
           },
         ],
         {
           taskId: "2",
-          subtasks: ["2"],
+          subtaskIds: ["2"],
         },
       );
       expect(result).toHaveLength(2);
-      expect(result[0]!.id).toBe("1");
-      expect(result[0]!.subtasks).toBeUndefined();
-      expect(result[1]!.id).toBe("2");
-      expect(result[1]!.subtasks).toHaveLength(1);
-      expect(result[1]!.subtasks![0]!.id).toBe("1");
+      expect(result[0]!.taskId).toBe("1");
+      expect(result[0]!.subtaskIds).toBeUndefined();
+      expect(result[1]!.taskId).toBe("2");
+      expect(result[1]!.subtaskIds).toHaveLength(1);
+      expect(result[1]!.subtaskIds![0]).toBe("1");
     });
   });
 });

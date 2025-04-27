@@ -2,10 +2,10 @@
 
 import { AppShell, Center } from "@mantine/core";
 
-import { SessionPlanner, useSessionPlanner } from "@/ui/deep-work";
+import { SprintBuilder, useSprintBuilder } from "@/ui/deep-work";
 
 export default function SessionPlannerPage() {
-  const sessionPlanner = useSessionPlanner(
+  const sessionPlanner = useSprintBuilder(
     [
       {
         id: "task1",
@@ -125,7 +125,7 @@ export default function SessionPlannerPage() {
   return (
     <AppShell.Main className="grid">
       <Center className="items-center" p="lg">
-        <SessionPlanner
+        <SprintBuilder
           mah="70dvh"
           className="w-full max-w-4/5"
           sprints={sessionPlanner.sprints}

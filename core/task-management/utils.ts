@@ -1,3 +1,5 @@
+import { groupBy } from "lodash-es";
+
 import { Subtask, Task, TaskSelection } from "./types";
 
 export const hasSubtasks = <T extends { subtasks?: unknown[] }>(
@@ -7,49 +9,79 @@ export const hasSubtasks = <T extends { subtasks?: unknown[] }>(
   return task.subtasks && task.subtasks.length > 0;
 };
 
-export const mergeTasks = (tasks: Task[]): Task[] =>
-  tasks.reduce<Task[]>((acc, task) => {
-    const existingTask = acc.find((prevTask) => prevTask.id === task.id);
-    if (!existingTask) return [...acc, task];
-    if (!hasSubtasks(task) || !hasSubtasks(existingTask)) return acc;
-
-    return acc.map<Task>((prevTask) => {
-      if (prevTask.id !== task.id) return prevTask;
-      if (!hasSubtasks(prevTask)) return prevTask;
-
-      return {
-        ...prevTask,
-        subtasks: task.subtasks.reduce<Subtask[]>((acc, subtask) => {
-          const isSubtaskAlreadyInList = acc.some(
-            (subtaskInList) => subtaskInList.id === subtask.id,
-          );
-          if (isSubtaskAlreadyInList) return acc;
-          return [...acc, subtask];
-        }, prevTask.subtasks),
-      };
-    });
-  }, []);
-
-export const excludeTask = (
+export const resolveTaskSelection = (
+  taskSelection: TaskSelection,
   tasks: Task[],
-  taskToExclude: TaskSelection,
-): Task[] =>
-  tasks.reduce<Task[]>((acc, task) => {
-    if (task.id !== taskToExclude.taskId) return [...acc, task];
+): TaskSelection | null => {
+  const task = tasks.find((t) => t.id === taskSelection.taskId);
+  if (!task) return null;
 
-    if (!hasSubtasks(task) || !hasSubtasks(taskToExclude)) return acc;
+  // If there are no subtask selections, return the full task
+  if (!taskSelection.subtaskIds?.length) return { taskId: task.id };
 
-    const taskWithRemainingSubtasks = {
-      ...task,
-      subtasks: task.subtasks.filter((subtask) =>
-        taskToExclude.subtasks.every(
-          (subtaskToExclude) => subtask.id !== subtaskToExclude,
-        ),
-      ),
+  // If the task doesn't have subtasks, ignore the subtask selections
+  if (!task.subtasks?.length)
+    return {
+      taskId: task.id,
     };
 
-    if (taskWithRemainingSubtasks.subtasks.length)
-      return [...acc, taskWithRemainingSubtasks];
+  const validSubtasSelection = taskSelection.subtaskIds.filter((id) =>
+    task.subtasks?.some((subtask) => subtask.id === id),
+  );
 
-    return acc;
+  if (!validSubtasSelection.length) return null;
+
+  return {
+    taskId: task.id,
+    subtaskIds: validSubtasSelection,
+  };
+};
+
+export const mergeTaskSelections = (
+  taskSelections: TaskSelection[],
+): TaskSelection[] => {
+  // TODO ensure order is preserved
+  const groupedByTaskId = groupBy(taskSelections, "taskId");
+
+  return Object.entries(groupedByTaskId).map<TaskSelection>(
+    ([taskId, taskSelectionsByTaskId]) => {
+      const subtaskIds = taskSelectionsByTaskId.flatMap(
+        ({ subtaskIds }) => subtaskIds || [],
+      );
+
+      return {
+        taskId,
+        subtaskIds: subtaskIds.length ? subtaskIds : undefined,
+      };
+    },
+  );
+};
+
+export const excludeTaskSelection = (
+  taskSelections: TaskSelection[],
+  task: TaskSelection,
+): TaskSelection[] => {
+  return taskSelections.reduce<TaskSelection[]>((acc, taskSelection) => {
+    if (taskSelection.taskId !== task.taskId) return [...acc, taskSelection];
+
+    // If no subtask IDs are provided, exclude the whole task
+    if (!taskSelection.subtaskIds?.length) return acc;
+
+    // If the task has no subtasks, ignore the subtasks to exclude
+    if (!task.subtaskIds?.length) return [...acc, task];
+
+    const remainingSubtaskIds = task.subtaskIds.filter(
+      (subtaskId) => !taskSelection.subtaskIds?.includes(subtaskId),
+    );
+
+    return [
+      ...acc,
+      {
+        ...task,
+        subtaskIds: remainingSubtaskIds.length
+          ? remainingSubtaskIds
+          : undefined,
+      },
+    ];
   }, []);
+};

@@ -1,14 +1,15 @@
 import { useMemo } from "react";
+import { min } from "lodash-es";
 import { nanoid } from "nanoid";
 
-import { SprintPlan } from "@/core/deep-work";
+import { MinimalSprintPlan, SprintPlan } from "@/core/deep-work";
 import {
   hasSubtasks,
-  mergeTasks,
+  mergeTaskSelections,
   Task,
   TaskSelection,
 } from "@/core/task-management";
-import { StateSetter } from "@/ui/utils";
+import { createUniqueId, StateSetter } from "@/ui/utils";
 
 import { SprintsReducerError, useSprintsReducer } from "./useSprintsReducer";
 
@@ -29,8 +30,9 @@ export interface SessionPlannerHookOptions {
 export interface SessionPlannerHookReturn {
   /** All current Sprint plans (with populated tasks) */
   sprints: SprintPlan[];
+  minimalSprints: MinimalSprintPlan[];
 
-  setSprints: StateSetter<SprintPlan[]>;
+  setSprints: (value: MinimalSprintPlan[]) => void;
 
   /** Tasks not yet assigned to any Sprint */
   unassignedTasks: Task[];
@@ -103,9 +105,9 @@ export interface SessionPlannerHookReturn {
 }
 
 /**
- * Provides in-memory sprint planning: initialize Sprints, adjust durations, and reorder sprints and tasks.
+ * Initialize Sprints, add new Sprints, adjust durations, and reorder sprints and tasks.
  */
-export function useSessionPlanner(
+export function useSprintBuilder(
   taskPool: Task[],
   {
     initialSprints = DEFAULT_OPTIONS.initialSprints,
@@ -113,7 +115,8 @@ export function useSessionPlanner(
     onError,
   }: SessionPlannerHookOptions = DEFAULT_OPTIONS,
 ): SessionPlannerHookReturn {
-  const [sprints, dispatch] = useSprintsReducer(
+  // FIXME The internal sprint tasks should be references, so that the returned sprint tasks stay in sync with the task pool
+  const [minimalSprints, dispatch] = useSprintsReducer(
     {
       taskPool,
       sprintDuration,
@@ -122,35 +125,47 @@ export function useSessionPlanner(
     initializeSprints(initialSprints, sprintDuration),
   );
 
-  const unassignedTasks = useMemo(() => {
-    const assignedTasks = mergeTasks(sprints.flatMap((sprint) => sprint.tasks));
+  const unassignedTasks = (() => {
+    const assignedTasks = mergeTaskSelections(
+      minimalSprints.flatMap((sprint) => sprint.tasks),
+    );
 
     return taskPool.reduce<Task[]>((acc, task) => {
       const assignedTask = assignedTasks.find(
-        (assignedTask) => assignedTask.id === task.id,
+        (assignedTask) => assignedTask.taskId === task.id,
       );
       if (!assignedTask) return [...acc, task];
 
-      if (!hasSubtasks(task) || !hasSubtasks(assignedTask)) return acc;
+      if (!hasSubtasks(task)) return acc;
 
-      const taskWithoutAssignedSubtasks = {
-        ...task,
-        subtasks: task.subtasks.filter((subtask) =>
-          assignedTask.subtasks.every(
-            (assignedSubtask) => assignedSubtask.id !== subtask.id,
-          ),
-        ),
-      };
+      const remainingSubtaskIds = task.subtasks.filter(
+        (subtask) => !assignedTask.subtaskIds?.includes(subtask.id),
+      );
 
-      if (!taskWithoutAssignedSubtasks.subtasks?.length) return acc;
+      if (!remainingSubtaskIds.length) return acc;
 
-      return [...acc, taskWithoutAssignedSubtasks];
+      return [...acc, { ...task, subtasks: remainingSubtaskIds }];
     }, []);
-  }, [taskPool, sprints]);
+  })();
 
-  const setSprints: StateSetter<SprintPlan[]> = (value) => {
-    const newSprints = typeof value === "function" ? value(sprints) : value;
-    dispatch({ type: "SET_SPRINTS", payload: { sprints: newSprints } });
+  const sprints = minimalSprints.map<SprintPlan>((minimalSprint) => ({
+    ...minimalSprint,
+    tasks: minimalSprint.tasks.reduce<Task[]>((acc, taskSelection) => {
+      const task = taskPool.find((task) => task.id === taskSelection.taskId);
+      if (!task) return acc;
+
+      if (!hasSubtasks(task)) return [...acc, task];
+
+      const subtasks = task.subtasks.filter((subtask) =>
+        taskSelection.subtaskIds?.includes(subtask.id),
+      );
+
+      return [...acc, { ...task, subtasks }];
+    }, []),
+  }));
+
+  const setSprints: SessionPlannerHookReturn["setSprints"] = (sprints) => {
+    dispatch({ type: "SET_SPRINTS", payload: { sprints } });
   };
 
   const addSprint: SessionPlannerHookReturn["addSprint"] = (
@@ -212,6 +227,7 @@ export function useSessionPlanner(
 
   return {
     sprints,
+    minimalSprints,
     setSprints,
     unassignedTasks,
     addSprint,
@@ -233,12 +249,15 @@ export function useSessionPlanner(
 export const initializeSprints = (
   sprintCount: number,
   sprintDuration: number = DEFAULT_OPTIONS.sprintDuration,
-): SprintPlan[] =>
-  Array.from(
-    { length: sprintCount },
-    (): SprintPlan => ({
-      id: nanoid(),
-      duration: sprintDuration,
-      tasks: [],
-    }),
+): MinimalSprintPlan[] =>
+  Array.from({ length: sprintCount }).reduce<MinimalSprintPlan[]>(
+    (acc) => [
+      ...acc,
+      {
+        id: createUniqueId(acc, 4),
+        duration: sprintDuration,
+        tasks: [],
+      },
+    ],
+    [],
   );

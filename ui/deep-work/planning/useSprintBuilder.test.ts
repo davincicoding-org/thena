@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createMockTasks } from "@/core/task-management/mock";
 
-import { DEFAULT_OPTIONS, useSessionPlanner } from "./useSprintPlanner";
+import { DEFAULT_OPTIONS, useSprintBuilder } from "./useSprintBuilder";
 
 // ----- Tests -----
 
@@ -11,7 +11,7 @@ describe("useSessionPlanner", () => {
   describe("Initialisation", () => {
     it("should initialize empty sprints", () => {
       const { result } = renderHook(() =>
-        useSessionPlanner([], { initialSprints: 3 }),
+        useSprintBuilder([], { initialSprints: 3 }),
       );
 
       expect(result.current.sprints).toHaveLength(3);
@@ -34,7 +34,7 @@ describe("useSessionPlanner", () => {
       const customDuration = 45;
 
       const { result } = renderHook(() =>
-        useSessionPlanner(mockTasks, {
+        useSprintBuilder(mockTasks, {
           initialSprints: 2,
           sprintDuration: customDuration,
         }),
@@ -102,7 +102,7 @@ describe("useSessionPlanner", () => {
 
   describe("addSprint", () => {
     it("should add a new sprint", () => {
-      const { result } = renderHook(() => useSessionPlanner([]));
+      const { result } = renderHook(() => useSprintBuilder([]));
 
       expect(result.current.sprints).toHaveLength(0);
 
@@ -118,7 +118,7 @@ describe("useSessionPlanner", () => {
     it("should add a sprint with tasks assigned to it", () => {
       const mockTasks = createMockTasks([0, 1, 2]);
 
-      const { result } = renderHook(() => useSessionPlanner(mockTasks));
+      const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
       expect(result.current.sprints).toHaveLength(0);
 
@@ -176,7 +176,7 @@ describe("useSessionPlanner", () => {
 
     it("should add a new sprint with custom duration", () => {
       const customDuration = 60;
-      const { result } = renderHook(() => useSessionPlanner([]));
+      const { result } = renderHook(() => useSprintBuilder([]));
 
       expect(result.current.sprints).toHaveLength(0);
 
@@ -190,7 +190,7 @@ describe("useSessionPlanner", () => {
 
   describe("addSprints", () => {
     it("should add multiple sprints", () => {
-      const { result } = renderHook(() => useSessionPlanner([]));
+      const { result } = renderHook(() => useSprintBuilder([]));
 
       expect(result.current.sprints).toHaveLength(0);
 
@@ -210,7 +210,7 @@ describe("useSessionPlanner", () => {
     it("should add multiple sprints with tasks assigned to them", () => {
       const mockTasks = createMockTasks([0, 1, 2, 3]);
 
-      const { result } = renderHook(() => useSessionPlanner(mockTasks));
+      const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
       expect(result.current.sprints).toHaveLength(0);
 
@@ -251,7 +251,7 @@ describe("useSessionPlanner", () => {
     });
 
     it("should add multiple sprints with custom durations", () => {
-      const { result } = renderHook(() => useSessionPlanner([]));
+      const { result } = renderHook(() => useSprintBuilder([]));
 
       expect(result.current.sprints).toHaveLength(0);
 
@@ -267,7 +267,7 @@ describe("useSessionPlanner", () => {
     });
 
     it("should not cause a state update when providing an empty options array", () => {
-      const { result } = renderHook(() => useSessionPlanner([]));
+      const { result } = renderHook(() => useSprintBuilder([]));
 
       expect(result.current.sprints).toHaveLength(0);
 
@@ -285,7 +285,7 @@ describe("useSessionPlanner", () => {
   describe("updateSprint", () => {
     it("should update a sprint's duration", () => {
       const { result } = renderHook(() =>
-        useSessionPlanner([], { initialSprints: 2 }),
+        useSprintBuilder([], { initialSprints: 2 }),
       );
 
       expect(result.current.sprints).toHaveLength(2);
@@ -319,7 +319,7 @@ describe("useSessionPlanner", () => {
     it("should log an error when providing an inexistent sprint ID", () => {
       const mockOnError = vi.fn();
       const { result } = renderHook(() =>
-        useSessionPlanner([], { initialSprints: 1, onError: mockOnError }),
+        useSprintBuilder([], { initialSprints: 1, onError: mockOnError }),
       );
 
       const nonExistentId = "non-existent-id";
@@ -342,7 +342,7 @@ describe("useSessionPlanner", () => {
 
     it("should not update any state when providing an inexistent sprint ID", () => {
       const { result } = renderHook(() =>
-        useSessionPlanner([], { initialSprints: 1 }),
+        useSprintBuilder([], { initialSprints: 1 }),
       );
 
       expect(result.current.sprints).toHaveLength(1);
@@ -368,7 +368,7 @@ describe("useSessionPlanner", () => {
   describe("reorderSprints", () => {
     it("should reorder sprints", () => {
       const { result } = renderHook(() =>
-        useSessionPlanner([], { initialSprints: 3 }),
+        useSprintBuilder([], { initialSprints: 3 }),
       );
 
       expect(result.current.sprints).toHaveLength(3);
@@ -394,7 +394,7 @@ describe("useSessionPlanner", () => {
       it("should log an error", () => {
         const mockOnError = vi.fn();
         const { result } = renderHook(() =>
-          useSessionPlanner([], { initialSprints: 3, onError: mockOnError }),
+          useSprintBuilder([], { initialSprints: 3, onError: mockOnError }),
         );
 
         expect(result.current.sprints).toHaveLength(3);
@@ -423,7 +423,7 @@ describe("useSessionPlanner", () => {
       it("should log multiple errors", () => {
         const mockOnError = vi.fn();
         const { result } = renderHook(() =>
-          useSessionPlanner([], { initialSprints: 4, onError: mockOnError }),
+          useSprintBuilder([], { initialSprints: 4, onError: mockOnError }),
         );
 
         expect(result.current.sprints).toHaveLength(4);
@@ -460,7 +460,7 @@ describe("useSessionPlanner", () => {
 
       it("should not update any state", () => {
         const { result } = renderHook(() =>
-          useSessionPlanner([], { initialSprints: 3 }),
+          useSprintBuilder([], { initialSprints: 3 }),
         );
 
         expect(result.current.sprints).toHaveLength(3);
@@ -484,7 +484,7 @@ describe("useSessionPlanner", () => {
     describe("with additional sprint IDs", () => {
       it("should not update state if additional IDs are provided", () => {
         const { result } = renderHook(() =>
-          useSessionPlanner([], { initialSprints: 2 }),
+          useSprintBuilder([], { initialSprints: 2 }),
         );
 
         expect(result.current.sprints).toHaveLength(2);
@@ -514,7 +514,7 @@ describe("useSessionPlanner", () => {
   describe("reorderSprintTasks", () => {
     it("should reorder sprint tasks", () => {
       const mockTasks = createMockTasks([0, 2, 1]);
-      const { result } = renderHook(() => useSessionPlanner(mockTasks));
+      const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
       // Initialize a sprint with the tasks
       act(() =>
@@ -546,7 +546,7 @@ describe("useSessionPlanner", () => {
 
     it("should ignore additional IDs", () => {
       const mockTasks = createMockTasks([0, 2, 1]);
-      const { result } = renderHook(() => useSessionPlanner(mockTasks));
+      const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
       act(() =>
         result.current.addSprint({
@@ -575,7 +575,7 @@ describe("useSessionPlanner", () => {
         const mockOnError = vi.fn();
         const mockTasks = createMockTasks([0, 2, 1]);
         const { result } = renderHook(() =>
-          useSessionPlanner(mockTasks, {
+          useSprintBuilder(mockTasks, {
             initialSprints: 2,
             onError: mockOnError,
           }),
@@ -614,7 +614,7 @@ describe("useSessionPlanner", () => {
         const mockOnError = vi.fn();
         const mockTasks = createMockTasks([0, 2, 1]);
         const { result } = renderHook(() =>
-          useSessionPlanner(mockTasks, { onError: mockOnError }),
+          useSprintBuilder(mockTasks, { onError: mockOnError }),
         );
 
         // Initialize a sprint with the tasks
@@ -646,7 +646,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([0, 2, 1]);
 
         const { result } = renderHook(() =>
-          useSessionPlanner(mockTasks, { onError: mockOnError }),
+          useSprintBuilder(mockTasks, { onError: mockOnError }),
         );
 
         act(() =>
@@ -686,7 +686,7 @@ describe("useSessionPlanner", () => {
 
       it("should not update state", () => {
         const mockTasks = createMockTasks([0, 2, 1]);
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         act(() =>
           result.current.addSprint({
@@ -710,7 +710,7 @@ describe("useSessionPlanner", () => {
   describe("dropSprint", () => {
     it("should remove a sprint", () => {
       const { result } = renderHook(() =>
-        useSessionPlanner([], { initialSprints: 3 }),
+        useSprintBuilder([], { initialSprints: 3 }),
       );
 
       expect(result.current.sprints).toHaveLength(3);
@@ -732,7 +732,7 @@ describe("useSessionPlanner", () => {
     it("should move its tasks to the unassigned tasks", () => {
       const mockTasks = createMockTasks([0, 2, 1]);
 
-      const { result } = renderHook(() => useSessionPlanner(mockTasks));
+      const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
       act(() =>
         result.current.addSprint({
@@ -774,7 +774,7 @@ describe("useSessionPlanner", () => {
       const mockTasks = createMockTasks([3, 2]);
 
       // Initialize sprints and assign tasks to them
-      const { result } = renderHook(() => useSessionPlanner(mockTasks));
+      const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
       // Add a sprint with assigned tasks, including partial subtasks
       act(() =>
@@ -782,7 +782,7 @@ describe("useSessionPlanner", () => {
           tasks: [
             {
               taskId: mockTasks[0]!.id,
-              subtasks: [
+              subtaskIds: [
                 mockTasks[0]!.subtasks![0]!.id,
                 mockTasks[0]!.subtasks![1]!.id,
               ],
@@ -834,7 +834,7 @@ describe("useSessionPlanner", () => {
       it("should not log an error because dropSprint doesn't validate IDs", () => {
         const mockOnError = vi.fn();
         const { result } = renderHook(() =>
-          useSessionPlanner([], { initialSprints: 2, onError: mockOnError }),
+          useSprintBuilder([], { initialSprints: 2, onError: mockOnError }),
         );
 
         // Drop a non-existent sprint ID
@@ -847,7 +847,7 @@ describe("useSessionPlanner", () => {
 
       it("should not update state when using an ID that doesn't match any sprint", () => {
         const { result } = renderHook(() =>
-          useSessionPlanner([], { initialSprints: 2 }),
+          useSprintBuilder([], { initialSprints: 2 }),
         );
 
         expect(result.current.sprints).toHaveLength(2);
@@ -879,7 +879,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([0, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() => result.current.addSprint({}));
@@ -906,7 +906,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([0, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() => result.current.addSprint({}));
@@ -932,7 +932,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([2, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() => result.current.addSprint({}));
@@ -947,7 +947,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId,
-                subtasks: mockTasks[0]!.subtasks!.map((s) => s.id),
+                subtaskIds: mockTasks[0]!.subtasks!.map((s) => s.id),
               },
             ],
           }),
@@ -965,7 +965,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([2, 1]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() => result.current.addSprint({}));
@@ -983,7 +983,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId,
-                subtasks: mockTasks[0]!.subtasks!.map((s) => s.id),
+                subtaskIds: mockTasks[0]!.subtasks!.map((s) => s.id),
               },
             ],
           }),
@@ -1001,7 +1001,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([3, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() => result.current.addSprint({}));
@@ -1022,7 +1022,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId,
-                subtasks: subtasksToAssign,
+                subtaskIds: subtasksToAssign,
               },
             ],
           }),
@@ -1038,7 +1038,7 @@ describe("useSessionPlanner", () => {
       it("should merge its subtasks when sprint has overlapping tasks", () => {
         const mockTasks = createMockTasks([3, 0]);
         const { result } = renderHook(() =>
-          useSessionPlanner(mockTasks, {
+          useSprintBuilder(mockTasks, {
             initialSprints: 1,
           }),
         );
@@ -1051,7 +1051,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId: mockTasks[0]!.id,
-                subtasks: [mockTasks[0]!.subtasks![0]!.id],
+                subtaskIds: [mockTasks[0]!.subtasks![0]!.id],
               },
             ],
           }),
@@ -1068,7 +1068,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId: mockTasks[0]!.id,
-                subtasks: [
+                subtaskIds: [
                   mockTasks[0]!.subtasks![1]!.id,
                   mockTasks[0]!.subtasks![2]!.id,
                 ],
@@ -1096,7 +1096,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([3, 2, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() => result.current.addSprint({}));
@@ -1161,7 +1161,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId: mockTasks[0]!.id,
-                subtasks: [mockTasks[0]!.subtasks![0]!.id],
+                subtaskIds: [mockTasks[0]!.subtasks![0]!.id],
               },
             ],
           }),
@@ -1197,7 +1197,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([2, 1, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() => result.current.addSprint({}));
@@ -1250,7 +1250,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([1, 0]);
 
         const { result } = renderHook(() =>
-          useSessionPlanner(mockTasks, { onError: mockOnError }),
+          useSprintBuilder(mockTasks, { onError: mockOnError }),
         );
 
         const taskId = mockTasks[0]!.id;
@@ -1281,7 +1281,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([1, 0]);
 
         // Initialize hook with tasks and a sprint
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
         act(() => result.current.addSprint({}));
 
         // Capture initial state
@@ -1310,7 +1310,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([1, 0]);
 
         const { result } = renderHook(() =>
-          useSessionPlanner(mockTasks, { onError: mockOnError }),
+          useSprintBuilder(mockTasks, { onError: mockOnError }),
         );
 
         // Add a sprint
@@ -1344,7 +1344,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([1, 0]);
 
         // Initialize hook with tasks and a sprint
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
         act(() => result.current.addSprint({}));
 
         // Capture initial state
@@ -1373,7 +1373,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([2, 0]);
 
         const { result } = renderHook(() =>
-          useSessionPlanner(mockTasks, { onError: mockOnError }),
+          useSprintBuilder(mockTasks, { onError: mockOnError }),
         );
 
         // Add a sprint
@@ -1390,7 +1390,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId,
-                subtasks: [nonExistentSubtaskId],
+                subtaskIds: [nonExistentSubtaskId],
               },
             ],
           }),
@@ -1413,7 +1413,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([2, 0]);
 
         // Initialize hook with tasks and a sprint
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
         act(() => result.current.addSprint({}));
 
         // Capture initial state
@@ -1427,7 +1427,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId: mockTasks[0]!.id,
-                subtasks: ["non-existent-subtask-id"],
+                subtaskIds: ["non-existent-subtask-id"],
               },
             ],
           }),
@@ -1449,7 +1449,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([0, 0, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() => result.current.addSprint({}));
@@ -1486,7 +1486,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([0, 0, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() => result.current.addSprint({}));
@@ -1522,7 +1522,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([2, 3, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() => result.current.addSprint({}));
@@ -1572,7 +1572,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([2, 3, 1]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() => result.current.addSprint({}));
@@ -1614,7 +1614,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([3, 2, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() => result.current.addSprint({}));
@@ -1667,7 +1667,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([3, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() => result.current.addSprint({}));
@@ -1682,7 +1682,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId,
-                subtasks: [mockTasks[0]!.subtasks![0]!.id],
+                subtaskIds: [mockTasks[0]!.subtasks![0]!.id],
               },
             ],
           }),
@@ -1699,7 +1699,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId,
-                subtasks: [
+                subtaskIds: [
                   mockTasks[0]!.subtasks![1]!.id,
                   mockTasks[0]!.subtasks![2]!.id,
                 ],
@@ -1727,7 +1727,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([3, 2, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() => result.current.addSprint({}));
@@ -1792,7 +1792,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId: mockTasks[0]!.id,
-                subtasks: [mockTasks[0]!.subtasks![0]!.id],
+                subtaskIds: [mockTasks[0]!.subtasks![0]!.id],
               },
             ],
           }),
@@ -1828,7 +1828,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([2, 1, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() => result.current.addSprint({}));
@@ -1881,7 +1881,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([1, 0]);
 
         const { result } = renderHook(() =>
-          useSessionPlanner(mockTasks, { onError: mockOnError }),
+          useSprintBuilder(mockTasks, { onError: mockOnError }),
         );
 
         const taskId = mockTasks[0]!.id;
@@ -1912,7 +1912,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([1, 0]);
 
         // Initialize hook with tasks and a sprint
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
         act(() => result.current.addSprint({}));
 
         // Capture initial state
@@ -1941,7 +1941,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([1, 0]);
 
         const { result } = renderHook(() =>
-          useSessionPlanner(mockTasks, { onError: mockOnError }),
+          useSprintBuilder(mockTasks, { onError: mockOnError }),
         );
 
         // Add a sprint
@@ -1975,7 +1975,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([1, 0]);
 
         // Initialize hook with tasks and a sprint
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
         act(() => result.current.addSprint({}));
 
         // Capture initial state
@@ -2004,7 +2004,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([2, 0]);
 
         const { result } = renderHook(() =>
-          useSessionPlanner(mockTasks, { onError: mockOnError }),
+          useSprintBuilder(mockTasks, { onError: mockOnError }),
         );
 
         // Add a sprint
@@ -2021,7 +2021,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId,
-                subtasks: [nonExistentSubtaskId],
+                subtaskIds: [nonExistentSubtaskId],
               },
             ],
           }),
@@ -2044,7 +2044,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([2, 0]);
 
         // Initialize hook with tasks and a sprint
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
         act(() => result.current.addSprint({}));
 
         // Capture initial state
@@ -2058,7 +2058,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId: mockTasks[0]!.id,
-                subtasks: ["non-existent-subtask-id"],
+                subtaskIds: ["non-existent-subtask-id"],
               },
             ],
           }),
@@ -2080,7 +2080,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([0, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint with one task
         act(() =>
@@ -2110,7 +2110,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([0, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() => result.current.addSprint({}));
@@ -2157,7 +2157,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([2, 1]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint with one task and all its subtasks
         act(() =>
@@ -2165,7 +2165,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId: mockTasks[0]!.id,
-                subtasks: mockTasks[0]!.subtasks!.map((s) => s.id),
+                subtaskIds: mockTasks[0]!.subtasks!.map((s) => s.id),
               },
             ],
           }),
@@ -2193,7 +2193,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([2, 1]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint with one task and all its subtasks
         act(() =>
@@ -2201,7 +2201,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId: mockTasks[0]!.id,
-                subtasks: mockTasks[0]!.subtasks!.map((s) => s.id),
+                subtaskIds: mockTasks[0]!.subtasks!.map((s) => s.id),
               },
             ],
           }),
@@ -2237,7 +2237,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([3, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() => result.current.addSprint({}));
@@ -2273,7 +2273,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId: mockTasks[0]!.id,
-                subtasks: [
+                subtaskIds: [
                   mockTasks[0]!.subtasks![0]!.id,
                   mockTasks[0]!.subtasks![1]!.id,
                 ],
@@ -2297,7 +2297,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([3, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() => result.current.addSprint({}));
@@ -2312,7 +2312,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId,
-                subtasks: [mockTasks[0]!.subtasks![0]!.id],
+                subtaskIds: [mockTasks[0]!.subtasks![0]!.id],
               },
             ],
           }),
@@ -2329,7 +2329,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId,
-                subtasks: [
+                subtaskIds: [
                   mockTasks[0]!.subtasks![1]!.id,
                   mockTasks[0]!.subtasks![2]!.id,
                 ],
@@ -2357,7 +2357,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([3, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add a sprint
         act(() =>
@@ -2365,7 +2365,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId: mockTasks[0]!.id,
-                subtasks: mockTasks[0]!.subtasks!.map((s) => s.id),
+                subtaskIds: mockTasks[0]!.subtasks!.map((s) => s.id),
               },
             ],
           }),
@@ -2392,7 +2392,7 @@ describe("useSessionPlanner", () => {
             tasks: [
               {
                 taskId,
-                subtasks: [subtaskToUnassign],
+                subtaskIds: [subtaskToUnassign],
               },
             ],
           }),
@@ -2430,7 +2430,7 @@ describe("useSessionPlanner", () => {
         const mockTasks = createMockTasks([0, 0]);
 
         // Initialize hook with tasks
-        const { result } = renderHook(() => useSessionPlanner(mockTasks));
+        const { result } = renderHook(() => useSprintBuilder(mockTasks));
 
         // Add two sprints
         act(() => result.current.addSprint({}));
@@ -2471,5 +2471,4 @@ describe("useSessionPlanner", () => {
       });
     });
   });
-
 });

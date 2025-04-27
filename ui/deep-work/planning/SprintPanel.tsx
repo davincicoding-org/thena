@@ -227,7 +227,7 @@ export function SprintPanel({
                                       tasks: [
                                         {
                                           taskId: task.id,
-                                          subtasks: [subtask.id],
+                                          subtaskIds: [subtask.id],
                                         },
                                       ],
                                     })
@@ -244,7 +244,7 @@ export function SprintPanel({
                             onClick={() =>
                               onUnassignTask({
                                 taskId: task.id,
-                                subtasks: [subtask.id],
+                                subtaskIds: [subtask.id],
                               })
                             }
                           >

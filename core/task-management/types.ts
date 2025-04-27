@@ -49,20 +49,21 @@ export const taskInputSchema = taskSchema.omit({
 });
 export type TaskInput = z.infer<typeof taskInputSchema>;
 
-export interface SubtaskReference {
-  taskId: string;
-  subtaskId: string;
-}
-
 export interface TaskReference {
-  taskId: string;
-  subtaskId?: string;
+  taskId: Task["id"];
+  subtaskId?: Subtask["id"];
 }
 
-export interface TaskSelection {
-  taskId: string;
-  subtasks?: string[];
+export interface SubtaskReference {
+  taskId: Task["id"];
+  subtaskId: Subtask["id"];
 }
+
+export const taskSelectionSchema = z.object({
+  taskId: z.string(),
+  subtaskIds: z.array(z.string()).optional(),
+});
+export type TaskSelection = z.infer<typeof taskSelectionSchema>;
 
 /**
  * Task inside the backlog

@@ -106,7 +106,7 @@ export default function HomePage() {
             component={Link}
             href="/session"
           >
-            New Session
+            Focus Session
           </Button>
 
           <Flex gap="md">

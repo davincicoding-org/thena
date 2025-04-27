@@ -1,13 +1,15 @@
 import { useReducer } from "react";
-import { nanoid } from "nanoid";
+import { groupBy } from "lodash-es";
 
-import { SprintPlan } from "@/core/deep-work";
+import { MinimalSprintPlan, SprintPlan } from "@/core/deep-work";
 import {
-  excludeTask,
-  mergeTasks,
+  excludeTaskSelection,
+  mergeTaskSelections,
+  resolveTaskSelection,
   Task,
   TaskSelection,
 } from "@/core/task-management";
+import { createUniqueId } from "@/ui/utils";
 
 // MARK: Actions
 
@@ -15,7 +17,7 @@ type SprintPlannerAction =
   | {
       type: "ADD_SPRINT";
       payload: { duration?: number; tasks?: TaskSelection[] };
-      callback?: (sprintId: SprintPlan["id"]) => void;
+      callback?: (sprintId: MinimalSprintPlan["id"]) => void;
     }
   | {
       type: "ADD_SPRINTS";
@@ -25,7 +27,7 @@ type SprintPlannerAction =
       type: "UPDATE_SPRINT";
       payload: {
         sprintId: string;
-        updates: Partial<Pick<SprintPlan, "duration">>;
+        updates: Partial<Pick<MinimalSprintPlan, "duration">>;
       };
     }
   | { type: "REORDER_SPRINTS"; payload: { sprintIds: string[] } }
@@ -55,7 +57,7 @@ type SprintPlannerAction =
       type: "REORDER_SPRINT_TASKS";
       payload: { sprintId: string; taskIds: string[] };
     }
-  | { type: "SET_SPRINTS"; payload: { sprints: SprintPlan[] } };
+  | { type: "SET_SPRINTS"; payload: { sprints: MinimalSprintPlan[] } };
 
 // MARK: Errors
 
@@ -75,6 +77,7 @@ export type SprintsReducerErrorCode =
 // MARK: Hook
 
 export interface SprintsReducerHookOptions {
+  // TODO Maybe these should be the unassigned tasks
   taskPool: Task[];
   sprintDuration: number;
   onError?: (error: SprintsReducerError) => void;
@@ -82,324 +85,311 @@ export interface SprintsReducerHookOptions {
 
 export function useSprintsReducer(
   { taskPool, sprintDuration, onError }: SprintsReducerHookOptions,
-  initialSprints: SprintPlan[] = [],
+  initialSprints: MinimalSprintPlan[] = [],
 ) {
-  return useReducer<SprintPlan[], [SprintPlannerAction]>((state, action) => {
-    // Helper for resolving tasks
-    const resolveTask = (taskSelection: TaskSelection): Task | null => {
-      const fullTask = taskPool.find((t) => t.id === taskSelection.taskId);
-      if (!fullTask) return null;
+  return useReducer<MinimalSprintPlan[], [SprintPlannerAction]>(
+    (state, action) => {
+      // Helper for error handling
+      const handleError = (code: SprintsReducerErrorCode) => {
+        onError?.({
+          code,
+          action,
+        });
+        return false; // Return false to indicate an error occurred
+      };
 
-      // If there are no subtask selections, return the full task
-      if (!taskSelection.subtasks?.length) return fullTask;
+      // Check if sprint exists
+      const sprintExists = (
+        sprintId: string,
+        sprints: MinimalSprintPlan[],
+      ): boolean => sprints.some((sprint) => sprint.id === sprintId);
 
-      // If there are subtask selections, filter the subtasks
-      if (fullTask.subtasks?.length)
-        return {
-          ...fullTask,
-          subtasks: fullTask.subtasks.filter((subtask) =>
-            taskSelection.subtasks?.includes(subtask.id),
-          ),
-        };
+      switch (action.type) {
+        case "ADD_SPRINT": {
+          const { duration = sprintDuration, tasks = [] } = action.payload;
 
-      // If the task doesn't have subtasks but we have subtask selections
-      // (shouldn't happen), return the full task
-      return fullTask;
-    };
+          const newSprintId = createUniqueId(state, 4);
+          action.callback?.(newSprintId);
 
-    // Helper for error handling
-    const handleError = (
-      code: SprintsReducerErrorCode,
-      actionName: string,
-      details?: Record<string, unknown>,
-    ) => {
-      onError?.({
-        code,
-        action: actionName as any,
-      });
-      return false; // Return false to indicate an error occurred
-    };
-
-    // Check if sprint exists
-    const sprintExists = (sprintId: string, sprints: SprintPlan[]): boolean =>
-      sprints.some((sprint) => sprint.id === sprintId);
-
-    switch (action.type) {
-      case "ADD_SPRINT": {
-        const { duration = sprintDuration, tasks = [] } = action.payload;
-
-        const newSprintId = nanoid();
-        action.callback?.(newSprintId);
-        return [
-          ...state,
-          {
-            id: newSprintId,
-            duration,
-            tasks: tasks.reduce<Task[]>((acc, task) => {
-              const resolvedTask = resolveTask(task);
-              if (!resolvedTask) return acc;
-              return [...acc, resolvedTask];
-            }, []),
-          },
-        ];
-      }
-
-      case "ADD_SPRINTS": {
-        const { sprints: sprintsToAdd } = action.payload;
-
-        return [
-          ...state,
-          ...sprintsToAdd.map(({ duration = sprintDuration, tasks = [] }) => ({
-            id: nanoid(),
-            duration,
-            tasks: tasks.reduce<Task[]>((acc, task) => {
-              const resolvedTask = resolveTask(task);
-              if (!resolvedTask) return acc;
-              return [...acc, resolvedTask];
-            }, []),
-          })),
-        ];
-      }
-
-      case "UPDATE_SPRINT": {
-        const { sprintId, updates } = action.payload;
-
-        if (!sprintExists(sprintId, state)) {
-          handleError("SPRINT_NOT_FOUND", "updateSprint", { sprintId });
-          return state;
+          return [
+            ...state,
+            {
+              id: newSprintId,
+              duration,
+              tasks: tasks.reduce<TaskSelection[]>((acc, task) => {
+                const resolvedSelection = resolveTaskSelection(task, taskPool);
+                if (!resolvedSelection) return acc;
+                return mergeTaskSelections([...acc, resolvedSelection]);
+              }, []),
+            },
+          ];
         }
 
-        return state.map((sprint) => {
-          if (sprint.id !== sprintId) return sprint;
-          return { ...sprint, ...updates };
-        });
-      }
+        case "ADD_SPRINTS": {
+          const { sprints: sprintsToAdd } = action.payload;
 
-      case "REORDER_SPRINTS": {
-        const { sprintIds } = action.payload;
+          return sprintsToAdd.reduce<MinimalSprintPlan[]>((acc, sprint) => {
+            return [
+              ...acc,
+              {
+                id: createUniqueId(acc, 4),
+                duration: sprint.duration || sprintDuration,
+                tasks: (sprint.tasks || []).reduce<TaskSelection[]>(
+                  (acc, task) => {
+                    const resolvedSelection = resolveTaskSelection(
+                      task,
+                      taskPool,
+                    );
+                    if (!resolvedSelection) return acc;
+                    return mergeTaskSelections([...acc, resolvedSelection]);
+                  },
+                  [],
+                ),
+              },
+            ];
+          }, state);
+        }
 
-        // Verify all sprint IDs exist
-        const invalidSprintIds = sprintIds.filter(
-          (id) => !sprintExists(id, state),
-        );
+        case "UPDATE_SPRINT": {
+          const { sprintId, updates } = action.payload;
 
-        if (invalidSprintIds.length) {
-          invalidSprintIds.forEach((id) =>
-            handleError("SPRINT_NOT_FOUND", "reorderSprints", {
-              sprintId: id,
-            }),
+          if (!sprintExists(sprintId, state)) {
+            handleError("SPRINT_NOT_FOUND");
+            return state;
+          }
+
+          return state.map((sprint) => {
+            if (sprint.id !== sprintId) return sprint;
+            return { ...sprint, ...updates };
+          });
+        }
+
+        case "REORDER_SPRINTS": {
+          const { sprintIds } = action.payload;
+
+          // Verify all sprint IDs exist
+          const invalidSprintIds = sprintIds.filter(
+            (id) => !sprintExists(id, state),
           );
-          return state;
-        }
 
-        // Verify all sprints are included in the update
-        const missingSprintIds = state.reduce<SprintPlan["id"][]>(
-          (acc, sprint) => {
-            if (sprintIds.includes(sprint.id)) return acc;
-            return [...acc, sprint.id];
-          },
-          [],
-        );
+          if (invalidSprintIds.length) {
+            invalidSprintIds.forEach((id) => handleError("SPRINT_NOT_FOUND"));
+            return state;
+          }
 
-        // If we're not rearranging all sprints, do nothing
-        if (missingSprintIds.length) {
-          missingSprintIds.forEach((id) =>
-            handleError("SPRINT_NOT_PROVIDED", "reorderSprints", {
-              sprintId: id,
-            }),
+          // Verify all sprints are included in the update
+          const missingSprintIds = state.reduce<SprintPlan["id"][]>(
+            (acc, sprint) => {
+              if (sprintIds.includes(sprint.id)) return acc;
+              return [...acc, sprint.id];
+            },
+            [],
           );
-          return state;
+
+          // If we're not rearranging all sprints, do nothing
+          if (missingSprintIds.length) {
+            missingSprintIds.forEach((id) =>
+              handleError("SPRINT_NOT_PROVIDED"),
+            );
+            return state;
+          }
+
+          return [...state].sort((a, b) => {
+            const aIndex = sprintIds.indexOf(a.id);
+            const bIndex = sprintIds.indexOf(b.id);
+            return aIndex - bIndex;
+          });
         }
 
-        return [...state].sort((a, b) => {
-          const aIndex = sprintIds.indexOf(a.id);
-          const bIndex = sprintIds.indexOf(b.id);
-          return aIndex - bIndex;
-        });
-      }
-
-      case "DROP_SPRINT": {
-        const { sprintId } = action.payload;
-        return state.filter((sprint) => sprint.id !== sprintId);
-      }
-
-      case "ASSIGN_TASK": {
-        const { sprintId, task } = action.payload;
-
-        if (!sprintExists(sprintId, state)) {
-          handleError("SPRINT_NOT_FOUND", "assignTask", { sprintId });
-          return state;
+        case "DROP_SPRINT": {
+          const { sprintId } = action.payload;
+          return state.filter((sprint) => sprint.id !== sprintId);
         }
 
-        const resolvedTask = resolveTask(task);
-        if (!resolvedTask) return state;
+        case "ASSIGN_TASK": {
+          const { sprintId, task } = action.payload;
 
-        return state.map((sprint) => {
-          if (sprint.id !== sprintId) return sprint;
+          if (!sprintExists(sprintId, state)) {
+            handleError("SPRINT_NOT_FOUND");
+            return state;
+          }
 
-          return {
-            ...sprint,
-            tasks: mergeTasks([...sprint.tasks, resolvedTask]),
-          };
-        });
-      }
+          const resolvedSelection = resolveTaskSelection(task, taskPool);
+          if (!resolvedSelection) return state;
 
-      case "ASSIGN_TASKS": {
-        const { sprintId, tasks } = action.payload;
+          return state.map((sprint) => {
+            if (sprint.id !== sprintId) return sprint;
 
-        if (!sprintExists(sprintId, state)) {
-          handleError("SPRINT_NOT_FOUND", "assignTasks", { sprintId });
-          return state;
-        }
-
-        const resolvedTasks = tasks.reduce<Task[]>((acc, task) => {
-          const resolvedTask = resolveTask(task);
-          if (!resolvedTask) return acc;
-          return [...acc, resolvedTask];
-        }, []);
-
-        return state.map((sprint) => {
-          if (sprint.id !== sprintId) return sprint;
-
-          return {
-            ...sprint,
-            tasks: mergeTasks([...sprint.tasks, ...resolvedTasks]),
-          };
-        });
-      }
-
-      case "UNASSIGN_TASK": {
-        const { sprintId, task } = action.payload;
-
-        if (!sprintExists(sprintId, state)) {
-          handleError("SPRINT_NOT_FOUND", "unassignTask", { sprintId });
-          return state;
-        }
-
-        return state.map((sprint) => {
-          if (sprint.id !== sprintId) return sprint;
-
-          return {
-            ...sprint,
-            tasks: excludeTask([...sprint.tasks], task),
-          };
-        });
-      }
-
-      case "UNASSIGN_TASKS": {
-        const { sprintId, tasks } = action.payload;
-
-        if (!sprintExists(sprintId, state)) {
-          handleError("SPRINT_NOT_FOUND", "unassignTasks", { sprintId });
-          return state;
-        }
-
-        return state.map((sprint) => {
-          if (sprint.id !== sprintId) return sprint;
-
-          return {
-            ...sprint,
-            tasks: tasks.reduce<Task[]>(
-              (acc, task) => excludeTask([...acc], task),
-              sprint.tasks,
-            ),
-          };
-        });
-      }
-
-      case "MOVE_TASKS": {
-        const { fromSprintId, toSprintId, tasks } = action.payload;
-
-        if (!sprintExists(fromSprintId, state)) {
-          handleError("SPRINT_NOT_FOUND", "moveTasks", { fromSprintId });
-          return state;
-        }
-
-        if (!sprintExists(toSprintId, state)) {
-          handleError("SPRINT_NOT_FOUND", "moveTasks", { toSprintId });
-          return state;
-        }
-
-        const resolvedTasks = tasks.reduce<Task[]>((acc, task) => {
-          const resolvedTask = resolveTask(task);
-          if (!resolvedTask) return acc;
-          return [...acc, resolvedTask];
-        }, []);
-
-        return state.map((sprint) => {
-          // Remove tasks from source sprint
-          if (sprint.id === fromSprintId)
             return {
               ...sprint,
-              tasks: tasks.reduce<Task[]>(
-                (acc, task) => excludeTask([...acc], task),
+              tasks: mergeTaskSelections([...sprint.tasks, resolvedSelection]),
+            };
+          });
+        }
+
+        case "ASSIGN_TASKS": {
+          const { sprintId, tasks } = action.payload;
+
+          if (!sprintExists(sprintId, state)) {
+            handleError("SPRINT_NOT_FOUND");
+            return state;
+          }
+
+          const resolvedSelections = tasks.reduce<TaskSelection[]>(
+            (acc, task) => {
+              const resolvedSelection = resolveTaskSelection(task, taskPool);
+              if (!resolvedSelection) return acc;
+              return [...acc, resolvedSelection];
+            },
+            [],
+          );
+
+          return state.map((sprint) => {
+            if (sprint.id !== sprintId) return sprint;
+
+            return {
+              ...sprint,
+              tasks: mergeTaskSelections([
+                ...sprint.tasks,
+                ...resolvedSelections,
+              ]),
+            };
+          });
+        }
+
+        case "UNASSIGN_TASK": {
+          const { sprintId, task } = action.payload;
+
+          if (!sprintExists(sprintId, state)) {
+            handleError("SPRINT_NOT_FOUND");
+            return state;
+          }
+
+          return state.map((sprint) => {
+            if (sprint.id !== sprintId) return sprint;
+
+            return {
+              ...sprint,
+              tasks: excludeTaskSelection([...sprint.tasks], task),
+            };
+          });
+        }
+
+        case "UNASSIGN_TASKS": {
+          const { sprintId, tasks } = action.payload;
+
+          if (!sprintExists(sprintId, state)) {
+            handleError("SPRINT_NOT_FOUND");
+            return state;
+          }
+
+          return state.map((sprint) => {
+            if (sprint.id !== sprintId) return sprint;
+
+            return {
+              ...sprint,
+              tasks: tasks.reduce<TaskSelection[]>(
+                (acc, task) => excludeTaskSelection([...acc], task),
                 sprint.tasks,
               ),
             };
+          });
+        }
 
-          // Add tasks to destination sprint
-          if (sprint.id === toSprintId)
+        case "MOVE_TASKS": {
+          const { fromSprintId, toSprintId, tasks } = action.payload;
+
+          if (!sprintExists(fromSprintId, state)) {
+            handleError("SPRINT_NOT_FOUND");
+            return state;
+          }
+
+          if (!sprintExists(toSprintId, state)) {
+            handleError("SPRINT_NOT_FOUND");
+            return state;
+          }
+
+          const resolvedTaskSelections = tasks.reduce<TaskSelection[]>(
+            (acc, task) => {
+              const resolvedTask = resolveTaskSelection(task, taskPool);
+              if (!resolvedTask) return acc;
+              return mergeTaskSelections([...acc, resolvedTask]);
+            },
+            [],
+          );
+
+          return state.map((sprint) => {
+            // Remove tasks from source sprint
+            if (sprint.id === fromSprintId)
+              return {
+                ...sprint,
+                tasks: tasks.reduce<TaskSelection[]>(
+                  (acc, task) => excludeTaskSelection([...acc], task),
+                  sprint.tasks,
+                ),
+              };
+
+            // Add tasks to destination sprint
+            if (sprint.id === toSprintId)
+              return {
+                ...sprint,
+                tasks: mergeTaskSelections([
+                  ...sprint.tasks,
+                  ...resolvedTaskSelections,
+                ]),
+              };
+
+            // Leave other sprints unchanged
+            return sprint;
+          });
+        }
+
+        case "REORDER_SPRINT_TASKS": {
+          const { sprintId, taskIds } = action.payload;
+
+          if (!taskIds.length) return state;
+
+          const sprintToAdjust = state.find((sprint) => sprint.id === sprintId);
+          if (!sprintToAdjust) {
+            handleError("SPRINT_NOT_FOUND");
+            return state;
+          }
+
+          const missingTaskIds = sprintToAdjust.tasks.reduce<Task["id"][]>(
+            (acc, { taskId }) => {
+              if (taskIds.includes(taskId)) return acc;
+              return [...acc, taskId];
+            },
+            [],
+          );
+
+          if (missingTaskIds.length > 0) {
+            missingTaskIds.forEach((id) => handleError("TASK_NOT_PROVIDED"));
+            return state;
+          }
+
+          return state.map((sprint) => {
+            if (sprint.id !== sprintId) return sprint;
+
             return {
               ...sprint,
-              tasks: mergeTasks([...sprint.tasks, ...resolvedTasks]),
+              tasks: [...sprint.tasks].sort((a, b) => {
+                const aIndex = taskIds.indexOf(a.taskId);
+                const bIndex = taskIds.indexOf(b.taskId);
+                return aIndex - bIndex;
+              }),
             };
-
-          // Leave other sprints unchanged
-          return sprint;
-        });
-      }
-
-      case "REORDER_SPRINT_TASKS": {
-        const { sprintId, taskIds } = action.payload;
-
-        if (!taskIds.length) return state;
-
-        const sprintToAdjust = state.find((sprint) => sprint.id === sprintId);
-        if (!sprintToAdjust) {
-          handleError("SPRINT_NOT_FOUND", "reorderSprintTasks", {
-            sprintId,
           });
-          return state;
         }
 
-        const missingTaskIds = sprintToAdjust.tasks.reduce<Task["id"][]>(
-          (acc, task) => {
-            if (taskIds.includes(task.id)) return acc;
-            return [...acc, task.id];
-          },
-          [],
-        );
-
-        if (missingTaskIds.length > 0) {
-          missingTaskIds.forEach((id) =>
-            handleError("TASK_NOT_PROVIDED", "reorderSprintTasks", {
-              sprintId,
-              taskId: id,
-            }),
-          );
-          return state;
+        case "SET_SPRINTS": {
+          return action.payload.sprints;
         }
 
-        return state.map((sprint) => {
-          if (sprint.id !== sprintId) return sprint;
-
-          return {
-            ...sprint,
-            tasks: [...sprint.tasks].sort((a, b) => {
-              const aIndex = taskIds.indexOf(a.id);
-              const bIndex = taskIds.indexOf(b.id);
-              return aIndex - bIndex;
-            }),
-          };
-        });
+        default:
+          return state;
       }
-
-      case "SET_SPRINTS": {
-        return action.payload.sprints;
-      }
-
-      default:
-        return state;
-    }
-  }, initialSprints);
+    },
+    initialSprints,
+  );
 }

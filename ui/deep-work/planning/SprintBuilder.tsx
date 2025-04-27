@@ -19,7 +19,7 @@ import { cn } from "@/ui/utils";
 import { SprintPanel } from "./SprintPanel";
 import { TaskPool } from "./TaskPool";
 
-export interface SessionPlannerProps {
+export interface SprintBuilderProps {
   sprints: SprintPlan[];
   unassignedTasks: Task[];
   onAddSprint: (callback?: (sprintId: SprintPlan["id"]) => void) => void;
@@ -43,7 +43,7 @@ export interface SessionPlannerProps {
   }) => void;
 }
 
-export function SessionPlanner({
+export function SprintBuilder({
   sprints,
   unassignedTasks,
   onAddSprint,
@@ -54,7 +54,7 @@ export function SessionPlanner({
   onMoveTasks,
   className,
   ...paperProps
-}: SessionPlannerProps & PaperProps) {
+}: SprintBuilderProps & PaperProps) {
   const [isShowingUnassignedTasks, unassignedTasksPanel] = useDisclosure(false);
   const [sprintToAddTaskTo, setSprintToAddTaskTo] =
     useState<SprintPlan["id"]>();

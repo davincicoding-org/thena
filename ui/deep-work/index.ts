@@ -1,5 +1,5 @@
-export * from "./planning/SessionPlanner";
-export * from "./planning/useSprintPlanner";
+export * from "./planning/SprintBuilder";
+export * from "./planning/useSprintBuilder";
 
 export * from "./execution/useSprint";
 export * from "./execution/SprintWidget";

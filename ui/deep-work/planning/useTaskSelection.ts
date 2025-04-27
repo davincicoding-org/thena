@@ -1,7 +1,9 @@
 import { useCallback, useState } from "react";
 
 import {
+  excludeTaskSelection,
   hasSubtasks,
+  mergeTaskSelections,
   SubtaskReference,
   Task,
   TaskSelection,
@@ -57,7 +59,7 @@ export function useTaskSelection(): TaskSelectionHookRetrun {
 
             return {
               ...selectedTask,
-              subtasks: hasSubtasks(task)
+              subtaskIds: hasSubtasks(task)
                 ? task.subtasks.map(({ id }) => id)
                 : undefined,
             };
@@ -75,7 +77,7 @@ export function useTaskSelection(): TaskSelectionHookRetrun {
           ...prev,
           {
             taskId: task.id,
-            subtasks: task.subtasks.map(({ id }) => id),
+            subtaskIds: task.subtasks.map(({ id }) => id),
           },
         ];
       }),
@@ -92,56 +94,19 @@ export function useTaskSelection(): TaskSelectionHookRetrun {
         );
 
         if (isSelected) {
-          return prev.reduce<TaskSelection[]>((acc, selectedTask) => {
-            if (selectedTask.taskId !== taskReference.taskId)
-              return [...acc, selectedTask];
-
-            if (!hasSubtasks(selectedTask)) return [...acc, selectedTask];
-
-            if (
-              selectedTask.subtasks.every(
-                (selectedSubtask) =>
-                  selectedSubtask === taskReference.subtaskId,
-              )
-            )
-              return acc;
-
-            return [
-              ...acc,
-              {
-                taskId: selectedTask.taskId,
-                subtasks: selectedTask.subtasks.filter(
-                  (subtask) => subtask !== taskReference.subtaskId,
-                ),
-              },
-            ];
-          }, []);
+          return excludeTaskSelection(prev, {
+            taskId: taskReference.taskId,
+            subtaskIds: [taskReference.subtaskId],
+          });
         }
 
-        const isParentIncluded = prev.some(
-          (selectedTask) => selectedTask.taskId === taskReference.taskId,
-        );
-
-        if (isParentIncluded)
-          return prev.map((selectedTask) => {
-            if (selectedTask.taskId !== taskReference.taskId)
-              return selectedTask;
-            return {
-              ...selectedTask,
-              subtasks: [
-                ...(selectedTask.subtasks || []),
-                taskReference.subtaskId,
-              ],
-            };
-          });
-
-        return [
+        return mergeTaskSelections([
           ...prev,
           {
             taskId: taskReference.taskId,
-            subtasks: [taskReference.subtaskId],
+            subtaskIds: [taskReference.subtaskId],
           },
-        ];
+        ]);
       }),
     [],
   );
@@ -172,10 +137,9 @@ const isTaskFullyIncluded = (
 ): boolean => {
   if (!isTaskPartiallyIncluded(task, selectedTask)) return false;
   if (!hasSubtasks(task)) return true;
-  if (!hasSubtasks(selectedTask)) return false;
 
   return task.subtasks.every((subtask) =>
-    selectedTask.subtasks.includes(subtask.id),
+    selectedTask.subtaskIds?.includes(subtask.id),
   );
 };
 
@@ -184,6 +148,6 @@ const isSubtaskIncluded = (
   selectedTask: TaskSelection,
 ): boolean => {
   if (selectedTask.taskId !== taskId) return false;
-  if (!hasSubtasks(selectedTask)) return false;
-  return selectedTask.subtasks.includes(subtaskId);
+  if (!selectedTask.subtaskIds?.length) return false;
+  return selectedTask.subtaskIds.includes(subtaskId);
 };

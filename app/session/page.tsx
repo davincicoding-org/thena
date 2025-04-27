@@ -1,16 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AppShell,
   Box,
   Button,
   Flex,
+  Group,
   HoverCard,
   LoadingOverlay,
-  Menu,
   Modal,
   SimpleGrid,
   Space,
@@ -26,14 +25,14 @@ import { notifications } from "@mantine/notifications";
 import { IconChevronRight, IconTransfer } from "@tabler/icons-react";
 import { z } from "zod";
 
-import { sprintPlanSchema } from "@/core/deep-work";
+import { minimalSprintPlanSchema } from "@/core/deep-work";
 import { BacklogTask, taskSchema } from "@/core/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
 import {
   FocusSession,
-  SessionPlanner,
+  SprintBuilder,
   useFocusSession,
-  useSessionPlanner,
+  useSprintBuilder,
 } from "@/ui/deep-work";
 import { useLocalStorageSync } from "@/ui/hooks/useLocalStorageSync";
 import {
@@ -52,29 +51,29 @@ export default function SessionPage() {
 
   // MARK: State
 
-  const [stage, setStage] = useState<"task-collector" | "session-planner">();
+  const [stage, setStage] = useState<"task-collector" | "sprint-builder">();
 
   const taskList = useTaskList();
 
-  const sessionPlanner = useSessionPlanner(taskList.tasks);
+  const sprintBuilder = useSprintBuilder(taskList.tasks);
 
   const localStorageSync = useLocalStorageSync({
     key: "session-page",
     state: {
       tasks: taskList.tasks,
-      sprints: sessionPlanner.sprints,
+      sprints: sprintBuilder.minimalSprints,
     },
     schema: z.object({
       tasks: taskSchema.array(),
-      sprints: sprintPlanSchema.array(),
+      sprints: minimalSprintPlanSchema.array(),
     }),
     read: (storedState) => {
       if (storedState === null) return setStage("task-collector");
       taskList.setTasks(storedState.tasks);
-      sessionPlanner.setSprints(storedState.sprints);
-      if (storedState.sprints.length > 0) return setStage("session-planner");
-
-      return setStage("task-collector");
+      sprintBuilder.setSprints(storedState.sprints);
+      if (storedState.tasks.length === 0) return setStage("task-collector");
+      if (storedState.sprints.length === 0) return setStage("task-collector");
+      return setStage("sprint-builder");
     },
   });
 
@@ -106,15 +105,23 @@ export default function SessionPage() {
 
   // MARK: User Actions
 
-  const handleCompleteTaskCollection = () => {
-    if (sessionPlanner.sprints.length === 0)
-      sessionPlanner.addSprints([{}, {}]);
-    setStage("session-planner");
+  const handleShowTaskCollector = () => {
+    setStage("task-collector");
+    taskList.history.reset();
+  };
+
+  const handleShowSprintBuilder = () => {
+    if (sprintBuilder.sprints.length === 0) sprintBuilder.addSprints([{}, {}]);
+    setStage("sprint-builder");
     taskList.history.reset();
   };
 
   const handleStartSession = () => {
-    focusSession.initialize({ sprints: sessionPlanner.sprints });
+    const validSprints = sprintBuilder.sprints.filter(
+      (sprint) => sprint.tasks.length > 0,
+    );
+    if (validSprints.length === 0) return;
+    focusSession.initialize({ sprints: validSprints });
     sessionModal.open();
   };
 
@@ -129,13 +136,9 @@ export default function SessionPage() {
   ] = useDisclosure(false);
 
   const handleReset = () => {
+    if (taskList.tasks.length > 0) return openDeleteModal();
     localStorageSync.clear();
     taskList.history.reset();
-  };
-
-  const handleDelete = () => {
-    if (taskList.tasks.length > 0) return openDeleteModal();
-    handleReset();
     router.push("/");
   };
 
@@ -146,8 +149,16 @@ export default function SessionPage() {
         visible={!localStorageSync.initialized}
       />
       <AppShell.Main display="flex" className="h-dvh flex-col">
-        <Tabs value={stage} m="auto" className="min-h-0 w-full grow-0" px="lg">
-          <Tabs.Panel value="task-collector" className="h-full" py="xl">
+        <Tabs
+          value={stage}
+          // m="auto"
+          className="flex! h-full min-h-0 grow-0 flex-col!"
+          classNames={{
+            panel: "my-auto min-h-0",
+            tabLabel: "text-5xl font-thin",
+          }}
+        >
+          <Tabs.Panel value="task-collector" py="xl">
             <TaskCollector
               className="mx-auto max-h-full"
               items={taskList.tasks}
@@ -166,67 +177,86 @@ export default function SessionPage() {
               onRequestToPullFromBacklog={backlogPanel.open}
             />
           </Tabs.Panel>
-          <Tabs.Panel value="session-planner" px="lg">
-            <SessionPlanner
+          <Tabs.Panel value="sprint-builder" px="lg">
+            <SprintBuilder
               className="mx-auto max-h-[70dvh] min-h-[400px] w-fit"
-              sprints={sessionPlanner.sprints}
-              unassignedTasks={sessionPlanner.unassignedTasks}
-              onAddSprint={(callback) => sessionPlanner.addSprint({}, callback)}
-              onDropSprint={sessionPlanner.dropSprint}
-              onSprintChange={sessionPlanner.updateSprint}
-              onAssignTasksToSprint={sessionPlanner.assignTasks}
-              onUnassignTasksFromSprint={sessionPlanner.unassignTasks}
-              onMoveTasks={sessionPlanner.moveTasks}
+              sprints={sprintBuilder.sprints}
+              unassignedTasks={sprintBuilder.unassignedTasks}
+              onAddSprint={(callback) => sprintBuilder.addSprint({}, callback)}
+              onDropSprint={sprintBuilder.dropSprint}
+              onSprintChange={sprintBuilder.updateSprint}
+              onAssignTasksToSprint={sprintBuilder.assignTasks}
+              onUnassignTasksFromSprint={sprintBuilder.unassignTasks}
+              onMoveTasks={sprintBuilder.moveTasks}
             />
           </Tabs.Panel>
-        </Tabs>
 
-        <Flex
-          p="lg"
-          justify="space-between"
-          align="end"
-          className={cn("transition-transform duration-500", {
-            "translate-y-full": stage === undefined,
-          })}
-        >
-          <Menu position="top-start">
-            <Menu.Target>
-              <Button variant="outline" color="gray">
-                Cancel
-              </Button>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item component={Link} href="/">
-                Save Session
-              </Menu.Item>
-              <Menu.Divider />
-              <Menu.Item color="red" onClick={handleDelete}>
-                Delete Session
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-
-          {stage === "task-collector" && (
+          <Box
+            p="lg"
+            className={cn(
+              "grid grid-cols-[1fr_auto_1fr] items-center transition-transform duration-500",
+              {
+                "translate-y-full": stage === undefined,
+              },
+            )}
+          >
             <Button
+              mr="auto"
               size="md"
-              disabled={taskList.tasks.length === 0}
-              rightSection={<IconChevronRight />}
-              onClick={handleCompleteTaskCollection}
+              variant="subtle"
+              color="gray"
+              onClick={handleReset}
             >
-              Plan Session
+              Reset
             </Button>
-          )}
-          {stage === "session-planner" && (
+
+            <Group>
+              <Button
+                size="md"
+                variant="light"
+                color={stage === "task-collector" ? "primary" : "gray"}
+                onClick={handleShowTaskCollector}
+              >
+                Collect Tasks
+              </Button>
+              <HoverCard disabled={taskList.tasks.length > 0} position="top">
+                <HoverCard.Target>
+                  <Box>
+                    <Button
+                      size="md"
+                      disabled={taskList.tasks.length === 0}
+                      variant="light"
+                      color={stage === "sprint-builder" ? "primary" : "gray"}
+                      onClick={handleShowSprintBuilder}
+                    >
+                      Define Sprints
+                    </Button>
+                  </Box>
+                </HoverCard.Target>
+                <HoverCard.Dropdown maw={250}>
+                  <Text className="text-pretty">
+                    Before you can define sprints, you need to collect some
+                    tasks.
+                  </Text>
+                </HoverCard.Dropdown>
+              </HoverCard>
+            </Group>
+
             <HoverCard
-              disabled={sessionPlanner.unassignedTasks.length === 0}
+              disabled={sprintBuilder.unassignedTasks.length === 0}
               position="top-end"
             >
               <HoverCard.Target>
-                <Box pos="absolute" right={24} bottom={24}>
+                <Box ml="auto">
                   <Button
                     size="md"
                     rightSection={<IconChevronRight />}
-                    disabled={sessionPlanner.unassignedTasks.length > 0}
+                    disabled={
+                      sprintBuilder.unassignedTasks.length > 0 ||
+                      sprintBuilder.sprints.filter(
+                        (sprint) => sprint.tasks.length === 0,
+                      ).length > 0
+                    }
                     onClick={handleStartSession}
                   >
                     Start Session
@@ -240,8 +270,8 @@ export default function SessionPage() {
                 </Text>
               </HoverCard.Dropdown>
             </HoverCard>
-          )}
-        </Flex>
+          </Box>
+        </Tabs>
       </AppShell.Main>
 
       <Modal.Root

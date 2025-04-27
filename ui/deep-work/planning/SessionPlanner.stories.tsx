@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { SessionPlanner } from "./SessionPlanner";
-import { useSessionPlanner } from "./useSprintPlanner";
+import { SprintBuilder } from "./SprintBuilder";
+import { useSprintBuilder } from "./useSprintBuilder";
 
 const Playground = () => {
   const {
@@ -13,7 +13,7 @@ const Playground = () => {
     moveTasks,
     addSprint,
     dropSprint,
-  } = useSessionPlanner(
+  } = useSprintBuilder(
     [
       {
         id: "app",
@@ -107,7 +107,7 @@ const Playground = () => {
     },
   );
   return (
-    <SessionPlanner
+    <SprintBuilder
       mah="70dvh"
       sprints={sprints}
       unassignedTasks={unassignedTasks}
