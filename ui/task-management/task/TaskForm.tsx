@@ -47,11 +47,13 @@ import {
   ProjectAvatar,
   TagBadge,
 } from "@/ui/task-management";
-import { cn } from "@/ui/utils";
+import { cn, createUniqueId } from "@/ui/utils";
 
 import { taskFormOpts, withTaskForm } from "./useTaskForm";
 
 type TaskActionsComponent = FunctionComponent<{ defaultActions: ReactNode }>;
+
+// MARK: Component
 
 export type TaskFormProps = {
   containerProps?: PaperProps & HTMLAttributes<HTMLDivElement>;
@@ -196,9 +198,7 @@ export const TaskForm = withTaskForm({
           children={(subtasksField) => {
             const handleAddSubtask = (values: Omit<Subtask, "id">) => {
               subtasksField.pushValue({
-                id: generateSubtaskId(
-                  subtasksField.state.value?.map((subtask) => subtask.id),
-                ),
+                id: createUniqueId(subtasksField.state.value || [], 4),
                 ...values,
               });
             };
@@ -233,7 +233,7 @@ export const TaskForm = withTaskForm({
   },
 });
 
-// ------- Subcomponents -------
+// MARK: Header
 
 type TaskHeaderProps = Pick<TaskFormProps, "readOnly"> & {
   resolveProject: (projectId: Project["id"]) => Project | undefined;
@@ -370,6 +370,8 @@ const TaskHeader = withTaskForm({
   },
 });
 
+// MARK: Subtask
+
 type SubtaskFormProps = Pick<TaskFormProps, "readOnly" | "onAttachNewTag"> & {
   index: number;
   tags: Tag[];
@@ -396,7 +398,7 @@ const SubtaskForm = withTaskForm({
                 flex={1}
                 classNames={{
                   input: cn(
-                    "h-7! min-h-0! truncate bg-transparent! px-1.5! not-focus:border-transparent! read-only:border-transparent!",
+                    "h-8! min-h-0! truncate bg-transparent! px-1.5! not-focus:border-transparent! read-only:border-transparent!",
                   ),
                 }}
                 value={subField.state.value || ""}
@@ -562,6 +564,8 @@ const SubtaskForm = withTaskForm({
     );
   },
 });
+
+// MARK: Metadata Fields
 
 function ProjectAssigner({
   value,
@@ -914,13 +918,3 @@ function ComplexityMenu({
     </Menu>
   );
 }
-
-// ------- Utilities -------
-
-export const generateSubtaskId = (
-  existingIds: string[] = [],
-): Subtask["id"] => {
-  const id = nanoid(4);
-  if (existingIds.includes(id)) return generateSubtaskId(existingIds);
-  return id;
-};

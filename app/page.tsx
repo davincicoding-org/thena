@@ -75,7 +75,7 @@ export default function HomePage() {
   return (
     <AppShell.Main display="grid">
       <Center>
-        <Stack gap="lg" maw={400}>
+        <Stack gap="lg" maw={400} p="lg">
           <Card
             p={0}
             radius="md"

@@ -130,10 +130,10 @@ export default function SessionPage() {
         visible={!localStorageSync.initialized}
       />
       <AppShell.Main display="flex" className="h-dvh flex-col">
-        <Tabs value={stage} m="auto" className="min-h-0 w-full grow-0">
+        <Tabs value={stage} m="auto" className="min-h-0 w-full grow-0" px="lg">
           <Tabs.Panel value="task-collector" className="h-full" py="xl">
             <TaskCollector
-              className="mx-auto max-h-full w-fit"
+              className="mx-auto max-h-full"
               items={taskList.tasks}
               onUpdateTask={updateTask}
               onRemoveTask={taskList.removeTask}
@@ -169,6 +169,7 @@ export default function SessionPage() {
         <Flex
           p="lg"
           justify="space-between"
+          align="end"
           className={cn("transition-transform duration-500", {
             "translate-y-full": stage === undefined,
           })}
@@ -192,6 +193,7 @@ export default function SessionPage() {
 
           {stage === "task-collector" && (
             <Button
+              size="md"
               disabled={taskList.tasks.length === 0}
               rightSection={<IconChevronRight />}
               onClick={() => {
@@ -210,6 +212,7 @@ export default function SessionPage() {
               <HoverCard.Target>
                 <Box pos="absolute" right={24} bottom={24}>
                   <Button
+                    size="md"
                     rightSection={<IconChevronRight />}
                     disabled={sessionPlanner.unassignedTasks.length > 0}
                     onClick={() => setStage("session-runner")}

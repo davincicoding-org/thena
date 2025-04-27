@@ -103,7 +103,6 @@ export function TaskCollector({
       >
         <ScrollArea
           scrollbars="y"
-          offsetScrollbars="y"
           scrollHideDelay={300}
           classNames={{
             scrollbar: "pb-20!",
@@ -144,6 +143,7 @@ export function TaskCollector({
                                     <Button
                                       fullWidth
                                       variant="subtle"
+                                      color="gray"
                                       justify="flex-start"
                                       onClick={() => onRefineTask(item)}
                                     >
@@ -157,6 +157,7 @@ export function TaskCollector({
                                 <Button
                                   fullWidth
                                   variant="subtle"
+                                  color="gray"
                                   justify="flex-start"
                                   onClick={() => onMoveTaskToBacklog(item)}
                                 >
