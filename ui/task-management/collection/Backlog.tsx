@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 import {
   ActionIcon,
   Avatar,
@@ -16,7 +16,6 @@ import {
   Menu,
   Modal,
   NavLink,
-  Paper,
   PaperProps,
   ScrollArea,
   Space,
@@ -48,7 +47,6 @@ import {
   BacklogTask,
   Project,
   ProjectInput,
-  Subtask,
   Tag,
   TagInput,
   TaskInput,

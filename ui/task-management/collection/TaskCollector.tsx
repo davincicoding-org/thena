@@ -9,18 +9,13 @@ import {
   Modal,
   Paper,
   PaperProps,
+  ScrollArea,
   Stack,
   Text,
   TextInput,
-  Tooltip,
 } from "@mantine/core";
 import { useDisclosure, useInputState } from "@mantine/hooks";
-import {
-  IconFileImport,
-  IconPlus,
-  IconTrash,
-  IconX,
-} from "@tabler/icons-react";
+import { IconPlus, IconTrash, IconX } from "@tabler/icons-react";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 
@@ -41,6 +36,7 @@ import {
   TaskFormProps,
   useTaskForm,
 } from "@/ui/task-management";
+import { cn } from "@/ui/utils";
 
 export type TaskCollectorProps = {
   items: Task[];
@@ -48,6 +44,7 @@ export type TaskCollectorProps = {
   onRemoveTask: (taskId: Task["id"]) => void;
   onAddTask: (task: Omit<Task, "id">) => void;
   onRefineTask?: (task: Task) => void;
+  onMoveTaskToBacklog: (task: Task) => void;
   projects: Project[];
   onCreateProject: (
     project: ProjectInput,
@@ -65,12 +62,14 @@ export function TaskCollector({
   onRemoveTask,
   onAddTask,
   onRefineTask,
+  onMoveTaskToBacklog,
   tags,
   onCreateProject,
   projects,
   onCreateTag,
   allowPullFromBacklog,
   onRequestToPullFromBacklog,
+  className,
   ...paperProps
 }: TaskCollectorProps & PaperProps) {
   const form = useForm({
@@ -96,90 +95,120 @@ export function TaskCollector({
   return (
     <>
       <Paper
-        withBorder={items.length > 0}
-        className="transition-all"
-        p="sm"
+        withBorder
+        display="grid"
+        radius="md"
+        className={cn("max-w-96 grid-rows-[1fr_auto] overflow-clip", className)}
         {...paperProps}
       >
-        <Stack>
+        <ScrollArea
+          scrollbars="y"
+          offsetScrollbars="y"
+          scrollHideDelay={300}
+          classNames={{
+            scrollbar: "pb-20!",
+          }}
+        >
           <form.Field
             name="items"
             mode="array"
-            children={(itemsField) => (
-              <>
-                {itemsField.state.value.map((item, index) => (
-                  <form.Field
-                    key={item.id}
-                    name={`items[${index}]`}
-                    children={(itemField) => (
-                      <>
-                        <form.Field
-                          name={`items[${index}].id`}
-                          defaultValue={item.id}
-                          children={() => null}
-                        />
-                        <Item
-                          item={itemField.state.value}
-                          onChange={(update) => {
-                            itemField.handleChange({ id: item.id, ...update });
-                            onUpdateTask(item.id, update);
-                          }}
-                          projects={projects}
-                          tags={tags}
-                          TaskActions={({ defaultActions }) => (
-                            <>
-                              {onRefineTask && (
-                                <>
-                                  <Button
-                                    fullWidth
-                                    variant="subtle"
-                                    onClick={() => onRefineTask(item)}
-                                  >
-                                    Refine
-                                  </Button>
-                                  <Divider />
-                                </>
-                              )}
-                              {defaultActions}
-                              <Divider />
-                              <Button
-                                fullWidth
-                                color="red"
-                                variant="subtle"
-                                justify="flex-start"
-                                leftSection={<IconTrash size={16} />}
-                                onClick={() => onRemoveTask(item.id)}
-                              >
-                                Delete
-                              </Button>
-                            </>
-                          )}
-                          onAssignToNewProject={(callback) => {
-                            createProjectCallback.current = callback;
-                            projectAdder.open();
-                          }}
-                          onAttachNewTag={(callback) => {
-                            createTagCallback.current = callback;
-                            tagAdder.open();
-                          }}
-                        />
-                      </>
-                    )}
-                  />
-                ))}
-              </>
-            )}
+            children={(itemsField) =>
+              itemsField.state.value.length ? (
+                <Stack p="md">
+                  {itemsField.state.value.map((item, index) => (
+                    <form.Field
+                      key={item.id}
+                      name={`items[${index}]`}
+                      children={(itemField) => (
+                        <>
+                          <form.Field
+                            name={`items[${index}].id`}
+                            defaultValue={item.id}
+                            children={() => null}
+                          />
+                          <Item
+                            item={itemField.state.value}
+                            onChange={(update) => {
+                              itemField.handleChange({
+                                id: item.id,
+                                ...update,
+                              });
+                              onUpdateTask(item.id, update);
+                            }}
+                            projects={projects}
+                            tags={tags}
+                            TaskActions={({ defaultActions }) => (
+                              <>
+                                {onRefineTask && (
+                                  <>
+                                    <Button
+                                      fullWidth
+                                      variant="subtle"
+                                      justify="flex-start"
+                                      onClick={() => onRefineTask(item)}
+                                    >
+                                      Refine
+                                    </Button>
+                                    <Divider />
+                                  </>
+                                )}
+                                {defaultActions}
+                                <Divider />
+                                <Button
+                                  fullWidth
+                                  variant="subtle"
+                                  justify="flex-start"
+                                  onClick={() => onMoveTaskToBacklog(item)}
+                                >
+                                  Move to Backlog
+                                </Button>
+                                <Divider />
+                                <Button
+                                  fullWidth
+                                  color="red"
+                                  variant="subtle"
+                                  justify="flex-start"
+                                  leftSection={<IconTrash size={16} />}
+                                  onClick={() => onRemoveTask(item.id)}
+                                >
+                                  Delete
+                                </Button>
+                              </>
+                            )}
+                            onAssignToNewProject={(callback) => {
+                              createProjectCallback.current = callback;
+                              projectAdder.open();
+                            }}
+                            onAttachNewTag={(callback) => {
+                              createTagCallback.current = callback;
+                              tagAdder.open();
+                            }}
+                          />
+                        </>
+                      )}
+                    />
+                  ))}
+                </Stack>
+              ) : (
+                <Text
+                  p="lg"
+                  size="xl"
+                  opacity={0.5}
+                  className="min-w-0 text-center leading-normal! text-balance"
+                >
+                  Start planning your next session by adding all the tasks you
+                  want to achieve.
+                </Text>
+              )
+            }
           />
-          <Divider className="first:hidden" />
           <TaskAdder
-            hasTasks={items.length > 0}
             onSubmit={onAddTask}
             allowPullFromBacklog={allowPullFromBacklog}
             onRequestToPullFromBacklog={onRequestToPullFromBacklog}
           />
-        </Stack>
+        </ScrollArea>
       </Paper>
-
       <Modal
         opened={isCreatingProject}
         centered
@@ -256,12 +285,10 @@ interface TaskAdderProps
     TaskCollectorProps,
     "allowPullFromBacklog" | "onRequestToPullFromBacklog"
   > {
-  hasTasks: boolean;
   onSubmit: (task: Omit<Task, "id">) => void;
 }
 
 function TaskAdder({
-  hasTasks,
   onSubmit,
   allowPullFromBacklog,
   onRequestToPullFromBacklog,
@@ -277,68 +304,72 @@ function TaskAdder({
     setTitle("");
   };
 
-  if (!visible)
-    return (
-      <Flex gap="xs">
-        <Button
-          className="transition-all"
-          flex={1}
-          leftSection={<IconPlus size={20} />}
-          size={hasTasks ? "xs" : "lg"}
-          variant={hasTasks ? "outline" : undefined}
-          onClick={open}
-        >
-          New Task
-        </Button>
-        {allowPullFromBacklog && (
-          <Tooltip label="Pull Tasks from Backlog">
+  return (
+    <Flex
+      gap="xs"
+      p="md"
+      pos="sticky"
+      bottom={0}
+      className={cn(
+        "border-t border-t-[var(--paper-border-color)] backdrop-blur-sm",
+        {
+          "flex-col": visible,
+        },
+      )}
+    >
+      {visible ? (
+        <TextInput
+          ref={inputRef}
+          autoFocus
+          size="md"
+          placeholder="New Task"
+          rightSection={
             <ActionIcon
-              aria-label="Pull Tasks from Backlog"
-              className="transition-all"
-              size={hasTasks ? 30 : 50}
+              aria-label="Cancel"
+              variant="transparent"
+              color="gray"
+              onClick={() => {
+                setTitle("");
+                close();
+              }}
+            >
+              <IconX size={16} />
+            </ActionIcon>
+          }
+          value={title}
+          onChange={setTitle}
+          onBlur={close}
+          onKeyDown={(e) => {
+            if (e.key !== "Enter") return;
+            handleSubmit();
+            close();
+          }}
+        />
+      ) : (
+        <>
+          <Button
+            className="grow-1"
+            variant="light"
+            size="md"
+            leftSection={<IconPlus size={20} />}
+            onClick={open}
+          >
+            Create Task
+          </Button>
+          {allowPullFromBacklog && (
+            <Button
+              className="grow-1"
               variant="default"
+              size="md"
               onClick={onRequestToPullFromBacklog}
             >
-              <IconFileImport size="60%" />
-            </ActionIcon>
-          </Tooltip>
-        )}
-      </Flex>
-    );
-
-  return (
-    <Box>
-      <TextInput
-        ref={inputRef}
-        autoFocus
-        placeholder="New Task"
-        rightSection={
-          <ActionIcon
-            aria-label="Cancel"
-            variant="transparent"
-            color="gray"
-            onClick={() => {
-              setTitle("");
-              close();
-            }}
-          >
-            <IconX size={16} />
-          </ActionIcon>
-        }
-        value={title}
-        onChange={setTitle}
-        onBlur={close}
-        onKeyDown={(e) => {
-          if (e.key !== "Enter") return;
-          handleSubmit();
-          close();
-        }}
-      />
-      <Collapse in={title.trim() !== ""}>
-        <Text size="xs" mt={2} opacity={0.3}>
-          Press Enter to add
-        </Text>
-      </Collapse>
-    </Box>
+              Add from Backlog
+            </Button>
+          )}
+        </>
+      )}
+    </Flex>
   );
+
+  return <Box></Box>;
 }

@@ -25,6 +25,7 @@ export default function TasksPage() {
         tags={tags}
         onUpdateTask={(taskId, updates) => updateTask(taskId, updates)}
         onRemoveTask={(taskId) => removeTask(taskId)}
+        onMoveTaskToBacklog={(task) => removeTask(task.id)}
         onAddTask={(task) => addTask(task)}
         onCreateProject={createProject}
         onCreateTag={createTag}

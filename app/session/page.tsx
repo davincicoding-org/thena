@@ -23,7 +23,7 @@ import {
   useHotkeys,
 } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
-import { IconChevronRight } from "@tabler/icons-react";
+import { IconChevronRight, IconTransfer } from "@tabler/icons-react";
 import { z } from "zod";
 
 import { sprintPlanSchema } from "@/core/deep-work";
@@ -52,7 +52,7 @@ type Stage = z.infer<typeof stageEnumSchema>;
 export default function SessionPage() {
   const router = useRouter();
 
-  // State
+  // MARK: State
 
   const [stage, setStage] = useState<Stage>();
 
@@ -100,7 +100,7 @@ export default function SessionPage() {
     BacklogTask["id"][]
   >([]);
 
-  // ------- User Actions -------
+  // MARK: User Actions
 
   useHotkeys([
     ["mod+z", taskList.history.undo],
@@ -129,14 +129,18 @@ export default function SessionPage() {
         loaderProps={{ type: "dots" }}
         visible={!localStorageSync.initialized}
       />
-      <AppShell.Main display="flex" className="h-full flex-col">
-        <Tabs value={stage} m="auto" className="w-full min-w-0">
-          <Tabs.Panel value="task-collector">
+      <AppShell.Main display="flex" className="h-dvh flex-col">
+        <Tabs value={stage} m="auto" className="min-h-0 w-full grow-0">
+          <Tabs.Panel value="task-collector" className="h-full" py="xl">
             <TaskCollector
-              className="mx-auto w-sm"
+              className="mx-auto max-h-full w-fit"
               items={taskList.tasks}
               onUpdateTask={updateTask}
               onRemoveTask={taskList.removeTask}
+              onMoveTaskToBacklog={(task) => {
+                taskList.removeTask(task.id);
+                backlog.addTask(task);
+              }}
               onAddTask={taskList.addTask}
               projects={projects}
               onCreateProject={createProject}
@@ -301,13 +305,17 @@ export default function SessionPage() {
                   backlog.deleteTasks(tasksToPullFromBacklog);
                 },
                 revert: () => {
+                  backlog.addTasks(tasks);
                   notifications.show({
-                    message: "Moved Tasks Back to Backlog",
-                    color: "green",
+                    message:
+                      tasks.length === 1
+                        ? "Moved Task Back to Backlog"
+                        : "Moved Tasks Back to Backlog",
+                    // color: "primary",
                     autoClose: 5000,
+                    icon: <IconTransfer size={20} />,
                     position: "bottom-center",
                   });
-                  backlog.addTasks(tasks);
                 },
               });
 

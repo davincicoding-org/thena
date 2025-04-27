@@ -48,6 +48,7 @@ const meta = {
     onRefineTask: fn(),
     onCreateProject: fn(),
     onCreateTag: fn(),
+    onMoveTaskToBacklog: fn(),
     onRequestToPullFromBacklog: fn(),
     allowPullFromBacklog: true,
   },
@@ -62,6 +63,7 @@ export const Showcase: Story = {
     onAddTask,
     onUpdateTask,
     onRemoveTask,
+    onMoveTaskToBacklog,
     onRefineTask,
     onCreateProject,
     onCreateTag,
@@ -94,6 +96,7 @@ export const Showcase: Story = {
           });
           onRemoveTask(id);
         }}
+        onMoveTaskToBacklog={onMoveTaskToBacklog}
         onRefineTask={onRefineTask}
         projects={projects}
         onCreateProject={onCreateProject}
