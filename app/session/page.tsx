@@ -32,9 +32,9 @@ import { SidePanel } from "@/ui/components/SidePanel";
 import {
   FocusSession,
   SessionPlanner,
+  useFocusSession,
   useSessionPlanner,
 } from "@/ui/deep-work";
-import { useFocusSession } from "@/ui/deep-work/execution/useFocusSession";
 import { useLocalStorageSync } from "@/ui/hooks/useLocalStorageSync";
 import {
   Backlog,
@@ -101,7 +101,7 @@ export default function SessionPage() {
   // MARK: Focus Session
 
   const focusSession = useFocusSession({
-    breakDuration: { minutes: 1 },
+    breakDuration: { seconds: 10 },
   });
 
   // MARK: User Actions

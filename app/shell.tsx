@@ -16,7 +16,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   return (
     <AppShell header={{ height: 60 }}>
       <AppShell.Header withBorder={false}>
-        <Flex py="xs" px="md" gap="sm" align="center" className="h-full">
+        <Flex py="xs" px="md" align="center" className="h-full">
           <Text
             size="xl"
             component={Link}

@@ -123,9 +123,9 @@ export default function HomePage() {
               </Button>
             </Card>
             <Card radius="md" shadow="sm" flex={1}>
-              <Card.Section>
+              <Card.Section mb={4}>
                 <ScrollArea scrollbars="x" scrollHideDelay={300}>
-                  <Flex gap="md" p="md">
+                  <Flex gap="sm" p="md">
                     {projects.map((project) => (
                       <Tooltip key={project.id} label={project.name}>
                         <Avatar
@@ -145,7 +145,7 @@ export default function HomePage() {
                   </Flex>
                 </ScrollArea>
               </Card.Section>
-              <Space h="xs" />
+              {/* <Space h="xs" /> */}
               <Button
                 variant="light"
                 fullWidth
