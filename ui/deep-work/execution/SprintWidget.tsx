@@ -72,7 +72,7 @@ export function SprintWidget({
             <Fragment key={task.id}>
               <TaskItem
                 task={task}
-                readOnly={status !== "running"}
+                readOnly={status !== "running" && status !== "over"}
                 activeTask={currentTask}
                 onComplete={onCompleteTask}
                 onSkip={onSkipTask}

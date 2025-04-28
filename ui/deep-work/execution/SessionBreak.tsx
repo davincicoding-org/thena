@@ -67,7 +67,7 @@ export function SessionBreak({
         fullWidth
         radius={0}
         size="md"
-        variant={progress >= 100 ? "filled" : "light"}
+        variant={progress >= 100 ? "filled" : "subtle"}
         onClick={onResume}
       >
         Finish Break
