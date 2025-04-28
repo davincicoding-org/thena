@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useRef } from "react";
 import {
   ActionIcon,
   Avatar,
@@ -246,23 +246,17 @@ function BacklogHeader({
 }: BacklogHeaderProps) {
   const [searchValue, setSearchValue] = useSyncInputState(filters.search ?? "");
 
-  const resolveProject = useCallback(
-    (projectId: string): Project =>
-      projects.find((project) => project.id === projectId) ?? {
-        id: projectId,
-        name: projectId,
-      },
-    [projects],
-  );
+  const resolveProject = (projectId: string): Project =>
+    projects.find((project) => project.id === projectId) ?? {
+      id: projectId,
+      name: projectId,
+    };
 
-  const resolveTag = useCallback(
-    (tagId: string): Tag =>
-      tags.find((tag) => tag.id === tagId) ?? {
-        id: tagId,
-        name: tagId,
-      },
-    [tags],
-  );
+  const resolveTag = (tagId: string): Tag =>
+    tags.find((tag) => tag.id === tagId) ?? {
+      id: tagId,
+      name: tagId,
+    };
 
   return (
     <>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AppShell,
@@ -101,9 +101,8 @@ export default function SessionPage() {
 
   const backlog = useBacklog();
   const { filterTasks, ...backlogQueryoptions } = useBacklogQueryOptions();
-  const backlogTasks = useMemo(
-    () => filterTasks(backlog.tasks).sort(backlogQueryoptions.sortFn),
-    [backlog.tasks, filterTasks, backlogQueryoptions.sortFn],
+  const backlogTasks = filterTasks(backlog.tasks).sort(
+    backlogQueryoptions.sortFn,
   );
   const [isBacklogPanelOpen, backlogPanel] = useDisclosure();
   const backlogTaskSelection = useTaskSelection();

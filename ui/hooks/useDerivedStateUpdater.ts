@@ -1,5 +1,4 @@
-import type { Dispatch, SetStateAction} from "react";
-import { useCallback } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 export function useDerivedStateUpdater<Original, Result>(
   setState: Dispatch<SetStateAction<Original>>,
@@ -11,7 +10,7 @@ export function useDerivedStateUpdater<Original, Result>(
     set: (prev: Original, value: Result) => Original;
   },
 ): Dispatch<SetStateAction<Result>> {
-  return useCallback((action) => {
+  return (action) => {
     setState((prev) => {
       const result =
         typeof action === "function"
@@ -20,5 +19,5 @@ export function useDerivedStateUpdater<Original, Result>(
 
       return set(prev, result);
     });
-  }, []);
+  };
 }

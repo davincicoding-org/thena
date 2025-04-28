@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useChat } from "@ai-sdk/react";
 import { Button, Center, Flex, Stack } from "@mantine/core";
 
@@ -63,7 +62,7 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
     },
   });
 
-  const assistantStatus = useMemo(():
+  const assistantStatus = (():
     | AssistantIndicatorProps["status"]
     | undefined => {
     if (isListening) return "listening";
@@ -71,7 +70,7 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
     if (chat?.status === "submitted") return "thinking";
     if (chat?.status === "streaming") return "thinking";
     return "idle";
-  }, [isListening, isSpeaking, chat.status]);
+  })();
 
   useKeyHold({
     disabled: tasks === undefined,

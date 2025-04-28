@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useRef } from "react";
 import Link from "next/link";
 import {
   AppShell,
@@ -75,9 +75,9 @@ export default function HomePage() {
   const [isCreatingProject, projectCreatorModal] = useDisclosure();
 
   const { tasks } = useBacklog();
-  const taskCount = useMemo(
-    () => tasks.reduce((acc, task) => acc + (task.subtasks?.length ?? 1), 0),
-    [tasks],
+  const taskCount = tasks.reduce(
+    (acc, task) => acc + (task.subtasks?.length ?? 1),
+    0,
   );
 
   const [isBacklogPanelOpen, backlogPanel] = useDisclosure();
@@ -238,10 +238,7 @@ function BacklogPanel({
   const { filters, filterTasks, updateFilters, sort, sortFn, updateSort } =
     useBacklogQueryOptions();
 
-  const tasks = useMemo(
-    () => filterTasks(backlog.tasks).sort(sortFn),
-    [backlog.tasks, filterTasks, sortFn],
-  );
+  const tasks = filterTasks(backlog.tasks).sort(sortFn);
 
   // ------- Task Adder -------
 

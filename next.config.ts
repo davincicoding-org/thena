@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   eslint: {
     dirs: ["app", "core", "ui"],
   },
+  experimental: {
+    reactCompiler: true,
+  },
 };
 
 export default nextConfig;

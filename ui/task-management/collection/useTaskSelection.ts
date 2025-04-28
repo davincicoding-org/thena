@@ -1,12 +1,13 @@
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
 import type {
   SubtaskReference,
   Task,
-  TaskSelection} from "@/core/task-management";
+  TaskSelection,
+} from "@/core/task-management";
 import {
   excludeTaskSelection,
-  mergeTaskSelections
+  mergeTaskSelections,
 } from "@/core/task-management";
 
 export interface TaskSelectionHookReturn<T extends Task> {
@@ -24,23 +25,16 @@ export function useTaskSelection<T extends Task>(
 ): TaskSelectionHookReturn<T> {
   const [selection, setSelection] = useState<TaskSelection[]>([]);
 
-  const isTaskSelected = useCallback<
-    TaskSelectionHookReturn<T>["isTaskSelected"]
-  >(
-    (task) =>
-      selection.some((selectedTask) => isTaskFullyIncluded(task, selectedTask)),
-    [selection],
-  );
+  const isTaskSelected: TaskSelectionHookReturn<T>["isTaskSelected"] = (task) =>
+    selection.some((selectedTask) => isTaskFullyIncluded(task, selectedTask));
 
-  const isSubtaskSelected = useCallback<
-    TaskSelectionHookReturn<T>["isSubtaskSelected"]
-  >(
-    ({ taskId, subtaskId }) =>
-      selection.some((selectedTask) =>
-        isSubtaskIncluded({ taskId, subtaskId }, selectedTask),
-      ),
-    [selection],
-  );
+  const isSubtaskSelected: TaskSelectionHookReturn<T>["isSubtaskSelected"] = ({
+    taskId,
+    subtaskId,
+  }) =>
+    selection.some((selectedTask) =>
+      isSubtaskIncluded({ taskId, subtaskId }, selectedTask),
+    );
 
   const tasks = taskList.reduce<T[]>((acc, task) => {
     if (isTaskSelected(task)) return [...acc, task];
@@ -65,9 +59,7 @@ export function useTaskSelection<T extends Task>(
     ];
   }, []);
 
-  const toggleTaskSelection = useCallback<
-    TaskSelectionHookReturn<T>["toggleTaskSelection"]
-  >(
+  const toggleTaskSelection: TaskSelectionHookReturn<T>["toggleTaskSelection"] =
     (task) =>
       setSelection((prev) => {
         const isFullySelected = prev.some((selectedTask) =>
@@ -108,13 +100,9 @@ export function useTaskSelection<T extends Task>(
             subtaskIds: task.subtasks.map(({ id }) => id),
           },
         ];
-      }),
-    [],
-  );
+      });
 
-  const toggleSubtaskSelection = useCallback<
-    TaskSelectionHookReturn<T>["toggleSubtaskSelection"]
-  >(
+  const toggleSubtaskSelection: TaskSelectionHookReturn<T>["toggleSubtaskSelection"] =
     (taskReference) =>
       setSelection((prev) => {
         const isSelected = prev.some((selectedTask) =>
@@ -135,9 +123,7 @@ export function useTaskSelection<T extends Task>(
             subtaskIds: [taskReference.subtaskId],
           },
         ]);
-      }),
-    [],
-  );
+      });
 
   return {
     tasks,
