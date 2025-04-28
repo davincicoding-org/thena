@@ -75,7 +75,7 @@ export default function HomePage() {
   return (
     <AppShell.Main display="grid">
       <Center>
-        <Stack gap="lg" maw={400} p="lg">
+        <Stack gap="lg" className="w-fit" p="lg">
           <Card
             p={0}
             radius="md"
@@ -142,11 +142,14 @@ export default function HomePage() {
                         />
                       </Tooltip>
                     ))}
+                    {projects.length === 0 && (
+                      <Text className="text-2xl!">No projects</Text>
+                    )}
                   </Flex>
                 </ScrollArea>
               </Card.Section>
-              {/* <Space h="xs" /> */}
               <Button
+                mt="auto"
                 variant="light"
                 fullWidth
                 onClick={() => alert("Coming soon!")}

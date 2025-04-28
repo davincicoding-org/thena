@@ -36,6 +36,7 @@ export type SprintStatus = "idle" | "running" | "paused" | "over" | "completed";
 export interface FocusSessionBreak {
   duration: number;
   timeElapsed: number;
+  sprintsLeft: number;
 }
 
 export type FocusSessionStatus = "sprint" | "break" | "finished";

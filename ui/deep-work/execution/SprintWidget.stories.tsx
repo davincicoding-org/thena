@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { fn } from "@storybook/test";
 
 import type { Meta, StoryObj } from "@storybook/react";
@@ -70,21 +71,22 @@ export const Showcase: Story = {
     ],
   },
   render: (args) => {
-    const sprint = useSprint(
-      {
+    const sprintPlan = useMemo(
+      () => ({
         id: "demo",
         duration: args.duration,
         tasks: args.tasks,
-      },
-      {
-        onStart: args.onStart,
-        // onCompleteTask: args.onCompleteTask,
-        // onSkipTask: args.onSkipTask,
-        // onRunTaskManually: args.onRunTaskManually,
-        onPause: args.onPause,
-        onResume: args.onResume,
-      },
-    )!;
+      }),
+      [],
+    );
+    const sprint = useSprint(sprintPlan, {
+      onStart: args.onStart,
+      // onCompleteTask: args.onCompleteTask,
+      // onSkipTask: args.onSkipTask,
+      // onRunTaskManually: args.onRunTaskManually,
+      onPause: args.onPause,
+      onResume: args.onResume,
+    })!;
 
     return (
       <SprintWidget

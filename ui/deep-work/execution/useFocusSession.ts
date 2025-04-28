@@ -30,7 +30,9 @@ export function useFocusSession(
 ): FocusSessionHookReturn {
   const [sprints, setSprints] = useState<SprintPlan[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [sessionBreak, setSessionBreak] = useState<FocusSessionBreak>({
+  const [sessionBreak, setSessionBreak] = useState<
+    Omit<FocusSessionBreak, "sprintsLeft">
+  >({
     duration: dayjs.duration(options.breakDuration).asMilliseconds(),
     timeElapsed: 0,
   });
@@ -70,7 +72,10 @@ export function useFocusSession(
   return {
     status,
     currentSprint: sprints[currentIndex],
-    sessionBreak: status === "break" ? sessionBreak : undefined,
+    sessionBreak:
+      status === "break"
+        ? { ...sessionBreak, sprintsLeft: sprints.length - currentIndex }
+        : undefined,
     initialize,
     finishSprint,
     finishBreak,

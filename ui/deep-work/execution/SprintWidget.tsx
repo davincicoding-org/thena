@@ -1,6 +1,7 @@
 import { Fragment, ReactElement } from "react";
 import {
   ActionIcon,
+  Box,
   Button,
   Collapse,
   Divider,
@@ -64,13 +65,28 @@ export function SprintWidget({
     : false;
 
   return (
-    <Paper p="sm" shadow="sm" radius="md" {...paperProps}>
-      <Collapse
-        in={status === "running" || status === "over"}
-        pb="md"
-        animateOpacity
-      >
-        <Flex gap={4} align="center">
+    <Paper withBorder shadow="sm" radius="md" {...paperProps}>
+      <Box p="sm">
+        <Paper className="overflow-clip" withBorder>
+          {tasks.map((task) => (
+            <Fragment key={task.id}>
+              <TaskItem
+                task={task}
+                readOnly={status !== "running"}
+                activeTask={currentTask}
+                onComplete={onCompleteTask}
+                onSkip={onSkipTask}
+                onRunManually={onRunTaskManually}
+              />
+              <Divider className="last:hidden" />
+            </Fragment>
+          ))}
+        </Paper>
+      </Box>
+      <Divider />
+
+      <Collapse in={status === "running" || status === "over"} animateOpacity>
+        <Flex gap={4} h={36} px="sm" align="center">
           <Progress
             flex={1}
             color={
@@ -97,33 +113,18 @@ export function SprintWidget({
           )}
         </Flex>
       </Collapse>
-      <Paper className="overflow-clip" withBorder>
-        {tasks.map((task) => (
-          <Fragment key={task.id}>
-            <TaskItem
-              task={task}
-              readOnly={status !== "running"}
-              activeTask={currentTask}
-              onComplete={onCompleteTask}
-              onSkip={onSkipTask}
-              onRunManually={onRunTaskManually}
-            />
-            <Divider className="last:hidden" />
-          </Fragment>
-        ))}
-      </Paper>
-      <Collapse in={status === "idle"} pt="md" animateOpacity>
-        <Button fullWidth onClick={onStart}>
+      <Collapse in={status === "idle"} animateOpacity>
+        <Button fullWidth className="rounded-t-none!" onClick={onStart}>
           Start Sprint
         </Button>
       </Collapse>
-      <Collapse in={status === "paused"} pt="md" animateOpacity>
-        <Button fullWidth onClick={onResume}>
+      <Collapse in={status === "paused"} animateOpacity>
+        <Button fullWidth className="rounded-t-none!" onClick={onResume}>
           Resume Sprint
         </Button>
       </Collapse>
-      <Collapse in={status === "over"} pt="md" animateOpacity>
-        <Button fullWidth onClick={onFinish}>
+      <Collapse in={status === "over"} animateOpacity>
+        <Button fullWidth className="rounded-t-none!" onClick={onFinish}>
           Finish Sprint
         </Button>
       </Collapse>

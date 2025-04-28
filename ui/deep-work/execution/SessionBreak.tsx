@@ -16,12 +16,14 @@ import { cn } from "@/ui/utils";
 export interface SessionBreakProps {
   duration: number;
   timeElapsed: number;
+  sprintsLeft: number;
   onResume: () => void;
 }
 
 export function SessionBreak({
   duration,
   timeElapsed,
+  sprintsLeft,
   onResume,
   className,
   ...paperProps
@@ -37,7 +39,7 @@ export function SessionBreak({
     >
       <Stack p="md" gap="sm">
         <Text size="xl" ta="center" fw={500}>
-          Time for a break
+          {progress >= 100 ? "Break is over" : "Time for a break"}
         </Text>
         <Progress
           color={timeElapsed > duration ? "red" : "primary"}
@@ -48,24 +50,27 @@ export function SessionBreak({
           value={progress}
         />
         <Text ta="center" size="sm">
-          X more Sprints to go
+          {sprintsLeft === 1 && "One last sprint to go"}
+          {sprintsLeft > 1 && `${sprintsLeft} more Sprints to go`}
         </Text>
       </Stack>
 
-      <Accordion variant="contained" radius={0} className="-mx-px">
+      {/* <Accordion variant="contained" radius={0} className="-mx-px">
         <Accordion.Item value="1">
           <Accordion.Control>Upcoming Sprint</Accordion.Control>
           <Accordion.Panel>TODO: Show upcoming sprint tasks</Accordion.Panel>
         </Accordion.Item>
-      </Accordion>
+      </Accordion> */}
 
+      <Divider />
       <Button
         fullWidth
         radius={0}
+        size="md"
         variant={progress >= 100 ? "filled" : "light"}
         onClick={onResume}
       >
-        Resume
+        Finish Break
       </Button>
     </Paper>
   );

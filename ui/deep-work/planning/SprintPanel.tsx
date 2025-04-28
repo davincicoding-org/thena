@@ -107,6 +107,7 @@ export function SprintPanel({
               value={sprint.duration}
               w={40 + sprint.duration.toString().length * 8}
               min={5}
+              max={90}
               step={5}
               styles={{
                 input: {
@@ -116,7 +117,7 @@ export function SprintPanel({
               }}
               onChange={(value) => {
                 if (typeof value !== "number") return;
-                onDurationChange(value);
+                onDurationChange(Math.min(value, 90));
               }}
             />
 

@@ -7,7 +7,6 @@ import {
   Box,
   Button,
   Flex,
-  Group,
   HoverCard,
   LoadingOverlay,
   Modal,
@@ -78,6 +77,18 @@ export default function SessionPage() {
   });
 
   const [isSessionModalOpen, sessionModal] = useDisclosure(false);
+
+  const sprintBuilderError = (() => {
+    if (taskList.tasks.length === 0)
+      return "Before you can define sprints, you need to collect your tasks.";
+  })();
+
+  const startSessionError = (() => {
+    if (sprintBuilder.sprints.length === 0)
+      return "Before you start the session, you need to define your sprints.";
+    if (sprintBuilder.unassignedTasks.length > 0)
+      return "You have unassigned tasks. Add them to a sprint or drop them to start the session.";
+  })();
 
   // MARK: Tasks
 
@@ -151,7 +162,6 @@ export default function SessionPage() {
       <AppShell.Main display="flex" className="h-dvh flex-col">
         <Tabs
           value={stage}
-          // m="auto"
           className="flex! h-full min-h-0 grow-0 flex-col!"
           classNames={{
             panel: "my-auto min-h-0",
@@ -191,10 +201,66 @@ export default function SessionPage() {
             />
           </Tabs.Panel>
 
+          <Flex align="center" px="xl" py="md" gap={4}>
+            <Button
+              size="xl"
+              flex={1}
+              fullWidth
+              variant="light"
+              color={stage === "task-collector" ? "primary" : "gray"}
+              onClick={handleShowTaskCollector}
+            >
+              Collect Tasks
+            </Button>
+            <IconChevronRight size={32} stroke={1.5} opacity={0.5} />
+            <HoverCard
+              disabled={sprintBuilderError === undefined}
+              position="top"
+            >
+              <HoverCard.Target>
+                <Box flex={1}>
+                  <Button
+                    size="xl"
+                    fullWidth
+                    disabled={sprintBuilderError !== undefined}
+                    variant="light"
+                    color={stage === "sprint-builder" ? "primary" : "gray"}
+                    onClick={handleShowSprintBuilder}
+                  >
+                    Define Sprints
+                  </Button>
+                </Box>
+              </HoverCard.Target>
+              <HoverCard.Dropdown maw={250}>
+                <Text className="text-pretty">{sprintBuilderError}</Text>
+              </HoverCard.Dropdown>
+            </HoverCard>
+            <IconChevronRight size={32} stroke={1.5} opacity={0.5} />
+            <HoverCard
+              disabled={startSessionError === undefined}
+              position="top-end"
+            >
+              <HoverCard.Target>
+                <Box>
+                  <Button
+                    size="xl"
+                    disabled={startSessionError !== undefined}
+                    onClick={handleStartSession}
+                  >
+                    Start Session
+                  </Button>
+                </Box>
+              </HoverCard.Target>
+              <HoverCard.Dropdown maw={250}>
+                <Text className="text-pretty">{startSessionError}</Text>
+              </HoverCard.Dropdown>
+            </HoverCard>
+          </Flex>
+
           <Box
             p="lg"
             className={cn(
-              "grid grid-cols-[1fr_auto_1fr] items-center transition-transform duration-500",
+              "grid hidden! grid-cols-[1fr_auto_1fr] items-center transition-transform duration-500",
               {
                 "translate-y-full": stage === undefined,
               },
@@ -209,67 +275,6 @@ export default function SessionPage() {
             >
               Reset
             </Button>
-
-            <Group>
-              <Button
-                size="md"
-                variant="light"
-                color={stage === "task-collector" ? "primary" : "gray"}
-                onClick={handleShowTaskCollector}
-              >
-                Collect Tasks
-              </Button>
-              <HoverCard disabled={taskList.tasks.length > 0} position="top">
-                <HoverCard.Target>
-                  <Box>
-                    <Button
-                      size="md"
-                      disabled={taskList.tasks.length === 0}
-                      variant="light"
-                      color={stage === "sprint-builder" ? "primary" : "gray"}
-                      onClick={handleShowSprintBuilder}
-                    >
-                      Define Sprints
-                    </Button>
-                  </Box>
-                </HoverCard.Target>
-                <HoverCard.Dropdown maw={250}>
-                  <Text className="text-pretty">
-                    Before you can define sprints, you need to collect some
-                    tasks.
-                  </Text>
-                </HoverCard.Dropdown>
-              </HoverCard>
-            </Group>
-
-            <HoverCard
-              disabled={sprintBuilder.unassignedTasks.length === 0}
-              position="top-end"
-            >
-              <HoverCard.Target>
-                <Box ml="auto">
-                  <Button
-                    size="md"
-                    rightSection={<IconChevronRight />}
-                    disabled={
-                      sprintBuilder.unassignedTasks.length > 0 ||
-                      sprintBuilder.sprints.filter(
-                        (sprint) => sprint.tasks.length === 0,
-                      ).length > 0
-                    }
-                    onClick={handleStartSession}
-                  >
-                    Start Session
-                  </Button>
-                </Box>
-              </HoverCard.Target>
-              <HoverCard.Dropdown maw={250}>
-                <Text>
-                  You have unassigned tasks. Add them to a sprint or drop them
-                  to start the session.
-                </Text>
-              </HoverCard.Dropdown>
-            </HoverCard>
           </Box>
         </Tabs>
       </AppShell.Main>

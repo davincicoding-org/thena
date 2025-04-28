@@ -10,7 +10,7 @@ import { Notifications } from "@mantine/notifications";
 
 const theme = createTheme({
   colors: {
-    primary: DEFAULT_THEME.colors.teal,
+    primary: DEFAULT_THEME.colors.cyan,
     light: [
       DEFAULT_THEME.colors.dark[9],
       DEFAULT_THEME.colors.dark[8],
