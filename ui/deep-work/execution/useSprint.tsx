@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { SprintPlan, SprintStatus, TaskRun, WithRun } from "@/core/deep-work";
-import { hasSubtasks, TaskReference } from "@/core/task-management";
+import { TaskReference } from "@/core/task-management";
 
 interface SprintRun {
   duration: number;
@@ -39,7 +39,7 @@ export function useSprint(
     setCurrentTask(undefined);
     setTaskRuns(
       plan.tasks.flatMap((task) => {
-        if (hasSubtasks(task)) {
+        if (task.subtasks?.length) {
           return task.subtasks.map((subtask) => ({
             taskId: task.id,
             subtaskId: subtask.id,
@@ -79,7 +79,7 @@ export function useSprint(
         (run) => run.taskId === task.id && run.subtaskId === undefined,
       );
 
-      if (!hasSubtasks(task))
+      if (!task.subtasks?.length)
         return {
           ...task,
           ...taskRun,

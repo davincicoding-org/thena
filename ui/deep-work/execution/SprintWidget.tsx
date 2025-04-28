@@ -20,7 +20,7 @@ import {
 } from "@tabler/icons-react";
 
 import type { SprintStatus, TaskRun } from "@/core/deep-work";
-import { hasSubtasks, TaskReference } from "@/core/task-management";
+import { TaskReference } from "@/core/task-management";
 import { BoundOverlay } from "@/ui/components/BoundOverlay";
 import { cn } from "@/ui/utils";
 
@@ -151,7 +151,7 @@ function TaskItem({
   onSkip,
   onRunManually,
 }: TaskItemProps) {
-  if (hasSubtasks(task)) {
+  if (task.subtasks?.length) {
     return (
       <>
         {task.subtasks.map((subtask) => (

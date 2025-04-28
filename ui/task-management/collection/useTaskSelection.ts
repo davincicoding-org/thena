@@ -2,33 +2,37 @@ import { useCallback, useState } from "react";
 
 import {
   excludeTaskSelection,
-  hasSubtasks,
   mergeTaskSelections,
   SubtaskReference,
   Task,
   TaskSelection,
 } from "@/core/task-management";
 
-export interface TaskSelectionHookRetrun {
+export interface TaskSelectionHookReturn<T extends Task> {
   selection: TaskSelection[];
+  tasks: T[];
   clearSelection: () => void;
-  isTaskSelected: (task: Task) => boolean;
+  isTaskSelected: (task: T) => boolean;
   isSubtaskSelected: (taskReference: SubtaskReference) => boolean;
-  toggleTaskSelection: (task: Task) => void;
+  toggleTaskSelection: (task: T) => void;
   toggleSubtaskSelection: (taskReference: SubtaskReference) => void;
 }
 
-export function useTaskSelection(): TaskSelectionHookRetrun {
+export function useTaskSelection<T extends Task>(
+  taskList: T[] = [],
+): TaskSelectionHookReturn<T> {
   const [selection, setSelection] = useState<TaskSelection[]>([]);
 
-  const isTaskSelected = useCallback<TaskSelectionHookRetrun["isTaskSelected"]>(
+  const isTaskSelected = useCallback<
+    TaskSelectionHookReturn<T>["isTaskSelected"]
+  >(
     (task) =>
       selection.some((selectedTask) => isTaskFullyIncluded(task, selectedTask)),
     [selection],
   );
 
   const isSubtaskSelected = useCallback<
-    TaskSelectionHookRetrun["isSubtaskSelected"]
+    TaskSelectionHookReturn<T>["isSubtaskSelected"]
   >(
     ({ taskId, subtaskId }) =>
       selection.some((selectedTask) =>
@@ -37,8 +41,31 @@ export function useTaskSelection(): TaskSelectionHookRetrun {
     [selection],
   );
 
+  const tasks = taskList.reduce<T[]>((acc, task) => {
+    if (isTaskSelected(task)) return [...acc, task];
+
+    if (!task.subtasks?.length) return acc;
+
+    const selectedSubTasks = task.subtasks.filter((subtask) =>
+      isSubtaskSelected({
+        taskId: task.id,
+        subtaskId: subtask.id,
+      }),
+    );
+
+    if (selectedSubTasks.length === 0) return acc;
+
+    return [
+      ...acc,
+      {
+        ...task,
+        subtasks: selectedSubTasks,
+      },
+    ];
+  }, []);
+
   const toggleTaskSelection = useCallback<
-    TaskSelectionHookRetrun["toggleTaskSelection"]
+    TaskSelectionHookReturn<T>["toggleTaskSelection"]
   >(
     (task) =>
       setSelection((prev) => {
@@ -59,13 +86,13 @@ export function useTaskSelection(): TaskSelectionHookRetrun {
 
             return {
               ...selectedTask,
-              subtaskIds: hasSubtasks(task)
+              subtaskIds: task.subtasks?.length
                 ? task.subtasks.map(({ id }) => id)
                 : undefined,
             };
           });
 
-        if (!hasSubtasks(task))
+        if (!task.subtasks?.length)
           return [
             ...prev,
             {
@@ -85,7 +112,7 @@ export function useTaskSelection(): TaskSelectionHookRetrun {
   );
 
   const toggleSubtaskSelection = useCallback<
-    TaskSelectionHookRetrun["toggleSubtaskSelection"]
+    TaskSelectionHookReturn<T>["toggleSubtaskSelection"]
   >(
     (taskReference) =>
       setSelection((prev) => {
@@ -112,6 +139,7 @@ export function useTaskSelection(): TaskSelectionHookRetrun {
   );
 
   return {
+    tasks,
     selection,
     clearSelection: () => setSelection([]),
     isTaskSelected,
@@ -136,7 +164,7 @@ const isTaskFullyIncluded = (
   selectedTask: TaskSelection,
 ): boolean => {
   if (!isTaskPartiallyIncluded(task, selectedTask)) return false;
-  if (!hasSubtasks(task)) return true;
+  if (!task.subtasks?.length) return true;
 
   return task.subtasks.every((subtask) =>
     selectedTask.subtaskIds?.includes(subtask.id),

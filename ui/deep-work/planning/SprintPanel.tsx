@@ -19,7 +19,7 @@ import {
 import { IconClock, IconDotsVertical } from "@tabler/icons-react";
 
 import { SprintPlan } from "@/core/deep-work";
-import { hasSubtasks, TaskSelection } from "@/core/task-management";
+import { TaskSelection } from "@/core/task-management";
 import { BoundOverlay } from "@/ui/components/BoundOverlay";
 import { Panel } from "@/ui/components/Panel";
 import { cn } from "@/ui/utils";
@@ -154,7 +154,7 @@ export function SprintPanel({
               <Menu position="bottom-end">
                 <Menu.Target>
                   <Paper
-                    {...(hasSubtasks(task)
+                    {...(task.subtasks?.length
                       ? {
                           withBorder: true,
                           mt: -1,
@@ -202,7 +202,7 @@ export function SprintPanel({
                 </Menu.Dropdown>
               </Menu>
 
-              {hasSubtasks(task) && (
+              {task.subtasks?.length ? (
                 <Stack gap={0} flex={1}>
                   {task.subtasks.map((subtask) => (
                     <Fragment key={subtask.id}>
@@ -257,7 +257,7 @@ export function SprintPanel({
                     </Fragment>
                   ))}
                 </Stack>
-              )}
+              ) : undefined}
             </Paper>
           ))}
 

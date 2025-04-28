@@ -1,10 +1,8 @@
-import { Fragment } from "react";
 import {
   ActionIcon,
   Button,
   Card,
   Collapse,
-  Divider,
   Flex,
   Menu,
   NavLink,
@@ -16,15 +14,9 @@ import {
 } from "@mantine/core";
 import { IconArrowLeft, IconX } from "@tabler/icons-react";
 
-import {
-  hasSubtasks,
-  SubtaskReference,
-  Task,
-  TaskSelection,
-} from "@/core/task-management";
+import { SubtaskReference, Task, TaskSelection } from "@/core/task-management";
+import { useTaskSelection } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
-
-import { useTaskSelection } from "./useTaskSelection";
 
 export interface TaskPoolProps {
   items: Task[];
@@ -140,7 +132,7 @@ export function TaskPool({
               >
                 <Menu.Target>
                   <Paper
-                    {...(hasSubtasks(task)
+                    {...(task.subtasks?.length
                       ? {
                           withBorder: true,
                           mt: -1,
@@ -177,7 +169,7 @@ export function TaskPool({
                   ))}
                 </Menu.Dropdown>
               </Menu>
-              {hasSubtasks(task) && (
+              {task.subtasks?.length ? (
                 <Stack gap={0} flex={1}>
                   {task.subtasks?.map((subtask) => (
                     <Menu
@@ -224,7 +216,7 @@ export function TaskPool({
                     </Menu>
                   ))}
                 </Stack>
-              )}
+              ) : undefined}
             </Paper>
           ))}
         </Stack>

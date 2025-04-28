@@ -26,7 +26,7 @@ import { IconChevronRight, IconTransfer } from "@tabler/icons-react";
 import { z } from "zod";
 
 import { minimalSprintPlanSchema } from "@/core/deep-work";
-import { BacklogTask, taskSchema } from "@/core/task-management";
+import { taskSchema } from "@/core/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
 import {
   FocusSession,
@@ -43,6 +43,7 @@ import {
   useProjects,
   useTags,
   useTaskList,
+  useTaskSelection,
 } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
@@ -105,9 +106,7 @@ export default function SessionPage() {
     [backlog.tasks, filterTasks, backlogQueryoptions.sortFn],
   );
   const [isBacklogPanelOpen, backlogPanel] = useDisclosure();
-  const [tasksToPullFromBacklog, setTasksToPullFromBacklog] = useState<
-    BacklogTask["id"][]
-  >([]);
+  const backlogTaskSelection = useTaskSelection();
 
   // MARK: Focus Session
 
@@ -343,7 +342,7 @@ export default function SessionPage() {
       <SidePanel
         opened={isBacklogPanelOpen}
         onClose={() => {
-          setTasksToPullFromBacklog([]);
+          backlogTaskSelection.clearSelection();
           backlogPanel.close();
         }}
       >
@@ -359,35 +358,27 @@ export default function SessionPage() {
             tags={tags}
             onFiltersUpdate={backlogQueryoptions.updateFilters}
             onSortUpdate={backlogQueryoptions.updateSort}
-            selectedTasks={tasksToPullFromBacklog}
-            onToggleTaskSelection={(taskId) =>
-              setTasksToPullFromBacklog((prev) =>
-                prev.includes(taskId)
-                  ? prev.filter((id) => id !== taskId)
-                  : [...prev, taskId],
-              )
-            }
+            selectedTasks={backlogTaskSelection.selection}
+            onToggleTaskSelection={backlogTaskSelection.toggleTaskSelection}
           />
           <Button
-            disabled={tasksToPullFromBacklog.length === 0}
+            disabled={backlogTaskSelection.tasks.length === 0}
             fullWidth
             onClick={() => {
-              const tasks = backlog.tasks.filter((task) =>
-                tasksToPullFromBacklog.includes(task.id),
-              );
-              taskList.addTasks(tasks, {
+              taskList.addTasks(backlogTaskSelection.tasks, {
                 apply: () => {
-                  console.log("backlog.deleteTasks", tasksToPullFromBacklog);
-                  backlog.deleteTasks(tasksToPullFromBacklog);
+                  backlog.deleteTasks(
+                    backlogTaskSelection.tasks.map(({ id }) => id),
+                  );
                 },
                 revert: () => {
-                  backlog.addTasks(tasks);
+                  const tasksToRestore = [...backlogTaskSelection.tasks];
+                  backlog.addTasks(tasksToRestore);
                   notifications.show({
                     message:
-                      tasks.length === 1
+                      tasksToRestore.length === 1
                         ? "Moved Task Back to Backlog"
                         : "Moved Tasks Back to Backlog",
-                    // color: "primary",
                     autoClose: 5000,
                     icon: <IconTransfer size={20} />,
                     position: "bottom-center",
@@ -395,11 +386,11 @@ export default function SessionPage() {
                 },
               });
 
-              setTasksToPullFromBacklog([]);
+              backlogTaskSelection.clearSelection();
               backlogPanel.close();
             }}
           >
-            {tasksToPullFromBacklog.length === 0
+            {backlogTaskSelection.tasks.length === 0
               ? "Select Tasks to Pull"
               : "Pull Tasks"}
           </Button>

@@ -12,7 +12,6 @@ import {
   Divider,
   Fieldset,
   Flex,
-  HoverCard,
   Menu,
   Modal,
   NavLink,
@@ -51,6 +50,7 @@ import {
   Tag,
   TagInput,
   TaskInput,
+  TaskSelection,
 } from "@/core/task-management";
 import { Panel } from "@/ui/components/Panel";
 import { useSyncInputState } from "@/ui/hooks/useSyncState";
@@ -90,8 +90,8 @@ export interface BacklogProps {
     onCreate: (project: Project) => void,
   ) => void;
   onCreateTag?: (tag: TagInput, onCreate: (tag: Tag) => void) => void;
-  selectedTasks?: BacklogTask["id"][];
-  onToggleTaskSelection?: (task: BacklogTask["id"]) => void;
+  selectedTasks?: TaskSelection[];
+  onToggleTaskSelection?: (task: BacklogTask) => void;
 }
 
 export function Backlog({
@@ -153,8 +153,10 @@ export function Backlog({
                     createTagCallback.current = callback;
                     tagAdder.open();
                   }}
-                  selected={selectedTasks?.includes(task.id)}
-                  onToggleSelection={() => onToggleTaskSelection?.(task.id)}
+                  selected={selectedTasks?.some(
+                    (selectedTask) => selectedTask.taskId === task.id,
+                  )}
+                  onToggleSelection={() => onToggleTaskSelection?.(task)}
                 />
               ))}
               <Text className="not-first:hidden" my="auto">

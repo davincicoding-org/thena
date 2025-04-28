@@ -1,15 +1,10 @@
-import { useMemo } from "react";
-import { min } from "lodash-es";
-import { nanoid } from "nanoid";
-
 import { MinimalSprintPlan, SprintPlan } from "@/core/deep-work";
 import {
-  hasSubtasks,
   mergeTaskSelections,
   Task,
   TaskSelection,
 } from "@/core/task-management";
-import { createUniqueId, StateSetter } from "@/ui/utils";
+import { createUniqueId } from "@/ui/utils";
 
 import { SprintsReducerError, useSprintsReducer } from "./useSprintsReducer";
 
@@ -115,7 +110,6 @@ export function useSprintBuilder(
     onError,
   }: SessionPlannerHookOptions = DEFAULT_OPTIONS,
 ): SessionPlannerHookReturn {
-  // FIXME The internal sprint tasks should be references, so that the returned sprint tasks stay in sync with the task pool
   const [minimalSprints, dispatch] = useSprintsReducer(
     {
       taskPool,
@@ -136,7 +130,7 @@ export function useSprintBuilder(
       );
       if (!assignedTask) return [...acc, task];
 
-      if (!hasSubtasks(task)) return acc;
+      if (!task.subtasks?.length) return acc;
 
       const remainingSubtaskIds = task.subtasks.filter(
         (subtask) => !assignedTask.subtaskIds?.includes(subtask.id),
@@ -154,7 +148,7 @@ export function useSprintBuilder(
       const task = taskPool.find((task) => task.id === taskSelection.taskId);
       if (!task) return acc;
 
-      if (!hasSubtasks(task)) return [...acc, task];
+      if (!task.subtasks?.length) return [...acc, task];
 
       const subtasks = task.subtasks.filter((subtask) =>
         taskSelection.subtaskIds?.includes(subtask.id),
