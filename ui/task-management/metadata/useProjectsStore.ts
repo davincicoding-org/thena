@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
-import { Project } from "@/core/task-management";
+import type { Project } from "@/core/task-management";
 import { createUniqueId } from "@/ui/utils";
 
 import { localDB } from "../../store";
@@ -15,16 +15,16 @@ export interface ProjectsStoreState {
 
   addProject: (
     project: Omit<Project, "id">,
-    callback?: (project: Project) => void,
+    callback?: (project: Project) => void | Promise<void>,
   ) => void;
   addProjects: (
     projects: Omit<Project, "id">[],
-    callback?: (projects: Project[]) => void,
+    callback?: (projects: Project[]) => void | Promise<void>,
   ) => void;
   updateProject: (
     projectId: Project["id"],
     update: Partial<Omit<Project, "id">>,
-    callback?: (project: Project) => void,
+    callback?: (project: Project) => void | Promise<void>,
   ) => void;
   removeProject: (projectId: Project["id"]) => void;
 }
@@ -40,7 +40,7 @@ export const useProjectsStore = create<ProjectsStoreState>()(
           set((state) => {
             const id = createUniqueId(state.pool);
 
-            callback?.({ ...project, id });
+            void callback?.({ ...project, id });
 
             return {
               pool: {
@@ -62,7 +62,7 @@ export const useProjectsStore = create<ProjectsStoreState>()(
               {},
             );
 
-            callback?.(
+            void callback?.(
               Object.entries(newProjects).map(([id, project]) => ({
                 ...project,
                 id,
@@ -81,7 +81,7 @@ export const useProjectsStore = create<ProjectsStoreState>()(
 
             const updatedProject = { ...existingProject, ...updates };
 
-            callback?.({ ...updatedProject, id: projectId });
+            void callback?.({ ...updatedProject, id: projectId });
 
             return {
               pool: {
@@ -93,7 +93,9 @@ export const useProjectsStore = create<ProjectsStoreState>()(
         },
         removeProject: (projectId) => {
           set((state) => {
-            const { [projectId]: _, ...remainingProjects } = state.pool;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { [projectId]: _removedProject, ...remainingProjects } =
+              state.pool;
 
             return {
               pool: remainingProjects,
@@ -119,10 +121,10 @@ export const useProjectsStore = create<ProjectsStoreState>()(
             };
           },
           setItem: (name, { state }) => {
-            localDB.setItem(name, JSON.stringify(state.pool));
+            void localDB.setItem(name, JSON.stringify(state.pool));
           },
           removeItem: (name) => {
-            localDB.removeItem(name);
+            void localDB.removeItem(name);
           },
         },
       },

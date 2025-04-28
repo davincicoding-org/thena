@@ -1,13 +1,11 @@
 import { useReducer } from "react";
-import { groupBy } from "lodash-es";
 
-import { MinimalSprintPlan, SprintPlan } from "@/core/deep-work";
+import type { MinimalSprintPlan, SprintPlan } from "@/core/deep-work";
+import type { Task, TaskSelection } from "@/core/task-management";
 import {
   excludeTaskSelection,
   mergeTaskSelections,
   resolveTaskSelection,
-  Task,
-  TaskSelection,
 } from "@/core/task-management";
 import { createUniqueId } from "@/ui/utils";
 
@@ -133,8 +131,8 @@ export function useSprintsReducer(
               ...acc,
               {
                 id: createUniqueId(acc, 4),
-                duration: sprint.duration || sprintDuration,
-                tasks: (sprint.tasks || []).reduce<TaskSelection[]>(
+                duration: sprint.duration ?? sprintDuration,
+                tasks: (sprint.tasks ?? []).reduce<TaskSelection[]>(
                   (acc, task) => {
                     const resolvedSelection = resolveTaskSelection(
                       task,
@@ -173,7 +171,7 @@ export function useSprintsReducer(
           );
 
           if (invalidSprintIds.length) {
-            invalidSprintIds.forEach((id) => handleError("SPRINT_NOT_FOUND"));
+            invalidSprintIds.forEach(() => handleError("SPRINT_NOT_FOUND"));
             return state;
           }
 
@@ -188,9 +186,7 @@ export function useSprintsReducer(
 
           // If we're not rearranging all sprints, do nothing
           if (missingSprintIds.length) {
-            missingSprintIds.forEach((id) =>
-              handleError("SPRINT_NOT_PROVIDED"),
-            );
+            missingSprintIds.forEach(() => handleError("SPRINT_NOT_PROVIDED"));
             return state;
           }
 
@@ -364,7 +360,7 @@ export function useSprintsReducer(
           );
 
           if (missingTaskIds.length > 0) {
-            missingTaskIds.forEach((id) => handleError("TASK_NOT_PROVIDED"));
+            missingTaskIds.forEach(() => handleError("TASK_NOT_PROVIDED"));
             return state;
           }
 

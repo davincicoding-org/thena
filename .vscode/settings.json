@@ -33,7 +33,8 @@
     "typescriptreact"
   ],
 
-  "eslint.rules.customizations": [{ "rule": "*", "severity": "warn" }],
+  "eslint.enable": true,
+  "eslint.useFlatConfig": true,
   "typescript.tsdk": "node_modules/typescript/lib",
   "prettier.documentSelectors": [
     "**/*.{cjs,mjs,ts,tsx,md,mdx,json,yaml,yml,json}"

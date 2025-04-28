@@ -1,6 +1,6 @@
 import { useReducer } from "react";
 
-import { Task, TaskInput } from "@/core/task-management";
+import type { Task, TaskInput } from "@/core/task-management";
 import { createUniqueId } from "@/ui/utils";
 
 export type TaskListAction =

@@ -1,11 +1,6 @@
 import "./globals.css";
 
-import {
-  createTheme,
-  DEFAULT_THEME,
-  MantineProvider,
-  virtualColor,
-} from "@mantine/core";
+import { createTheme, DEFAULT_THEME, MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 
 const theme = createTheme({

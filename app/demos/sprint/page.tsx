@@ -30,13 +30,13 @@ export default function SessionPage() {
     },
     {
       onStart: () => {
-        videoRef.current?.play();
+        void videoRef.current?.play();
       },
       onPause: () => {
         videoRef.current?.pause();
       },
       onResume: () => {
-        videoRef.current?.play();
+        void videoRef.current?.play();
       },
     },
   )!;

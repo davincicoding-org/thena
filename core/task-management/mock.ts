@@ -1,4 +1,4 @@
-import { Project, Subtask, Tag, Task } from "./types";
+import type { Project, Subtask, Tag, Task } from "./types";
 
 export const createMockTasks = (subtasks: number[]) =>
   subtasks.map<Task>((subtask = 0, index) => ({

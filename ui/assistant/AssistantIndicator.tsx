@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Box, BoxProps } from "@mantine/core";
+import type { BoxProps } from "@mantine/core";
+import { Box } from "@mantine/core";
 import { motion } from "framer-motion";
 
 import { cn } from "../utils";

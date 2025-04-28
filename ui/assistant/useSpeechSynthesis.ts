@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { SupportedLang } from "./speech-config";
+import type { SupportedLang } from "./speech-config";
 
 export function useSpeechSynthesis({
   lang,
@@ -84,9 +84,9 @@ export function useSpeechSynthesis({
         }
 
         // Simulate output volume during speech
-        let volumeInterval: number | null = null;
+        // let volumeInterval: number | null = null;
 
-        utterance.onstart = (event) => {
+        utterance.onstart = () => {
           setIsSpeaking(true);
           onStart?.();
 
@@ -117,6 +117,7 @@ export function useSpeechSynthesis({
             resolve();
           } else {
             onError?.(error);
+            // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
             reject(error);
           }
           // if (volumeInterval) {

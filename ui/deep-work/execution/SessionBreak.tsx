@@ -1,12 +1,10 @@
+import type {
+  PaperProps} from "@mantine/core";
 import {
-  Accordion,
-  Box,
   Button,
   Divider,
   Paper,
-  PaperProps,
   Progress,
-  Space,
   Stack,
   Text,
 } from "@mantine/core";

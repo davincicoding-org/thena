@@ -1,21 +1,16 @@
 import { useCallback, useState } from "react";
 
-import {
+import type {
   BacklogFilters,
   BacklogSortOptions,
   BacklogTask,
 } from "@/core/task-management";
-import { ExternalState } from "@/ui/utils";
 
 import { hasFiltersApplied } from "./utils";
 
 export interface BacklogHookOptions {
   defaultFilters?: BacklogFilters;
   defaultSort?: BacklogSortOptions;
-  externalState?: ExternalState<{
-    filters: BacklogFilters;
-    sort: BacklogSortOptions;
-  }>;
 }
 
 export interface BacklogQueryOptionsHookReturn {
@@ -33,11 +28,11 @@ export interface BacklogQueryOptionsHookReturn {
 export function useBacklogQueryOptions({
   defaultFilters = {},
   defaultSort = { sortBy: "addedAt", direction: "desc" },
-  externalState: [{ sort, filters }, setOptions] = useState({
+}: BacklogHookOptions = {}) {
+  const [{ sort, filters }, setOptions] = useState({
     filters: defaultFilters,
     sort: defaultSort,
-  }),
-}: BacklogHookOptions = {}) {
+  });
   const updateFilters = useCallback<
     BacklogQueryOptionsHookReturn["updateFilters"]
   >(

@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import dayjs from "dayjs";
-import duration, { DurationUnitsObjectType } from "dayjs/plugin/duration";
+import type { DurationUnitsObjectType } from "dayjs/plugin/duration";
+import duration from "dayjs/plugin/duration";
 
-import {
+import type {
   FocusSessionBreak,
   FocusSessionStatus,
   SprintPlan,
 } from "@/core/deep-work";
-import { Task } from "@/core/task-management";
+import type { Task } from "@/core/task-management";
 
 dayjs.extend(duration);
 

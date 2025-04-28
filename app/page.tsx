@@ -26,7 +26,7 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { IconPlus } from "@tabler/icons-react";
 
-import { TaskInput } from "@/core/task-management";
+import type { TaskInput } from "@/core/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
 import {
   Backlog,
@@ -76,7 +76,7 @@ export default function HomePage() {
 
   const { tasks } = useBacklog();
   const taskCount = useMemo(
-    () => tasks.reduce((acc, task) => acc + (task.subtasks?.length || 1), 0),
+    () => tasks.reduce((acc, task) => acc + (task.subtasks?.length ?? 1), 0),
     [tasks],
   );
 
@@ -151,7 +151,7 @@ export default function HomePage() {
                             radius="md"
                             src={project.image}
                             alt={project.name}
-                            color={project.color || "gray"}
+                            color={project.color ?? "gray"}
                             name={project.name}
                           />
                         </Tooltip>
@@ -312,7 +312,7 @@ function BacklogTaskAdder({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            form.handleSubmit();
+            void form.handleSubmit();
           }}
         >
           <Stack gap="sm">

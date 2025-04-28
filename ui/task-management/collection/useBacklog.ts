@@ -1,4 +1,4 @@
-import { BacklogTask, Task, TaskInput } from "@/core/task-management";
+import type { BacklogTask, Task, TaskInput } from "@/core/task-management";
 
 import { useBacklogStore } from "./useBacklogStore";
 
@@ -25,7 +25,7 @@ export function useBacklog(): BacklogHookReturn {
   }));
 
   const addTask: BacklogHookReturn["addTask"] = (input, callback) => {
-    store.addTask(input, async (task) => {
+    store.addTask(input, (task) => {
       if (callback) callback?.(task);
       // TODO store tag in backend
     });
@@ -39,7 +39,7 @@ export function useBacklog(): BacklogHookReturn {
   };
 
   const updateTask: BacklogHookReturn["updateTask"] = (taskId, updates) => {
-    store.updateTask(taskId, updates, (task) => {
+    store.updateTask(taskId, updates, () => {
       // TODO update in backend
     });
   };

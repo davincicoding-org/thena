@@ -31,13 +31,13 @@ export default function ChatPage() {
             h="70dvh"
             messages={chat.messages}
             status={chat.status}
-            onSend={(message) => {
+            onSend={(message) =>
               chat.append({
                 id: `manual-input-${Date.now()}`,
                 role: "user",
                 content: message,
-              });
-            }}
+              })
+            }
           />
         </Container>
       </Center>

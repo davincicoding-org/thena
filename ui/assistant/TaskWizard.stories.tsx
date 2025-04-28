@@ -1,9 +1,6 @@
-import { useArgs } from "@storybook/preview-api";
-import { fn } from "@storybook/test";
-
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { TaskWizard, TaskWizardProps } from "./TaskWizard";
+import { TaskWizard } from "./TaskWizard";
 
 const meta = {
   component: TaskWizard,

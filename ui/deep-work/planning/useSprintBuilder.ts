@@ -1,12 +1,14 @@
-import { MinimalSprintPlan, SprintPlan } from "@/core/deep-work";
-import {
-  mergeTaskSelections,
+import type { MinimalSprintPlan, SprintPlan } from "@/core/deep-work";
+import type {
   Task,
-  TaskSelection,
+  TaskSelection} from "@/core/task-management";
+import {
+  mergeTaskSelections
 } from "@/core/task-management";
 import { createUniqueId } from "@/ui/utils";
 
-import { SprintsReducerError, useSprintsReducer } from "./useSprintsReducer";
+import type { SprintsReducerError} from "./useSprintsReducer";
+import { useSprintsReducer } from "./useSprintsReducer";
 
 export const DEFAULT_OPTIONS = {
   initialSprints: 0,

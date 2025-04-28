@@ -1,12 +1,7 @@
 import { z } from "zod";
 
-import {
-  Subtask,
-  Task,
-  taskSchema,
-  TaskSelection,
-  taskSelectionSchema,
-} from "@/core/task-management";
+import type { Subtask, Task } from "@/core/task-management";
+import { taskSchema, taskSelectionSchema } from "@/core/task-management";
 
 export const sprintPlanSchema = z.object({
   id: z.string(),

@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 
-import { Tag, TagInput } from "@/core/task-management";
+import type { Tag, TagInput } from "@/core/task-management";
 
 import { useTagsStore } from "./useTagsStore";
 
@@ -30,7 +30,7 @@ export function useTags(): TagsHookReturn {
 
   const createTag = useCallback<TagsHookReturn["createTag"]>(
     (input, callback) => {
-      tagsStore.addTag(input, async (tag) => {
+      tagsStore.addTag(input, (tag) => {
         if (callback) callback?.(tag);
         // TODO store tag in backend
       });
@@ -40,7 +40,7 @@ export function useTags(): TagsHookReturn {
 
   const updateTag = useCallback<TagsHookReturn["updateTag"]>(
     (tagId, updates) => {
-      tagsStore.updateTag(tagId, updates, (tag) => {
+      tagsStore.updateTag(tagId, updates, () => {
         // TODO update in backend
       });
     },

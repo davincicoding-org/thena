@@ -15,7 +15,6 @@ import {
   Menu,
   Modal,
   NavLink,
-  PaperProps,
   Popover,
   ScrollArea,
   Space,
@@ -28,7 +27,6 @@ import {
   IconAbc,
   IconCalendar,
   IconFilter,
-  IconProps,
   IconSearch,
   IconSortAscending,
   IconSortDescending,
@@ -40,8 +38,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { isEqual } from "lodash-es";
 
-import {
-  BACKLOG_SORT_OPTIONS,
+import type {
   BacklogFilters,
   BacklogSortOptions,
   BacklogTask,
@@ -52,6 +49,10 @@ import {
   TaskInput,
   TaskSelection,
 } from "@/core/task-management";
+import type { TaskFormProps } from "@/ui/task-management";
+import type { PaperProps } from "@mantine/core";
+import type { IconProps } from "@tabler/icons-react";
+import { BACKLOG_SORT_OPTIONS } from "@/core/task-management";
 import { Panel } from "@/ui/components/Panel";
 import { useSyncInputState } from "@/ui/hooks/useSyncState";
 import {
@@ -60,12 +61,11 @@ import {
   TagCreator,
   TaskForm,
   taskFormOpts,
-  TaskFormProps,
   useTaskForm,
 } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
-import { BacklogQueryOptionsHookReturn } from "./useBacklogQueryOptions";
+import type { BacklogQueryOptionsHookReturn } from "./useBacklogQueryOptions";
 
 dayjs.extend(relativeTime);
 
@@ -244,11 +244,11 @@ function BacklogHeader({
   sort,
   onSortUpdate,
 }: BacklogHeaderProps) {
-  const [searchValue, setSearchValue] = useSyncInputState(filters.search || "");
+  const [searchValue, setSearchValue] = useSyncInputState(filters.search ?? "");
 
   const resolveProject = useCallback(
     (projectId: string): Project =>
-      projects.find((project) => project.id === projectId) || {
+      projects.find((project) => project.id === projectId) ?? {
         id: projectId,
         name: projectId,
       },
@@ -257,7 +257,7 @@ function BacklogHeader({
 
   const resolveTag = useCallback(
     (tagId: string): Tag =>
-      tags.find((tag) => tag.id === tagId) || {
+      tags.find((tag) => tag.id === tagId) ?? {
         id: tagId,
         name: tagId,
       },
@@ -329,7 +329,7 @@ function BacklogHeader({
                                 ? filters.projectIds?.filter(
                                     (id) => id !== project.id,
                                   )
-                                : [...(filters.projectIds || []), project.id],
+                                : [...(filters.projectIds ?? []), project.id],
                             });
                           }}
                         />
@@ -350,7 +350,7 @@ function BacklogHeader({
                           label={tag.name}
                           leftSection={
                             <Box
-                              bg={tag.color || "gray"}
+                              bg={tag.color ?? "gray"}
                               className="h-4 w-4 rounded-full"
                             />
                           }
@@ -360,7 +360,7 @@ function BacklogHeader({
                             onFiltersUpdate({
                               tags: filters.tags?.includes(tag.id)
                                 ? filters.tags?.filter((id) => id !== tag.id)
-                                : [...(filters.tags || []), tag.id],
+                                : [...(filters.tags ?? []), tag.id],
                             });
                           }}
                         />
@@ -425,7 +425,7 @@ function BacklogHeader({
                   key={projectId}
                   component="button"
                   className="shrink-0 cursor-pointer!"
-                  color={project.color || "gray"}
+                  color={project.color ?? "gray"}
                   size="md"
                   variant="light"
                   autoContrast
@@ -454,7 +454,7 @@ function BacklogHeader({
                   key={tagId}
                   component="button"
                   className="shrink-0 cursor-pointer!"
-                  color={tag.color || "gray"}
+                  color={tag.color ?? "gray"}
                   size="md"
                   variant="light"
                   autoContrast
@@ -559,7 +559,7 @@ function TaskItem({
               size="xs"
               fullWidth
               onClick={(e) => {
-                form.handleSubmit();
+                void form.handleSubmit();
                 e.currentTarget.blur();
               }}
             >

@@ -6,14 +6,14 @@ import {
   Divider,
   Flex,
   Paper,
-  PaperProps,
   ScrollArea,
   Space,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 
-import { SprintPlan } from "@/core/deep-work";
-import { Task, TaskSelection } from "@/core/task-management";
+import type { SprintPlan } from "@/core/deep-work";
+import type { Task, TaskSelection } from "@/core/task-management";
+import type { PaperProps } from "@mantine/core";
 import { cn } from "@/ui/utils";
 
 import { SprintPanel } from "./SprintPanel";
@@ -67,7 +67,7 @@ export function SprintBuilder({
   }));
 
   const totalUnassignedTasks = unassignedTasks.reduce(
-    (acc, task) => acc + (task.subtasks?.length || 1),
+    (acc, task) => acc + (task.subtasks?.length ?? 1),
     0,
   );
 

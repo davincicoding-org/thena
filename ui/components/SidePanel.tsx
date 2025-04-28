@@ -1,12 +1,11 @@
-import { PropsWithChildren } from "react";
-import { Drawer, DrawerProps } from "@mantine/core";
-
-export interface SidePanelProps {}
+import type { PropsWithChildren } from "react";
+import type { DrawerProps } from "@mantine/core";
+import { Drawer } from "@mantine/core";
 
 export function SidePanel({
   children,
   ...props
-}: PropsWithChildren<SidePanelProps> & DrawerProps) {
+}: PropsWithChildren<DrawerProps>) {
   return (
     <Drawer
       position="right"

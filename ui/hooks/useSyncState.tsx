@@ -4,7 +4,7 @@ import { useInputState } from "@mantine/hooks";
 /**
  * Internal state that reacts to external state changes.
  */
-export const useSyncState = <T extends unknown>(externalState: T) => {
+export function useSyncState<T>(externalState: T) {
   const [state, setState] = useState<T>(externalState);
 
   useEffect(() => {
@@ -12,12 +12,12 @@ export const useSyncState = <T extends unknown>(externalState: T) => {
   }, [externalState]);
 
   return [state, setState] as const;
-};
+}
 
 /**
  * Internal state that reacts to external state changes.
  */
-export const useSyncInputState = <T extends unknown>(externalState: T) => {
+export function useSyncInputState<T>(externalState: T) {
   const [state, setState] = useInputState<T>(externalState);
 
   useEffect(() => {
@@ -25,4 +25,4 @@ export const useSyncInputState = <T extends unknown>(externalState: T) => {
   }, [externalState]);
 
   return [state, setState] as const;
-};
+}

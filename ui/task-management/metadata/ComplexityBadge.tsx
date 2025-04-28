@@ -1,6 +1,7 @@
-import { Badge, BadgeProps } from "@mantine/core";
+import type { BadgeProps } from "@mantine/core";
+import { Badge } from "@mantine/core";
 
-import { TaskComplexity } from "@/core/task-management";
+import type { TaskComplexity } from "@/core/task-management";
 
 export interface ComplexityBadgeProps {
   complexity: TaskComplexity;

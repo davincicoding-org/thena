@@ -1,20 +1,9 @@
-import {
-  cloneElement,
-  createContext,
-  ReactElement,
-  ReactNode,
-  useContext,
-  useEffect,
-} from "react";
-import {
-  Box,
-  BoxProps,
-  Overlay,
-  OverlayProps,
-  Transition,
-  TransitionProps,
-} from "@mantine/core";
+import type { ReactElement, ReactNode } from "react";
+import { cloneElement, createContext, useContext, useEffect } from "react";
+import { Box, Overlay, Transition } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+
+import type { BoxProps, OverlayProps, TransitionProps } from "@mantine/core";
 
 const Context = createContext<{
   isOpen: boolean;
@@ -26,8 +15,8 @@ const Context = createContext<{
   isOpen: false,
   disabled: false,
   trigger: "enter",
-  open: () => {},
-  close: () => {},
+  open: () => void 0,
+  close: () => void 0,
 });
 
 export interface BoundOverlayProps {

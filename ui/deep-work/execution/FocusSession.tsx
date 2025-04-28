@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { Box, Flex } from "@mantine/core";
 
-import {
+import type {
   FocusSessionBreak,
   FocusSessionStatus,
   SprintPlan,
@@ -31,13 +31,13 @@ export function FocusSession({
 
   const sprint = useSprint(currentSprint, {
     onStart: () => {
-      videoRef.current?.play();
+      void videoRef.current?.play();
     },
     onPause: () => {
       videoRef.current?.pause();
     },
     onResume: () => {
-      videoRef.current?.play();
+      void videoRef.current?.play();
     },
     onComplete: onFinishSprint,
   });

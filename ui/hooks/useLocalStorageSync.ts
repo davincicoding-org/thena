@@ -1,5 +1,5 @@
+import type { z, ZodSchema } from "zod";
 import { useEffect, useState } from "react";
-import { z, ZodSchema } from "zod";
 
 export function useLocalStorageSync<Schema extends ZodSchema>({
   key,
@@ -18,6 +18,8 @@ export function useLocalStorageSync<Schema extends ZodSchema>({
     if (typeof window === "undefined") return;
 
     const storedValue = localStorage.getItem(key);
+    // FIXME
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     read(storedValue ? schema.parse(JSON.parse(storedValue)) : null);
     setInitialized(true);
   }, []);

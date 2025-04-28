@@ -1,11 +1,12 @@
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
+import type {
+  ActionIconProps,
+  FlexProps,
+  OverlayProps} from "@mantine/core";
 import {
   ActionIcon,
-  ActionIconProps,
   Flex,
-  FlexProps,
-  Overlay,
-  OverlayProps,
+  Overlay
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconDotsVertical } from "@tabler/icons-react";

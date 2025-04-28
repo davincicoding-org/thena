@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { SprintPlan, SprintStatus, TaskRun, WithRun } from "@/core/deep-work";
-import { TaskReference } from "@/core/task-management";
+import type { SprintPlan, SprintStatus, TaskRun, WithRun } from "@/core/deep-work";
+import type { TaskReference } from "@/core/task-management";
 
 interface SprintRun {
   duration: number;

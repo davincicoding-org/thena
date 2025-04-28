@@ -1,11 +1,10 @@
-import { useArgs } from "@storybook/preview-api";
 import { fn } from "@storybook/test";
 
 import type { Meta, StoryObj } from "@storybook/react";
 
-import { Backlog, BacklogProps } from "./Backlog";
-import { useBacklogQueryOptions } from "./useBacklogQueryOptions";
+import { Backlog } from "./Backlog";
 
+// eslint-disable-next-line storybook/story-exports
 const meta = {
   component: Backlog,
   parameters: {
@@ -56,6 +55,7 @@ const meta = {
 } satisfies Meta<typeof Backlog>;
 
 export default meta;
+// eslint-disable-next-line  @typescript-eslint/no-unused-vars
 type Story = StoryObj<typeof meta>;
 
 // FIXME

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
-import { Tag } from "@/core/task-management";
+import type { Tag } from "@/core/task-management";
 import { createUniqueId } from "@/ui/utils";
 
 import { localDB } from "../../store";
@@ -26,7 +26,7 @@ interface TagsStoreState {
 export const useTagsStore = create<TagsStoreState>()(
   devtools(
     persist(
-      (set, get) => ({
+      (set) => ({
         pool: {},
         items: [],
         ready: false,
@@ -87,7 +87,8 @@ export const useTagsStore = create<TagsStoreState>()(
         },
         removeTag: (tagId) => {
           set((state) => {
-            const { [tagId]: _, ...remainingTags } = state.pool;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { [tagId]: _removedTag, ...remainingTags } = state.pool;
 
             return {
               pool: remainingTags,
@@ -111,10 +112,10 @@ export const useTagsStore = create<TagsStoreState>()(
             };
           },
           setItem: (name, { state }) => {
-            localDB.setItem(name, JSON.stringify(state.pool));
+            void localDB.setItem(name, JSON.stringify(state.pool));
           },
           removeItem: (name) => {
-            localDB.removeItem(name);
+            void localDB.removeItem(name);
           },
         },
       },

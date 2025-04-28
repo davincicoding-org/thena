@@ -7,7 +7,6 @@ import {
   Divider,
   FileButton,
   Flex,
-  Paper,
   Popover,
   SimpleGrid,
   Stack,
@@ -18,11 +17,8 @@ import { useClickOutside, useDisclosure } from "@mantine/hooks";
 import { IconUpload } from "@tabler/icons-react";
 import { useForm } from "@tanstack/react-form";
 
-import {
-  colorsEnum,
-  ProjectInput,
-  projectInputSchema,
-} from "@/core/task-management";
+import type { ProjectInput } from "@/core/task-management";
+import { colorsEnum, projectInputSchema } from "@/core/task-management";
 import { cn } from "@/ui/utils";
 
 export interface ProjectCreatorProps {
@@ -55,7 +51,7 @@ export function ProjectCreator({ onCreate }: ProjectCreatorProps) {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          form.handleSubmit();
+          void form.handleSubmit();
         }}
       >
         <Flex gap="md" p="lg">
@@ -85,7 +81,7 @@ export function ProjectCreator({ onCreate }: ProjectCreatorProps) {
               <form.Field
                 name="imageFile"
                 children={(field) => {
-                  const handleImageUpload = async (file: File | null) => {
+                  const handleImageUpload = (file: File | null) => {
                     if (!file) return;
                     field.handleChange(file);
                     avatarPanel.close();

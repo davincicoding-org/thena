@@ -1,3 +1,4 @@
+import { coreMessageSchema } from "ai";
 import { z } from "zod";
 
 import { taskSchema } from "@/core/task-management";
@@ -35,7 +36,7 @@ export const taskManagerResponseSchema = z.object({
 export type TaskManagerResponse = z.infer<typeof taskManagerResponseSchema>;
 
 export const taskManagerRequestSchema = z.object({
-  messages: z.array(z.any()),
+  messages: z.array(coreMessageSchema),
   tasks: z.array(taskSchema).nullable(),
 });
 export type TaskManagerRequest = z.infer<typeof taskManagerRequestSchema>;

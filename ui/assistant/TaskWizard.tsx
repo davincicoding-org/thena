@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { useChat } from "@ai-sdk/react";
-import { BoxProps, Button, Center, Flex, Stack } from "@mantine/core";
+import { Button, Center, Flex, Stack } from "@mantine/core";
 
+import type { BoxProps } from "@mantine/core";
 import { taskManagerResponseSchema } from "@/ui/assistant/schema";
 import { useKeyHold } from "@/ui/hooks/useKeyHold";
 import {
@@ -11,15 +12,14 @@ import {
   useTaskList,
 } from "@/ui/task-management";
 
-import {
-  AssistantIndicator,
-  AssistantIndicatorProps,
-} from "../assistant/AssistantIndicator";
+import type { AssistantIndicatorProps } from "../assistant/AssistantIndicator";
+import { AssistantIndicator } from "../assistant/AssistantIndicator";
 import { cn } from "../utils";
 import { useSpeechConfigStore } from "./speech-config";
 import { useSpeechRecognition } from "./useSpeechRecognition";
 import { useSpeechSynthesis } from "./useSpeechSynthesis";
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TaskWizardProps extends BoxProps {}
 
 export function TaskWizard({ ...boxProps }: TaskWizardProps) {
@@ -44,13 +44,13 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
     onResponse: async (response) => {
       const { reply, tasks, usage } = await response
         .json()
-        .then(taskManagerResponseSchema.parse);
+        .then((data) => taskManagerResponseSchema.parse(data));
 
       console.log(`🪙 ${usage.promptTokens} -> ${usage.completionTokens}`);
 
       if (tasks) setTasks(tasks);
       if (reply) {
-        speak(reply);
+        void speak(reply);
         chat.setMessages((prev) => [
           ...prev,
           {
@@ -76,14 +76,14 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
   useKeyHold({
     disabled: tasks === undefined,
     keyCode: ["AltLeft", "AltRight"],
-    onStart: async () => {
-      abortSpeech();
-      startListening();
+    onStart: () => {
+      void abortSpeech();
+      void startListening();
     },
     onRelease: async () => {
       const input = await stopListening();
       if (!input) return;
-      chat.append({
+      void chat.append({
         role: "user",
         content: input,
       });
@@ -92,13 +92,13 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
 
   return (
     <Center inline {...boxProps}>
-      // FIXME: Tasks are never undefined
+      {/*  FIXME: Tasks are never undefined */}
       {tasks === undefined ? (
         <Button
           variant="outline"
           size="lg"
           onClick={() => {
-            speak("What do you want to accomplish today?");
+            void speak("What do you want to accomplish today?");
           }}
         >
           Start
@@ -118,7 +118,7 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
                 onMoveTaskToBacklog={(task) => removeTask(task.id)}
                 onAddTask={(task) => addTask(task)}
                 onRefineTask={(task) => {
-                  chat.append({
+                  void chat.append({
                     role: "user",
                     content: `Refine the "${task.title}" task`,
                   });

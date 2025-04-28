@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
-import { BacklogTask } from "@/core/task-management";
+import type { BacklogTask } from "@/core/task-management";
 import { localDB } from "@/ui/store";
 import { createUniqueId } from "@/ui/utils";
 
@@ -15,16 +15,16 @@ interface BacklogStoreState {
   // Mutation actions
   addTask: (
     task: Omit<BacklogTask, "id" | "addedAt">,
-    callback?: (task: BacklogTask) => void,
+    callback?: (task: BacklogTask) => void | Promise<void>,
   ) => void;
   addTasks: (
     tasks: Omit<BacklogTask, "id" | "addedAt">[],
-    callback?: (tasks: BacklogTask[]) => void,
+    callback?: (tasks: BacklogTask[]) => void | Promise<void>,
   ) => void;
   updateTask: (
     taskId: BacklogTask["id"],
     update: Partial<Omit<BacklogTask, "id">>,
-    callback?: (task: BacklogTask) => void,
+    callback?: (task: BacklogTask) => void | Promise<void>,
   ) => void;
   removeTask: (taskId: BacklogTask["id"]) => void;
   removeTasks: (taskIds: BacklogTask["id"][]) => void;
@@ -33,7 +33,7 @@ interface BacklogStoreState {
 export const useBacklogStore = create<BacklogStoreState>()(
   devtools(
     persist(
-      (set, get) => ({
+      (set) => ({
         pool: {},
         items: [],
         ready: false,
@@ -45,7 +45,7 @@ export const useBacklogStore = create<BacklogStoreState>()(
               addedAt: new Date().toISOString(),
             };
 
-            callback?.(newTask);
+            void callback?.(newTask);
 
             const { id, ...taskData } = newTask;
 
@@ -76,7 +76,7 @@ export const useBacklogStore = create<BacklogStoreState>()(
               {},
             );
 
-            callback?.(Object.values(newTasks));
+            void callback?.(Object.values(newTasks));
 
             return {
               pool: {
@@ -94,7 +94,7 @@ export const useBacklogStore = create<BacklogStoreState>()(
             if (!existingTask) return state;
 
             const updatedTask = { ...existingTask, ...updates };
-            callback?.({ id: taskId, ...updatedTask });
+            void callback?.({ id: taskId, ...updatedTask });
 
             return {
               pool: {
@@ -106,6 +106,7 @@ export const useBacklogStore = create<BacklogStoreState>()(
         },
         removeTask: (taskId) => {
           set((state) => {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { [taskId]: _removedTask, ...remainingTasks } = state.pool;
 
             return {
@@ -146,10 +147,10 @@ export const useBacklogStore = create<BacklogStoreState>()(
             };
           },
           setItem: (name, { state }) => {
-            localDB.setItem(name, JSON.stringify(state.pool));
+            void localDB.setItem(name, JSON.stringify(state.pool));
           },
           removeItem: (name) => {
-            localDB.removeItem(name);
+            void localDB.removeItem(name);
           },
         },
       },

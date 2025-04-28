@@ -4,7 +4,8 @@ import { fn } from "@storybook/test";
 import type { Meta, StoryObj } from "@storybook/react";
 import { MOCK_PROJECTS, MOCK_TAGS } from "@/core/task-management/mock";
 
-import { TaskCollector, TaskCollectorProps } from "./TaskCollector";
+import type { TaskCollectorProps } from "./TaskCollector";
+import { TaskCollector } from "./TaskCollector";
 
 const meta = {
   component: TaskCollector,

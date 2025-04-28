@@ -1,4 +1,5 @@
-import { Fragment, ReactElement } from "react";
+import type { ReactElement } from "react";
+import { Fragment } from "react";
 import {
   ActionIcon,
   Box,
@@ -7,9 +8,7 @@ import {
   Divider,
   Flex,
   NavLink,
-  NavLinkProps,
   Paper,
-  PaperProps,
   Progress,
   Tooltip,
 } from "@mantine/core";
@@ -20,7 +19,8 @@ import {
 } from "@tabler/icons-react";
 
 import type { SprintStatus, TaskRun } from "@/core/deep-work";
-import { TaskReference } from "@/core/task-management";
+import type { TaskReference } from "@/core/task-management";
+import type { NavLinkProps, PaperProps } from "@mantine/core";
 import { BoundOverlay } from "@/ui/components/BoundOverlay";
 import { cn } from "@/ui/utils";
 
@@ -308,7 +308,7 @@ function TaskControlItem({
   return (
     <BoundOverlay
       isTrigger
-      disabled={readOnly || actions.length === 0}
+      disabled={readOnly ?? actions.length === 0}
       content={
         <Flex
           className="h-full"
@@ -327,7 +327,7 @@ function TaskControlItem({
         description={group}
         component="div"
         py={status === "active" ? undefined : 4}
-        disabled={readOnly || actions.length === 0 || status === "upcoming"}
+        disabled={readOnly ?? actions.length === 0 ?? status === "upcoming"}
         active={status !== "active"}
         color={color}
         classNames={{

@@ -1,14 +1,14 @@
 import { useRef } from "react";
+import type {
+  PaperProps} from "@mantine/core";
 import {
   ActionIcon,
   Box,
   Button,
-  Collapse,
   Divider,
   Flex,
   Modal,
   Paper,
-  PaperProps,
   ScrollArea,
   Stack,
   Text,
@@ -19,26 +19,28 @@ import { IconPlus, IconTrash, IconX } from "@tabler/icons-react";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 
-import {
+import type {
   Project,
   ProjectInput,
   Tag,
   TagInput,
   Task,
-  TaskInput,
+  TaskInput} from "@/core/task-management";
+import {
   taskInputSchema,
   taskSchema,
 } from "@/core/task-management";
+import type {
+  TaskFormProps} from "@/ui/task-management";
 import {
   ProjectCreator,
   TagCreator,
   TaskForm,
-  TaskFormProps,
   useTaskForm,
 } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
-export type TaskCollectorProps = {
+export interface TaskCollectorProps {
   items: Task[];
   onUpdateTask: (taskId: Task["id"], updates: Partial<Task>) => void;
   onRemoveTask: (taskId: Task["id"]) => void;
@@ -54,7 +56,7 @@ export type TaskCollectorProps = {
   onCreateTag: (tag: TagInput, onCreate: (tag: Tag) => void) => void;
   allowPullFromBacklog?: boolean;
   onRequestToPullFromBacklog?: () => void;
-};
+}
 
 export function TaskCollector({
   items,

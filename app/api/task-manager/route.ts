@@ -1,5 +1,6 @@
+import type { CoreMessage } from "ai";
 import { openai } from "@ai-sdk/openai";
-import { generateObject, Message, NoObjectGeneratedError } from "ai";
+import { generateObject, NoObjectGeneratedError } from "ai";
 import { z } from "zod";
 
 import { taskSchema } from "@/core/task-management";
@@ -11,9 +12,9 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
   const { messages: clientMessages, tasks } = await req
     .json()
-    .then(taskManagerRequestSchema.parse);
+    .then((data) => taskManagerRequestSchema.parse(data));
 
-  const messages: Array<Omit<Message, "id">> = [
+  const messages: CoreMessage[] = [
     {
       role: "system",
       content: `You are a task management assistant.
@@ -56,10 +57,9 @@ export async function POST(req: Request) {
     ...clientMessages,
     {
       role: "system",
-      content:
-        tasks && tasks.length
-          ? `This is the user's current task list: ${JSON.stringify(tasks)}`
-          : "The user's task list is empty.",
+      content: tasks?.length
+        ? `This is the user's current task list: ${JSON.stringify(tasks)}`
+        : "The user's task list is empty.",
     },
   ];
 

@@ -1,9 +1,9 @@
 import { useRef } from "react";
 
-export type ActionSideEffect = {
+export interface ActionSideEffect {
   apply: () => void;
   revert?: () => void;
-};
+}
 
 export interface HistoryEvent<Action> {
   event: "push" | "undo" | "redo";

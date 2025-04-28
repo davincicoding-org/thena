@@ -4,10 +4,11 @@ import { action } from "@storybook/addon-actions";
 import { fn } from "@storybook/test";
 
 import type { Meta, StoryObj } from "@storybook/react";
-import { TaskInput } from "@/core/task-management";
+import type { TaskInput } from "@/core/task-management";
 import { MOCK_PROJECTS, MOCK_TAGS } from "@/core/task-management/mock";
 
-import { TaskForm, TaskFormProps } from "./TaskForm";
+import type { TaskFormProps } from "./TaskForm";
+import { TaskForm } from "./TaskForm";
 import { taskFormOpts, useTaskForm } from "./useTaskForm";
 
 interface PlaygroundProps extends TaskFormProps {
@@ -188,7 +189,7 @@ export const WithEverything: Story = {
 
 export const WithCustomActions: Story = {
   args: {
-    TaskActions: ({ defaultActions }) => (
+    TaskActions: () => (
       <Button fullWidth variant="subtle" onClick={action("refine")}>
         Refine
       </Button>

@@ -1,6 +1,7 @@
-import { Badge, BadgeProps } from "@mantine/core";
+import { Badge } from "@mantine/core";
 
-import { Tag } from "@/core/task-management";
+import type { Tag } from "@/core/task-management";
+import type { BadgeProps } from "@mantine/core";
 
 export interface TagBadgeProps {
   tag: Tag;
@@ -8,7 +9,7 @@ export interface TagBadgeProps {
 
 export function TagBadge({ tag, ...props }: TagBadgeProps & BadgeProps) {
   return (
-    <Badge color={tag.color || "gray"} variant="dot" autoContrast {...props}>
+    <Badge color={tag.color ?? "gray"} variant="dot" autoContrast {...props}>
       {tag.name}
     </Badge>
   );

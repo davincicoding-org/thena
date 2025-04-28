@@ -1,6 +1,7 @@
-import { Badge, BadgeProps } from "@mantine/core";
+import type { BadgeProps } from "@mantine/core";
+import { Badge } from "@mantine/core";
 
-import { TaskPriority } from "@/core/task-management";
+import type { TaskPriority } from "@/core/task-management";
 
 export interface PriorityBadgeProps {
   priority: TaskPriority;

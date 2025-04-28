@@ -21,8 +21,6 @@ const speechSynthesisConfigBrowserSchema = z.object({
   voice: z.string().default("Google UK English Male"),
 });
 
-type SpeechSynthesisConfig = z.infer<typeof speechSynthesisConfigBrowserSchema>;
-
 const speechSynthesisConfigSchema = z.discriminatedUnion("provider", [
   speechSynthesisConfigBrowserSchema,
 ]);
@@ -30,10 +28,6 @@ const speechSynthesisConfigSchema = z.discriminatedUnion("provider", [
 const speechRecognitionConfigBrowserSchema = z.object({
   provider: z.literal("browser").default("browser"),
 });
-
-type SpeechRecognitionConfig = z.infer<
-  typeof speechRecognitionConfigBrowserSchema
->;
 
 const speechRecognitionConfigSchema = z.discriminatedUnion("provider", [
   speechRecognitionConfigBrowserSchema,

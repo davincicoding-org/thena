@@ -17,8 +17,9 @@ import {
 import { IconVolume, IconX } from "@tabler/icons-react";
 
 import type { SupportedLang } from "@/ui/assistant";
+import type {
+  LLMConfig} from "@/core/config/models";
 import {
-  LLMConfig,
   LLMConfigSchema,
   useModelsConfigStore,
 } from "@/core/config/models";

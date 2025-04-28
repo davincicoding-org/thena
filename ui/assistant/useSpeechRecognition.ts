@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { SupportedLang } from "./speech-config";
+import type { SupportedLang } from "./speech-config";
 
 export function useSpeechRecognition({
   lang,
@@ -52,6 +52,8 @@ export function useSpeechRecognition({
       // Store handlers as refs so we can remove them
       const errorHandler = (event: SpeechRecognitionErrorEvent) => {
         onError?.(event);
+
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
         reject(event);
       };
 
@@ -119,6 +121,7 @@ export function useSpeechRecognition({
         }
 
         onError?.(event);
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
         reject(event);
       };
 

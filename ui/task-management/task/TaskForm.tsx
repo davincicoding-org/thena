@@ -1,12 +1,10 @@
-import {
-  Fragment,
+import type {
   FunctionComponent,
   HTMLAttributes,
   ReactElement,
   ReactNode,
-  useEffect,
-  useRef,
 } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import {
   ActionIcon,
   Box,
@@ -17,9 +15,7 @@ import {
   Flex,
   Group,
   Menu,
-  MenuProps,
   Paper,
-  PaperProps,
   Popover,
   ScrollArea,
   Text,
@@ -28,17 +24,20 @@ import {
 } from "@mantine/core";
 import { useDisclosure, useInputState } from "@mantine/hooks";
 import { IconDotsVertical, IconPlus, IconX } from "@tabler/icons-react";
-import { Updater, useForm } from "@tanstack/react-form";
-import { nanoid } from "nanoid";
+import { useForm } from "@tanstack/react-form";
 
-import {
-  baseTaskSchema,
+import type {
   Project,
   Subtask,
   Tag,
   TaskComplexity,
-  taskComplexityEnum,
   TaskPriority,
+} from "@/core/task-management";
+import type { MenuProps, PaperProps } from "@mantine/core";
+import type { Updater } from "@tanstack/react-form";
+import {
+  baseTaskSchema,
+  taskComplexityEnum,
   taskPriorityEnum,
 } from "@/core/task-management";
 import {
@@ -55,6 +54,7 @@ type TaskActionsComponent = FunctionComponent<{ defaultActions: ReactNode }>;
 
 // MARK: Component
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type TaskFormProps = {
   containerProps?: PaperProps & HTMLAttributes<HTMLDivElement>;
   projects: Project[];
@@ -79,6 +79,7 @@ export const TaskForm = withTaskForm({
     TaskActions = (({ defaultActions }) =>
       defaultActions) as TaskActionsComponent,
   }) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     const [isAddingSubtask, subtaskAdder] = useDisclosure(false);
 
     const resolveTag = (tagId: Tag["id"]) =>
@@ -198,7 +199,7 @@ export const TaskForm = withTaskForm({
           children={(subtasksField) => {
             const handleAddSubtask = (values: Omit<Subtask, "id">) => {
               subtasksField.pushValue({
-                id: createUniqueId(subtasksField.state.value || [], 4),
+                id: createUniqueId(subtasksField.state.value ?? [], 4),
                 ...values,
               });
             };
@@ -278,7 +279,7 @@ const TaskHeader = withTaskForm({
                     onChange={(e) => field.handleChange(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
-                        form.handleSubmit();
+                        void form.handleSubmit();
                         e.currentTarget.blur();
                       }
                     }}
@@ -401,13 +402,13 @@ const SubtaskForm = withTaskForm({
                     "h-8! min-h-0! truncate bg-transparent! px-1.5! not-focus:border-transparent! read-only:border-transparent!",
                   ),
                 }}
-                value={subField.state.value || ""}
+                value={subField.state.value ?? ""}
                 readOnly={readOnly}
                 onChange={(e) => subField.handleChange(e.target.value)}
                 error={subField.state.meta.errors.length > 0}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    form.handleSubmit();
+                    void form.handleSubmit();
                     e.currentTarget.blur();
                   }
                 }}
@@ -841,7 +842,7 @@ function SubtaskAdder({
                 onBlur={onCancel}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    form.handleSubmit();
+                    void form.handleSubmit();
                   }
                 }}
               />

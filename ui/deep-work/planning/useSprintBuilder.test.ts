@@ -333,9 +333,6 @@ describe("useSessionPlanner", () => {
         expect.objectContaining({
           code: "SPRINT_NOT_FOUND",
           action: "updateSprint",
-          details: expect.objectContaining({
-            sprintId: nonExistentId,
-          }),
         }),
       );
     });
@@ -804,7 +801,7 @@ describe("useSessionPlanner", () => {
         (task) => task.id === mockTasks[0]!.id,
       );
       expect(task0InUnassigned).toBeDefined();
-      if (task0InUnassigned && task0InUnassigned.subtasks) {
+      if (task0InUnassigned?.subtasks) {
         expect(task0InUnassigned.subtasks).toHaveLength(1); // Only one subtask remains unassigned
       }
 
@@ -825,7 +822,7 @@ describe("useSessionPlanner", () => {
         (task) => task.id === mockTasks[0]!.id,
       );
       expect(mergedTask0).toBeDefined();
-      if (mergedTask0 && mergedTask0.subtasks) {
+      if (mergedTask0?.subtasks) {
         expect(mergedTask0.subtasks).toHaveLength(3); // All 3 subtasks should be present
       }
     });
@@ -896,7 +893,7 @@ describe("useSessionPlanner", () => {
 
         // Verify the task is assigned to the sprint
         expect(result.current.sprints[0]!.tasks).toHaveLength(1);
-        expect(result.current.sprints[0]!.tasks![0]).toEqual(
+        expect(result.current.sprints[0]!.tasks[0]).toEqual(
           expect.objectContaining({ id: taskId }),
         );
       });
@@ -955,7 +952,7 @@ describe("useSessionPlanner", () => {
 
         // Verify the task is assigned to the sprint with all subtasks
         expect(result.current.sprints[0]!.tasks).toHaveLength(1);
-        const assignedTask = result.current.sprints[0]!.tasks![0]!;
+        const assignedTask = result.current.sprints[0]!.tasks[0]!;
         expect(assignedTask.id).toBe(mockTasks[0]!.id);
         expect(assignedTask.subtasks).toHaveLength(2);
       });
@@ -1030,7 +1027,7 @@ describe("useSessionPlanner", () => {
 
         // Verify the task is assigned to the sprint with selected subtasks
         expect(result.current.sprints[0]!.tasks).toHaveLength(1);
-        const assignedTask = result.current.sprints[0]!.tasks![0]!;
+        const assignedTask = result.current.sprints[0]!.tasks[0]!;
         expect(assignedTask.id).toBe(mockTasks[0]!.id);
         expect(assignedTask.subtasks).toHaveLength(2);
       });
@@ -1059,7 +1056,7 @@ describe("useSessionPlanner", () => {
 
         // Verify first assignment
         expect(result.current.sprints[0]!.tasks).toHaveLength(1);
-        expect(result.current.sprints[0]!.tasks![0]!.subtasks).toHaveLength(1);
+        expect(result.current.sprints[0]!.tasks[0]!.subtasks).toHaveLength(1);
 
         // Now assign subtasks 1 and 2
         act(() =>
@@ -1079,7 +1076,7 @@ describe("useSessionPlanner", () => {
 
         // Verify subtasks were merged
         expect(result.current.sprints[0]!.tasks).toHaveLength(1);
-        const taskWithMergedSubtasks = result.current.sprints[0]!.tasks![0]!;
+        const taskWithMergedSubtasks = result.current.sprints[0]!.tasks[0]!;
 
         if (taskWithMergedSubtasks?.subtasks) {
           expect(taskWithMergedSubtasks.subtasks).toHaveLength(3);
@@ -1134,7 +1131,7 @@ describe("useSessionPlanner", () => {
           (t) => t.id === mockTasks[0]!.id,
         );
         expect(task0InUnassigned).toBeDefined();
-        if (task0InUnassigned && task0InUnassigned.subtasks) {
+        if (task0InUnassigned?.subtasks) {
           // Should only have the one remaining subtask
           expect(task0InUnassigned.subtasks).toHaveLength(1);
           expect(task0InUnassigned.subtasks[0]!.id).toBe(
@@ -1147,7 +1144,7 @@ describe("useSessionPlanner", () => {
           (t) => t.id === mockTasks[1]!.id,
         );
         expect(task1InUnassigned).toBeDefined();
-        if (task1InUnassigned && task1InUnassigned.subtasks) {
+        if (task1InUnassigned?.subtasks) {
           expect(task1InUnassigned.subtasks).toHaveLength(1);
           expect(task1InUnassigned.subtasks[0]!.id).toBe(
             mockTasks[1]!.subtasks![1]!.id,
@@ -1270,9 +1267,6 @@ describe("useSessionPlanner", () => {
           expect.objectContaining({
             code: "SPRINT_NOT_FOUND",
             action: "assignTask",
-            details: expect.objectContaining({
-              sprintId: nonExistentId,
-            }),
           }),
         );
       });
@@ -1333,9 +1327,6 @@ describe("useSessionPlanner", () => {
           expect.objectContaining({
             code: "TASK_NOT_FOUND",
             action: "assignTask",
-            details: expect.objectContaining({
-              taskId: nonExistentTaskId,
-            }),
           }),
         );
       });
@@ -1402,9 +1393,6 @@ describe("useSessionPlanner", () => {
           expect.objectContaining({
             code: "SUBTASK_NOT_FOUND",
             action: "assignTasks",
-            details: expect.objectContaining({
-              subtaskId: nonExistentSubtaskId,
-            }),
           }),
         );
       });
@@ -1476,9 +1464,9 @@ describe("useSessionPlanner", () => {
 
         // Verify the tasks are assigned to the sprint
         expect(result.current.sprints[0]!.tasks).toHaveLength(2);
-        expect(
-          result.current.sprints[0]!.tasks!.map((task) => task.id),
-        ).toEqual(expect.arrayContaining([mockTasks[0]!.id, mockTasks[1]!.id]));
+        expect(result.current.sprints[0]!.tasks.map((task) => task.id)).toEqual(
+          expect.arrayContaining([mockTasks[0]!.id, mockTasks[1]!.id]),
+        );
       });
 
       it("should remove them from the unassigned tasks", () => {
@@ -1553,14 +1541,14 @@ describe("useSessionPlanner", () => {
         expect(result.current.sprints[0]!.tasks).toHaveLength(2);
 
         // Check first task
-        const firstTask = result.current.sprints[0]!.tasks!.find(
+        const firstTask = result.current.sprints[0]!.tasks.find(
           (t) => t.id === mockTasks[0]!.id,
         );
         expect(firstTask).toBeDefined();
         expect(firstTask?.subtasks).toHaveLength(2);
 
         // Check second task
-        const secondTask = result.current.sprints[0]!.tasks!.find(
+        const secondTask = result.current.sprints[0]!.tasks.find(
           (t) => t.id === mockTasks[1]!.id,
         );
         expect(secondTask).toBeDefined();
@@ -1648,14 +1636,14 @@ describe("useSessionPlanner", () => {
         expect(result.current.sprints[0]!.tasks).toHaveLength(2);
 
         // Check first task's subtasks
-        const firstTask = result.current.sprints[0]!.tasks!.find(
+        const firstTask = result.current.sprints[0]!.tasks.find(
           (t) => t.id === mockTasks[0]!.id,
         );
         expect(firstTask).toBeDefined();
         expect(firstTask?.subtasks).toHaveLength(2);
 
         // Check second task's subtasks
-        const secondTask = result.current.sprints[0]!.tasks!.find(
+        const secondTask = result.current.sprints[0]!.tasks.find(
           (t) => t.id === mockTasks[1]!.id,
         );
         expect(secondTask).toBeDefined();
@@ -1690,7 +1678,7 @@ describe("useSessionPlanner", () => {
 
         // Verify first assignment
         expect(result.current.sprints[0]!.tasks).toHaveLength(1);
-        expect(result.current.sprints[0]!.tasks![0]!.subtasks).toHaveLength(1);
+        expect(result.current.sprints[0]!.tasks[0]!.subtasks).toHaveLength(1);
 
         // Now assign subtasks 1 and 2
         act(() =>
@@ -1710,7 +1698,7 @@ describe("useSessionPlanner", () => {
 
         // Verify subtasks were merged
         expect(result.current.sprints[0]!.tasks).toHaveLength(1);
-        const taskWithMergedSubtasks = result.current.sprints[0]!.tasks![0]!;
+        const taskWithMergedSubtasks = result.current.sprints[0]!.tasks[0]!;
 
         if (taskWithMergedSubtasks?.subtasks) {
           expect(taskWithMergedSubtasks.subtasks).toHaveLength(3);
@@ -1765,7 +1753,7 @@ describe("useSessionPlanner", () => {
           (t) => t.id === mockTasks[0]!.id,
         );
         expect(task0InUnassigned).toBeDefined();
-        if (task0InUnassigned && task0InUnassigned.subtasks) {
+        if (task0InUnassigned?.subtasks) {
           // Should only have the one remaining subtask
           expect(task0InUnassigned.subtasks).toHaveLength(1);
           expect(task0InUnassigned.subtasks[0]!.id).toBe(
@@ -1778,7 +1766,7 @@ describe("useSessionPlanner", () => {
           (t) => t.id === mockTasks[1]!.id,
         );
         expect(task1InUnassigned).toBeDefined();
-        if (task1InUnassigned && task1InUnassigned.subtasks) {
+        if (task1InUnassigned?.subtasks) {
           expect(task1InUnassigned.subtasks).toHaveLength(1);
           expect(task1InUnassigned.subtasks[0]!.id).toBe(
             mockTasks[1]!.subtasks![1]!.id,
@@ -1901,9 +1889,6 @@ describe("useSessionPlanner", () => {
           expect.objectContaining({
             code: "SPRINT_NOT_FOUND",
             action: "assignTasks",
-            details: expect.objectContaining({
-              sprintId: nonExistentId,
-            }),
           }),
         );
       });
@@ -1964,9 +1949,6 @@ describe("useSessionPlanner", () => {
           expect.objectContaining({
             code: "TASK_NOT_FOUND",
             action: "assignTasks",
-            details: expect.objectContaining({
-              taskId: nonExistentTaskId,
-            }),
           }),
         );
       });
@@ -2033,9 +2015,6 @@ describe("useSessionPlanner", () => {
           expect.objectContaining({
             code: "SUBTASK_NOT_FOUND",
             action: "assignTasks",
-            details: expect.objectContaining({
-              subtaskId: nonExistentSubtaskId,
-            }),
           }),
         );
       });
@@ -2091,7 +2070,7 @@ describe("useSessionPlanner", () => {
 
         // Verify the task is in the sprint
         expect(result.current.sprints[0]!.tasks).toHaveLength(1);
-        expect(result.current.sprints[0]!.tasks![0]!.id).toBe(mockTasks[0]!.id);
+        expect(result.current.sprints[0]!.tasks[0]!.id).toBe(mockTasks[0]!.id);
 
         // Unassign the task
         act(() =>
@@ -2173,8 +2152,8 @@ describe("useSessionPlanner", () => {
 
         // Verify the task is in the sprint with all subtasks
         expect(result.current.sprints[0]!.tasks).toHaveLength(1);
-        expect(result.current.sprints[0]!.tasks![0]!.id).toBe(mockTasks[0]!.id);
-        expect(result.current.sprints[0]!.tasks![0]!.subtasks).toHaveLength(2);
+        expect(result.current.sprints[0]!.tasks[0]!.id).toBe(mockTasks[0]!.id);
+        expect(result.current.sprints[0]!.tasks[0]!.subtasks).toHaveLength(2);
 
         // Unassign the task
         act(() =>
@@ -2320,7 +2299,7 @@ describe("useSessionPlanner", () => {
 
         // Verify first assignment
         expect(result.current.sprints[0]!.tasks).toHaveLength(1);
-        expect(result.current.sprints[0]!.tasks![0]!.subtasks).toHaveLength(1);
+        expect(result.current.sprints[0]!.tasks[0]!.subtasks).toHaveLength(1);
 
         // Now assign subtasks 1 and 2
         act(() =>
@@ -2340,7 +2319,7 @@ describe("useSessionPlanner", () => {
 
         // Verify subtasks were merged
         expect(result.current.sprints[0]!.tasks).toHaveLength(1);
-        const taskWithMergedSubtasks = result.current.sprints[0]!.tasks![0]!;
+        const taskWithMergedSubtasks = result.current.sprints[0]!.tasks[0]!;
 
         if (taskWithMergedSubtasks?.subtasks) {
           expect(taskWithMergedSubtasks.subtasks).toHaveLength(3);

@@ -1,11 +1,12 @@
 import { useCallback, useState } from "react";
 
-import {
-  excludeTaskSelection,
-  mergeTaskSelections,
+import type {
   SubtaskReference,
   Task,
-  TaskSelection,
+  TaskSelection} from "@/core/task-management";
+import {
+  excludeTaskSelection,
+  mergeTaskSelections
 } from "@/core/task-management";
 
 export interface TaskSelectionHookReturn<T extends Task> {

@@ -1,3 +1,5 @@
+import type {
+  PaperProps} from "@mantine/core";
 import {
   ActionIcon,
   Button,
@@ -7,14 +9,13 @@ import {
   Menu,
   NavLink,
   Paper,
-  PaperProps,
   ScrollArea,
   Stack,
   Text,
 } from "@mantine/core";
 import { IconArrowLeft, IconX } from "@tabler/icons-react";
 
-import { SubtaskReference, Task, TaskSelection } from "@/core/task-management";
+import type { SubtaskReference, Task, TaskSelection } from "@/core/task-management";
 import { useTaskSelection } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 

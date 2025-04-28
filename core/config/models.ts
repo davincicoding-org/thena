@@ -29,11 +29,6 @@ export const LLMConfigSchema = z.discriminatedUnion("provider", [
 ]);
 export type LLMConfig = z.infer<typeof LLMConfigSchema>;
 
-const modelsConfigSchema = z.object({
-  llm: LLMConfigSchema,
-});
-export type ModelsConfig = z.infer<typeof modelsConfigSchema>;
-
 interface ModelsConfigState {
   llm: LLMConfig;
   switchLLMProvider: (provider: LLMConfig["provider"]) => void;

@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 
-import { Project, ProjectInput } from "@/core/task-management";
+import type { Project, ProjectInput } from "@/core/task-management";
 import { uploadImage } from "@/server/actions";
 
 import { useProjectsStore } from "./useProjectsStore";
@@ -51,7 +51,7 @@ export function useProjects(): ProjectsHookReturn {
 
   const updateProject = useCallback<ProjectsHookReturn["updateProject"]>(
     (projectId, updates) => {
-      projectsStore.updateProject(projectId, updates, (project) => {
+      projectsStore.updateProject(projectId, updates, () => {
         // TODO update in backend
       });
     },

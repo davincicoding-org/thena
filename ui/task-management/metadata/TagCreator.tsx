@@ -10,10 +10,11 @@ import {
   Textarea,
   TextInput,
 } from "@mantine/core";
-import { useClickOutside, useDisclosure } from "@mantine/hooks";
+import { useDisclosure } from "@mantine/hooks";
 import { useForm } from "@tanstack/react-form";
 
-import { colorsEnum, TagInput, tagInputSchema } from "@/core/task-management";
+import type { TagInput } from "@/core/task-management";
+import { colorsEnum, tagInputSchema } from "@/core/task-management";
 import { cn } from "@/ui/utils";
 
 export interface TagCreatorProps {
@@ -34,14 +35,13 @@ export function TagCreator({ onCreate }: TagCreatorProps) {
   });
 
   const [isColorPanelOpen, colorPanel] = useDisclosure(false);
-  const avatarPanelRef = useClickOutside(() => {});
 
   return (
     <Paper p="md" shadow="xs" radius="md" withBorder>
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          form.handleSubmit();
+          void form.handleSubmit();
         }}
       >
         <Stack gap="lg">
@@ -66,7 +66,7 @@ export function TagCreator({ onCreate }: TagCreatorProps) {
                           selector={(state) => state.values.color}
                         >
                           <Box
-                            bg={field.state.value || "gray"}
+                            bg={field.state.value ?? "gray"}
                             className={cn(
                               "h-6 w-6 cursor-pointer rounded-full",
                             )}
@@ -74,7 +74,7 @@ export function TagCreator({ onCreate }: TagCreatorProps) {
                         </form.Subscribe>
                       </ActionIcon>
                     </Popover.Target>
-                    <Popover.Dropdown ref={avatarPanelRef} p={0}>
+                    <Popover.Dropdown p={0}>
                       <SimpleGrid cols={4} p="xs" className="gap-1!">
                         {colorsEnum.options.map((color) => (
                           <ActionIcon

@@ -1,6 +1,6 @@
 import { groupBy } from "lodash-es";
 
-import { Task, TaskSelection } from "./types";
+import type { Task, TaskSelection } from "./types";
 
 export const resolveTaskSelection = (
   taskSelection: TaskSelection,
@@ -39,7 +39,7 @@ export const mergeTaskSelections = (
   return Object.entries(groupedByTaskId).map<TaskSelection>(
     ([taskId, taskSelectionsByTaskId]) => {
       const subtaskIds = taskSelectionsByTaskId.flatMap(
-        ({ subtaskIds }) => subtaskIds || [],
+        ({ subtaskIds }) => subtaskIds ?? [],
       );
 
       return {

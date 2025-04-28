@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useDisclosure, useWindowEvent } from "@mantine/hooks";
+import { useWindowEvent } from "@mantine/hooks";
 
 export const useKeyHold = ({
   keyCode,
@@ -9,7 +9,7 @@ export const useKeyHold = ({
 }: {
   keyCode: string | string[];
   onStart: () => void;
-  onRelease: () => void;
+  onRelease: () => void | Promise<void>;
   disabled?: boolean;
 }) => {
   const [isHeld, setIsHeld] = useState(false);
@@ -33,7 +33,7 @@ export const useKeyHold = ({
     if (!isHeld) return;
     onStart();
     return () => {
-      onRelease();
+      void onRelease();
     };
   }, [isHeld]);
 };

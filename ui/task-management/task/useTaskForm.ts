@@ -4,7 +4,8 @@ import {
   formOptions,
 } from "@tanstack/react-form";
 
-import { TaskInput, taskInputSchema } from "@/core/task-management";
+import type { TaskInput} from "@/core/task-management";
+import { taskInputSchema } from "@/core/task-management";
 
 export const { fieldContext, formContext, useFieldContext } =
   createFormHookContexts();

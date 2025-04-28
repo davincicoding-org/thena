@@ -1,12 +1,14 @@
-import { Task, TaskInput } from "@/core/task-management";
-import {
+import type { Task, TaskInput } from "@/core/task-management";
+import type {
   ActionSideEffect,
   HistoryEvent,
-  HistoryHookReturn,
+  HistoryHookReturn} from "@/ui/hooks/useHistory";
+import {
   useHistory,
 } from "@/ui/hooks/useHistory";
 
-import { TaskListAction, useTaskListReducer } from "./useTaskListReducer";
+import type { TaskListAction} from "./useTaskListReducer";
+import { useTaskListReducer } from "./useTaskListReducer";
 
 export interface TaskListHookOptions {
   initialTasks?: Task[];

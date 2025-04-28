@@ -1,4 +1,6 @@
 import { Fragment, useRef } from "react";
+import type {
+  PaperProps} from "@mantine/core";
 import {
   ActionIcon,
   Box,
@@ -11,15 +13,14 @@ import {
   NavLink,
   NumberInput,
   Paper,
-  PaperProps,
   ScrollArea,
   Stack,
   Text,
 } from "@mantine/core";
 import { IconClock, IconDotsVertical } from "@tabler/icons-react";
 
-import { SprintPlan } from "@/core/deep-work";
-import { TaskSelection } from "@/core/task-management";
+import type { SprintPlan } from "@/core/deep-work";
+import type { TaskSelection } from "@/core/task-management";
 import { BoundOverlay } from "@/ui/components/BoundOverlay";
 import { Panel } from "@/ui/components/Panel";
 import { cn } from "@/ui/utils";
