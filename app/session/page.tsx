@@ -6,6 +6,7 @@ import {
   AppShell,
   Box,
   Button,
+  Divider,
   Flex,
   HoverCard,
   LoadingOverlay,
@@ -162,7 +163,12 @@ export default function SessionPage() {
       <AppShell.Main display="flex" className="h-dvh flex-col">
         <Tabs
           value={stage}
-          className="flex! h-full min-h-0 grow-0 flex-col!"
+          className={cn(
+            "flex! h-full min-h-0 grow-0 flex-col! transition-opacity duration-500",
+            {
+              "opacity-0": !localStorageSync.initialized,
+            },
+          )}
           classNames={{
             panel: "my-auto min-h-0",
             tabLabel: "text-5xl font-thin",
@@ -201,7 +207,9 @@ export default function SessionPage() {
             />
           </Tabs.Panel>
 
-          <Flex align="center" px="xl" py="md" gap={4}>
+          <Divider />
+
+          <Flex align="center" px="xl" py="lg" gap={4}>
             <Button
               size="xl"
               flex={1}
