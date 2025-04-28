@@ -7,6 +7,7 @@ import {
   Divider,
   FileButton,
   Flex,
+  Paper,
   Popover,
   SimpleGrid,
   Stack,
@@ -50,14 +51,14 @@ export function ProjectCreator({ onCreate }: ProjectCreatorProps) {
   const [imagePreview, setImagePreview] = useState<string>();
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        form.handleSubmit();
-      }}
-    >
-      <Stack gap="lg">
-        <Flex gap="md">
+    <Box>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          form.handleSubmit();
+        }}
+      >
+        <Flex gap="md" p="lg">
           <Popover
             opened={isAvatarPanelOpen}
             position="bottom-start"
@@ -189,15 +190,22 @@ export function ProjectCreator({ onCreate }: ProjectCreatorProps) {
             />
           </Stack>
         </Flex>
+        <Divider />
         <form.Subscribe
           selector={(state) => state.isValid && state.isDirty}
           children={(isValid) => (
-            <Button type="submit" disabled={!isValid}>
+            <Button
+              fullWidth
+              radius={0}
+              size="md"
+              type="submit"
+              disabled={!isValid}
+            >
               Create Project
             </Button>
           )}
         />
-      </Stack>
-    </form>
+      </form>
+    </Box>
   );
 }

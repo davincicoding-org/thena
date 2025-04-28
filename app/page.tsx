@@ -13,8 +13,10 @@ import {
   Divider,
   Fieldset,
   Flex,
+  Modal,
   RingProgress,
   ScrollArea,
+  Skeleton,
   Space,
   Stack,
   Text,
@@ -28,6 +30,7 @@ import { TaskInput } from "@/core/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
 import {
   Backlog,
+  ProjectCreator,
   taskFormOpts,
   useBacklog,
   useBacklogQueryOptions,
@@ -63,8 +66,14 @@ const DEMO_PAGES = [
   },
 ];
 
+const PROJECT_SKELETONS = Array.from({ length: 10 }, (_, index) => (
+  <Skeleton key={index} height={38} width={38} radius="sm" />
+));
+
 export default function HomePage() {
-  const { projects, createProject } = useProjects();
+  const { projects, createProject, loading: loadingProjects } = useProjects();
+  const [isCreatingProject, projectCreatorModal] = useDisclosure();
+
   const { tasks } = useBacklog();
   const taskCount = useMemo(
     () => tasks.reduce((acc, task) => acc + (task.subtasks?.length || 1), 0),
@@ -128,23 +137,26 @@ export default function HomePage() {
               <Card.Section mb={4}>
                 <ScrollArea scrollbars="x" scrollHideDelay={300}>
                   <Flex gap="sm" p="md">
-                    {projects.map((project) => (
-                      <Tooltip key={project.id} label={project.name}>
-                        <Avatar
-                          // component={Link}
-                          // href={`/projects/${project.id}`}
-                          // aria-label={`Open "${project.name}" project`}
-                          display="inline-block"
-                          size="md"
-                          radius="md"
-                          src={project.image}
-                          alt={project.name}
-                          color={project.color || "gray"}
-                          name={project.name}
-                        />
-                      </Tooltip>
-                    ))}
-                    {projects.length === 0 && (
+                    {loadingProjects ? (
+                      PROJECT_SKELETONS
+                    ) : projects.length ? (
+                      projects.map((project) => (
+                        <Tooltip key={project.id} label={project.name}>
+                          <Avatar
+                            // component={Link}
+                            // href={`/projects/${project.id}`}
+                            // aria-label={`Open "${project.name}" project`}
+                            display="inline-block"
+                            size="md"
+                            radius="md"
+                            src={project.image}
+                            alt={project.name}
+                            color={project.color || "gray"}
+                            name={project.name}
+                          />
+                        </Tooltip>
+                      ))
+                    ) : (
                       <Text className="text-2xl!">No projects</Text>
                     )}
                   </Flex>
@@ -154,9 +166,12 @@ export default function HomePage() {
                 mt="auto"
                 variant="light"
                 fullWidth
-                onClick={() => alert("Coming soon!")}
+                onClick={(e) => {
+                  projectCreatorModal.open();
+                  e.currentTarget.blur();
+                }}
               >
-                Manage Projects
+                Create Project
               </Button>
             </Card>
           </Flex>
@@ -181,6 +196,28 @@ export default function HomePage() {
           </Fieldset>
         </Stack>
       </Center>
+
+      <Modal
+        opened={isCreatingProject}
+        centered
+        radius="md"
+        classNames={{
+          body: "p-0!",
+        }}
+        transitionProps={{ transition: "pop" }}
+        overlayProps={{
+          className: "backdrop-blur-xs",
+        }}
+        withCloseButton={false}
+        onClose={projectCreatorModal.close}
+      >
+        <ProjectCreator
+          onCreate={(project) => {
+            createProject(project);
+            projectCreatorModal.close();
+          }}
+        />
+      </Modal>
 
       <BacklogPanel isOpen={isBacklogPanelOpen} onClose={backlogPanel.close} />
     </AppShell.Main>

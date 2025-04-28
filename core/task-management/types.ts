@@ -117,8 +117,7 @@ export const projectSchema = z.object({
 });
 export type Project = z.infer<typeof projectSchema>;
 
-export const projectInputSchema = projectSchema.extend({
-  id: z.never(),
+export const projectInputSchema = projectSchema.omit({ id: true }).extend({
   imageFile: z.instanceof(File).optional(),
 });
 export type ProjectInput = z.infer<typeof projectInputSchema>;
