@@ -64,7 +64,7 @@ const DEMO_PAGES = [
 ];
 
 export default function HomePage() {
-  const { projects } = useProjects();
+  const { projects, createProject } = useProjects();
   const { tasks } = useBacklog();
   const taskCount = useMemo(
     () => tasks.reduce((acc, task) => acc + (task.subtasks?.length || 1), 0),
@@ -75,7 +75,7 @@ export default function HomePage() {
   return (
     <AppShell.Main display="grid">
       <Center>
-        <Stack gap="lg" className="w-fit" p="lg">
+        <Stack gap="lg" className="w-fit" maw={500} p="lg">
           <Card
             p={0}
             radius="md"
@@ -108,6 +108,8 @@ export default function HomePage() {
           >
             Focus Session
           </Button>
+
+          <Divider />
 
           <Flex gap="md">
             <Card radius="md" shadow="sm">
