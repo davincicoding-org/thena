@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Flex } from "@mantine/core";
+import { Box, Flex } from "@mantine/core";
 
 import {
   FocusSessionBreak,
@@ -73,39 +73,46 @@ export function FocusSession({
           type="video/mp4"
         />
       </video>
-      {status === "break" && sessionBreak && (
-        <SessionBreak
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-          duration={sessionBreak.duration}
-          timeElapsed={sessionBreak.timeElapsed}
-          sprintsLeft={sessionBreak.sprintsLeft}
-          onResume={onFinishBreak}
-        />
-      )}
-      {status === "sprint" && sprint && (
-        <SprintWidget
-          className={cn(
-            "absolute bg-neutral-700/50! backdrop-blur-sm transition-all duration-1000",
-            sprint.status === "idle"
-              ? "right-1/2 bottom-1/2 translate-x-1/2 translate-y-1/2"
-              : "right-6 bottom-6",
-          )}
-          allowToPause
-          duration={sprint.duration}
-          warnBeforeTimeRunsOut={10}
-          tasks={sprint.tasks}
-          currentTask={sprint.currentTask}
-          status={sprint.status}
-          timeElapsed={sprint.timeElapsed}
-          onStart={sprint.start}
-          onPause={sprint.pause}
-          onResume={sprint.resume}
-          onCompleteTask={sprint.completeTask}
-          onSkipTask={sprint.skipTask}
-          onRunTaskManually={sprint.runTaskManually}
-          onFinish={handleFinish}
-        />
-      )}
+
+      <Box
+        className={cn(
+          "absolute right-1/2 bottom-1/2 translate-x-1/2 translate-y-1/2 transition-all duration-1000",
+          {
+            "right-6 bottom-6 translate-0":
+              sprint?.status === "running" ||
+              sprint?.status === "paused" ||
+              sprint?.status === "over",
+          },
+        )}
+      >
+        {status === "sprint" && sprint && (
+          <SprintWidget
+            className={cn("bg-neutral-700/50! backdrop-blur-sm")}
+            allowToPause
+            duration={sprint.duration}
+            warnBeforeTimeRunsOut={10}
+            tasks={sprint.tasks}
+            currentTask={sprint.currentTask}
+            status={sprint.status}
+            timeElapsed={sprint.timeElapsed}
+            onStart={sprint.start}
+            onPause={sprint.pause}
+            onResume={sprint.resume}
+            onCompleteTask={sprint.completeTask}
+            onSkipTask={sprint.skipTask}
+            onRunTaskManually={sprint.runTaskManually}
+            onFinish={handleFinish}
+          />
+        )}
+        {status === "break" && sessionBreak && (
+          <SessionBreak
+            duration={sessionBreak.duration}
+            timeElapsed={sessionBreak.timeElapsed}
+            sprintsLeft={sessionBreak.sprintsLeft}
+            onResume={onFinishBreak}
+          />
+        )}
+      </Box>
     </Flex>
   );
 }

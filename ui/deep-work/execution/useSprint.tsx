@@ -166,6 +166,7 @@ export function useSprint(
     } else {
       setCurrentTask(undefined);
       setStatus("completed");
+      options.onComplete?.();
     }
 
     setTaskRuns((prev) =>

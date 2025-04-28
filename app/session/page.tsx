@@ -88,8 +88,8 @@ export default function SessionPage() {
   const startSessionError = (() => {
     if (sprintBuilder.sprints.length === 0)
       return "Before you start the session, you need to define your sprints.";
-    if (sprintBuilder.unassignedTasks.length > 0)
-      return "You have unassigned tasks. Add them to a sprint or drop them to start the session.";
+    if (sprintBuilder.sprints.every(({ tasks }) => tasks.length === 0))
+      return "Before you start the session, you need to assign some tasks to your sprints.";
   })();
 
   // MARK: Tasks
@@ -132,7 +132,10 @@ export default function SessionPage() {
       (sprint) => sprint.tasks.length > 0,
     );
     if (validSprints.length === 0) return;
-    focusSession.initialize({ sprints: validSprints });
+    focusSession.initialize({
+      sprints: validSprints,
+      backlog: sprintBuilder.unassignedTasks,
+    });
     sessionModal.open();
   };
 

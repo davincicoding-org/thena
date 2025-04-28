@@ -7,6 +7,7 @@ import {
   FocusSessionStatus,
   SprintPlan,
 } from "@/core/deep-work";
+import { Task } from "@/core/task-management";
 
 dayjs.extend(duration);
 
@@ -19,7 +20,8 @@ export interface FocusSessionHookReturn {
   status: FocusSessionStatus;
   currentSprint: SprintPlan | undefined;
   sessionBreak: FocusSessionBreak | undefined;
-  initialize: (options: { sprints: SprintPlan[] }) => void;
+  backlog: Task[];
+  initialize: (options: { sprints: SprintPlan[]; backlog?: Task[] }) => void;
   finishSprint: () => void;
   finishBreak: () => void;
   // summary: an aarray of each sprint's summary
@@ -37,6 +39,7 @@ export function useFocusSession(
     timeElapsed: 0,
   });
   const [status, setStatus] = useState<FocusSessionStatus>("sprint");
+  const [backlog, setBacklog] = useState<Task[]>([]);
 
   useEffect(() => {
     if (status !== "break") return;
@@ -51,6 +54,7 @@ export function useFocusSession(
 
   const initialize: FocusSessionHookReturn["initialize"] = (options) => {
     setSprints(options.sprints);
+    if (options.backlog) setBacklog(options.backlog);
   };
 
   const finishSprint: FocusSessionHookReturn["finishSprint"] = () => {
@@ -76,6 +80,7 @@ export function useFocusSession(
       status === "break"
         ? { ...sessionBreak, sprintsLeft: sprints.length - currentIndex }
         : undefined,
+    backlog,
     initialize,
     finishSprint,
     finishBreak,

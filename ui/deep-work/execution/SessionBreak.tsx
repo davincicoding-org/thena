@@ -67,6 +67,7 @@ export function SessionBreak({
         fullWidth
         radius={0}
         size="md"
+        className="transition-colors"
         variant={progress >= 100 ? "filled" : "subtle"}
         onClick={onResume}
       >

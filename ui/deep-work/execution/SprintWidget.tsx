@@ -55,6 +55,7 @@ export function SprintWidget({
   onPause,
   onResume,
   onFinish,
+  className,
   ...paperProps
 }: SprintWidgetProps & PaperProps) {
   const isTimeUp = timeElapsed >= duration;
@@ -65,7 +66,13 @@ export function SprintWidget({
     : false;
 
   return (
-    <Paper withBorder shadow="sm" radius="md" {...paperProps}>
+    <Paper
+      withBorder
+      shadow="sm"
+      radius="md"
+      className={cn("overflow-clip", className)}
+      {...paperProps}
+    >
       <Box p="sm">
         <Paper className="overflow-clip" withBorder>
           {tasks.map((task) => (
