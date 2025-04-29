@@ -132,7 +132,7 @@ const meta = {
     ],
     onSubmitSelection: fn(),
     onAbortSelection: fn(),
-    onAssignTasksToSprint: fn(),
+    onAssignTaskToSprint: fn(),
     mah: "70dvh",
     w: 400,
   },

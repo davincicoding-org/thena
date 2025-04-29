@@ -48,14 +48,17 @@ export function SprintBuilder({
   unassignedTasks,
   onAddSprint,
   onDropSprint,
-  onSprintChange: onSprintMetaChange,
+  onSprintChange,
   onAssignTasksToSprint,
-  onUnassignTasksFromSprint: onUnassignTaskFromSprint,
+  onUnassignTasksFromSprint,
   onMoveTasks,
   className,
   ...paperProps
 }: SprintBuilderProps & PaperProps) {
-  const [isShowingUnassignedTasks, unassignedTasksPanel] = useDisclosure(false);
+  const [
+    isShowingUnassignedTasks,
+    { close: closeTaskPool, open: openTaskPool, toggle: toggleTaskPool },
+  ] = useDisclosure(false);
   const [sprintToAddTaskTo, setSprintToAddTaskTo] =
     useState<SprintPlan["id"]>();
 
@@ -73,15 +76,15 @@ export function SprintBuilder({
 
   useEffect(() => {
     if (unassignedTasks.length === 0) {
-      unassignedTasksPanel.close();
+      closeTaskPool();
     }
-  }, [unassignedTasks.length]);
+  }, [unassignedTasks.length, closeTaskPool]);
 
   const handleAddSprint = () => {
     onAddSprint((sprintId) => {
       setTimeout(() => {
         setSprintToAddTaskTo(sprintId);
-        unassignedTasksPanel.open();
+        openTaskPool();
 
         setTimeout(() => {
           viewport.current!.scrollTo({
@@ -140,11 +143,11 @@ export function SprintBuilder({
                 }
                 onDrop={() => handleDropSprint(sprint.id)}
                 onDurationChange={(duration) =>
-                  onSprintMetaChange(sprint.id, { duration })
+                  onSprintChange(sprint.id, { duration })
                 }
                 onAddTasks={(el) => {
                   setSprintToAddTaskTo(sprint.id);
-                  unassignedTasksPanel.open();
+                  openTaskPool();
 
                   setTimeout(() => {
                     el.scrollIntoView({
@@ -154,7 +157,7 @@ export function SprintBuilder({
                   }, 300);
                 }}
                 onUnassignTask={(task) =>
-                  onUnassignTaskFromSprint({
+                  onUnassignTasksFromSprint({
                     sprintId: sprint.id,
                     tasks: [task],
                   })
@@ -185,14 +188,24 @@ export function SprintBuilder({
               if (!sprintToAddTaskTo) return;
               onAssignTasksToSprint({ sprintId: sprintToAddTaskTo, tasks });
               setSprintToAddTaskTo(undefined);
-              unassignedTasksPanel.close();
+              closeTaskPool();
               setSprintToAddTaskTo(undefined);
             }}
             onAbortSelection={() => {
               setSprintToAddTaskTo(undefined);
-              unassignedTasksPanel.close();
+              closeTaskPool();
             }}
-            onAssignTasksToSprint={onAssignTasksToSprint}
+            onAssignTaskToSprint={({ sprintId, task }) => {
+              onAssignTasksToSprint({
+                sprintId,
+                tasks: [
+                  {
+                    taskId: task.taskId,
+                    subtaskIds: task.subtaskId ? [task.subtaskId] : undefined,
+                  },
+                ],
+              });
+            }}
           />
         </Box>
       </Flex>
@@ -217,7 +230,7 @@ export function SprintBuilder({
               </Badge>
             ) : undefined
           }
-          onClick={unassignedTasksPanel.toggle}
+          onClick={toggleTaskPool}
         >
           {unassignedTasks.length ? "Unassigned Tasks" : "All Tasks assigned"}
         </Button>

@@ -1,5 +1,3 @@
-import type {
-  PaperProps} from "@mantine/core";
 import {
   ActionIcon,
   Button,
@@ -15,7 +13,13 @@ import {
 } from "@mantine/core";
 import { IconArrowLeft, IconX } from "@tabler/icons-react";
 
-import type { SubtaskReference, Task, TaskSelection } from "@/core/task-management";
+import type {
+  SubtaskReference,
+  Task,
+  TaskReference,
+  TaskSelection,
+} from "@/core/task-management";
+import type { PaperProps } from "@mantine/core";
 import { useTaskSelection } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
@@ -25,9 +29,9 @@ export interface TaskPoolProps {
   sprintOptions: { id: string; title: string }[];
   onSubmitSelection: (tasks: TaskSelection[]) => void;
   onAbortSelection: () => void;
-  onAssignTasksToSprint: (options: {
+  onAssignTaskToSprint: (options: {
     sprintId: string;
-    tasks: { taskId: string; subtaskId?: string }[];
+    task: TaskReference;
   }) => void;
 }
 
@@ -37,7 +41,7 @@ export function TaskPool({
   selectionEnabled,
   onSubmitSelection,
   onAbortSelection,
-  onAssignTasksToSprint,
+  onAssignTaskToSprint: onAssignTasksToSprint,
   ...props
 }: TaskPoolProps & PaperProps) {
   const {
@@ -161,7 +165,7 @@ export function TaskPool({
                       onClick={() =>
                         onAssignTasksToSprint({
                           sprintId: option.id,
-                          tasks: [{ taskId: task.id }],
+                          task: { taskId: task.id },
                         })
                       }
                     >
@@ -204,9 +208,10 @@ export function TaskPool({
                             onClick={() =>
                               onAssignTasksToSprint({
                                 sprintId: option.id,
-                                tasks: [
-                                  { taskId: task.id, subtaskId: subtask.id },
-                                ],
+                                task: {
+                                  taskId: task.id,
+                                  subtaskId: subtask.id,
+                                },
                               })
                             }
                           >
