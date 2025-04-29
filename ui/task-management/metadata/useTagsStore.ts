@@ -87,7 +87,6 @@ export const useTagsStore = create<TagsStoreState>()(
         },
         removeTag: (tagId) => {
           set((state) => {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { [tagId]: _removedTag, ...remainingTags } = state.pool;
 
             return {

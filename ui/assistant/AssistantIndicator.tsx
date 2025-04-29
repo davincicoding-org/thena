@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
 import type { BoxProps } from "@mantine/core";
+import React, { useEffect, useState } from "react";
 import { Box } from "@mantine/core";
 import { motion } from "framer-motion";
 
@@ -27,6 +27,7 @@ export function AssistantIndicator({
     } else {
       resetBars();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [volume]);
 
   const updateBars = (volume: number, multiplier: number) => {

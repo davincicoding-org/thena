@@ -93,7 +93,6 @@ export const useProjectsStore = create<ProjectsStoreState>()(
         },
         removeProject: (projectId) => {
           set((state) => {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { [projectId]: _removedProject, ...remainingProjects } =
               state.pool;
 

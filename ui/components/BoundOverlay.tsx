@@ -1,9 +1,8 @@
+import type { BoxProps, OverlayProps, TransitionProps } from "@mantine/core";
 import type { ReactElement, ReactNode } from "react";
 import { cloneElement, createContext, useContext, useEffect } from "react";
 import { Box, Overlay, Transition } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-
-import type { BoxProps, OverlayProps, TransitionProps } from "@mantine/core";
 
 const Context = createContext<{
   isOpen: boolean;
@@ -45,6 +44,7 @@ export function BoundOverlay({
   useEffect(() => {
     if (!disabled) return;
     close();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [disabled]);
 
   return (

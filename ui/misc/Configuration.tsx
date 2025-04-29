@@ -16,13 +16,9 @@ import {
 } from "@mantine/core";
 import { IconVolume, IconX } from "@tabler/icons-react";
 
+import type { LLMConfig } from "@/core/config/models";
 import type { SupportedLang } from "@/ui/assistant";
-import type {
-  LLMConfig} from "@/core/config/models";
-import {
-  LLMConfigSchema,
-  useModelsConfigStore,
-} from "@/core/config/models";
+import { LLMConfigSchema, useModelsConfigStore } from "@/core/config/models";
 import {
   supportedLangSchema,
   useSpeechConfigStore,
@@ -135,7 +131,12 @@ function SpeechConfig() {
     if (voiceOptions.length === 0) return;
     if (voiceOptions.includes(speech.synthesis.voice)) return;
     updateSynthesisConfig({ voice: voiceOptions[0] });
-  }, [voiceOptions, speech.synthesis.voice, speech.lang]);
+  }, [
+    voiceOptions,
+    speech.synthesis.voice,
+    speech.lang,
+    updateSynthesisConfig,
+  ]);
 
   return (
     <Stack gap="sm">

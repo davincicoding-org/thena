@@ -1,128 +1,83 @@
 import { useState } from "react";
 
-import type {
-  SubtaskReference,
-  Task,
-  TaskSelection,
-} from "@/core/task-management";
+import type { Task, TaskReference } from "@/core/task-management";
 import {
-  excludeTaskSelection,
-  mergeTaskSelections,
+  excludeTaskReferences,
+  resolveTaskReferences,
 } from "@/core/task-management";
 
 export interface TaskSelectionHookReturn<T extends Task> {
-  selection: TaskSelection[];
+  selection: TaskReference[];
   tasks: T[];
   clearSelection: () => void;
   isTaskSelected: (task: T) => boolean;
-  isSubtaskSelected: (taskReference: SubtaskReference) => boolean;
+  isSubtaskSelected: (taskReference: TaskReference) => boolean;
   toggleTaskSelection: (task: T) => void;
-  toggleSubtaskSelection: (taskReference: SubtaskReference) => void;
+  toggleSubtaskSelection: (taskReference: TaskReference) => void;
 }
 
 export function useTaskSelection<T extends Task>(
   taskList: T[] = [],
 ): TaskSelectionHookReturn<T> {
-  const [selection, setSelection] = useState<TaskSelection[]>([]);
+  const [selection, setSelection] = useState<TaskReference[]>([]);
 
   const isTaskSelected: TaskSelectionHookReturn<T>["isTaskSelected"] = (task) =>
-    selection.some((selectedTask) => isTaskFullyIncluded(task, selectedTask));
+    isTaskFullyIncluded(task, selection);
 
   const isSubtaskSelected: TaskSelectionHookReturn<T>["isSubtaskSelected"] = ({
     taskId,
     subtaskId,
-  }) =>
-    selection.some((selectedTask) =>
-      isSubtaskIncluded({ taskId, subtaskId }, selectedTask),
-    );
+  }) => isSubtaskIncluded({ taskId, subtaskId }, selection);
 
-  const tasks = taskList.reduce<T[]>((acc, task) => {
-    if (isTaskSelected(task)) return [...acc, task];
-
-    if (!task.subtasks?.length) return acc;
-
-    const selectedSubTasks = task.subtasks.filter((subtask) =>
-      isSubtaskSelected({
-        taskId: task.id,
-        subtaskId: subtask.id,
-      }),
-    );
-
-    if (selectedSubTasks.length === 0) return acc;
-
-    return [
-      ...acc,
-      {
-        ...task,
-        subtasks: selectedSubTasks,
-      },
-    ];
-  }, []);
+  const tasks = resolveTaskReferences(selection, taskList);
 
   const toggleTaskSelection: TaskSelectionHookReturn<T>["toggleTaskSelection"] =
     (task) =>
       setSelection((prev) => {
-        const isFullySelected = prev.some((selectedTask) =>
-          isTaskFullyIncluded(task, selectedTask),
-        );
+        const isFullySelected = isTaskFullyIncluded(task, prev);
 
         if (isFullySelected)
           return prev.filter((selectedTask) => selectedTask.taskId !== task.id);
 
-        const isPartiallySelected = prev.some((selectedTask) =>
-          isTaskPartiallyIncluded(task, selectedTask),
-        );
+        const isPartiallySelected = isTaskPartiallyIncluded(task, prev);
 
         if (isPartiallySelected)
-          return prev.map((selectedTask) => {
-            if (selectedTask.taskId !== task.id) return selectedTask;
-
-            return {
-              ...selectedTask,
-              subtaskIds: task.subtasks?.length
-                ? task.subtasks.map(({ id }) => id)
-                : undefined,
-            };
-          });
+          return [
+            ...prev.filter((selectedTask) => selectedTask.taskId !== task.id),
+            ...(task.subtasks ?? []).map((subtask) => ({
+              taskId: task.id,
+              subtaskId: subtask.id,
+            })),
+          ];
 
         if (!task.subtasks?.length)
           return [
             ...prev,
             {
               taskId: task.id,
+              subtaskId: null,
             },
           ];
 
         return [
           ...prev,
-          {
+          ...(task.subtasks ?? []).map((subtask) => ({
             taskId: task.id,
-            subtaskIds: task.subtasks.map(({ id }) => id),
-          },
+            subtaskId: subtask.id,
+          })),
         ];
       });
 
   const toggleSubtaskSelection: TaskSelectionHookReturn<T>["toggleSubtaskSelection"] =
     (taskReference) =>
       setSelection((prev) => {
-        const isSelected = prev.some((selectedTask) =>
-          isSubtaskIncluded(taskReference, selectedTask),
-        );
+        const isSelected = isSubtaskIncluded(taskReference, prev);
 
         if (isSelected) {
-          return excludeTaskSelection(prev, {
-            taskId: taskReference.taskId,
-            subtaskIds: [taskReference.subtaskId],
-          });
+          return excludeTaskReferences(prev, [taskReference]);
         }
 
-        return mergeTaskSelections([
-          ...prev,
-          {
-            taskId: taskReference.taskId,
-            subtaskIds: [taskReference.subtaskId],
-          },
-        ]);
+        return [...prev, taskReference];
       });
 
   return {
@@ -140,29 +95,25 @@ export function useTaskSelection<T extends Task>(
 
 const isTaskPartiallyIncluded = (
   task: Task,
-  selectedTask: TaskSelection,
-): boolean => {
-  if (selectedTask.taskId !== task.id) return false;
-  return true;
-};
+  selection: TaskReference[],
+): boolean => selection.some((selectedTask) => selectedTask.taskId === task.id);
 
 const isTaskFullyIncluded = (
   task: Task,
-  selectedTask: TaskSelection,
+  selection: TaskReference[],
 ): boolean => {
-  if (!isTaskPartiallyIncluded(task, selectedTask)) return false;
+  if (!isTaskPartiallyIncluded(task, selection)) return false;
   if (!task.subtasks?.length) return true;
 
   return task.subtasks.every((subtask) =>
-    selectedTask.subtaskIds?.includes(subtask.id),
+    selection.some(({ subtaskId }) => subtaskId === subtask.id),
   );
 };
 
 const isSubtaskIncluded = (
-  { taskId, subtaskId }: SubtaskReference,
-  selectedTask: TaskSelection,
-): boolean => {
-  if (selectedTask.taskId !== taskId) return false;
-  if (!selectedTask.subtaskIds?.length) return false;
-  return selectedTask.subtaskIds.includes(subtaskId);
-};
+  { taskId, subtaskId }: TaskReference,
+  selection: TaskReference[],
+): boolean =>
+  selection.some(
+    (entry) => subtaskId === entry.subtaskId && taskId === entry.taskId,
+  );

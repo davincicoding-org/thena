@@ -1,5 +1,7 @@
 "use client";
 
+import type { PaperProps } from "@mantine/core";
+import type { IconProps } from "@tabler/icons-react";
 import { useRef } from "react";
 import {
   ActionIcon,
@@ -47,11 +49,9 @@ import type {
   Tag,
   TagInput,
   TaskInput,
-  TaskSelection,
+  TaskReference,
 } from "@/core/task-management";
 import type { TaskFormProps } from "@/ui/task-management";
-import type { PaperProps } from "@mantine/core";
-import type { IconProps } from "@tabler/icons-react";
 import { BACKLOG_SORT_OPTIONS } from "@/core/task-management";
 import { Panel } from "@/ui/components/Panel";
 import { useSyncInputState } from "@/ui/hooks/useSyncState";
@@ -90,7 +90,7 @@ export interface BacklogProps {
     onCreate: (project: Project) => void,
   ) => void;
   onCreateTag?: (tag: TagInput, onCreate: (tag: Tag) => void) => void;
-  selectedTasks?: TaskSelection[];
+  selectedTasks?: TaskReference[];
   onToggleTaskSelection?: (task: BacklogTask) => void;
 }
 

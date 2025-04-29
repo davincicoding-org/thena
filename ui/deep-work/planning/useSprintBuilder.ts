@@ -1,13 +1,16 @@
-import type { MinimalSprintPlan, SprintPlan } from "@/core/deep-work";
-import type {
-  Task,
-  TaskSelection} from "@/core/task-management";
+import { useEffect } from "react";
+import { usePrevious } from "@mantine/hooks";
+
+import type { SprintPlan } from "@/core/deep-work";
+import type { Task, TaskReference } from "@/core/task-management";
 import {
-  mergeTaskSelections
+  countTasks,
+  excludeTaskReferences,
+  tranformTasksToReferences,
 } from "@/core/task-management";
 import { createUniqueId } from "@/ui/utils";
 
-import type { SprintsReducerError} from "./useSprintsReducer";
+import type { SprintsReducerError } from "./useSprintsReducer";
 import { useSprintsReducer } from "./useSprintsReducer";
 
 export const DEFAULT_OPTIONS = {
@@ -27,12 +30,11 @@ export interface SessionPlannerHookOptions {
 export interface SessionPlannerHookReturn {
   /** All current Sprint plans (with populated tasks) */
   sprints: SprintPlan[];
-  minimalSprints: MinimalSprintPlan[];
 
-  setSprints: (value: MinimalSprintPlan[]) => void;
+  setSprints: (value: SprintPlan[]) => void;
 
   /** Tasks not yet assigned to any Sprint */
-  unassignedTasks: Task[];
+  unassignedTasks: TaskReference[];
 
   /** Initialize `count` empty Sprints */
   // initialize: (options: SessionPlannerHookOptions) => void;
@@ -41,7 +43,7 @@ export interface SessionPlannerHookReturn {
   addSprint: (
     sprintToAdd: {
       duration?: number;
-      tasks?: TaskSelection[];
+      tasks?: TaskReference[];
     },
     callback?: (sprintId: SprintPlan["id"]) => void,
   ) => void;
@@ -50,7 +52,7 @@ export interface SessionPlannerHookReturn {
   addSprints: (
     sprintsToAdd: {
       duration?: number;
-      tasks?: TaskSelection[];
+      tasks?: TaskReference[];
     }[],
   ) => void;
 
@@ -69,32 +71,32 @@ export interface SessionPlannerHookReturn {
   /** Assign one of the tasks into a Sprint */
   assignTask: (options: {
     sprintId: SprintPlan["id"];
-    task: TaskSelection;
+    task: TaskReference;
   }) => void;
 
   /** Assign multiple tasks into a Sprint */
   assignTasks: (options: {
-    sprintId: SprintPlan["id"];
-    tasks: TaskSelection[];
+    sprintId: SprintPlan["id"] | null;
+    tasks: TaskReference[];
   }) => void;
 
   /** Unassign one of the Sprint's tasks */
   unassignTask: (options: {
     sprintId: SprintPlan["id"];
-    task: TaskSelection;
+    task: TaskReference;
   }) => void;
 
   /** Unassign multiple of the Sprint's tasks */
   unassignTasks: (options: {
     sprintId: SprintPlan["id"];
-    tasks: TaskSelection[];
+    tasks: TaskReference[];
   }) => void;
 
   /** Move tasks between two Sprints */
   moveTasks: (options: {
     fromSprintId: SprintPlan["id"];
     toSprintId: SprintPlan["id"];
-    tasks: TaskSelection[];
+    tasks: TaskReference[];
   }) => void;
 
   /** Reorder tasks within a Sprint (for drag‑and‑drop UIs) */
@@ -112,7 +114,7 @@ export function useSprintBuilder(
     onError,
   }: SessionPlannerHookOptions = DEFAULT_OPTIONS,
 ): SessionPlannerHookReturn {
-  const [minimalSprints, dispatch] = useSprintsReducer(
+  const [sprints, dispatch] = useSprintsReducer(
     {
       taskPool,
       sprintDuration,
@@ -121,44 +123,24 @@ export function useSprintBuilder(
     initializeSprints(initialSprints, sprintDuration),
   );
 
-  const unassignedTasks = (() => {
-    const assignedTasks = mergeTaskSelections(
-      minimalSprints.flatMap((sprint) => sprint.tasks),
-    );
+  const totalAvailableTasks = countTasks(taskPool);
+  const prevTotalAssignedTasks = usePrevious(totalAvailableTasks);
 
-    return taskPool.reduce<Task[]>((acc, task) => {
-      const assignedTask = assignedTasks.find(
-        (assignedTask) => assignedTask.taskId === task.id,
-      );
-      if (!assignedTask) return [...acc, task];
+  useEffect(() => {
+    if (prevTotalAssignedTasks === undefined) return;
+    if (totalAvailableTasks >= prevTotalAssignedTasks) return;
 
-      if (!task.subtasks?.length) return acc;
+    console.log("TASK WAS REMOVED, NEED TO SYNC");
+    // dispatch({ type: "SYNC_SPRINTS" });
+  }, [prevTotalAssignedTasks, totalAvailableTasks]);
 
-      const remainingSubtaskIds = task.subtasks.filter(
-        (subtask) => !assignedTask.subtaskIds?.includes(subtask.id),
-      );
+  const unassignedTasks = ((): TaskReference[] => {
+    const allAssignedTaskReferences = sprints.flatMap((sprint) => sprint.tasks);
 
-      if (!remainingSubtaskIds.length) return acc;
+    const allTaskReferences = tranformTasksToReferences(taskPool);
 
-      return [...acc, { ...task, subtasks: remainingSubtaskIds }];
-    }, []);
+    return excludeTaskReferences(allTaskReferences, allAssignedTaskReferences);
   })();
-
-  const sprints = minimalSprints.map<SprintPlan>((minimalSprint) => ({
-    ...minimalSprint,
-    tasks: minimalSprint.tasks.reduce<Task[]>((acc, taskSelection) => {
-      const task = taskPool.find((task) => task.id === taskSelection.taskId);
-      if (!task) return acc;
-
-      if (!task.subtasks?.length) return [...acc, task];
-
-      const subtasks = task.subtasks.filter((subtask) =>
-        taskSelection.subtaskIds?.includes(subtask.id),
-      );
-
-      return [...acc, { ...task, subtasks }];
-    }, []),
-  }));
 
   const setSprints: SessionPlannerHookReturn["setSprints"] = (sprints) => {
     dispatch({ type: "SET_SPRINTS", payload: { sprints } });
@@ -223,7 +205,6 @@ export function useSprintBuilder(
 
   return {
     sprints,
-    minimalSprints,
     setSprints,
     unassignedTasks,
     addSprint,
@@ -245,8 +226,8 @@ export function useSprintBuilder(
 export const initializeSprints = (
   sprintCount: number,
   sprintDuration: number = DEFAULT_OPTIONS.sprintDuration,
-): MinimalSprintPlan[] =>
-  Array.from({ length: sprintCount }).reduce<MinimalSprintPlan[]>(
+): SprintPlan[] =>
+  Array.from({ length: sprintCount }).reduce<SprintPlan[]>(
     (acc) => [
       ...acc,
       {

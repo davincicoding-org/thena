@@ -106,7 +106,6 @@ export const useBacklogStore = create<BacklogStoreState>()(
         },
         removeTask: (taskId) => {
           set((state) => {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { [taskId]: _removedTask, ...remainingTasks } = state.pool;
 
             return {

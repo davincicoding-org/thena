@@ -7,7 +7,7 @@ const compat = new FlatCompat({
 
 export default tseslint.config(
   {
-    ignores: [".next"],
+    ignores: [".next", "deprecated", "**/*.stories.tsx", "**/*.test.ts"],
   },
   ...compat.extends("next/core-web-vitals", "plugin:storybook/recommended"),
   {
@@ -28,21 +28,23 @@ export default tseslint.config(
       ],
       "@typescript-eslint/no-unused-vars": [
         "warn",
-        { argsIgnorePattern: "^_" },
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
-      // "@typescript-eslint/require-await": "off",
       "@typescript-eslint/no-misused-promises": [
         "error",
         { checksVoidReturn: { attributes: false } },
       ],
     },
   },
-  // {
-  //   files: ["**/*.stories.tsx"],
-  //   rules: {
-  //     "react-hooks/rules-of-hooks": "off",
-  //   },
-  // },
+  {
+    files: ["**/*.tsx", "**/*.ts"],
+    rules: {
+      "max-lines": [
+        "warn",
+        { max: 300, skipBlankLines: true, skipComments: true },
+      ],
+    },
+  },
   {
     linterOptions: {
       reportUnusedDisableDirectives: true,

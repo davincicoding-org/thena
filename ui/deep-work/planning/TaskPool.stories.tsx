@@ -1,6 +1,5 @@
-import { fn } from "@storybook/test";
-
 import type { Meta, StoryObj } from "@storybook/react";
+import { fn } from "@storybook/test";
 
 import { TaskPool } from "./TaskPool";
 
@@ -132,7 +131,7 @@ const meta = {
     ],
     onSubmitSelection: fn(),
     onAbortSelection: fn(),
-    onAssignTaskToSprint: fn(),
+    onAssignTasksToSprint: fn(),
     mah: "70dvh",
     w: 400,
   },

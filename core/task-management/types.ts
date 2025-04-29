@@ -27,16 +27,8 @@ export const baseTaskSchema = z.object({
 });
 export type BaseTask = z.infer<typeof baseTaskSchema>;
 
-/**
- * Minimal subtask
- */
-
 export const subtaskSchema = baseTaskSchema;
 export type Subtask = z.infer<typeof subtaskSchema>;
-
-/**
- * Task inside the backlog
- */
 
 export const taskSchema = baseTaskSchema.extend({
   projectId: z.string().optional(),
@@ -49,21 +41,31 @@ export const taskInputSchema = taskSchema.omit({
 });
 export type TaskInput = z.infer<typeof taskInputSchema>;
 
-export interface TaskReference {
-  taskId: Task["id"];
-  subtaskId?: Subtask["id"];
-}
+/**
+ * Task reference
+ */
 
-export interface SubtaskReference {
-  taskId: Task["id"];
-  subtaskId: Subtask["id"];
-}
-
-export const taskSelectionSchema = z.object({
+export const taskReferenceSchema = z.object({
   taskId: z.string(),
-  subtaskIds: z.array(z.string()).optional(),
+  subtaskId: z.string().nullable(),
 });
-export type TaskSelection = z.infer<typeof taskSelectionSchema>;
+export type TaskReference = z.infer<typeof taskReferenceSchema>;
+
+export const flatTaskSchema = baseTaskSchema
+  .omit({ id: true })
+  .extend({
+    parentTitle: z.string().optional(),
+    projectId: z.string().optional(),
+  })
+  .and(taskReferenceSchema);
+
+export type FlatTask = z.infer<typeof flatTaskSchema>;
+
+export interface FlatTaskGroup {
+  taskId: TaskReference["taskId"];
+  groupLabel: string;
+  items: FlatTask[];
+}
 
 /**
  * Task inside the backlog

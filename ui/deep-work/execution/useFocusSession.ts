@@ -1,14 +1,16 @@
-import { useEffect, useState } from "react";
-import dayjs from "dayjs";
 import type { DurationUnitsObjectType } from "dayjs/plugin/duration";
+import { useEffect, useMemo, useState } from "react";
+import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 
 import type {
   FocusSessionBreak,
   FocusSessionStatus,
+  PopulatedSprintPlan,
   SprintPlan,
 } from "@/core/deep-work";
 import type { Task } from "@/core/task-management";
+import { resolveTaskReferencesFlat } from "@/core/task-management";
 
 dayjs.extend(duration);
 
@@ -19,16 +21,16 @@ export interface FocusSessionHookOptions {
 
 export interface FocusSessionHookReturn {
   status: FocusSessionStatus;
-  currentSprint: SprintPlan | undefined;
+  currentSprint: PopulatedSprintPlan | undefined;
   sessionBreak: FocusSessionBreak | undefined;
-  backlog: Task[];
-  initialize: (options: { sprints: SprintPlan[]; backlog?: Task[] }) => void;
+  initialize: (options: { sprints: SprintPlan[] }) => void;
   finishSprint: () => void;
   finishBreak: () => void;
-  // summary: an aarray of each sprint's summary
+  // summary: an array of each sprint's summary
 }
 
 export function useFocusSession(
+  tasks: Task[],
   options: FocusSessionHookOptions,
 ): FocusSessionHookReturn {
   const [sprints, setSprints] = useState<SprintPlan[]>([]);
@@ -40,7 +42,6 @@ export function useFocusSession(
     timeElapsed: 0,
   });
   const [status, setStatus] = useState<FocusSessionStatus>("sprint");
-  const [backlog, setBacklog] = useState<Task[]>([]);
 
   useEffect(() => {
     if (status !== "break") return;
@@ -55,7 +56,6 @@ export function useFocusSession(
 
   const initialize: FocusSessionHookReturn["initialize"] = (options) => {
     setSprints(options.sprints);
-    if (options.backlog) setBacklog(options.backlog);
   };
 
   const finishSprint: FocusSessionHookReturn["finishSprint"] = () => {
@@ -74,14 +74,22 @@ export function useFocusSession(
     }));
   };
 
+  const currentSprint = useMemo((): FocusSessionHookReturn["currentSprint"] => {
+    const currentPlan = sprints[currentIndex];
+    if (!currentPlan) return undefined;
+    return {
+      ...currentPlan,
+      tasks: resolveTaskReferencesFlat(currentPlan.tasks, tasks),
+    };
+  }, [sprints, currentIndex, tasks]);
+
   return {
     status,
-    currentSprint: sprints[currentIndex],
+    currentSprint,
     sessionBreak:
       status === "break"
         ? { ...sessionBreak, sprintsLeft: sprints.length - currentIndex }
         : undefined,
-    backlog,
     initialize,
     finishSprint,
     finishBreak,

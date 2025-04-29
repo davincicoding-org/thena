@@ -1,19 +1,19 @@
 import { z } from "zod";
 
-import type { Subtask, Task } from "@/core/task-management";
-import { taskSchema, taskSelectionSchema } from "@/core/task-management";
+import type { TaskReference } from "@/core/task-management";
+import { flatTaskSchema, taskReferenceSchema } from "@/core/task-management";
 
 export const sprintPlanSchema = z.object({
   id: z.string(),
   duration: z.number(),
-  tasks: z.array(taskSchema),
+  tasks: z.array(taskReferenceSchema),
 });
 export type SprintPlan = z.infer<typeof sprintPlanSchema>;
 
-export const minimalSprintPlanSchema = sprintPlanSchema.extend({
-  tasks: taskSelectionSchema.array(),
+export const populatedSprintPlanSchema = sprintPlanSchema.extend({
+  tasks: z.array(flatTaskSchema),
 });
-export type MinimalSprintPlan = z.infer<typeof minimalSprintPlanSchema>;
+export type PopulatedSprintPlan = z.infer<typeof populatedSprintPlanSchema>;
 
 export type WithRun<T> = T & {
   completedAt?: number;
@@ -22,9 +22,12 @@ export type WithRun<T> = T & {
 };
 
 /** Represents a single execution of a task within a session. */
-export interface TaskRun extends WithRun<Task> {
-  subtasks?: WithRun<Subtask>[];
-}
+export type TaskRun = WithRun<TaskReference>;
+
+export type RuntITem$$$ = TaskRun & {
+  group: string | undefined;
+  label: string;
+};
 
 export type SprintStatus = "idle" | "running" | "paused" | "over" | "completed";
 

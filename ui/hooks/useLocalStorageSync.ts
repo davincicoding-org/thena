@@ -22,11 +22,13 @@ export function useLocalStorageSync<Schema extends ZodSchema>({
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     read(storedValue ? schema.parse(JSON.parse(storedValue)) : null);
     setInitialized(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (!initialized) return;
     localStorage.setItem(key, JSON.stringify(state));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   const clear = () => localStorage.removeItem(key);

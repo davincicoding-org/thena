@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import type { PaperProps } from "@mantine/core";
 import { Fragment } from "react";
 import {
   ActionIcon,
@@ -7,29 +7,23 @@ import {
   Collapse,
   Divider,
   Flex,
-  NavLink,
   Paper,
   Progress,
-  Tooltip,
 } from "@mantine/core";
-import {
-  IconArrowDownDashed,
-  IconCheck,
-  IconPlayerPause,
-} from "@tabler/icons-react";
+import { IconPlayerPause } from "@tabler/icons-react";
 
-import type { SprintStatus, TaskRun } from "@/core/deep-work";
+import type { RuntITem$$$ } from "@/core/deep-work";
 import type { TaskReference } from "@/core/task-management";
-import type { NavLinkProps, PaperProps } from "@mantine/core";
-import { BoundOverlay } from "@/ui/components/BoundOverlay";
 import { cn } from "@/ui/utils";
+
+import { QueueTask } from "./QueueTask";
 
 export interface SprintWidgetProps {
   duration: number;
   timeElapsed: number;
   warnBeforeTimeRunsOut: number;
-  status: SprintStatus;
-  tasks: TaskRun[];
+  paused?: boolean;
+  tasks: RuntITem$$$[];
   currentTask?: TaskReference;
   allowToPause?: boolean;
   onStart: () => void;
@@ -45,8 +39,8 @@ export function SprintWidget({
   timeElapsed,
   warnBeforeTimeRunsOut,
   tasks,
+  paused = false,
   currentTask,
-  status,
   allowToPause = false,
   onStart,
   onCompleteTask,
@@ -58,7 +52,9 @@ export function SprintWidget({
   className,
   ...paperProps
 }: SprintWidgetProps & PaperProps) {
+  // IDEA Bring some of the logic from use Sprint to here
   const isTimeUp = timeElapsed >= duration;
+  const hasStarted = timeElapsed > 0;
   const warningThreshold =
     warnBeforeTimeRunsOut && Math.max(duration - warnBeforeTimeRunsOut, 0);
   const shouldWarnAboutTime = warningThreshold
@@ -73,27 +69,8 @@ export function SprintWidget({
       className={cn("overflow-clip", className)}
       {...paperProps}
     >
-      <Box p="sm">
-        <Paper className="overflow-clip" withBorder>
-          {tasks.map((task) => (
-            <Fragment key={task.id}>
-              <TaskItem
-                task={task}
-                readOnly={status !== "running" && status !== "over"}
-                activeTask={currentTask}
-                onComplete={onCompleteTask}
-                onSkip={onSkipTask}
-                onRunManually={onRunTaskManually}
-              />
-              <Divider className="last:hidden" />
-            </Fragment>
-          ))}
-        </Paper>
-      </Box>
-      <Divider />
-
-      <Collapse in={status === "running" || status === "over"} animateOpacity>
-        <Flex gap={4} h={36} px="sm" align="center">
+      <Collapse in={hasStarted} animateOpacity>
+        <Flex gap={4} h={24} pt="xs" px="sm" align="center">
           <Progress
             flex={1}
             color={
@@ -107,7 +84,7 @@ export function SprintWidget({
             }}
             value={(timeElapsed / duration) * 100}
           />
-          {allowToPause && status !== "over" && (
+          {allowToPause && !paused && !isTimeUp && (
             <ActionIcon
               size="xs"
               aria-label="Pause Sprint"
@@ -120,226 +97,64 @@ export function SprintWidget({
           )}
         </Flex>
       </Collapse>
-      <Collapse in={status === "idle"} animateOpacity>
+      <Box p="sm">
+        <Paper className="overflow-clip" withBorder>
+          {tasks.map((item) => (
+            <Fragment key={`${item.taskId}-${item.subtaskId}`}>
+              <QueueTask
+                group={item.group ?? undefined}
+                label={item.label}
+                readOnly={!hasStarted}
+                status={
+                  item.completedAt
+                    ? "completed"
+                    : item.skipped
+                      ? "skipped"
+                      : currentTask?.taskId === item.taskId &&
+                          currentTask?.subtaskId === item.subtaskId
+                        ? "active"
+                        : "upcoming"
+                }
+                onComplete={() =>
+                  onCompleteTask({
+                    taskId: item.taskId,
+                    subtaskId: item.subtaskId,
+                  })
+                }
+                onSkip={() =>
+                  onSkipTask({ taskId: item.taskId, subtaskId: item.subtaskId })
+                }
+                onRunManually={() =>
+                  onRunTaskManually({
+                    taskId: item.taskId,
+                    subtaskId: item.subtaskId,
+                  })
+                }
+              />
+              <Divider className="last:hidden" />
+            </Fragment>
+          ))}
+        </Paper>
+      </Box>
+
+      <Collapse in={timeElapsed === 0} animateOpacity>
+        <Divider />
         <Button fullWidth className="rounded-t-none!" onClick={onStart}>
           Start Sprint
         </Button>
       </Collapse>
-      <Collapse in={status === "paused"} animateOpacity>
+      <Collapse in={paused} animateOpacity>
+        <Divider />
         <Button fullWidth className="rounded-t-none!" onClick={onResume}>
           Resume Sprint
         </Button>
       </Collapse>
-      <Collapse in={status === "over"} animateOpacity>
+      <Collapse in={isTimeUp} animateOpacity>
+        <Divider />
         <Button fullWidth className="rounded-t-none!" onClick={onFinish}>
           Finish Sprint
         </Button>
       </Collapse>
     </Paper>
-  );
-}
-
-// MARK: Task Item
-
-interface TaskItemProps {
-  task: TaskRun;
-  readOnly?: boolean;
-  activeTask: TaskReference | undefined;
-  onComplete: (task: TaskReference) => void;
-  onSkip: (task: TaskReference) => void;
-  onRunManually: (task: TaskReference) => void;
-}
-
-function TaskItem({
-  task,
-  activeTask,
-  readOnly,
-  onComplete,
-  onSkip,
-  onRunManually,
-}: TaskItemProps) {
-  if (task.subtasks?.length) {
-    return (
-      <>
-        {task.subtasks.map((subtask) => (
-          <Fragment key={subtask.id}>
-            <TaskControlItem
-              key={subtask.id}
-              label={subtask.title}
-              group={task.title}
-              readOnly={readOnly}
-              status={
-                subtask.completedAt
-                  ? "completed"
-                  : subtask.skipped
-                    ? "skipped"
-                    : activeTask?.taskId === task.id &&
-                        activeTask?.subtaskId === subtask.id
-                      ? "active"
-                      : "upcoming"
-              }
-              onComplete={() =>
-                onComplete({ taskId: task.id, subtaskId: subtask.id })
-              }
-              onSkip={() => onSkip({ taskId: task.id, subtaskId: subtask.id })}
-              onRunManually={() =>
-                onRunManually({ taskId: task.id, subtaskId: subtask.id })
-              }
-            />
-            <Divider className="last:hidden" />
-          </Fragment>
-        ))}
-      </>
-    );
-  }
-  return (
-    <TaskControlItem
-      label={task.title}
-      status={
-        task.completedAt
-          ? "completed"
-          : task.skipped
-            ? "skipped"
-            : activeTask?.taskId === task.id
-              ? "active"
-              : "upcoming"
-      }
-      readOnly={readOnly}
-      onComplete={() => onComplete({ taskId: task.id })}
-      onSkip={() => onSkip({ taskId: task.id })}
-      onRunManually={() => onRunManually({ taskId: task.id })}
-    />
-  );
-}
-
-// MARK: Task Control Item
-
-type TaskStatus = "completed" | "skipped" | "active" | "upcoming";
-
-interface TaskControlProps {
-  label: string;
-  group?: string;
-  status: TaskStatus;
-  readOnly?: boolean;
-  onComplete: () => void;
-  onSkip: () => void;
-  onRunManually: () => void;
-}
-function TaskControlItem({
-  label,
-  group,
-  status,
-  readOnly,
-  onComplete,
-  onSkip,
-  onRunManually,
-}: TaskControlProps) {
-  const color = ((): NavLinkProps["color"] => {
-    switch (status) {
-      case "completed":
-        return "green";
-      case "skipped":
-        return "yellow";
-      case "active":
-        return undefined;
-      default:
-        return "gray";
-    }
-  })();
-
-  const actions = ((): ReactElement[] => {
-    switch (status) {
-      case "skipped":
-        return [
-          <Button
-            key="resume"
-            size="compact-xs"
-            variant="outline"
-            color="gray"
-            fullWidth
-            onClick={onRunManually}
-          >
-            Resume Task
-          </Button>,
-        ];
-      case "active":
-        return [
-          <Button
-            key="complete"
-            color="green"
-            size="compact-sm"
-            variant="outline"
-            flex={1}
-            leftSection={<IconCheck size={16} />}
-            onClick={onComplete}
-          >
-            Complete
-          </Button>,
-          <Tooltip label="Skip Task" key="skip">
-            <ActionIcon
-              aria-label="Skip Task"
-              variant="subtle"
-              size="md"
-              color="yellow"
-              onClick={onSkip}
-            >
-              <IconArrowDownDashed size={16} />
-            </ActionIcon>
-          </Tooltip>,
-        ];
-      case "upcoming":
-        return [
-          <Button
-            key="jump-to"
-            size="compact-xs"
-            variant="outline"
-            color="gray"
-            fullWidth
-            onClick={onRunManually}
-          >
-            Jump to Task
-          </Button>,
-        ];
-      default:
-        return [];
-    }
-  })();
-
-  return (
-    <BoundOverlay
-      isTrigger
-      disabled={readOnly ?? actions.length === 0}
-      content={
-        <Flex
-          className="h-full"
-          justify="flex-end"
-          align="center"
-          px="xs"
-          gap={4}
-        >
-          {actions}
-        </Flex>
-      }
-      overlayProps={{ blur: 2 }}
-    >
-      <NavLink
-        label={label}
-        description={group}
-        component="div"
-        py={status === "active" ? undefined : 4}
-        disabled={readOnly ?? actions.length === 0 ?? status === "upcoming"}
-        active={status !== "active"}
-        color={color}
-        classNames={{
-          root: "min-w-48 transition-all",
-          label: cn({
-            "line-through": status === "completed",
-            "opacity-30": status === "skipped",
-          }),
-          body: "flex flex-col-reverse",
-        }}
-        rightSection={null}
-      />
-    </BoundOverlay>
   );
 }

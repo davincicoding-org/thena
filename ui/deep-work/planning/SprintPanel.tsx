@@ -1,11 +1,10 @@
+import type { MenuProps, PaperProps } from "@mantine/core";
+import type { PropsWithChildren } from "react";
 import { Fragment, useRef } from "react";
-import type {
-  PaperProps} from "@mantine/core";
 import {
   ActionIcon,
   Box,
   Button,
-  Collapse,
   Divider,
   Flex,
   Menu,
@@ -17,72 +16,54 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import { IconClock, IconDotsVertical } from "@tabler/icons-react";
+import { IconClock, IconDotsVertical, IconX } from "@tabler/icons-react";
 
-import type { SprintPlan } from "@/core/deep-work";
-import type { TaskSelection } from "@/core/task-management";
-import { BoundOverlay } from "@/ui/components/BoundOverlay";
+import type { FlatTask, TaskReference } from "@/core/task-management";
+import { groupFlatTasks } from "@/core/task-management";
 import { Panel } from "@/ui/components/Panel";
 import { cn } from "@/ui/utils";
 
 export interface SprintPanelProps {
-  sprint: SprintPlan;
   title: string;
+  duration: number;
+  tasks: FlatTask[];
   disabled?: boolean;
   canAddTasks: boolean;
-  sprintOptions: { id: string; title: string }[];
+  otherSprints: { id: string; title: string }[];
   onDrop: () => void;
   onDurationChange: (duration: number) => void;
   onAddTasks: (el: HTMLDivElement) => void;
-  onUnassignTask: (task: TaskSelection) => void;
+  onUnassignTasks: (tasks: TaskReference[]) => void;
   onMoveTasks: (options: {
     toSprintId: string;
-    tasks: TaskSelection[];
+    tasks: TaskReference[];
   }) => void;
 }
 
 export function SprintPanel({
-  sprint,
   title,
-  sprintOptions,
+  duration,
+  tasks,
+  otherSprints,
   disabled,
   canAddTasks,
   onDrop,
   onDurationChange,
   onAddTasks,
-  onUnassignTask,
+  onUnassignTasks,
   onMoveTasks,
   className,
   ...props
 }: SprintPanelProps & PaperProps) {
-  const otherSprints = sprintOptions.filter(
-    (option) => option.id !== sprint.id,
-  );
-
   const panelRef = useRef<HTMLDivElement>(null);
+
+  const items = groupFlatTasks(tasks);
 
   return (
     <Panel
-      key={sprint.id}
       ref={panelRef}
       header={
-        <BoundOverlay
-          overlayProps={{
-            className: "backdrop-blur-xs",
-          }}
-          content={
-            <Flex className="h-full" align="center" justify="end" px="sm">
-              <Button
-                variant="outline"
-                color="red"
-                size="compact-sm"
-                onClick={onDrop}
-              >
-                Drop Sprint
-              </Button>
-            </Flex>
-          }
-        >
+        <Menu position="bottom-end">
           <Flex align="center" gap={4} pl="sm" pr={4} py={4}>
             <Text
               size="lg"
@@ -105,8 +86,8 @@ export function SprintPanel({
               radius="xl"
               size="xs"
               ff="monospace"
-              value={sprint.duration}
-              w={40 + sprint.duration.toString().length * 8}
+              value={duration}
+              w={40 + duration.toString().length * 8}
               min={5}
               max={90}
               step={5}
@@ -122,17 +103,23 @@ export function SprintPanel({
               }}
             />
 
-            <BoundOverlay.Trigger>
+            <Menu.Target>
               <ActionIcon
+                className="ml-1"
                 aria-label="Sprint Options"
-                variant="transparent"
+                variant="subtle"
                 color="gray"
               >
                 <IconDotsVertical size={16} />
               </ActionIcon>
-            </BoundOverlay.Trigger>
+            </Menu.Target>
           </Flex>
-        </BoundOverlay>
+          <Menu.Dropdown>
+            <Menu.Item color="red" onClick={onDrop}>
+              Drop Sprint
+            </Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
       }
       className={cn(
         "min-w-64 transition-opacity",
@@ -145,164 +132,152 @@ export function SprintPanel({
     >
       <ScrollArea scrollbars="y" scrollHideDelay={300}>
         <Stack gap="sm" p="sm" bg="neutral.8">
-          {sprint.tasks.map((task) => (
-            <Paper
-              key={task.id}
-              withBorder
-              className="overflow-clip"
-              radius="md"
-            >
-              <Menu position="bottom-end">
-                <Menu.Target>
+          {items.map((taskOrGroup) => {
+            if (!("groupLabel" in taskOrGroup))
+              return (
+                <ActionsMenu
+                  key={`${taskOrGroup.taskId}-${taskOrGroup.subtaskId}`}
+                  tasks={[taskOrGroup]}
+                  otherSprints={otherSprints}
+                  onMoveTasks={onMoveTasks}
+                  onUnassignTasks={onUnassignTasks}
+                >
                   <Paper
-                    {...(task.subtasks?.length
-                      ? {
-                          withBorder: true,
-                          mt: -1,
-                          mx: -1,
-                          bg: "neutral.6",
-                          radius: "md",
-                        }
-                      : { radius: 0 })}
+                    key={`${taskOrGroup.taskId}-${taskOrGroup.subtaskId}`}
+                    className={cn(
+                      "cursor-pointer px-3",
+                      taskOrGroup.parentTitle ? "py-1.5" : "py-2",
+                    )}
+                    withBorder
                   >
-                    <NavLink
-                      component="div"
-                      label={task.title}
-                      color="gray"
-                      rightSection={null}
-                    />
+                    {taskOrGroup.parentTitle ? (
+                      <Text size="xs" opacity={0.5}>
+                        {taskOrGroup.parentTitle}
+                      </Text>
+                    ) : null}
+                    <Text size="sm">{taskOrGroup.title}</Text>
                   </Paper>
-                </Menu.Target>
-                <Menu.Dropdown>
-                  {otherSprints.length > 0 && (
-                    <>
-                      <Menu.Label>Move to</Menu.Label>
+                </ActionsMenu>
+              );
 
-                      {otherSprints.map((option) => (
-                        <Menu.Item
-                          key={option.id}
-                          onClick={() => {
-                            onMoveTasks({
-                              toSprintId: option.id,
-                              tasks: [{ taskId: task.id }],
-                            });
-                          }}
-                        >
-                          {option.title}
-                        </Menu.Item>
-                      ))}
-                    </>
-                  )}
-                  <MenuDivider className="first:hidden" />
-                  <Menu.Item
-                    color="red"
-                    onClick={() => onUnassignTask({ taskId: task.id })}
+            return (
+              <Paper
+                key={taskOrGroup.taskId}
+                withBorder
+                className="overflow-clip"
+              >
+                <ActionsMenu
+                  tasks={taskOrGroup.items}
+                  otherSprints={otherSprints}
+                  onMoveTasks={onMoveTasks}
+                  onUnassignTasks={onUnassignTasks}
+                >
+                  <Text
+                    size="xs"
+                    opacity={0.5}
+                    className="cursor-pointer px-1.5! py-1!"
                   >
-                    Unassign
-                  </Menu.Item>
-                </Menu.Dropdown>
-              </Menu>
+                    {taskOrGroup.groupLabel}
+                  </Text>
+                </ActionsMenu>
+                {taskOrGroup.items.map((item) => (
+                  <Fragment key={`${item.taskId}-${item.subtaskId}`}>
+                    <Divider />
+                    <ActionsMenu
+                      tasks={[item]}
+                      otherSprints={otherSprints}
+                      onMoveTasks={onMoveTasks}
+                      onUnassignTasks={onUnassignTasks}
+                    >
+                      <NavLink className="px-2! py-1!" label={item.title} />
+                    </ActionsMenu>
+                  </Fragment>
+                ))}
+              </Paper>
+            );
+          })}
 
-              {task.subtasks?.length ? (
-                <Stack gap={0} flex={1}>
-                  {task.subtasks.map((subtask) => (
-                    <Fragment key={subtask.id}>
-                      <Menu position="bottom-end">
-                        <Menu.Target>
-                          <NavLink
-                            component="div"
-                            color="gray"
-                            label={subtask.title}
-                            rightSection={null}
-                          />
-                        </Menu.Target>
-                        <Menu.Dropdown>
-                          {otherSprints.length > 0 && (
-                            <>
-                              <Menu.Label>Assign to</Menu.Label>
-                              {otherSprints.map((option) => (
-                                <Menu.Item
-                                  key={option.id}
-                                  onClick={() =>
-                                    onMoveTasks({
-                                      toSprintId: option.id,
-                                      tasks: [
-                                        {
-                                          taskId: task.id,
-                                          subtaskIds: [subtask.id],
-                                        },
-                                      ],
-                                    })
-                                  }
-                                >
-                                  {option.title}
-                                </Menu.Item>
-                              ))}
-                            </>
-                          )}
-                          <MenuDivider className="first:hidden" />
-                          <Menu.Item
-                            color="red"
-                            onClick={() =>
-                              onUnassignTask({
-                                taskId: task.id,
-                                subtaskIds: [subtask.id],
-                              })
-                            }
-                          >
-                            Unassign
-                          </Menu.Item>
-                        </Menu.Dropdown>
-                      </Menu>
-                      <Divider className="last:hidden" />
-                    </Fragment>
-                  ))}
-                </Stack>
-              ) : undefined}
-            </Paper>
-          ))}
-
-          <Collapse in={canAddTasks && sprint.tasks.length > 0}>
-            <Button
-              disabled={disabled}
-              variant="light"
-              fullWidth
-              size="xs"
-              onClick={() => {
-                if (!panelRef.current) return;
-                onAddTasks(panelRef.current);
-              }}
-            >
-              Assign Tasks
-            </Button>
-          </Collapse>
-
-          {sprint.tasks.length === 0 && (
-            <Box>
-              {canAddTasks ? (
-                <Button
-                  disabled={disabled}
-                  variant="outline"
-                  fullWidth
-                  onClick={() => {
-                    if (!panelRef.current) return;
-                    onAddTasks(panelRef.current);
-                  }}
-                >
-                  Assign Tasks
-                </Button>
-              ) : (
-                <Text
-                  className="flex items-center justify-center opacity-30"
-                  h={36}
-                >
-                  No tasks assigned
-                </Text>
-              )}
-            </Box>
-          )}
+          <Box className="empty:hidden">
+            {canAddTasks ? (
+              <Button
+                disabled={disabled}
+                variant="outline"
+                fullWidth
+                onClick={() => {
+                  if (!panelRef.current) return;
+                  onAddTasks(panelRef.current);
+                }}
+              >
+                Assign Tasks
+              </Button>
+            ) : tasks.length === 0 ? (
+              <Text
+                className="flex items-center justify-center opacity-30"
+                h={36}
+              >
+                No tasks assigned
+              </Text>
+            ) : null}
+          </Box>
         </Stack>
       </ScrollArea>
     </Panel>
+  );
+}
+
+interface ActionsMenuProps
+  extends Pick<
+    SprintPanelProps,
+    "onMoveTasks" | "onUnassignTasks" | "otherSprints"
+  > {
+  tasks: TaskReference[];
+}
+
+function ActionsMenu({
+  tasks,
+  otherSprints,
+  onMoveTasks,
+  onUnassignTasks,
+  children,
+  ...props
+}: PropsWithChildren<ActionsMenuProps> & MenuProps) {
+  return (
+    <Menu
+      position="bottom-end"
+      offset={{
+        mainAxis: -20,
+      }}
+      {...props}
+    >
+      <Menu.Target>{children}</Menu.Target>
+      <Menu.Dropdown>
+        {otherSprints.length > 0 && (
+          <>
+            <Menu.Label>Move to</Menu.Label>
+            {otherSprints.map((option) => (
+              <Menu.Item
+                key={option.id}
+                onClick={() =>
+                  onMoveTasks({
+                    toSprintId: option.id,
+                    tasks,
+                  })
+                }
+              >
+                {option.title}
+              </Menu.Item>
+            ))}
+            <MenuDivider />
+          </>
+        )}
+        <Menu.Item
+          color="red"
+          leftSection={<IconX size={16} />}
+          onClick={() => onUnassignTasks(tasks)}
+        >
+          Unassign
+        </Menu.Item>
+      </Menu.Dropdown>
+    </Menu>
   );
 }

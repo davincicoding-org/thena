@@ -22,7 +22,7 @@ export function useSyncInputState<T>(externalState: T) {
 
   useEffect(() => {
     setState(externalState);
-  }, [externalState]);
+  }, [externalState, setState]);
 
   return [state, setState] as const;
 }

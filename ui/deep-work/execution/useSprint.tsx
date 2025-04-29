@@ -1,13 +1,18 @@
 import { useEffect, useState } from "react";
 
-import type { SprintPlan, SprintStatus, TaskRun, WithRun } from "@/core/deep-work";
+import type {
+  PopulatedSprintPlan,
+  RuntITem$$$,
+  SprintStatus,
+  WithRun,
+} from "@/core/deep-work";
 import type { TaskReference } from "@/core/task-management";
 
 interface SprintRun {
   duration: number;
   timeElapsed: number;
   status: SprintStatus;
-  tasks: TaskRun[];
+  tasks: RuntITem$$$[];
   currentTask?: TaskReference;
   start: () => void;
   pause: () => void;
@@ -25,7 +30,7 @@ export interface SprintHookOptions {
 }
 
 export function useSprint(
-  plan: SprintPlan | undefined,
+  plan: PopulatedSprintPlan | undefined,
   options: SprintHookOptions,
 ): SprintRun | undefined {
   const [status, setStatus] = useState<SprintStatus>("idle");
@@ -38,19 +43,7 @@ export function useSprint(
     setStatus("idle");
     setCurrentTask(undefined);
     setTaskRuns(
-      plan.tasks.flatMap((task) => {
-        if (task.subtasks?.length) {
-          return task.subtasks.map((subtask) => ({
-            taskId: task.id,
-            subtaskId: subtask.id,
-          }));
-        }
-        return [
-          {
-            taskId: task.id,
-          },
-        ];
-      }),
+      plan.tasks.map(({ taskId, subtaskId }) => ({ taskId, subtaskId })),
     );
     setTimeElapsed(0);
   }, [plan]);
@@ -68,35 +61,23 @@ export function useSprint(
     if (status !== "running") return;
     if (timeElapsed < plan.duration) return;
     setStatus("over");
-  }, [timeElapsed, plan]);
+  }, [timeElapsed, plan, status]);
 
   if (!plan) return undefined;
 
   const tasks = ((): SprintRun["tasks"] => {
     if (!plan) return [];
-    return plan.tasks.map((task) => {
+    return plan.tasks.map<RuntITem$$$>((item) => {
       const taskRun = taskRuns.find(
-        (run) => run.taskId === task.id && run.subtaskId === undefined,
+        (run) => run.taskId === item.taskId && run.subtaskId === item.subtaskId,
       );
 
-      if (!task.subtasks?.length)
-        return {
-          ...task,
-          ...taskRun,
-        };
-
       return {
-        ...task,
+        label: item.title,
+        group: item.parentTitle,
+        taskId: item.taskId,
+        subtaskId: item.subtaskId,
         ...taskRun,
-        subtasks: task.subtasks.map((subtask) => {
-          const subtaskRun = taskRuns.find(
-            (run) => run.taskId === task.id && run.subtaskId === subtask.id,
-          );
-          return {
-            ...subtask,
-            ...subtaskRun,
-          };
-        }),
       };
     });
   })();

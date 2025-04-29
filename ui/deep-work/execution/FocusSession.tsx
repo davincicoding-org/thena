@@ -4,7 +4,7 @@ import { Box, Flex } from "@mantine/core";
 import type {
   FocusSessionBreak,
   FocusSessionStatus,
-  SprintPlan,
+  PopulatedSprintPlan,
 } from "@/core/deep-work";
 import { cn } from "@/ui/utils";
 
@@ -13,7 +13,7 @@ import { SprintWidget } from "./SprintWidget";
 import { useSprint } from "./useSprint";
 
 export interface FocusSessionProps {
-  currentSprint: SprintPlan | undefined;
+  currentSprint: PopulatedSprintPlan | undefined;
   sessionBreak: FocusSessionBreak | undefined;
   status: FocusSessionStatus;
   onFinishSprint: () => void;
@@ -93,8 +93,8 @@ export function FocusSession({
             warnBeforeTimeRunsOut={10}
             tasks={sprint.tasks}
             currentTask={sprint.currentTask}
-            status={sprint.status}
             timeElapsed={sprint.timeElapsed}
+            paused={sprint.status === "paused"}
             onStart={sprint.start}
             onPause={sprint.pause}
             onResume={sprint.resume}

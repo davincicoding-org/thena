@@ -35,5 +35,6 @@ export const useKeyHold = ({
     return () => {
       void onRelease();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHeld]);
 };

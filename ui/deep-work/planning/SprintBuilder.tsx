@@ -1,3 +1,4 @@
+import type { PaperProps } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
 import {
   Badge,
@@ -12,8 +13,11 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 
 import type { SprintPlan } from "@/core/deep-work";
-import type { Task, TaskSelection } from "@/core/task-management";
-import type { PaperProps } from "@mantine/core";
+import type { Task, TaskReference } from "@/core/task-management";
+import {
+  resolveTaskReferences,
+  resolveTaskReferencesFlat,
+} from "@/core/task-management";
 import { cn } from "@/ui/utils";
 
 import { SprintPanel } from "./SprintPanel";
@@ -21,7 +25,8 @@ import { TaskPool } from "./TaskPool";
 
 export interface SprintBuilderProps {
   sprints: SprintPlan[];
-  unassignedTasks: Task[];
+  tasks: Task[];
+  unassignedTasks: TaskReference[];
   onAddSprint: (callback?: (sprintId: SprintPlan["id"]) => void) => void;
   onDropSprint: (sprintId: SprintPlan["id"]) => void;
   onSprintChange: (
@@ -29,22 +34,23 @@ export interface SprintBuilderProps {
     updates: Partial<Pick<SprintPlan, "duration">>,
   ) => void;
   onAssignTasksToSprint: (options: {
-    sprintId: string;
-    tasks: TaskSelection[];
+    sprintId: string | null;
+    tasks: TaskReference[];
   }) => void;
   onUnassignTasksFromSprint: (options: {
     sprintId: string;
-    tasks: TaskSelection[];
+    tasks: TaskReference[];
   }) => void;
   onMoveTasks: (options: {
     fromSprintId: string;
     toSprintId: string;
-    tasks: TaskSelection[];
+    tasks: TaskReference[];
   }) => void;
 }
 
 export function SprintBuilder({
   sprints,
+  tasks,
   unassignedTasks,
   onAddSprint,
   onDropSprint,
@@ -55,6 +61,7 @@ export function SprintBuilder({
   className,
   ...paperProps
 }: SprintBuilderProps & PaperProps) {
+  console.log({ tasks, unassignedTasks });
   const [
     isShowingUnassignedTasks,
     { close: closeTaskPool, open: openTaskPool, toggle: toggleTaskPool },
@@ -69,16 +76,12 @@ export function SprintBuilder({
     title: `Sprint ${index + 1}`,
   }));
 
-  const totalUnassignedTasks = unassignedTasks.reduce(
-    (acc, task) => acc + (task.subtasks?.length ?? 1),
-    0,
-  );
+  const hasUnassignedTasks = unassignedTasks.length > 0;
 
   useEffect(() => {
-    if (unassignedTasks.length === 0) {
-      closeTaskPool();
-    }
-  }, [unassignedTasks.length, closeTaskPool]);
+    if (hasUnassignedTasks) return;
+    closeTaskPool();
+  }, [hasUnassignedTasks, closeTaskPool]);
 
   const handleAddSprint = () => {
     onAddSprint((sprintId) => {
@@ -132,11 +135,14 @@ export function SprintBuilder({
             {sprints.map((sprint, index) => (
               <SprintPanel
                 key={sprint.id}
-                sprint={sprint}
+                duration={sprint.duration}
+                tasks={resolveTaskReferencesFlat(sprint.tasks, tasks)}
                 className="max-h-full"
-                sprintOptions={sprintOptions}
+                otherSprints={sprintOptions.filter(
+                  (option) => option.id !== sprint.id,
+                )}
                 title={`Sprint ${index + 1}`}
-                canAddTasks={totalUnassignedTasks > 0}
+                canAddTasks={hasUnassignedTasks}
                 disabled={
                   sprintToAddTaskTo !== undefined &&
                   sprintToAddTaskTo !== sprint.id
@@ -156,11 +162,8 @@ export function SprintBuilder({
                     });
                   }, 300);
                 }}
-                onUnassignTask={(task) =>
-                  onUnassignTasksFromSprint({
-                    sprintId: sprint.id,
-                    tasks: [task],
-                  })
+                onUnassignTasks={(tasks) =>
+                  onUnassignTasksFromSprint({ sprintId: sprint.id, tasks })
                 }
                 onMoveTasks={(options) =>
                   onMoveTasks({
@@ -181,7 +184,7 @@ export function SprintBuilder({
           p="sm"
         >
           <TaskPool
-            items={unassignedTasks}
+            items={resolveTaskReferences(unassignedTasks, tasks)}
             sprintOptions={sprintOptions}
             selectionEnabled={sprintToAddTaskTo !== undefined}
             onSubmitSelection={(tasks) => {
@@ -195,17 +198,12 @@ export function SprintBuilder({
               setSprintToAddTaskTo(undefined);
               closeTaskPool();
             }}
-            onAssignTaskToSprint={({ sprintId, task }) => {
+            onAssignTasksToSprint={({ sprintId, tasks }) =>
               onAssignTasksToSprint({
                 sprintId,
-                tasks: [
-                  {
-                    taskId: task.taskId,
-                    subtaskIds: task.subtaskId ? [task.subtaskId] : undefined,
-                  },
-                ],
-              });
-            }}
+                tasks,
+              })
+            }
           />
         </Box>
       </Flex>
@@ -221,12 +219,12 @@ export function SprintBuilder({
           color={unassignedTasks.length ? "orange" : "green"}
           className={cn({
             "pointer-events-none":
-              sprintToAddTaskTo !== undefined || totalUnassignedTasks === 0,
+              sprintToAddTaskTo !== undefined || !hasUnassignedTasks,
           })}
           leftSection={
             unassignedTasks.length ? (
               <Badge px={4} miw={20} color="orange">
-                {totalUnassignedTasks}
+                {unassignedTasks.length}
               </Badge>
             ) : undefined
           }

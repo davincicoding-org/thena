@@ -41,18 +41,6 @@ import {
 
 const DEMO_PAGES = [
   {
-    label: "Sprint",
-    href: "/demos/sprint",
-  },
-  {
-    label: "Session Planner",
-    href: "/demos/session-planner",
-  },
-  {
-    label: "Tasks",
-    href: "/demos/tasks",
-  },
-  {
     label: "Task Wizard",
     href: "/demos/task-wizard",
   },

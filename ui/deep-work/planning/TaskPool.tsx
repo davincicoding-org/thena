@@ -1,3 +1,4 @@
+import type { PaperProps } from "@mantine/core";
 import {
   ActionIcon,
   Button,
@@ -13,13 +14,7 @@ import {
 } from "@mantine/core";
 import { IconArrowLeft, IconX } from "@tabler/icons-react";
 
-import type {
-  SubtaskReference,
-  Task,
-  TaskReference,
-  TaskSelection,
-} from "@/core/task-management";
-import type { PaperProps } from "@mantine/core";
+import type { Task, TaskReference } from "@/core/task-management";
 import { useTaskSelection } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
@@ -27,11 +22,11 @@ export interface TaskPoolProps {
   items: Task[];
   selectionEnabled: boolean;
   sprintOptions: { id: string; title: string }[];
-  onSubmitSelection: (tasks: TaskSelection[]) => void;
+  onSubmitSelection: (tasks: TaskReference[]) => void;
   onAbortSelection: () => void;
-  onAssignTaskToSprint: (options: {
-    sprintId: string;
-    task: TaskReference;
+  onAssignTasksToSprint: (options: {
+    sprintId: string | null;
+    tasks: TaskReference[];
   }) => void;
 }
 
@@ -41,9 +36,10 @@ export function TaskPool({
   selectionEnabled,
   onSubmitSelection,
   onAbortSelection,
-  onAssignTaskToSprint: onAssignTasksToSprint,
+  onAssignTasksToSprint,
   ...props
 }: TaskPoolProps & PaperProps) {
+  console.log(items);
   const {
     selection,
     clearSelection,
@@ -58,7 +54,7 @@ export function TaskPool({
     toggleTaskSelection(task);
   };
 
-  const handleSubtaskClick = (taskReference: SubtaskReference) => {
+  const handleSubtaskClick = (taskReference: TaskReference) => {
     if (!selectionEnabled) return;
     toggleSubtaskSelection(taskReference);
   };
@@ -165,13 +161,33 @@ export function TaskPool({
                       onClick={() =>
                         onAssignTasksToSprint({
                           sprintId: option.id,
-                          task: { taskId: task.id },
+                          tasks: task.subtasks?.length
+                            ? task.subtasks.map((subtask) => ({
+                                taskId: task.id,
+                                subtaskId: subtask.id,
+                              }))
+                            : [{ taskId: task.id, subtaskId: null }],
                         })
                       }
                     >
                       {option.title}
                     </Menu.Item>
                   ))}
+                  <Menu.Item
+                    onClick={() =>
+                      onAssignTasksToSprint({
+                        sprintId: null,
+                        tasks: task.subtasks?.length
+                          ? task.subtasks.map((subtask) => ({
+                              taskId: task.id,
+                              subtaskId: subtask.id,
+                            }))
+                          : [{ taskId: task.id, subtaskId: null }],
+                      })
+                    }
+                  >
+                    New Sprint
+                  </Menu.Item>
                 </Menu.Dropdown>
               </Menu>
               {task.subtasks?.length ? (
@@ -208,10 +224,12 @@ export function TaskPool({
                             onClick={() =>
                               onAssignTasksToSprint({
                                 sprintId: option.id,
-                                task: {
-                                  taskId: task.id,
-                                  subtaskId: subtask.id,
-                                },
+                                tasks: [
+                                  {
+                                    taskId: task.id,
+                                    subtaskId: subtask.id,
+                                  },
+                                ],
                               })
                             }
                           >

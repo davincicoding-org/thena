@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  excludeTaskSelection,
+  excludeTaskReferences,
   mergeTaskSelections,
 } from "@/core/task-management/utils";
 
@@ -73,7 +73,7 @@ describe("task-management utilities", () => {
 
   describe("excludeTaskSelection", () => {
     it("should exclude task", () => {
-      const result = excludeTaskSelection(
+      const result = excludeTaskReferences(
         [
           { taskId: "1" },
           {
@@ -91,7 +91,7 @@ describe("task-management utilities", () => {
     });
 
     it("should exclude subtasks", () => {
-      const result = excludeTaskSelection(
+      const result = excludeTaskReferences(
         [
           { taskId: "1" },
           {

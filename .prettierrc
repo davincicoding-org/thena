@@ -10,7 +10,7 @@
     "^(next/(.*)$)|^(next$)",
     "<THIRD_PARTY_MODULES>",
     "",
-    "<TYPES>^@",
+    "<TYPES>^@/",
     "^@/(.*)$",
     "",
     "<TYPES>^[.|..|~]",

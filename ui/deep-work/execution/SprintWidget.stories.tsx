@@ -1,7 +1,7 @@
-import { useMemo } from "react";
-import { fn } from "@storybook/test";
-
 import type { Meta, StoryObj } from "@storybook/react";
+import { ComponentProps, useEffect } from "react";
+import { useArgs, useState } from "@storybook/preview-api";
+import { fn } from "@storybook/test";
 
 import { SprintWidget } from "./SprintWidget";
 import { useSprint } from "./useSprint";
@@ -31,76 +31,107 @@ type Story = StoryObj<typeof meta>;
 
 export const Showcase: Story = {
   args: {
-    status: "idle",
     allowToPause: true,
     tasks: [
       {
-        id: "task1",
-        title: "Standup meeting",
+        taskId: "task1",
+        subtaskId: null,
+        label: "Standup meeting",
+        group: undefined,
       },
       {
-        id: "task2",
-        title: "Code review PR-123",
+        taskId: "task2",
+        subtaskId: null,
+        label: "Code review PR-123",
+        group: undefined,
       },
       {
-        id: "app",
-        title: "Building an app",
-        subtasks: [
-          {
-            id: "1",
-            title: "Gather requirements",
-          },
-          {
-            id: "2",
-            title: "Design the UI",
-          },
-          {
-            id: "3",
-            title: "Implement the UI",
-          },
-          {
-            id: "4",
-            title: "Test the app",
-          },
-        ],
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "1",
+        label: "Gather requirements",
       },
       {
-        id: "dog",
-        title: "Walk the dog",
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "2",
+        label: "Design the UI",
+      },
+      {
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "3",
+        label: "Implement the UI",
+      },
+      {
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "4",
+        label: "Test the app",
+      },
+      {
+        taskId: "dog",
+        subtaskId: null,
+        label: "Walk the dog",
+        group: undefined,
       },
     ],
   },
   render: (args) => {
-    const sprintPlan = useMemo(
-      () => ({
-        id: "demo",
-        duration: args.duration,
-        tasks: args.tasks,
-      }),
-      [],
-    );
-    const sprint = useSprint(sprintPlan, {
-      onStart: args.onStart,
-      // onCompleteTask: args.onCompleteTask,
-      // onSkipTask: args.onSkipTask,
-      // onRunTaskManually: args.onRunTaskManually,
-      onPause: args.onPause,
-      onResume: args.onResume,
-    })!;
+    const [, updateArgs] = useArgs<ComponentProps<typeof SprintWidget>>();
+
+    useEffect(() => {
+      if (args.timeElapsed === 0) return;
+      if (args?.paused) return;
+      const interval = setTimeout(() => {
+        updateArgs({ timeElapsed: args.timeElapsed + 0.1 });
+      }, 100);
+      return () => clearInterval(interval);
+    }, [args?.paused, args.timeElapsed]);
 
     return (
       <SprintWidget
         {...args}
-        tasks={sprint.tasks}
-        status={sprint.status}
-        currentTask={sprint.currentTask}
-        timeElapsed={sprint.timeElapsed}
-        onStart={sprint.start}
-        onCompleteTask={sprint.completeTask}
-        onSkipTask={sprint.skipTask}
-        onRunTaskManually={sprint.runTaskManually}
-        onPause={sprint.pause}
-        onResume={sprint.resume}
+        tasks={args.tasks}
+        currentTask={args.currentTask}
+        onStart={() => {
+          updateArgs({ timeElapsed: 0.1, currentTask: args.tasks[0] });
+        }}
+        onPause={() => updateArgs({ paused: true })}
+        onResume={() => updateArgs({ paused: false })}
+        onCompleteTask={(completedTask) => {
+          const taskIndex = args.tasks.findIndex(
+            (task) =>
+              task.taskId === completedTask.taskId &&
+              task.subtaskId === completedTask.subtaskId,
+          );
+          updateArgs({
+            tasks: args.tasks.map((task, index) => {
+              if (index !== taskIndex) return task;
+              return { ...task, completedAt: Date.now() };
+            }),
+            currentTask: args.tasks[taskIndex + 1],
+          });
+        }}
+        onSkipTask={(skippedTask) => {
+          const taskIndex = args.tasks.findIndex(
+            (task) =>
+              task.taskId === skippedTask.taskId &&
+              task.subtaskId === skippedTask.subtaskId,
+          );
+          updateArgs({
+            tasks: args.tasks.map((task, index) => {
+              if (index !== taskIndex) return task;
+              return { ...task, skipped: true };
+            }),
+            currentTask: args.tasks[taskIndex + 1],
+          });
+        }}
+        onRunTaskManually={(taskToRun) => {
+          updateArgs({
+            currentTask: taskToRun,
+          });
+        }}
       />
     );
   },
@@ -108,41 +139,48 @@ export const Showcase: Story = {
 
 export const Idle: Story = {
   args: {
-    status: "idle",
     tasks: [
       {
-        id: "task1",
-        title: "Standup meeting",
+        taskId: "task1",
+        subtaskId: null,
+        label: "Standup meeting",
+        group: undefined,
       },
       {
-        id: "task2",
-        title: "Code review PR-123",
+        taskId: "task2",
+        subtaskId: null,
+        label: "Code review PR-123",
+        group: undefined,
       },
       {
-        id: "app",
-        title: "Building an app",
-        subtasks: [
-          {
-            id: "1",
-            title: "Gather requirements",
-          },
-          {
-            id: "2",
-            title: "Design the UI",
-          },
-          {
-            id: "3",
-            title: "Implement the UI",
-          },
-          {
-            id: "4",
-            title: "Test the app",
-          },
-        ],
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "1",
+        label: "Gather requirements",
       },
       {
-        id: "dog",
-        title: "Walk the dog",
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "2",
+        label: "Design the UI",
+      },
+      {
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "3",
+        label: "Implement the UI",
+      },
+      {
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "4",
+        label: "Test the app",
+      },
+      {
+        taskId: "dog",
+        subtaskId: null,
+        label: "Walk the dog",
+        group: undefined,
       },
     ],
   },
@@ -150,44 +188,51 @@ export const Idle: Story = {
 
 export const Running: Story = {
   args: {
-    status: "running",
     timeElapsed: 10,
-    currentTask: { taskId: "task2", subtaskId: undefined },
+    currentTask: { taskId: "task2", subtaskId: null },
     tasks: [
       {
-        id: "task1",
-        title: "Standup meeting",
+        taskId: "task1",
+        subtaskId: null,
+        label: "Standup meeting",
+        group: undefined,
         completedAt: Date.now(),
       },
       {
-        id: "task2",
-        title: "Code review PR-123",
+        taskId: "task2",
+        subtaskId: null,
+        label: "Code review PR-123",
+        group: undefined,
       },
       {
-        id: "app",
-        title: "Building an app",
-        subtasks: [
-          {
-            id: "1",
-            title: "Gather requirements",
-          },
-          {
-            id: "2",
-            title: "Design the UI",
-          },
-          {
-            id: "3",
-            title: "Implement the UI",
-          },
-          {
-            id: "4",
-            title: "Test the app",
-          },
-        ],
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "1",
+        label: "Gather requirements",
       },
       {
-        id: "dog",
-        title: "Walk the dog",
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "2",
+        label: "Design the UI",
+      },
+      {
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "3",
+        label: "Implement the UI",
+      },
+      {
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "4",
+        label: "Test the app",
+      },
+      {
+        taskId: "dog",
+        subtaskId: null,
+        label: "Walk the dog",
+        group: undefined,
       },
     ],
   },
@@ -195,45 +240,52 @@ export const Running: Story = {
 
 export const Pausable: Story = {
   args: {
-    status: "running",
     timeElapsed: 10,
     allowToPause: true,
-    currentTask: { taskId: "task2", subtaskId: undefined },
+    currentTask: { taskId: "task2", subtaskId: null },
     tasks: [
       {
-        id: "task1",
-        title: "Standup meeting",
+        taskId: "task1",
+        subtaskId: null,
+        label: "Standup meeting",
+        group: undefined,
         completedAt: Date.now(),
       },
       {
-        id: "task2",
-        title: "Code review PR-123",
+        taskId: "task2",
+        subtaskId: null,
+        label: "Code review PR-123",
+        group: undefined,
       },
       {
-        id: "app",
-        title: "Building an app",
-        subtasks: [
-          {
-            id: "1",
-            title: "Gather requirements",
-          },
-          {
-            id: "2",
-            title: "Design the UI",
-          },
-          {
-            id: "3",
-            title: "Implement the UI",
-          },
-          {
-            id: "4",
-            title: "Test the app",
-          },
-        ],
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "1",
+        label: "Gather requirements",
       },
       {
-        id: "dog",
-        title: "Walk the dog",
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "2",
+        label: "Design the UI",
+      },
+      {
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "3",
+        label: "Implement the UI",
+      },
+      {
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "4",
+        label: "Test the app",
+      },
+      {
+        taskId: "dog",
+        subtaskId: null,
+        label: "Walk the dog",
+        group: undefined,
       },
     ],
   },
@@ -241,45 +293,53 @@ export const Pausable: Story = {
 
 export const Paused: Story = {
   args: {
-    status: "paused",
+    paused: true,
     timeElapsed: 10,
     allowToPause: true,
-    currentTask: { taskId: "task2", subtaskId: undefined },
+    currentTask: { taskId: "task2", subtaskId: null },
     tasks: [
       {
-        id: "task1",
-        title: "Standup meeting",
+        taskId: "task1",
+        subtaskId: null,
+        label: "Standup meeting",
+        group: undefined,
         completedAt: Date.now(),
       },
       {
-        id: "task2",
-        title: "Code review PR-123",
+        taskId: "task2",
+        subtaskId: null,
+        label: "Code review PR-123",
+        group: undefined,
       },
       {
-        id: "app",
-        title: "Building an app",
-        subtasks: [
-          {
-            id: "1",
-            title: "Gather requirements",
-          },
-          {
-            id: "2",
-            title: "Design the UI",
-          },
-          {
-            id: "3",
-            title: "Implement the UI",
-          },
-          {
-            id: "4",
-            title: "Test the app",
-          },
-        ],
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "1",
+        label: "Gather requirements",
       },
       {
-        id: "dog",
-        title: "Walk the dog",
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "2",
+        label: "Design the UI",
+      },
+      {
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "3",
+        label: "Implement the UI",
+      },
+      {
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "4",
+        label: "Test the app",
+      },
+      {
+        taskId: "dog",
+        subtaskId: null,
+        label: "Walk the dog",
+        group: undefined,
       },
     ],
   },
@@ -287,45 +347,52 @@ export const Paused: Story = {
 
 export const SkippedTask: Story = {
   args: {
-    status: "running",
     timeElapsed: 30,
     currentTask: { taskId: "app", subtaskId: "1" },
     tasks: [
       {
-        id: "task1",
-        title: "Standup meeting",
+        taskId: "task1",
+        subtaskId: null,
+        label: "Standup meeting",
+        group: undefined,
         completedAt: Date.now(),
       },
       {
-        id: "task2",
-        title: "Code review PR-123",
+        taskId: "task2",
+        subtaskId: null,
+        label: "Code review PR-123",
+        group: undefined,
         skipped: true,
       },
       {
-        id: "app",
-        title: "Building an app",
-        subtasks: [
-          {
-            id: "1",
-            title: "Gather requirements",
-          },
-          {
-            id: "2",
-            title: "Design the UI",
-          },
-          {
-            id: "3",
-            title: "Implement the UI",
-          },
-          {
-            id: "4",
-            title: "Test the app",
-          },
-        ],
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "1",
+        label: "Gather requirements",
       },
       {
-        id: "dog",
-        title: "Walk the dog",
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "2",
+        label: "Design the UI",
+      },
+      {
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "3",
+        label: "Implement the UI",
+      },
+      {
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "4",
+        label: "Test the app",
+      },
+      {
+        taskId: "dog",
+        subtaskId: null,
+        label: "Walk the dog",
+        group: undefined,
       },
     ],
   },
@@ -333,50 +400,57 @@ export const SkippedTask: Story = {
 
 export const RunningOutOfTime: Story = {
   args: {
-    status: "running",
     warnBeforeTimeRunsOut: 10,
     timeElapsed: meta.args.duration - 10,
-    currentTask: { taskId: "dog", subtaskId: undefined },
+    currentTask: { taskId: "dog", subtaskId: null },
     tasks: [
       {
-        id: "task1",
-        title: "Standup meeting",
+        taskId: "task1",
+        subtaskId: null,
+        label: "Standup meeting",
+        group: undefined,
         completedAt: Date.now(),
       },
       {
-        id: "task2",
-        title: "Code review PR-123",
+        taskId: "task2",
+        subtaskId: null,
+        label: "Code review PR-123",
+        group: undefined,
         completedAt: Date.now(),
       },
       {
-        id: "app",
-        title: "Building an app",
-        subtasks: [
-          {
-            id: "1",
-            title: "Gather requirements",
-            completedAt: Date.now(),
-          },
-          {
-            id: "2",
-            title: "Design the UI",
-            completedAt: Date.now(),
-          },
-          {
-            id: "3",
-            title: "Implement the UI",
-            completedAt: Date.now(),
-          },
-          {
-            id: "4",
-            title: "Test the app",
-            completedAt: Date.now(),
-          },
-        ],
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "1",
+        label: "Gather requirements",
+        completedAt: Date.now(),
       },
       {
-        id: "dog",
-        title: "Walk the dog",
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "2",
+        label: "Design the UI",
+        completedAt: Date.now(),
+      },
+      {
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "3",
+        label: "Implement the UI",
+        completedAt: Date.now(),
+      },
+      {
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "4",
+        label: "Test the app",
+        completedAt: Date.now(),
+      },
+      {
+        taskId: "dog",
+        subtaskId: null,
+        label: "Walk the dog",
+        group: undefined,
       },
     ],
   },
@@ -384,148 +458,56 @@ export const RunningOutOfTime: Story = {
 
 export const RanOutOfTime: Story = {
   args: {
-    status: "running",
     timeElapsed: meta.args.duration,
-    currentTask: { taskId: "dog", subtaskId: undefined },
+    currentTask: { taskId: "dog", subtaskId: null },
     tasks: [
       {
-        id: "task1",
-        title: "Standup meeting",
+        taskId: "task1",
+        subtaskId: null,
+        label: "Standup meeting",
+        group: undefined,
         completedAt: Date.now(),
       },
       {
-        id: "task2",
-        title: "Code review PR-123",
+        taskId: "task2",
+        subtaskId: null,
+        label: "Code review PR-123",
+        group: undefined,
         completedAt: Date.now(),
       },
       {
-        id: "app",
-        title: "Building an app",
-        subtasks: [
-          {
-            id: "1",
-            title: "Gather requirements",
-            completedAt: Date.now(),
-          },
-          {
-            id: "2",
-            title: "Design the UI",
-            completedAt: Date.now(),
-          },
-          {
-            id: "3",
-            title: "Implement the UI",
-            completedAt: Date.now(),
-          },
-          {
-            id: "4",
-            title: "Test the app",
-            completedAt: Date.now(),
-          },
-        ],
-      },
-      {
-        id: "dog",
-        title: "Walk the dog",
-      },
-    ],
-  },
-};
-
-export const Completed: Story = {
-  args: {
-    status: "completed",
-    timeElapsed: meta.args.duration,
-    tasks: [
-      {
-        id: "task1",
-        title: "Standup meeting",
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "1",
+        label: "Gather requirements",
         completedAt: Date.now(),
       },
       {
-        id: "task2",
-        title: "Code review PR-123",
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "2",
+        label: "Design the UI",
         completedAt: Date.now(),
       },
       {
-        id: "app",
-        title: "Building an app",
-        subtasks: [
-          {
-            id: "1",
-            title: "Gather requirements",
-            completedAt: Date.now(),
-          },
-          {
-            id: "2",
-            title: "Design the UI",
-            completedAt: Date.now(),
-          },
-          {
-            id: "3",
-            title: "Implement the UI",
-            completedAt: Date.now(),
-          },
-          {
-            id: "4",
-            title: "Test the app",
-            completedAt: Date.now(),
-          },
-        ],
-      },
-      {
-        id: "dog",
-        title: "Walk the dog",
-        completedAt: Date.now(),
-      },
-    ],
-  },
-};
-export const CompletedWithSkips: Story = {
-  args: {
-    status: "completed",
-    timeElapsed: meta.args.duration,
-    tasks: [
-      {
-        id: "task1",
-        title: "Standup meeting",
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "3",
+        label: "Implement the UI",
         completedAt: Date.now(),
       },
       {
-        id: "task2",
-        title: "Code review PR-123",
-        skipped: true,
-      },
-      {
-        id: "app",
-        title: "Building an app",
-        subtasks: [
-          {
-            id: "1",
-            title: "Gather requirements",
-            completedAt: Date.now(),
-          },
-          {
-            id: "2",
-            title: "Design the UI",
-            completedAt: Date.now(),
-          },
-          {
-            id: "3",
-            title: "Implement the UI",
-            completedAt: Date.now(),
-          },
-          {
-            id: "4",
-            title: "Test the app",
-            completedAt: Date.now(),
-          },
-        ],
-      },
-      {
-        id: "dog",
-        title: "Walk the dog",
+        taskId: "app",
+        group: "Build an app",
+        subtaskId: "4",
+        label: "Test the app",
         completedAt: Date.now(),
+      },
+      {
+        taskId: "dog",
+        subtaskId: null,
+        label: "Walk the dog",
+        group: undefined,
       },
     ],
   },

@@ -25,7 +25,7 @@ import { notifications } from "@mantine/notifications";
 import { IconChevronRight, IconTransfer } from "@tabler/icons-react";
 import { z } from "zod";
 
-import { minimalSprintPlanSchema } from "@/core/deep-work";
+import { sprintPlanSchema } from "@/core/deep-work";
 import { taskSchema } from "@/core/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
 import {
@@ -62,11 +62,11 @@ export default function SessionPage() {
     key: "session-page",
     state: {
       tasks: taskList.tasks,
-      sprints: sprintBuilder.minimalSprints,
+      sprints: sprintBuilder.sprints,
     },
     schema: z.object({
       tasks: taskSchema.array(),
-      sprints: minimalSprintPlanSchema.array(),
+      sprints: sprintPlanSchema.array(),
     }),
     read: (storedState) => {
       if (storedState === null) return setStage("task-collector");
@@ -94,7 +94,7 @@ export default function SessionPage() {
 
   // MARK: Tasks
 
-  const updateTask = useDebouncedCallback(taskList.updateTask, 1_000);
+  const handleUpdateTask = useDebouncedCallback(taskList.updateTask, 1_000);
 
   const { projects, createProject } = useProjects();
   const { tags, createTag } = useTags();
@@ -109,7 +109,7 @@ export default function SessionPage() {
 
   // MARK: Focus Session
 
-  const focusSession = useFocusSession({
+  const focusSession = useFocusSession(taskList.tasks, {
     breakDuration: { seconds: 10 },
   });
 
@@ -133,7 +133,6 @@ export default function SessionPage() {
     if (validSprints.length === 0) return;
     focusSession.initialize({
       sprints: validSprints,
-      backlog: sprintBuilder.unassignedTasks,
     });
     sessionModal.open();
   };
@@ -179,7 +178,7 @@ export default function SessionPage() {
             <TaskCollector
               className="mx-auto max-h-full"
               items={taskList.tasks}
-              onUpdateTask={updateTask}
+              onUpdateTask={handleUpdateTask}
               onRemoveTask={taskList.removeTask}
               onMoveTaskToBacklog={(task) => {
                 taskList.removeTask(task.id);
@@ -198,6 +197,7 @@ export default function SessionPage() {
             <SprintBuilder
               className="mx-auto max-h-[70dvh] min-h-[400px] w-fit"
               sprints={sprintBuilder.sprints}
+              tasks={taskList.tasks}
               unassignedTasks={sprintBuilder.unassignedTasks}
               onAddSprint={(callback) => sprintBuilder.addSprint({}, callback)}
               onDropSprint={sprintBuilder.dropSprint}
@@ -364,7 +364,7 @@ export default function SessionPage() {
             onToggleTaskSelection={backlogTaskSelection.toggleTaskSelection}
           />
           <Button
-            disabled={backlogTaskSelection.tasks.length === 0}
+            disabled={backlogTaskSelection.selection.length === 0}
             fullWidth
             onClick={() => {
               taskList.addTasks(backlogTaskSelection.tasks, {
