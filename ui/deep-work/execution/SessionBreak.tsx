@@ -1,38 +1,51 @@
-import type {
-  PaperProps} from "@mantine/core";
-import {
-  Button,
-  Divider,
-  Paper,
-  Progress,
-  Stack,
-  Text,
-} from "@mantine/core";
+import type { PaperProps } from "@mantine/core";
+import type { DurationUnitsObjectType } from "dayjs/plugin/duration";
+import type { Ref } from "react";
+import { useEffect, useState } from "react";
+import { Button, Divider, Paper, Progress, Stack, Text } from "@mantine/core";
+import dayjs from "dayjs";
+import duration from "dayjs/plugin/duration";
 
 import { cn } from "@/ui/utils";
 
+dayjs.extend(duration);
+
 export interface SessionBreakProps {
-  duration: number;
-  timeElapsed: number;
+  duration: DurationUnitsObjectType;
+  running: boolean;
   sprintsLeft: number;
+  ref?: Ref<HTMLDivElement>;
   onResume: () => void;
 }
 
 export function SessionBreak({
   duration,
-  timeElapsed,
   sprintsLeft,
+  ref,
+  running,
   onResume,
   className,
   ...paperProps
 }: SessionBreakProps & PaperProps) {
-  const progress = 100 * (timeElapsed / duration);
+  const durationMs = dayjs.duration(duration).asMilliseconds();
+  const [timeElapsed, setTimeElapsed] = useState(0);
+  const progress = 100 * (timeElapsed / durationMs);
+  const hasRanOutOfTime = timeElapsed > durationMs;
+
+  useEffect(() => {
+    if (!running) return;
+    const timer = setInterval(() => {
+      setTimeElapsed((prev) => prev + 100);
+    }, 100);
+    return () => clearInterval(timer);
+  }, [running]);
 
   return (
     <Paper
       withBorder
       radius="md"
       className={cn("w-xs overflow-clip", className)}
+      ref={ref}
       {...paperProps}
     >
       <Stack p="md" gap="sm">
@@ -40,10 +53,10 @@ export function SessionBreak({
           {progress >= 100 ? "Break is over" : "Time for a break"}
         </Text>
         <Progress
-          color={timeElapsed > duration ? "red" : "primary"}
+          color={hasRanOutOfTime ? "red" : "primary"}
           size="md"
           className={cn({
-            "animate-pulse": timeElapsed > duration,
+            "animate-pulse": hasRanOutOfTime,
           })}
           value={progress}
         />
@@ -53,20 +66,13 @@ export function SessionBreak({
         </Text>
       </Stack>
 
-      {/* <Accordion variant="contained" radius={0} className="-mx-px">
-        <Accordion.Item value="1">
-          <Accordion.Control>Upcoming Sprint</Accordion.Control>
-          <Accordion.Panel>TODO: Show upcoming sprint tasks</Accordion.Panel>
-        </Accordion.Item>
-      </Accordion> */}
-
       <Divider />
       <Button
         fullWidth
         radius={0}
         size="md"
         className="transition-colors"
-        variant={progress >= 100 ? "filled" : "subtle"}
+        variant={hasRanOutOfTime ? "filled" : "subtle"}
         onClick={onResume}
       >
         Finish Break

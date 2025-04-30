@@ -40,7 +40,6 @@ export const resolveTaskReferences = <T extends Task>(
     isValidTaskReference(taskReference, tasks),
   );
 
-  console.log({ validTaskReferences });
   const mergedTaskReferences = validTaskReferences.reduce<
     {
       taskId: TaskReference["taskId"];

@@ -61,7 +61,6 @@ export function SprintBuilder({
   className,
   ...paperProps
 }: SprintBuilderProps & PaperProps) {
-  console.log({ tasks, unassignedTasks });
   const [
     isShowingUnassignedTasks,
     { close: closeTaskPool, open: openTaskPool, toggle: toggleTaskPool },

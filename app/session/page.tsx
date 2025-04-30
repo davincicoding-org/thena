@@ -28,12 +28,7 @@ import { z } from "zod";
 import { sprintPlanSchema } from "@/core/deep-work";
 import { taskSchema } from "@/core/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
-import {
-  FocusSession,
-  SprintBuilder,
-  useFocusSession,
-  useSprintBuilder,
-} from "@/ui/deep-work";
+import { FocusSession, SprintBuilder, useSprintBuilder } from "@/ui/deep-work";
 import { useLocalStorageSync } from "@/ui/hooks/useLocalStorageSync";
 import {
   Backlog,
@@ -107,12 +102,6 @@ export default function SessionPage() {
   const [isBacklogPanelOpen, backlogPanel] = useDisclosure();
   const backlogTaskSelection = useTaskSelection();
 
-  // MARK: Focus Session
-
-  const focusSession = useFocusSession(taskList.tasks, {
-    breakDuration: { seconds: 10 },
-  });
-
   // MARK: User Actions
 
   const handleShowTaskCollector = () => {
@@ -131,9 +120,6 @@ export default function SessionPage() {
       (sprint) => sprint.tasks.length > 0,
     );
     if (validSprints.length === 0) return;
-    focusSession.initialize({
-      sprints: validSprints,
-    });
     sessionModal.open();
   };
 
@@ -296,11 +282,8 @@ export default function SessionPage() {
       >
         <Modal.Content>
           <FocusSession
-            currentSprint={focusSession.currentSprint}
-            sessionBreak={focusSession.sessionBreak}
-            status={focusSession.status}
-            onFinishSprint={focusSession.finishSprint}
-            onFinishBreak={focusSession.finishBreak}
+            sprints={sprintBuilder.sprints}
+            tasks={taskList.tasks}
           />
         </Modal.Content>
       </Modal.Root>

@@ -18,20 +18,22 @@ import {
 } from "@mantine/core";
 import { IconClock, IconDotsVertical, IconX } from "@tabler/icons-react";
 
+import type { Duration } from "@/core/deep-work";
 import type { FlatTask, TaskReference } from "@/core/task-management";
+import { resolveDuration } from "@/core/deep-work";
 import { groupFlatTasks } from "@/core/task-management";
 import { Panel } from "@/ui/components/Panel";
 import { cn } from "@/ui/utils";
 
 export interface SprintPanelProps {
   title: string;
-  duration: number;
+  duration: Duration;
   tasks: FlatTask[];
   disabled?: boolean;
   canAddTasks: boolean;
   otherSprints: { id: string; title: string }[];
   onDrop: () => void;
-  onDurationChange: (duration: number) => void;
+  onDurationChange: (duration: Duration) => void;
   onAddTasks: (el: HTMLDivElement) => void;
   onUnassignTasks: (tasks: TaskReference[]) => void;
   onMoveTasks: (options: {
@@ -58,6 +60,8 @@ export function SprintPanel({
   const panelRef = useRef<HTMLDivElement>(null);
 
   const items = groupFlatTasks(tasks);
+
+  const durationMinutes = resolveDuration(duration).asMinutes();
 
   return (
     <Panel
@@ -86,8 +90,8 @@ export function SprintPanel({
               radius="xl"
               size="xs"
               ff="monospace"
-              value={duration}
-              w={40 + duration.toString().length * 8}
+              value={durationMinutes}
+              w={40 + durationMinutes.toString().length * 8}
               min={5}
               max={90}
               step={5}
@@ -99,7 +103,7 @@ export function SprintPanel({
               }}
               onChange={(value) => {
                 if (typeof value !== "number") return;
-                onDurationChange(Math.min(value, 90));
+                onDurationChange({ minutes: Math.min(value, 90) });
               }}
             />
 

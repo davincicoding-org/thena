@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { usePrevious } from "@mantine/hooks";
 
-import type { SprintPlan } from "@/core/deep-work";
+import type { Duration, SprintPlan } from "@/core/deep-work";
 import type { Task, TaskReference } from "@/core/task-management";
 import {
   countTasks,
@@ -15,14 +15,14 @@ import { useSprintsReducer } from "./useSprintsReducer";
 
 export const DEFAULT_OPTIONS = {
   initialSprints: 0,
-  sprintDuration: 25,
+  sprintDuration: { minutes: 25 },
 };
 
 export interface SessionPlannerHookOptions {
   /** Initial number of Sprints */
   initialSprints?: number;
   /** Default duration for new Sprints */
-  sprintDuration?: number;
+  sprintDuration?: Duration;
   /** Error callback for handling errors without throwing */
   onError?: (error: SprintsReducerError) => void;
 }
@@ -130,7 +130,7 @@ export function useSprintBuilder(
     if (prevTotalAssignedTasks === undefined) return;
     if (totalAvailableTasks >= prevTotalAssignedTasks) return;
 
-    console.log("TASK WAS REMOVED, NEED TO SYNC");
+    console.warn("TASK WAS REMOVED, NEED TO SYNC");
     // dispatch({ type: "SYNC_SPRINTS" });
   }, [prevTotalAssignedTasks, totalAvailableTasks]);
 
@@ -225,7 +225,7 @@ export function useSprintBuilder(
 
 export const initializeSprints = (
   sprintCount: number,
-  sprintDuration: number = DEFAULT_OPTIONS.sprintDuration,
+  sprintDuration: Duration = DEFAULT_OPTIONS.sprintDuration,
 ): SprintPlan[] =>
   Array.from({ length: sprintCount }).reduce<SprintPlan[]>(
     (acc) => [

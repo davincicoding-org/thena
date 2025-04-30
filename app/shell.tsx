@@ -22,13 +22,14 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             component={Link}
             href="/"
             className={cn(
+              "font-(family-name:--font-logo)",
               "transition-colors select-none hover:text-[var(--mantine-primary-color-filled)]!",
               {
                 "pointer-events-none": pathname === "/",
               },
             )}
           >
-            ConcentrAID
+            THENA
           </Text>
 
           <ActionIcon

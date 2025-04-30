@@ -121,7 +121,6 @@ export const useBacklogStore = create<BacklogStoreState>()(
               ),
             );
 
-            console.log("removeTasks", { state, taskIds, result });
             return {
               pool: result,
             };

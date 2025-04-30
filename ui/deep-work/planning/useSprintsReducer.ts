@@ -1,6 +1,6 @@
 import { useReducer } from "react";
 
-import type { SprintPlan } from "@/core/deep-work";
+import type { Duration, SprintPlan } from "@/core/deep-work";
 import type { Task, TaskReference } from "@/core/task-management";
 import {
   excludeTaskReferences,
@@ -13,12 +13,12 @@ import { createUniqueId } from "@/ui/utils";
 type SprintPlannerAction =
   | {
       type: "ADD_SPRINT";
-      payload: { duration?: number; tasks?: TaskReference[] };
+      payload: { duration?: Duration; tasks?: TaskReference[] };
       callback?: (sprintId: SprintPlan["id"]) => void;
     }
   | {
       type: "ADD_SPRINTS";
-      payload: { sprints: { duration?: number; tasks?: TaskReference[] }[] };
+      payload: { sprints: { duration?: Duration; tasks?: TaskReference[] }[] };
     }
   | {
       type: "UPDATE_SPRINT";
@@ -75,7 +75,7 @@ export type SprintsReducerErrorCode =
 
 export interface SprintsReducerHookOptions {
   taskPool: Task[];
-  sprintDuration: number;
+  sprintDuration: Duration;
   onError?: (error: SprintsReducerError) => void;
 }
 

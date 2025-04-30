@@ -1,5 +1,6 @@
 import type { PaperProps } from "@mantine/core";
-import { Fragment } from "react";
+import type { Ref } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import {
   ActionIcon,
   Box,
@@ -12,64 +13,116 @@ import {
 } from "@mantine/core";
 import { IconPlayerPause } from "@tabler/icons-react";
 
-import type { RuntITem$$$ } from "@/core/deep-work";
-import type { TaskReference } from "@/core/task-management";
+import type { Duration, WithRunMetrics } from "@/core/deep-work";
+import type { FlatTask, TaskReference } from "@/core/task-management";
+import { isTaskRunnable, resolveDuration } from "@/core/deep-work";
 import { cn } from "@/ui/utils";
 
 import { QueueTask } from "./QueueTask";
 
+type SprintStatus = "idle" | "running" | "paused";
+
 export interface SprintWidgetProps {
-  duration: number;
-  timeElapsed: number;
-  warnBeforeTimeRunsOut: number;
-  paused?: boolean;
-  tasks: RuntITem$$$[];
-  currentTask?: TaskReference;
+  initialStatus?: SprintStatus;
+  duration: Duration;
+  warnBeforeTimeRunsOut?: number;
+  viewOnly?: boolean;
+  tasks: WithRunMetrics<FlatTask>[];
   allowToPause?: boolean;
-  onStart: () => void;
-  onCompleteTask: (task: TaskReference) => void;
-  onSkipTask: (task: TaskReference) => void;
-  onRunTaskManually: (task: TaskReference) => void;
-  onPause: () => void;
-  onResume: () => void;
-  onFinish: () => void;
+  ref?: Ref<HTMLDivElement>;
+  onStart?: () => void;
+  onCompleteTask?: (task: TaskReference) => void;
+  onSkipTask?: (task: TaskReference) => void;
+  // onRunTaskManually?: (task: TaskReference) => void;
+  onPause?: () => void;
+  onResume?: () => void;
+  onFinish?: () => void;
 }
 export function SprintWidget({
+  initialStatus = "idle",
   duration,
-  timeElapsed,
-  warnBeforeTimeRunsOut,
+  warnBeforeTimeRunsOut = 0,
   tasks,
-  paused = false,
-  currentTask,
+  viewOnly = false,
   allowToPause = false,
+  ref,
   onStart,
   onCompleteTask,
   onSkipTask,
-  onRunTaskManually,
   onPause,
   onResume,
   onFinish,
   className,
   ...paperProps
 }: SprintWidgetProps & PaperProps) {
-  // IDEA Bring some of the logic from use Sprint to here
-  const isTimeUp = timeElapsed >= duration;
-  const hasStarted = timeElapsed > 0;
+  const [status, setStatus] = useState<SprintStatus>(initialStatus);
+  const [timeElapsed, setTimeElapsed] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const durationMs = resolveDuration(duration).asMilliseconds();
+
+  const currentTask = useMemo(() => {
+    if (status === "idle") return undefined;
+    return tasks.find(isTaskRunnable);
+  }, [status, tasks]);
+
+  const outOfTasks = tasks.filter(isTaskRunnable).length === 0;
+
+  useEffect(() => {
+    if (status === "idle") return;
+    if (status === "paused") return;
+
+    const timer = setInterval(() => {
+      setTimeElapsed((prev) => prev + 100);
+    }, 100);
+
+    return () => clearInterval(timer);
+  }, [status, paused]);
+
+  const isTimeUp = timeElapsed >= durationMs;
   const warningThreshold =
-    warnBeforeTimeRunsOut && Math.max(duration - warnBeforeTimeRunsOut, 0);
+    warnBeforeTimeRunsOut && Math.max(durationMs - warnBeforeTimeRunsOut, 0);
   const shouldWarnAboutTime = warningThreshold
     ? timeElapsed >= warningThreshold
     : false;
+
+  const handleStart = () => {
+    setStatus("running");
+    onStart?.();
+  };
+
+  const handlePause = () => {
+    setPaused(true);
+    onPause?.();
+  };
+
+  const handleResume = () => {
+    setPaused(false);
+    onResume?.();
+  };
+
+  const handleJumpToTask = (task: TaskReference) => {
+    const taskIndex = tasks.findIndex(
+      ({ taskId, subtaskId }) =>
+        taskId === task.taskId && subtaskId === task.subtaskId,
+    );
+    if (taskIndex === -1) return;
+
+    tasks
+      .slice(0, taskIndex)
+      .filter(isTaskRunnable)
+      .forEach(({ taskId, subtaskId }) => onSkipTask?.({ taskId, subtaskId }));
+  };
 
   return (
     <Paper
       withBorder
       shadow="sm"
       radius="md"
+      ref={ref}
       className={cn("overflow-clip", className)}
       {...paperProps}
     >
-      <Collapse in={hasStarted} animateOpacity>
+      <Collapse in={status !== "idle" && !viewOnly} animateOpacity>
         <Flex gap={4} h={24} pt="xs" px="sm" align="center">
           <Progress
             flex={1}
@@ -82,7 +135,7 @@ export function SprintWidget({
               }),
               section: "ease-linear!",
             }}
-            value={(timeElapsed / duration) * 100}
+            value={(timeElapsed / durationMs) * 100}
           />
           {allowToPause && !paused && !isTimeUp && (
             <ActionIcon
@@ -90,7 +143,7 @@ export function SprintWidget({
               aria-label="Pause Sprint"
               variant="subtle"
               color="gray"
-              onClick={onPause}
+              onClick={handlePause}
             >
               <IconPlayerPause size={16} />
             </ActionIcon>
@@ -102,9 +155,9 @@ export function SprintWidget({
           {tasks.map((item) => (
             <Fragment key={`${item.taskId}-${item.subtaskId}`}>
               <QueueTask
-                group={item.group ?? undefined}
-                label={item.label}
-                readOnly={!hasStarted}
+                group={item.parentTitle}
+                label={item.title}
+                readOnly={viewOnly || status === "idle"}
                 status={
                   item.completedAt
                     ? "completed"
@@ -116,16 +169,19 @@ export function SprintWidget({
                         : "upcoming"
                 }
                 onComplete={() =>
-                  onCompleteTask({
+                  onCompleteTask?.({
                     taskId: item.taskId,
                     subtaskId: item.subtaskId,
                   })
                 }
                 onSkip={() =>
-                  onSkipTask({ taskId: item.taskId, subtaskId: item.subtaskId })
+                  onSkipTask?.({
+                    taskId: item.taskId,
+                    subtaskId: item.subtaskId,
+                  })
                 }
                 onRunManually={() =>
-                  onRunTaskManually({
+                  handleJumpToTask?.({
                     taskId: item.taskId,
                     subtaskId: item.subtaskId,
                   })
@@ -137,24 +193,32 @@ export function SprintWidget({
         </Paper>
       </Box>
 
-      <Collapse in={timeElapsed === 0} animateOpacity>
-        <Divider />
-        <Button fullWidth className="rounded-t-none!" onClick={onStart}>
-          Start Sprint
-        </Button>
-      </Collapse>
-      <Collapse in={paused} animateOpacity>
-        <Divider />
-        <Button fullWidth className="rounded-t-none!" onClick={onResume}>
-          Resume Sprint
-        </Button>
-      </Collapse>
-      <Collapse in={isTimeUp} animateOpacity>
-        <Divider />
-        <Button fullWidth className="rounded-t-none!" onClick={onFinish}>
-          Finish Sprint
-        </Button>
-      </Collapse>
+      {!viewOnly && (
+        <>
+          <Collapse in={timeElapsed === 0} animateOpacity>
+            <Divider />
+            <Button fullWidth className="rounded-t-none!" onClick={handleStart}>
+              Start Sprint
+            </Button>
+          </Collapse>
+          <Collapse in={paused} animateOpacity>
+            <Divider />
+            <Button
+              fullWidth
+              className="rounded-t-none!"
+              onClick={handleResume}
+            >
+              Resume Sprint
+            </Button>
+          </Collapse>
+          <Collapse in={isTimeUp || outOfTasks} animateOpacity>
+            <Divider />
+            <Button fullWidth className="rounded-t-none!" onClick={onFinish}>
+              Finish Sprint
+            </Button>
+          </Collapse>
+        </>
+      )}
     </Paper>
   );
 }

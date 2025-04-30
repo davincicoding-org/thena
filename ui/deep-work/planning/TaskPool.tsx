@@ -39,7 +39,6 @@ export function TaskPool({
   onAssignTasksToSprint,
   ...props
 }: TaskPoolProps & PaperProps) {
-  console.log(items);
   const {
     selection,
     clearSelection,
