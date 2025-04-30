@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Lexend_Giga } from "next/font/google";
 import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
+import { Analytics } from "@vercel/analytics/next";
 
 import { ThemeProvider } from "@/ui/Theme";
 
@@ -42,6 +43,7 @@ export default function RootLayout({
         <ThemeProvider>
           <Shell>{children}</Shell>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
