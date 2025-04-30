@@ -1,5 +1,5 @@
-import type { PropsWithChildren } from "react";
 import type { DrawerProps } from "@mantine/core";
+import type { PropsWithChildren } from "react";
 import { Drawer } from "@mantine/core";
 
 export function SidePanel({
@@ -13,7 +13,7 @@ export function SidePanel({
       offset={24}
       radius="md"
       classNames={{
-        body: "h-full",
+        body: "h-full p-0!",
       }}
       {...props}
     >

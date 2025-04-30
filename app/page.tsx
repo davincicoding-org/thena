@@ -4,7 +4,6 @@ import { useRef } from "react";
 import Link from "next/link";
 import {
   AppShell,
-  Avatar,
   Box,
   Button,
   Card,
@@ -14,23 +13,22 @@ import {
   Fieldset,
   Flex,
   Modal,
-  RingProgress,
   ScrollArea,
-  Skeleton,
   Space,
   Stack,
   Text,
   TextInput,
-  Tooltip,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconPlus } from "@tabler/icons-react";
 
 import type { TaskInput } from "@/core/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
+import { IntelligenceTile } from "@/ui/intelligence";
 import {
   Backlog,
   ProjectCreator,
+  ProjectsTile,
   taskFormOpts,
   useBacklog,
   useBacklogQueryOptions,
@@ -38,6 +36,8 @@ import {
   useTags,
   useTaskForm,
 } from "@/ui/task-management";
+
+const DEMO_DISABLED = true;
 
 const DEMO_PAGES = [
   {
@@ -54,10 +54,6 @@ const DEMO_PAGES = [
   },
 ];
 
-const PROJECT_SKELETONS = Array.from({ length: 10 }, (_, index) => (
-  <Skeleton key={index} height={38} width={38} radius="sm" />
-));
-
 export default function HomePage() {
   const { projects, createProject, loading: loadingProjects } = useProjects();
   const [isCreatingProject, projectCreatorModal] = useDisclosure();
@@ -73,29 +69,7 @@ export default function HomePage() {
     <AppShell.Main display="grid">
       <Center>
         <Stack gap="lg" className="w-fit" maw={500} p="lg">
-          <Card
-            p={0}
-            radius="md"
-            shadow="sm"
-            component={Link}
-            href="/intelligence"
-            className="transition-colors hover:bg-[var(--mantine-color-dark-5)]!"
-          >
-            <Flex gap="md" pr="sm" justify="space-evenly" align="center">
-              <RingProgress
-                size={90}
-                sections={[{ value: 75, color: "primary" }]}
-              />
-              <Stack gap={0} ta="center">
-                <Text className="text-3xl!">5h 20m</Text>
-                <Text size="sm">Total Focus Time</Text>
-              </Stack>
-              <Stack gap={0} ta="center">
-                <Text className="text-3xl!">75%</Text>
-                <Text size="sm">Goals achieved</Text>
-              </Stack>
-            </Flex>
-          </Card>
+          <IntelligenceTile />
           <Button
             size="xl"
             radius="md"
@@ -121,67 +95,34 @@ export default function HomePage() {
                 Open Backlog
               </Button>
             </Card>
-            <Card radius="md" shadow="sm" flex={1}>
-              <Card.Section mb={4}>
-                <ScrollArea scrollbars="x" scrollHideDelay={300}>
-                  <Flex gap="sm" p="md">
-                    {loadingProjects ? (
-                      PROJECT_SKELETONS
-                    ) : projects.length ? (
-                      projects.map((project) => (
-                        <Tooltip key={project.id} label={project.name}>
-                          <Avatar
-                            // component={Link}
-                            // href={`/projects/${project.id}`}
-                            // aria-label={`Open "${project.name}" project`}
-                            display="inline-block"
-                            size="md"
-                            radius="md"
-                            src={project.image}
-                            alt={project.name}
-                            color={project.color ?? "gray"}
-                            name={project.name}
-                          />
-                        </Tooltip>
-                      ))
-                    ) : (
-                      <Text className="text-2xl!">No projects</Text>
-                    )}
-                  </Flex>
-                </ScrollArea>
-              </Card.Section>
-              <Button
-                mt="auto"
-                variant="light"
-                fullWidth
-                onClick={(e) => {
-                  projectCreatorModal.open();
-                  e.currentTarget.blur();
-                }}
-              >
-                Create Project
-              </Button>
-            </Card>
+            <ProjectsTile
+              flex={1}
+              loading={loadingProjects}
+              items={projects}
+              onCreate={projectCreatorModal.open}
+            />
           </Flex>
 
-          <Fieldset legend="Demos" ta="center" p={0}>
-            <ScrollArea scrollbars="x" scrollHideDelay={300}>
-              <Flex align="center" className="h-full" p="sm" pt={0}>
-                {DEMO_PAGES.map((page) => (
-                  <Button
-                    key={page.label}
-                    color="gray"
-                    size="compact-sm"
-                    variant="subtle"
-                    component={Link}
-                    href={page.href}
-                  >
-                    {page.label}
-                  </Button>
-                ))}
-              </Flex>
-            </ScrollArea>
-          </Fieldset>
+          {!DEMO_DISABLED && (
+            <Fieldset legend="Demos" ta="center" p={0}>
+              <ScrollArea scrollbars="x" scrollHideDelay={300}>
+                <Flex align="center" className="h-full" p="sm" pt={0}>
+                  {DEMO_PAGES.map((page) => (
+                    <Button
+                      key={page.label}
+                      color="gray"
+                      size="compact-sm"
+                      variant="subtle"
+                      component={Link}
+                      href={page.href}
+                    >
+                      {page.label}
+                    </Button>
+                  ))}
+                </Flex>
+              </ScrollArea>
+            </Fieldset>
+          )}
         </Stack>
       </Center>
 
@@ -232,13 +173,18 @@ function BacklogPanel({
 
   return (
     // TODO: Make side panel close on escape. Setting closeOnEscape={false} is a workaround, because pressing escape on the task adder form would the side panel.
-    <SidePanel opened={isOpen} closeOnEscape={false} onClose={onClose}>
-      <Flex className="h-full" direction="column" gap="md">
+    <SidePanel
+      opened={isOpen}
+      size="sm"
+      closeOnEscape={false}
+      onClose={onClose}
+    >
+      <Flex className="h-full" direction="column">
         <Backlog
           mode="edit"
           flex={1}
           tasks={tasks}
-          className="min-h-0"
+          className="min-h-0 rounded-b-none!"
           filters={filters}
           onFiltersUpdate={updateFilters}
           sort={sort}
@@ -250,7 +196,6 @@ function BacklogPanel({
           onCreateProject={createProject}
           onCreateTag={createTag}
         />
-        <Divider className="-mx-4" />
         <BacklogTaskAdder onSubmit={backlog.addTask} />
       </Flex>
     </SidePanel>
@@ -280,6 +225,7 @@ function BacklogTaskAdder({
       <Collapse in={!isAdding}>
         <Button
           variant="light"
+          radius={0}
           fullWidth
           size="md"
           leftSection={<IconPlus />}
@@ -300,7 +246,7 @@ function BacklogTaskAdder({
             void form.handleSubmit();
           }}
         >
-          <Stack gap="sm">
+          <Stack gap="sm" p="sm">
             <form.Field name="title">
               {(titleField) => (
                 <TextInput

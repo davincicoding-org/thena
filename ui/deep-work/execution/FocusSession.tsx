@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Card, Flex, ScrollArea, Text } from "@mantine/core";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
