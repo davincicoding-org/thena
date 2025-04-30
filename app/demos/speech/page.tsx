@@ -60,21 +60,13 @@ To get started with a template, open it on GitHub and click "Use this template" 
   return (
     <AppShell.Main className="grid">
       <Center className="items-center">
-        <SimpleGrid cols={2} className="w-full max-w-screen-md">
+        <SimpleGrid
+          cols={{ base: 1, sm: 2 }}
+          p="md"
+          className="w-full max-w-screen-md"
+        >
           <Fieldset legend="Speech Recognition">
-            <Stack gap="lg">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  if (isListening) {
-                    return stopListening();
-                  }
-                  setTranscriptions([]);
-                  return startListening();
-                }}
-              >
-                {isListening ? "Stop Listening" : "Start Listening"}
-              </Button>
+            <Stack gap="lg" h="100%">
               <Stack gap="xs">
                 {transcriptions.map((transcription, index) => (
                   <Card
@@ -89,6 +81,19 @@ To get started with a template, open it on GitHub and click "Use this template" 
                   </Card>
                 ))}
               </Stack>
+              <Button
+                mt="auto"
+                variant="outline"
+                onClick={() => {
+                  if (isListening) {
+                    return stopListening();
+                  }
+                  setTranscriptions([]);
+                  return startListening();
+                }}
+              >
+                {isListening ? "Stop Listening" : "Start Listening"}
+              </Button>
             </Stack>
           </Fieldset>
           <Fieldset legend="Speech Synthesis">

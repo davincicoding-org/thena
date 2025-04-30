@@ -10,10 +10,8 @@ import {
   Center,
   Collapse,
   Divider,
-  Fieldset,
   Flex,
   Modal,
-  ScrollArea,
   Space,
   Stack,
   Text,
@@ -36,23 +34,6 @@ import {
   useTags,
   useTaskForm,
 } from "@/ui/task-management";
-
-const DEMO_DISABLED = true;
-
-const DEMO_PAGES = [
-  {
-    label: "Task Wizard",
-    href: "/demos/task-wizard",
-  },
-  {
-    label: "Chat",
-    href: "/demos/chat",
-  },
-  {
-    label: "Speech",
-    href: "/demos/speech",
-  },
-];
 
 export default function HomePage() {
   const { projects, createProject, loading: loadingProjects } = useProjects();
@@ -102,27 +83,6 @@ export default function HomePage() {
               onCreate={projectCreatorModal.open}
             />
           </Flex>
-
-          {!DEMO_DISABLED && (
-            <Fieldset legend="Demos" ta="center" p={0}>
-              <ScrollArea scrollbars="x" scrollHideDelay={300}>
-                <Flex align="center" className="h-full" p="sm" pt={0}>
-                  {DEMO_PAGES.map((page) => (
-                    <Button
-                      key={page.label}
-                      color="gray"
-                      size="compact-sm"
-                      variant="subtle"
-                      component={Link}
-                      href={page.href}
-                    >
-                      {page.label}
-                    </Button>
-                  ))}
-                </Flex>
-              </ScrollArea>
-            </Fieldset>
-          )}
         </Stack>
       </Center>
 
