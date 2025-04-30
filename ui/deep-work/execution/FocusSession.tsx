@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, Flex, ScrollArea, Text } from "@mantine/core";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 
 import type { SprintPlan } from "@/core/deep-work";
 import type { Task } from "@/core/task-management";
+import { WavyBackground } from "@/ui/components/WavyBackground";
 import { cn } from "@/ui/utils";
 
 import { SessionBreak } from "./SessionBreak";
@@ -29,6 +30,7 @@ export function FocusSession({ sprints, tasks, className }: FocusSessionProps) {
     startSprint,
     completeTask,
     skipTask,
+    jumpToTask,
     finishSprint,
     finishBreak,
   } = useSprintsRunner({
@@ -89,136 +91,143 @@ export function FocusSession({ sprints, tasks, className }: FocusSessionProps) {
   }, [status]);
 
   return (
-    <Flex pos="relative" className={cn("h-full", className)}>
-      <video
-        ref={videoRef}
-        muted
-        playsInline
-        loop
-        className={cn(
-          "absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-1000",
-          {
-            "opacity-100": status === "sprint-run",
-          },
-        )}
-      >
-        <source
-          src={`${process.env.NEXT_PUBLIC_VIDEO_BASE_URL}/library.webm`}
-          type="video/webm"
-        />
-        <source
-          src={`${process.env.NEXT_PUBLIC_VIDEO_BASE_URL}/library.webm`}
-          type="video/mp4"
-        />
-      </video>
+    <WavyBackground
+      speed="slow"
+      className="h-full"
+      disabled={status === "sprint-run"}
+    >
+      <Flex className={cn("h-full", className)}>
+        <video
+          ref={videoRef}
+          muted
+          playsInline
+          loop
+          className={cn(
+            "absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-1000",
+            {
+              "opacity-100": status === "sprint-run",
+            },
+          )}
+        >
+          <source
+            src={`${process.env.NEXT_PUBLIC_VIDEO_BASE_URL}/library.webm`}
+            type="video/webm"
+          />
+          <source
+            src={`${process.env.NEXT_PUBLIC_VIDEO_BASE_URL}/library.webm`}
+            type="video/mp4"
+          />
+        </video>
 
-      <ScrollArea
-        classNames={{
-          root: cn("relative my-auto w-screen"),
-          viewport: cn("snap-x snap-mandatory"),
-        }}
-        scrollbars="x"
-        type="never"
-      >
-        <div className="flex gap-16 px-[50vw]">
-          <AnimatePresence>
-            {slots.map((slot) => {
-              if (
-                slot.type === "sprint-run" &&
-                slot.sprint.id === activeSprint?.id
-              )
-                return (
-                  <motion.div
-                    key={slot.sprint.id}
-                    layout
-                    className="shrink-0 snap-center snap-always"
-                    style={
-                      status === "sprint-run"
-                        ? {
-                            position: "fixed",
-                            right: 24,
-                            bottom: 24,
-                          }
-                        : undefined
-                    }
-                    transition={{ duration: 1 }}
-                  >
-                    <SprintWidget
-                      ref={activeSprintRef}
-                      viewOnly={status === "break"}
-                      className={cn("bg-neutral-700/50! backdrop-blur-sm")}
-                      duration={slot.sprint.duration}
-                      tasks={slot.sprint.tasks}
-                      onStart={handleStartSprint}
-                      onPause={handlePauseSprint}
-                      onResume={handleResumeSprint}
-                      onCompleteTask={completeTask}
-                      onSkipTask={skipTask}
-                      onFinish={handleFinishSprint}
-                    />
-                  </motion.div>
-                );
+        <ScrollArea
+          classNames={{
+            root: cn("relative my-auto w-screen"),
+            viewport: cn("snap-x snap-mandatory"),
+          }}
+          scrollbars="x"
+          type="never"
+        >
+          <div className="flex gap-12 px-[50vw]">
+            <AnimatePresence>
+              {slots.map((slot) => {
+                if (
+                  slot.type === "sprint-run" &&
+                  slot.sprint.id === activeSprint?.id
+                )
+                  return (
+                    <motion.div
+                      key={slot.sprint.id}
+                      layout
+                      className="shrink-0 snap-center snap-always"
+                      style={
+                        status === "sprint-run"
+                          ? {
+                              position: "fixed",
+                              right: 24,
+                              bottom: 24,
+                            }
+                          : undefined
+                      }
+                      transition={{ duration: 1 }}
+                    >
+                      <SprintWidget
+                        ref={activeSprintRef}
+                        viewOnly={status === "break"}
+                        className={cn("bg-neutral-700/50! backdrop-blur-sm")}
+                        duration={slot.sprint.duration}
+                        tasks={slot.sprint.tasks}
+                        onStart={handleStartSprint}
+                        onPause={handlePauseSprint}
+                        onResume={handleResumeSprint}
+                        onCompleteTask={completeTask}
+                        onSkipTask={skipTask}
+                        onJumpToTask={jumpToTask}
+                        onFinish={handleFinishSprint}
+                      />
+                    </motion.div>
+                  );
 
-              if (status === "sprint-run") return null;
+                if (status === "sprint-run") return null;
 
-              if (slot.type === "sprint-run")
-                return (
-                  <motion.div
-                    key={slot.sprint.id}
-                    // exit={{ opacity: 0 }}
-                    // transition={{ duration: 1 }}
-                  >
-                    <SprintWidget
-                      className={cn(
-                        "shrink-0 snap-center snap-always bg-neutral-700/50! backdrop-blur-sm",
-                      )}
-                      viewOnly
-                      duration={slot.sprint.duration}
-                      tasks={slot.sprint.tasks}
-                    />
-                  </motion.div>
-                );
+                if (slot.type === "sprint-run")
+                  return (
+                    <motion.div
+                      key={slot.sprint.id}
+                      // exit={{ opacity: 0 }}
+                      // transition={{ duration: 1 }}
+                    >
+                      <SprintWidget
+                        className={cn(
+                          "shrink-0 snap-center snap-always bg-neutral-700/50! backdrop-blur-sm",
+                        )}
+                        viewOnly
+                        duration={slot.sprint.duration}
+                        tasks={slot.sprint.tasks}
+                      />
+                    </motion.div>
+                  );
 
-              if (
-                slot.type === "break" &&
-                status === "break" &&
-                slot.nextSprint === activeSprint?.id
-              )
-                return (
-                  <motion.div
-                    key={`break-before-${slot.nextSprint}`}
-                    // exit={{ opacity: 0, scale: 0 }}
-                  >
-                    <SessionBreak
-                      ref={breakRef}
-                      className="snap-center snap-always self-start"
-                      duration={slot.duration}
-                      running
-                      sprintsLeft={upcomingSprints.length}
-                      onResume={handleFinishBreak}
-                    />
-                  </motion.div>
-                );
+                if (
+                  slot.type === "break" &&
+                  status === "break" &&
+                  slot.nextSprint === activeSprint?.id
+                )
+                  return (
+                    <motion.div
+                      key={`break-before-${slot.nextSprint}`}
+                      // exit={{ opacity: 0, scale: 0 }}
+                    >
+                      <SessionBreak
+                        ref={breakRef}
+                        className="w-48 snap-center snap-always self-start"
+                        duration={slot.duration}
+                        running
+                        sprintsLeft={upcomingSprints.length}
+                        onResume={handleFinishBreak}
+                      />
+                    </motion.div>
+                  );
 
-              return null;
-            })}
-            {status === "finished" && (
-              <Card
-                className="shrink-0 snap-center snap-always self-start"
-                withBorder
-                radius="md"
-                component={motion.div}
-                ref={finishedRef}
-              >
-                <Text size="xl" ta="center" c="green">
-                  Well Done
-                </Text>
-                <Text ta="center">Your session is completed.</Text>
-              </Card>
-            )}
-          </AnimatePresence>
-        </div>
-      </ScrollArea>
-    </Flex>
+                return null;
+              })}
+              {status === "finished" && (
+                <Card
+                  className="shrink-0 snap-center snap-always self-start"
+                  withBorder
+                  radius="md"
+                  component={motion.div}
+                  ref={finishedRef}
+                >
+                  <Text size="xl" ta="center" c="green">
+                    Well Done
+                  </Text>
+                  <Text ta="center">Your session is completed.</Text>
+                </Card>
+              )}
+            </AnimatePresence>
+          </div>
+        </ScrollArea>
+      </Flex>
+    </WavyBackground>
   );
 }

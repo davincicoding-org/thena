@@ -44,12 +44,12 @@ export function SessionBreak({
     <Paper
       withBorder
       radius="md"
-      className={cn("w-xs overflow-clip", className)}
+      className={cn("overflow-clip", className)}
       ref={ref}
       {...paperProps}
     >
       <Stack p="md" gap="sm">
-        <Text size="xl" ta="center" fw={500}>
+        <Text size="xl" ta="center" fw={500} className="text-nowrap">
           {progress >= 100 ? "Break is over" : "Time for a break"}
         </Text>
         <Progress

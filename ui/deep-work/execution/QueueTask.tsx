@@ -125,11 +125,10 @@ export function QueueTask({
         color={color}
         classNames={{
           root: "min-w-48 transition-all opacity-100!",
-          label: cn({
+          body: cn("flex flex-col-reverse", {
             "line-through": status === "completed",
             "opacity-30": status === "skipped",
           }),
-          body: "flex flex-col-reverse",
         }}
         rightSection={null}
       />

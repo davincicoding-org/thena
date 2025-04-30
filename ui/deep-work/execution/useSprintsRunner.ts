@@ -24,13 +24,13 @@ export interface SprintsRunnerHookReturn {
   startSprint: () => void;
   completeTask: (task: TaskReference) => void;
   skipTask: (task: TaskReference) => void;
+  jumpToTask: (task: TaskReference, skippedTasks?: TaskReference[]) => void;
   finishSprint: () => void;
   finishBreak: () => void;
 }
 
-const taskRunKey = (
-  task: TaskReference,
-): `${TaskReference["taskId"]}--${TaskReference["subtaskId"]}` =>
+type TaskRunKey = `${TaskReference["taskId"]}--${TaskReference["subtaskId"]}`;
+const taskRunKey = (task: TaskReference): TaskRunKey =>
   `${task.taskId}--${task.subtaskId}`;
 
 export function useSprintsRunner({
@@ -95,6 +95,39 @@ export function useSprintsRunner({
     }));
   };
 
+  const jumpToTask: SprintsRunnerHookReturn["jumpToTask"] = (
+    task,
+    skippedTasks = [],
+  ) => {
+    const targetTaskRunKey = taskRunKey(task);
+    const skippedTaskRunKeys = skippedTasks.map((skippedTask) =>
+      taskRunKey(skippedTask),
+    );
+
+    setTaskRuns((prev) => {
+      const skipped = skippedTaskRunKeys.reduce<typeof prev>(
+        (acc, taskToSkip) => ({
+          ...acc,
+          [taskToSkip]: {
+            ...prev[taskToSkip],
+            skipped: true,
+          },
+        }),
+        {
+          [targetTaskRunKey]: {
+            ...prev[targetTaskRunKey],
+            skipped: false,
+          },
+        },
+      );
+
+      return {
+        ...prev,
+        ...skipped,
+      };
+    });
+  };
+
   return {
     slots,
     status,
@@ -118,5 +151,6 @@ export function useSprintsRunner({
     },
     completeTask,
     skipTask,
+    jumpToTask,
   };
 }

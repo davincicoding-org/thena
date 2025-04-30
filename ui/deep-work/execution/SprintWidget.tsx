@@ -33,7 +33,7 @@ export interface SprintWidgetProps {
   onStart?: () => void;
   onCompleteTask?: (task: TaskReference) => void;
   onSkipTask?: (task: TaskReference) => void;
-  // onRunTaskManually?: (task: TaskReference) => void;
+  onJumpToTask?: (task: TaskReference, tasksToSkip?: TaskReference[]) => void;
   onPause?: () => void;
   onResume?: () => void;
   onFinish?: () => void;
@@ -49,6 +49,7 @@ export function SprintWidget({
   onStart,
   onCompleteTask,
   onSkipTask,
+  onJumpToTask,
   onPause,
   onResume,
   onFinish,
@@ -107,10 +108,8 @@ export function SprintWidget({
     );
     if (taskIndex === -1) return;
 
-    tasks
-      .slice(0, taskIndex)
-      .filter(isTaskRunnable)
-      .forEach(({ taskId, subtaskId }) => onSkipTask?.({ taskId, subtaskId }));
+    const tasksToSkip = tasks.slice(0, taskIndex).filter(isTaskRunnable);
+    onJumpToTask?.(task, tasksToSkip);
   };
 
   return (

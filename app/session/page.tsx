@@ -277,7 +277,7 @@ export default function SessionPage() {
       <Modal.Root
         opened={isSessionModalOpen}
         fullScreen
-        transitionProps={{ transition: "pop" }}
+        transitionProps={{ transition: "fade", duration: 1000 }}
         onClose={sessionModal.close}
       >
         <Modal.Content>

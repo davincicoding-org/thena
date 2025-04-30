@@ -42,7 +42,7 @@ export interface SessionPlannerHookReturn {
   /** Add a new empty Sprint, using optional duration */
   addSprint: (
     sprintToAdd: {
-      duration?: number;
+      duration?: Duration;
       tasks?: TaskReference[];
     },
     callback?: (sprintId: SprintPlan["id"]) => void,
@@ -51,7 +51,7 @@ export interface SessionPlannerHookReturn {
   /** Add multiple Sprints at once */
   addSprints: (
     sprintsToAdd: {
-      duration?: number;
+      duration?: Duration;
       tasks?: TaskReference[];
     }[],
   ) => void;
