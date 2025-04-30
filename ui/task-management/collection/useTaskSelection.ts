@@ -1,93 +1,70 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import type { Task, TaskReference } from "@/core/task-management";
 import {
+  doesTaskReferenceExist,
   excludeTaskReferences,
-  resolveTaskReferences,
 } from "@/core/task-management";
 
-export interface TaskSelectionHookReturn<T extends Task> {
+export interface TaskSelectionHookReturn {
   selection: TaskReference[];
-  tasks: T[];
   clearSelection: () => void;
-  isTaskSelected: (task: T) => boolean;
-  isSubtaskSelected: (taskReference: TaskReference) => boolean;
-  toggleTaskSelection: (task: T) => void;
-  toggleSubtaskSelection: (taskReference: TaskReference) => void;
+  isTaskSelected: (task: TaskReference) => boolean;
+  isTaskGroupSelected: (tasks: TaskReference[]) => boolean;
+  toggleTaskSelection: (task: TaskReference) => void;
+  toggleTaskGroupSelection: (tasks: TaskReference[]) => void;
 }
 
-export function useTaskSelection<T extends Task>(
-  taskList: T[] = [],
-): TaskSelectionHookReturn<T> {
+export function useTaskSelection(): TaskSelectionHookReturn {
   const [selection, setSelection] = useState<TaskReference[]>([]);
 
-  const isTaskSelected: TaskSelectionHookReturn<T>["isTaskSelected"] = (task) =>
-    isTaskFullyIncluded(task, selection);
+  const clearSelection = useCallback(() => setSelection([]), []);
 
-  const isSubtaskSelected: TaskSelectionHookReturn<T>["isSubtaskSelected"] = ({
-    taskId,
-    subtaskId,
-  }) => isSubtaskIncluded({ taskId, subtaskId }, selection);
+  const isTaskSelected: TaskSelectionHookReturn["isTaskSelected"] = (task) =>
+    doesTaskReferenceExist(task, selection);
 
-  const tasks = resolveTaskReferences(selection, taskList);
+  const isTaskGroupSelected: TaskSelectionHookReturn["isTaskGroupSelected"] = (
+    tasks,
+  ) => tasks.every((task) => doesTaskReferenceExist(task, selection));
 
-  const toggleTaskSelection: TaskSelectionHookReturn<T>["toggleTaskSelection"] =
-    (task) =>
+  const toggleTaskSelection: TaskSelectionHookReturn["toggleTaskSelection"] = (
+    task,
+  ) =>
+    setSelection((prev) => {
+      const isSelected = doesTaskReferenceExist(task, prev);
+
+      if (isSelected) {
+        return excludeTaskReferences(prev, [task]);
+      }
+
+      return [...prev, task];
+    });
+
+  const toggleTaskGroupSelection: TaskSelectionHookReturn["toggleTaskGroupSelection"] =
+    (tasks) =>
       setSelection((prev) => {
-        const isFullySelected = isTaskFullyIncluded(task, prev);
+        const areAllSelected = tasks.every((task) =>
+          doesTaskReferenceExist(task, prev),
+        );
 
-        if (isFullySelected)
-          return prev.filter((selectedTask) => selectedTask.taskId !== task.id);
-
-        const isPartiallySelected = isTaskPartiallyIncluded(task, prev);
-
-        if (isPartiallySelected)
-          return [
-            ...prev.filter((selectedTask) => selectedTask.taskId !== task.id),
-            ...(task.subtasks ?? []).map((subtask) => ({
-              taskId: task.id,
-              subtaskId: subtask.id,
-            })),
-          ];
-
-        if (!task.subtasks?.length)
-          return [
-            ...prev,
-            {
-              taskId: task.id,
-              subtaskId: null,
-            },
-          ];
-
-        return [
-          ...prev,
-          ...(task.subtasks ?? []).map((subtask) => ({
-            taskId: task.id,
-            subtaskId: subtask.id,
-          })),
-        ];
-      });
-
-  const toggleSubtaskSelection: TaskSelectionHookReturn<T>["toggleSubtaskSelection"] =
-    (taskReference) =>
-      setSelection((prev) => {
-        const isSelected = isSubtaskIncluded(taskReference, prev);
-
-        if (isSelected) {
-          return excludeTaskReferences(prev, [taskReference]);
+        if (areAllSelected) {
+          return excludeTaskReferences(prev, tasks);
         }
 
-        return [...prev, taskReference];
+        const notSelectedTasks = tasks.filter(
+          (task) => !doesTaskReferenceExist(task, prev),
+        );
+
+        return [...prev, ...notSelectedTasks];
       });
 
   return {
-    tasks,
     selection,
-    clearSelection: () => setSelection([]),
+    clearSelection,
     isTaskSelected,
-    isSubtaskSelected,
+    isTaskGroupSelected,
     toggleTaskSelection,
-    toggleSubtaskSelection,
+    toggleTaskGroupSelection,
   };
 }
 

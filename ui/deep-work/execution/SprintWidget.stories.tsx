@@ -9,14 +9,13 @@ const meta = {
     layout: "centered",
   },
   args: {
-    duration: 60,
+    duration: { seconds: 60 },
     warnBeforeTimeRunsOut: 10,
-    timeElapsed: 0,
 
     onStart: fn(),
     onCompleteTask: fn(),
     onSkipTask: fn(),
-    onRunTaskManually: fn(),
+    onJumpToTask: fn(),
     onPause: fn(),
     onResume: fn(),
     onFinish: fn(),

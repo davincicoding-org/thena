@@ -183,7 +183,7 @@ export default function SessionPage() {
             <SprintBuilder
               className="mx-auto max-h-[70dvh] min-h-[400px] w-fit"
               sprints={sprintBuilder.sprints}
-              tasks={taskList.tasks}
+              tasks={sprintBuilder.tasks}
               unassignedTasks={sprintBuilder.unassignedTasks}
               onAddSprint={(callback) => sprintBuilder.addSprint({}, callback)}
               onDropSprint={sprintBuilder.dropSprint}
@@ -330,6 +330,7 @@ export default function SessionPage() {
           backlogTaskSelection.clearSelection();
           backlogPanel.close();
         }}
+        // eslint-disable-next-line max-lines
       >
         <Flex className="h-full" direction="column" gap="md">
           <Backlog
@@ -350,18 +351,25 @@ export default function SessionPage() {
             disabled={backlogTaskSelection.selection.length === 0}
             fullWidth
             onClick={() => {
-              taskList.addTasks(backlogTaskSelection.tasks, {
+              const taskIds = backlogTaskSelection.selection.map(
+                ({ taskId }) => taskId,
+              );
+
+              const tasksToAdd = backlogTasks.filter(({ id }) =>
+                taskIds.includes(id),
+              );
+
+              taskList.addTasks(tasksToAdd, {
                 apply: () => {
                   backlog.deleteTasks(
-                    backlogTaskSelection.tasks.map(({ id }) => id),
+                    backlogTaskSelection.selection.map(({ taskId }) => taskId),
                   );
                 },
                 revert: () => {
-                  const tasksToRestore = [...backlogTaskSelection.tasks];
-                  backlog.addTasks(tasksToRestore);
+                  backlog.addTasks(tasksToAdd);
                   notifications.show({
                     message:
-                      tasksToRestore.length === 1
+                      tasksToAdd.length === 1
                         ? "Moved Task Back to Backlog"
                         : "Moved Tasks Back to Backlog",
                     autoClose: 5000,
@@ -375,7 +383,7 @@ export default function SessionPage() {
               backlogPanel.close();
             }}
           >
-            {backlogTaskSelection.tasks.length === 0
+            {backlogTaskSelection.selection.length === 0
               ? "Select Tasks to Pull"
               : "Pull Tasks"}
           </Button>

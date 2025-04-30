@@ -10,7 +10,7 @@ const meta = {
   },
   args: {
     title: "Sprint 1",
-    duration: 25,
+    duration: { minutes: 25 },
     tasks: [
       {
         taskId: "task1",

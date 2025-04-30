@@ -219,6 +219,12 @@ importers:
       storybook:
         specifier: ^8.6.12
         version: 8.6.12(prettier@3.5.3)
+      ts-toolbelt:
+        specifier: ^9.6.0
+        version: 9.6.0
+      type-fest:
+        specifier: ^4.40.1
+        version: 4.40.1
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -5725,6 +5731,9 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
+
+  ts-toolbelt@9.6.0:
+    resolution: {integrity: sha512-nsZd8ZeNUzukXPlJmTBwUAuABDe/9qtVDelJeT/qW0ow3ZS3BsQJtNkan1802aM9Uf68/Y8ljw86Hu0h5IUW3w==}
 
   tsconfig-paths-webpack-plugin@4.2.0:
     resolution: {integrity: sha512-zbem3rfRS8BgeNK50Zz5SIQgXzLafiHjOwUAvk/38/o1jHn/V5QAgVUcz884or7WYcPaH3N2CIfUc2u0ul7UcA==}
@@ -12301,6 +12310,8 @@ snapshots:
   ts-pnp@1.2.0(typescript@5.8.3):
     optionalDependencies:
       typescript: 5.8.3
+
+  ts-toolbelt@9.6.0: {}
 
   tsconfig-paths-webpack-plugin@4.2.0:
     dependencies:

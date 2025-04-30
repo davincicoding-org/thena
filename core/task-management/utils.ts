@@ -3,93 +3,21 @@ import type { FlatTask, FlatTaskGroup, Task, TaskReference } from "./types";
 export const countTasks = (tasks: Task[]): number =>
   tasks.reduce((acc, task) => acc + (task.subtasks?.length ?? 1), 0);
 
-// Checks if the task reference is valid and returns the task reference
-export const isValidTaskReference = (
+// Checks if the task reference is valid
+export const doesTaskReferenceExist = (
   taskReference: TaskReference,
-  tasks: Task[],
-): boolean => {
-  const task = tasks.find((t) => t.id === taskReference.taskId);
-
-  // Task must exist
-  if (!task) return false;
-
-  if (taskReference.subtaskId === null) {
-    // Task must not have subtasks
-    if (task.subtasks?.length) return false;
-    return true;
-  }
-
-  // Task has no subtasks, so subtask reference must not be provided
-  if (!task.subtasks?.length) return false;
-
-  if (task.subtasks?.length && taskReference.subtaskId === null) return false;
-
-  const doesSubtaskExist = task.subtasks.some(
-    (subtask) => subtask.id === taskReference.subtaskId,
+  tasks: TaskReference[],
+): boolean =>
+  tasks.some(
+    ({ taskId, subtaskId }) =>
+      taskId === taskReference.taskId && subtaskId === taskReference.subtaskId,
   );
-
-  if (!doesSubtaskExist) return false;
-  return true;
-};
 
 export const resolveTaskReferences = <T extends Task>(
   taskReferences: TaskReference[],
-  tasks: T[],
-): T[] => {
-  const validTaskReferences = taskReferences.filter((taskReference) =>
-    isValidTaskReference(taskReference, tasks),
-  );
-
-  const mergedTaskReferences = validTaskReferences.reduce<
-    {
-      taskId: TaskReference["taskId"];
-      subtaskIds?: NonNullable<TaskReference["subtaskId"]>[];
-    }[]
-  >((acc, taskReference) => {
-    const isAlreadyInAcc = acc.some(
-      ({ taskId }) => taskId === taskReference.taskId,
-    );
-
-    if (!isAlreadyInAcc)
-      return [
-        ...acc,
-        {
-          taskId: taskReference.taskId,
-          subtaskIds: taskReference.subtaskId
-            ? [taskReference.subtaskId]
-            : undefined,
-        },
-      ];
-
-    return acc.map((entry) => {
-      if (entry.taskId !== taskReference.taskId) return entry;
-
-      return {
-        ...entry,
-        subtaskIds: taskReference.subtaskId
-          ? [...(entry.subtaskIds ?? []), taskReference.subtaskId]
-          : undefined,
-      };
-    });
-  }, []);
-
-  return mergedTaskReferences.reduce<T[]>((acc, { taskId, subtaskIds }) => {
-    const task = tasks.find(({ id }) => id === taskId);
-    if (!task) return acc;
-
-    if (!subtaskIds) return [...acc, task];
-
-    if (!task.subtasks?.length) return acc;
-
-    return [
-      ...acc,
-      {
-        ...task,
-        subtasks: task.subtasks.filter(({ id }) => subtaskIds.includes(id)),
-      },
-    ];
-  }, []);
-};
+  tasks: FlatTask[],
+): FlatTask[] =>
+  tasks.filter((task) => doesTaskReferenceExist(task, taskReferences));
 
 export const tranformTasksToReferences = (tasks: Task[]): TaskReference[] => {
   return tasks.flatMap<TaskReference>((task) => {
@@ -98,6 +26,20 @@ export const tranformTasksToReferences = (tasks: Task[]): TaskReference[] => {
     return task.subtasks.map((subtask) => ({
       taskId: task.id,
       subtaskId: subtask.id,
+    }));
+  });
+};
+
+export const flattenTasks = (tasks: Task[]): FlatTask[] => {
+  return tasks.flatMap<FlatTask>(({ id: taskId, ...task }) => {
+    if (!task.subtasks?.length) return [{ taskId, subtaskId: null, ...task }];
+
+    return task.subtasks.map<FlatTask>(({ id, ...subtask }) => ({
+      taskId,
+      subtaskId: id,
+      parentTitle: task.title,
+      projectId: task.projectId,
+      ...subtask,
     }));
   });
 };
@@ -142,6 +84,10 @@ export const resolveTaskReferencesFlat = (
   }, []);
 };
 
+export const isTaskGroup = (
+  item: FlatTaskGroup | FlatTask,
+): item is FlatTaskGroup => "groupLabel" in item;
+
 export const groupFlatTasks = (tasks: FlatTask[]) =>
   tasks.reduce<(FlatTaskGroup | FlatTask)[]>((acc, task) => {
     const prevItem = acc[acc.length - 1];
@@ -150,7 +96,7 @@ export const groupFlatTasks = (tasks: FlatTask[]) =>
 
     if (prevItem.taskId !== task.taskId) return [...acc, task];
 
-    if ("groupLabel" in prevItem)
+    if (isTaskGroup(prevItem))
       return [
         ...acc.slice(0, -1),
         {
@@ -172,13 +118,15 @@ export const groupFlatTasks = (tasks: FlatTask[]) =>
 export const excludeTaskReferences = (
   targetSelection: TaskReference[],
   excludedSelection: TaskReference[],
-): TaskReference[] =>
-  targetSelection.filter((existingTaskReference) => {
-    const isExcluded = excludedSelection.some(
-      (excludedTaskReference) =>
-        existingTaskReference.taskId === excludedTaskReference.taskId &&
-        existingTaskReference.subtaskId === excludedTaskReference.subtaskId,
+) =>
+  // Reduce is used, because `targetSelection` items could be an extension of TaskReference
+  targetSelection.reduce<TaskReference[]>((acc, { taskId, subtaskId }) => {
+    const isIncluded = excludedSelection.some(
+      (taskReferenceToExclude) =>
+        taskReferenceToExclude.taskId === taskId &&
+        taskReferenceToExclude.subtaskId === subtaskId,
     );
+    if (isIncluded) return acc;
 
-    return !isExcluded;
-  });
+    return [...acc, { taskId, subtaskId }];
+  }, []);

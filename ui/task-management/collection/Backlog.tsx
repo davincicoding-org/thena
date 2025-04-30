@@ -91,7 +91,7 @@ export interface BacklogProps {
   ) => void;
   onCreateTag?: (tag: TagInput, onCreate: (tag: Tag) => void) => void;
   selectedTasks?: TaskReference[];
-  onToggleTaskSelection?: (task: BacklogTask) => void;
+  onToggleTaskSelection?: (task: TaskReference) => void;
 }
 
 export function Backlog({
@@ -156,7 +156,12 @@ export function Backlog({
                   selected={selectedTasks?.some(
                     (selectedTask) => selectedTask.taskId === task.id,
                   )}
-                  onToggleSelection={() => onToggleTaskSelection?.(task)}
+                  onToggleSelection={() =>
+                    onToggleTaskSelection?.({
+                      taskId: task.id,
+                      subtaskId: null,
+                    })
+                  }
                 />
               ))}
               <Text className="not-first:hidden" my="auto">

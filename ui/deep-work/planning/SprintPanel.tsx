@@ -147,7 +147,6 @@ export function SprintPanel({
                   onUnassignTasks={onUnassignTasks}
                 >
                   <Paper
-                    key={`${taskOrGroup.taskId}-${taskOrGroup.subtaskId}`}
                     className={cn(
                       "cursor-pointer px-3",
                       taskOrGroup.parentTitle ? "py-1.5" : "py-2",

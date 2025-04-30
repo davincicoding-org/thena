@@ -6,6 +6,7 @@ import { useSprintBuilder } from "./useSprintBuilder";
 const Playground = () => {
   const {
     sprints,
+    tasks,
     unassignedTasks,
     updateSprint,
     assignTasks,
@@ -110,6 +111,7 @@ const Playground = () => {
     <SprintBuilder
       mah="70dvh"
       sprints={sprints}
+      tasks={tasks}
       unassignedTasks={unassignedTasks}
       onSprintChange={updateSprint}
       onAssignTasksToSprint={assignTasks}

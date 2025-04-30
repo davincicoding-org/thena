@@ -2,11 +2,11 @@ import { useEffect } from "react";
 import { usePrevious } from "@mantine/hooks";
 
 import type { Duration, SprintPlan } from "@/core/deep-work";
-import type { Task, TaskReference } from "@/core/task-management";
+import type { FlatTask, Task, TaskReference } from "@/core/task-management";
 import {
   countTasks,
   excludeTaskReferences,
-  tranformTasksToReferences,
+  flattenTasks,
 } from "@/core/task-management";
 import { createUniqueId } from "@/ui/utils";
 
@@ -30,6 +30,9 @@ export interface SessionPlannerHookOptions {
 export interface SessionPlannerHookReturn {
   /** All current Sprint plans (with populated tasks) */
   sprints: SprintPlan[];
+
+  /** All current flat tasks */
+  tasks: FlatTask[];
 
   setSprints: (value: SprintPlan[]) => void;
 
@@ -114,9 +117,10 @@ export function useSprintBuilder(
     onError,
   }: SessionPlannerHookOptions = DEFAULT_OPTIONS,
 ): SessionPlannerHookReturn {
+  const flatTasks = flattenTasks(taskPool);
   const [sprints, dispatch] = useSprintsReducer(
     {
-      taskPool,
+      taskPool: flatTasks,
       sprintDuration,
       onError,
     },
@@ -137,9 +141,7 @@ export function useSprintBuilder(
   const unassignedTasks = ((): TaskReference[] => {
     const allAssignedTaskReferences = sprints.flatMap((sprint) => sprint.tasks);
 
-    const allTaskReferences = tranformTasksToReferences(taskPool);
-
-    return excludeTaskReferences(allTaskReferences, allAssignedTaskReferences);
+    return excludeTaskReferences(flatTasks, allAssignedTaskReferences);
   })();
 
   const setSprints: SessionPlannerHookReturn["setSprints"] = (sprints) => {
@@ -206,6 +208,7 @@ export function useSprintBuilder(
   return {
     sprints,
     setSprints,
+    tasks: flatTasks,
     unassignedTasks,
     addSprint,
     addSprints,

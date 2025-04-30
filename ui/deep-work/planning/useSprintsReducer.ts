@@ -1,10 +1,10 @@
 import { useReducer } from "react";
 
 import type { Duration, SprintPlan } from "@/core/deep-work";
-import type { Task, TaskReference } from "@/core/task-management";
+import type { FlatTask, Task, TaskReference } from "@/core/task-management";
 import {
+  doesTaskReferenceExist,
   excludeTaskReferences,
-  isValidTaskReference,
 } from "@/core/task-management";
 import { createUniqueId } from "@/ui/utils";
 
@@ -74,7 +74,7 @@ export type SprintsReducerErrorCode =
 // MARK: Hook
 
 export interface SprintsReducerHookOptions {
-  taskPool: Task[];
+  taskPool: FlatTask[];
   sprintDuration: Duration;
   onError?: (error: SprintsReducerError) => void;
 }
@@ -110,7 +110,7 @@ export function useSprintsReducer(
             id: newSprintId,
             duration,
             tasks: tasks.reduce<SprintPlan["tasks"]>((acc, task) => {
-              if (!isValidTaskReference(task, taskPool)) return acc;
+              if (!doesTaskReferenceExist(task, taskPool)) return acc;
               return [...acc, task];
             }, []),
           },
@@ -128,7 +128,7 @@ export function useSprintsReducer(
               duration: sprint.duration ?? sprintDuration,
               tasks: (sprint.tasks ?? []).reduce<SprintPlan["tasks"]>(
                 (acc, task) => {
-                  if (!isValidTaskReference(task, taskPool)) return acc;
+                  if (!doesTaskReferenceExist(task, taskPool)) return acc;
                   return [...acc, task];
                 },
                 [],
@@ -200,7 +200,7 @@ export function useSprintsReducer(
           return state;
         }
 
-        if (!isValidTaskReference(task, taskPool)) return state;
+        if (!doesTaskReferenceExist(task, taskPool)) return state;
 
         return state.map((sprint) => {
           if (sprint.id !== sprintId) return sprint;
@@ -221,7 +221,7 @@ export function useSprintsReducer(
         }
 
         const validTaskReferences = tasks.filter((task) =>
-          isValidTaskReference(task, taskPool),
+          doesTaskReferenceExist(task, taskPool),
         );
         if (!validTaskReferences.length) return state;
 
@@ -310,7 +310,7 @@ export function useSprintsReducer(
         }
 
         const validTaskReferences = tasks.filter((task) =>
-          isValidTaskReference(task, taskPool),
+          doesTaskReferenceExist(task, taskPool),
         );
         if (!validTaskReferences.length) return state;
 

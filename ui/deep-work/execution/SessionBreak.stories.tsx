@@ -9,9 +9,9 @@ const meta = {
     layout: "centered",
   },
   args: {
-    timeElapsed: 1,
-    duration: 10,
+    duration: { minutes: 10 },
     sprintsLeft: 3,
+    running: true,
     onResume: fn(),
   },
 } satisfies Meta<typeof SessionBreak>;
@@ -21,11 +21,11 @@ type Story = StoryObj<typeof meta>;
 
 export const Showcase: Story = {};
 
-export const TimeUp: Story = {
-  args: {
-    timeElapsed: 10,
-  },
-};
+// export const TimeUp: Story = {
+//   args: {
+//     timeElapsed: 10,
+//   },
+// };
 
 export const BeforeLastSprint: Story = {
   args: {

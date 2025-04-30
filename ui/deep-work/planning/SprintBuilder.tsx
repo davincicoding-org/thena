@@ -13,10 +13,10 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 
 import type { SprintPlan } from "@/core/deep-work";
-import type { Task, TaskReference } from "@/core/task-management";
+import type { FlatTask, TaskReference } from "@/core/task-management";
 import {
+  doesTaskReferenceExist,
   resolveTaskReferences,
-  resolveTaskReferencesFlat,
 } from "@/core/task-management";
 import { cn } from "@/ui/utils";
 
@@ -25,7 +25,7 @@ import { TaskPool } from "./TaskPool";
 
 export interface SprintBuilderProps {
   sprints: SprintPlan[];
-  tasks: Task[];
+  tasks: FlatTask[];
   unassignedTasks: TaskReference[];
   onAddSprint: (callback?: (sprintId: SprintPlan["id"]) => void) => void;
   onDropSprint: (sprintId: SprintPlan["id"]) => void;
@@ -135,7 +135,9 @@ export function SprintBuilder({
               <SprintPanel
                 key={sprint.id}
                 duration={sprint.duration}
-                tasks={resolveTaskReferencesFlat(sprint.tasks, tasks)}
+                tasks={tasks.filter((task) =>
+                  doesTaskReferenceExist(task, sprint.tasks),
+                )}
                 className="max-h-full"
                 otherSprints={sprintOptions.filter(
                   (option) => option.id !== sprint.id,
@@ -183,7 +185,7 @@ export function SprintBuilder({
           p="sm"
         >
           <TaskPool
-            items={resolveTaskReferences(unassignedTasks, tasks)}
+            tasks={resolveTaskReferences(unassignedTasks, tasks)}
             sprintOptions={sprintOptions}
             selectionEnabled={sprintToAddTaskTo !== undefined}
             onSubmitSelection={(tasks) => {

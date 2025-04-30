@@ -1,115 +1,131 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { fn } from "@storybook/test";
 
+import { FlatTask } from "@/core/task-management";
+
 import { TaskPool } from "./TaskPool";
 
-const TASKS = [
+const TASKS: FlatTask[] = [
   {
-    id: "task1",
+    taskId: "task1",
+    subtaskId: null,
     title: "Standup meeting",
   },
 
   {
-    id: "app",
-    title: "Building an app",
-    subtasks: [
-      {
-        id: "1",
-        title: "Gather requirements",
-      },
-      {
-        id: "2",
-        title: "Design the UI",
-      },
-      {
-        id: "3",
-        title: "Implement the UI",
-      },
-      {
-        id: "4",
-        title: "Test the app",
-      },
-    ],
+    taskId: "app",
+    subtaskId: "1",
+    parentTitle: "Building an app",
+    title: "Gather requirements",
   },
   {
-    id: "task2",
+    taskId: "2",
+    subtaskId: null,
+    parentTitle: "Building an app",
+    title: "Design the UI",
+  },
+  {
+    taskId: "3",
+    subtaskId: null,
+    parentTitle: "Building an app",
+    title: "Implement the UI",
+  },
+  {
+    taskId: "4",
+    subtaskId: null,
+    parentTitle: "Building an app",
+    title: "Test the app",
+  },
+  {
+    taskId: "task2",
+    subtaskId: null,
     title: "Code review PR-123",
   },
   {
-    id: "task3",
+    taskId: "task3",
+    subtaskId: null,
     title: "Reply to client emails",
   },
   {
-    id: "website",
-    title: "Company website redesign",
-    subtasks: [
-      {
-        id: "w1",
-        title: "Analyze current website",
-      },
-      {
-        id: "w2",
-        title: "Create wireframes",
-      },
-      {
-        id: "w3",
-        title: "Design new pages",
-      },
-    ],
+    taskId: "website",
+    subtaskId: "w1",
+    parentTitle: "Company website redesign",
+    title: "Analyze current website",
   },
   {
-    id: "marketing",
-    title: "Marketing campaign",
-    subtasks: [
-      {
-        id: "m1",
-        title: "Define target audience",
-      },
-      {
-        id: "m2",
-        title: "Create content strategy",
-      },
-    ],
+    taskId: "w2",
+    subtaskId: null,
+    parentTitle: "Company website redesign",
+    title: "Create wireframes",
   },
   {
-    id: "task4",
+    taskId: "w3",
+    subtaskId: null,
+    parentTitle: "Company website redesign",
+    title: "Design new pages",
+  },
+  {
+    taskId: "marketing",
+    subtaskId: "m1",
+    parentTitle: "Marketing campaign",
+    title: "Define target audience",
+  },
+  {
+    taskId: "marketing",
+    subtaskId: "m1",
+    parentTitle: "Marketing campaign",
+    title: "Define target audience",
+  },
+  {
+    taskId: "marketing",
+    subtaskId: "m2",
+    parentTitle: "Marketing campaign",
+    title: "Create content strategy",
+  },
+  {
+    taskId: "task4",
+    subtaskId: null,
     title: "Update sprint board",
   },
 
   {
-    id: "api",
-    title: "API development",
-    subtasks: [
-      {
-        id: "a1",
-        title: "Design endpoints",
-      },
-      {
-        id: "a2",
-        title: "Implement auth system",
-      },
-      {
-        id: "a3",
-        title: "Write documentation",
-      },
-    ],
+    taskId: "api",
+    subtaskId: "a1",
+    parentTitle: "API development",
+    title: "Design endpoints",
   },
   {
-    id: "database",
-    title: "Database optimization",
-    subtasks: [
-      {
-        id: "d1",
-        title: "Analyze performance issues",
-      },
-      {
-        id: "d2",
-        title: "Implement indexing strategy",
-      },
-    ],
+    taskId: "api",
+    subtaskId: "a2",
+    parentTitle: "API development",
+    title: "Implement auth system",
   },
   {
-    id: "task5",
+    taskId: "api",
+    subtaskId: "a3",
+    parentTitle: "API development",
+    title: "Write documentation",
+  },
+  {
+    taskId: "task5",
+    subtaskId: null,
+    title: "Quick bug fix for nav menu",
+  },
+  {
+    taskId: "database",
+    subtaskId: "d1",
+    parentTitle: "Database optimization",
+    title: "Analyze performance issues",
+  },
+  {
+    taskId: "database",
+    subtaskId: "d2",
+    parentTitle: "Database optimization",
+    title: "Implement indexing strategy",
+  },
+  {
+    taskId: "task5",
+    subtaskId: null,
     title: "Quick bug fix for nav menu",
   },
 ];
@@ -120,7 +136,7 @@ const meta = {
     layout: "centered",
   },
   args: {
-    items: TASKS,
+    tasks: TASKS,
     selectionEnabled: false,
     sprintOptions: [
       { id: "sprint1", title: "Sprint 1" },

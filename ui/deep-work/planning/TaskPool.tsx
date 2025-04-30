@@ -1,9 +1,12 @@
-import type { PaperProps } from "@mantine/core";
+import type { MenuProps, PaperProps } from "@mantine/core";
+import type { PropsWithChildren } from "react";
+import { Fragment, useEffect } from "react";
 import {
   ActionIcon,
   Button,
   Card,
   Collapse,
+  Divider,
   Flex,
   Menu,
   NavLink,
@@ -12,14 +15,15 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import { IconArrowLeft, IconX } from "@tabler/icons-react";
+import { IconArrowLeft, IconDotsVertical, IconX } from "@tabler/icons-react";
 
-import type { Task, TaskReference } from "@/core/task-management";
+import type { FlatTask, TaskReference } from "@/core/task-management";
+import { groupFlatTasks, isTaskGroup } from "@/core/task-management";
 import { useTaskSelection } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
 export interface TaskPoolProps {
-  items: Task[];
+  tasks: FlatTask[];
   selectionEnabled: boolean;
   sprintOptions: { id: string; title: string }[];
   onSubmitSelection: (tasks: TaskReference[]) => void;
@@ -31,7 +35,7 @@ export interface TaskPoolProps {
 }
 
 export function TaskPool({
-  items,
+  tasks,
   sprintOptions,
   selectionEnabled,
   onSubmitSelection,
@@ -43,19 +47,24 @@ export function TaskPool({
     selection,
     clearSelection,
     isTaskSelected,
-    isSubtaskSelected,
+    isTaskGroupSelected,
     toggleTaskSelection,
-    toggleSubtaskSelection,
+    toggleTaskGroupSelection,
   } = useTaskSelection();
 
-  const handleTaskClick = (task: Task) => {
-    if (!selectionEnabled) return;
-    toggleTaskSelection(task);
-  };
+  useEffect(() => {
+    if (!selectionEnabled) {
+      clearSelection();
+    }
+  }, [selectionEnabled, clearSelection]);
 
-  const handleSubtaskClick = (taskReference: TaskReference) => {
+  const handleTaskClick = (taskReference: TaskReference) => {
     if (!selectionEnabled) return;
-    toggleSubtaskSelection(taskReference);
+    toggleTaskSelection(taskReference);
+  };
+  const handleTaskGroupClick = (taskReferences: TaskReference[]) => {
+    if (!selectionEnabled) return;
+    toggleTaskGroupSelection(taskReferences);
   };
 
   const handleAbortSelection = () => {
@@ -67,6 +76,8 @@ export function TaskPool({
     onSubmitSelection(selection);
     clearSelection();
   };
+
+  const items = groupFlatTasks(tasks);
 
   return (
     <Paper
@@ -117,133 +128,133 @@ export function TaskPool({
         classNames={{ viewport: "pb-2" }}
         scrollHideDelay={300}
       >
-        <Stack gap="sm" p="md">
-          {items.map((task) => (
-            <Paper
-              key={task.id}
-              withBorder
-              className="overflow-clip"
-              radius="md"
-            >
-              <Menu
-                position="bottom-end"
-                key={task.id}
-                disabled={selectionEnabled}
-              >
-                <Menu.Target>
-                  <Paper
-                    {...(task.subtasks?.length
-                      ? {
-                          withBorder: true,
-                          mt: -1,
-                          mx: -1,
-                          bg: "neutral.6",
-                          radius: "md",
-                        }
-                      : { radius: 0 })}
-                  >
+        <Stack gap="sm" p="sm">
+          {items.map((taskOrGroup) => {
+            if (!isTaskGroup(taskOrGroup))
+              return (
+                <ActionsMenu
+                  key={`${taskOrGroup.taskId}-${taskOrGroup.subtaskId}`}
+                  disabled={selectionEnabled}
+                  tasks={[taskOrGroup]}
+                  sprintOptions={sprintOptions}
+                  onAssignTasksToSprint={onAssignTasksToSprint}
+                >
+                  <Paper withBorder className="overflow-clip">
                     <NavLink
-                      component="div"
-                      color="gray"
-                      active={isTaskSelected(task)}
-                      label={task.title}
-                      rightSection={null}
-                      onClick={() => handleTaskClick(task)}
+                      component="button"
+                      classNames={{ body: cn("flex flex-col-reverse") }}
+                      className="truncate px-2! py-1! text-nowrap"
+                      description={taskOrGroup.parentTitle}
+                      label={taskOrGroup.title}
+                      active={isTaskSelected(taskOrGroup)}
+                      onClick={() => handleTaskClick(taskOrGroup)}
                     />
                   </Paper>
-                </Menu.Target>
-                <Menu.Dropdown>
-                  <Menu.Label>Assign to</Menu.Label>
-                  {sprintOptions.map((option) => (
-                    <Menu.Item
-                      key={option.id}
-                      onClick={() =>
-                        onAssignTasksToSprint({
-                          sprintId: option.id,
-                          tasks: task.subtasks?.length
-                            ? task.subtasks.map((subtask) => ({
-                                taskId: task.id,
-                                subtaskId: subtask.id,
-                              }))
-                            : [{ taskId: task.id, subtaskId: null }],
-                        })
-                      }
-                    >
-                      {option.title}
-                    </Menu.Item>
-                  ))}
-                  <Menu.Item
-                    onClick={() =>
-                      onAssignTasksToSprint({
-                        sprintId: null,
-                        tasks: task.subtasks?.length
-                          ? task.subtasks.map((subtask) => ({
-                              taskId: task.id,
-                              subtaskId: subtask.id,
-                            }))
-                          : [{ taskId: task.id, subtaskId: null }],
-                      })
+                </ActionsMenu>
+              );
+
+            return (
+              <Paper key={taskOrGroup.taskId} withBorder>
+                <ActionsMenu
+                  disabled={selectionEnabled}
+                  tasks={taskOrGroup.items}
+                  sprintOptions={sprintOptions}
+                  onAssignTasksToSprint={onAssignTasksToSprint}
+                >
+                  <NavLink
+                    component="button"
+                    description={taskOrGroup.groupLabel}
+                    className="cursor-pointer truncate px-1.5! py-1! text-nowrap"
+                    active={isTaskGroupSelected(taskOrGroup.items)}
+                    rightSection={
+                      selectionEnabled ? undefined : (
+                        <IconDotsVertical size={12} />
+                      )
                     }
-                  >
-                    New Sprint
-                  </Menu.Item>
-                </Menu.Dropdown>
-              </Menu>
-              {task.subtasks?.length ? (
-                <Stack gap={0} flex={1}>
-                  {task.subtasks?.map((subtask) => (
-                    <Menu
-                      position="bottom-end"
-                      key={subtask.id}
+                    onClick={() => handleTaskGroupClick(taskOrGroup.items)}
+                  />
+                </ActionsMenu>
+
+                {taskOrGroup.items.map((item) => (
+                  <Fragment key={`${item.taskId}-${item.subtaskId}`}>
+                    <Divider />
+                    <ActionsMenu
                       disabled={selectionEnabled}
+                      tasks={[item]}
+                      sprintOptions={sprintOptions}
+                      onAssignTasksToSprint={onAssignTasksToSprint}
                     >
-                      <Menu.Target>
-                        <NavLink
-                          component="div"
-                          color="gray"
-                          active={isSubtaskSelected({
-                            taskId: task.id,
-                            subtaskId: subtask.id,
-                          })}
-                          label={subtask.title}
-                          rightSection={null}
-                          onClick={() =>
-                            handleSubtaskClick({
-                              taskId: task.id,
-                              subtaskId: subtask.id,
-                            })
-                          }
-                        />
-                      </Menu.Target>
-                      <Menu.Dropdown>
-                        <Menu.Label>Assign to</Menu.Label>
-                        {sprintOptions.map((option) => (
-                          <Menu.Item
-                            key={option.id}
-                            onClick={() =>
-                              onAssignTasksToSprint({
-                                sprintId: option.id,
-                                tasks: [
-                                  {
-                                    taskId: task.id,
-                                    subtaskId: subtask.id,
-                                  },
-                                ],
-                              })
-                            }
-                          >
-                            {option.title}
-                          </Menu.Item>
-                        ))}
-                      </Menu.Dropdown>
-                    </Menu>
-                  ))}
-                </Stack>
-              ) : undefined}
-            </Paper>
-          ))}
+                      <NavLink
+                        component="button"
+                        className="truncate px-2! py-1! text-nowrap"
+                        label={item.title}
+                        active={isTaskSelected(item)}
+                        rightSection={
+                          selectionEnabled ? undefined : (
+                            <IconDotsVertical size={12} />
+                          )
+                        }
+                        onClick={() => handleTaskClick(item)}
+                      />
+                    </ActionsMenu>
+                  </Fragment>
+                ))}
+              </Paper>
+            );
+          })}
         </Stack>
       </ScrollArea>
     </Paper>
+  );
+}
+
+interface ActionsMenuProps
+  extends Pick<TaskPoolProps, "onAssignTasksToSprint" | "sprintOptions"> {
+  tasks: TaskReference[];
+}
+
+function ActionsMenu({
+  tasks,
+  sprintOptions,
+  onAssignTasksToSprint,
+  children,
+  ...props
+}: PropsWithChildren<ActionsMenuProps> & MenuProps) {
+  return (
+    <Menu
+      position="bottom-end"
+      offset={{
+        mainAxis: 0,
+      }}
+      {...props}
+    >
+      <Menu.Target>{children}</Menu.Target>
+      <Menu.Dropdown>
+        <Menu.Label>Assign to</Menu.Label>
+        {sprintOptions.map((option) => (
+          <Menu.Item
+            key={option.id}
+            onClick={() =>
+              onAssignTasksToSprint({
+                sprintId: option.id,
+                tasks,
+              })
+            }
+          >
+            {option.title}
+          </Menu.Item>
+        ))}
+        <Menu.Item
+          onClick={() =>
+            onAssignTasksToSprint({
+              sprintId: null,
+              tasks,
+            })
+          }
+        >
+          New Sprint
+        </Menu.Item>
+      </Menu.Dropdown>
+    </Menu>
   );
 }
