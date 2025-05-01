@@ -59,6 +59,7 @@ export interface SprintBuilderProps {
     fromSprintId: string;
     toSprintId: string;
     tasks: TaskReference[];
+    insertIndex?: number;
   }) => void;
   onReorderSprintTasks: (options: {
     sprintId: string;
@@ -152,6 +153,45 @@ export function SprintBuilder({
 
         setDraggedItem(item);
       }}
+      onDragOver={(event) => {
+        if (!event.active.data.current) return;
+        if (!event.over) return;
+
+        const targetContainerId =
+          (event.over.data.current as SortableData | undefined)?.sortable
+            .containerId ?? event.over.id;
+
+        const active = event.active.data.current as SortableTaskData;
+
+        if (active.sortable.containerId === targetContainerId) return;
+
+        if (targetContainerId !== "TASK_POOL") {
+          onMoveTasks({
+            fromSprintId: active.sortable.containerId.toString(),
+            toSprintId: targetContainerId.toString(),
+            tasks: [active.item],
+            insertIndex: (event.over.data.current as SortableData | undefined)
+              ?.sortable.index,
+          });
+          return;
+        }
+
+        // const over = event.over.data.current as SortableTaskData;
+
+        // console.log(over.sortable.containerId);
+
+        // if (active.sortable.containerId === "TASK_POOL") {
+        //   // TODO Assign task to sprint
+        //   console.log("Assign task to sprint");
+        //   return;
+        // }
+        // if (over.sortable.containerId === "TASK_POOL") {
+        //   // TODO Unassign task from sprint
+        //   // IDEA Maybe also if over is null
+        //   console.log("Unassign task from sprint");
+        //   return;
+        // }
+      }}
       onDragEnd={(event) => {
         setDraggedItem(undefined);
         if (!event.active.data.current) return;
@@ -160,28 +200,18 @@ export function SprintBuilder({
         const active = event.active.data.current as SortableTaskData;
         const over = event.over.data.current as SortableTaskData;
 
-        if (active.sortable.containerId === over.sortable.containerId) {
-          const indexes = over.sortable.items.map((_, index) => index);
-          const order = arrayMove(
-            indexes,
-            active.sortable.index,
-            over.sortable.index,
-          );
-          onReorderSprintTasks({
-            sprintId: over.sortable.containerId.toString(),
-            order,
-          });
-          // TODO Reorder tasks
-        } else if (active.sortable.containerId === "TASK_POOL") {
-          // TODO Assign task to sprint
-          console.log("Assign task to sprint");
-        } else if (over.sortable.containerId === "TASK_POOL") {
-          // TODO Unassign task from sprint
-          console.log("Unassign task from sprint");
-        } else {
-          // TODO Move task to other sprint
-          console.log("Move task to other sprint");
-        }
+        if (active.sortable.containerId !== over.sortable.containerId) return;
+
+        const indexes = over.sortable.items.map((_, index) => index);
+        const order = arrayMove(
+          indexes,
+          active.sortable.index,
+          over.sortable.index,
+        );
+        onReorderSprintTasks({
+          sprintId: over.sortable.containerId.toString(),
+          order,
+        });
       }}
     >
       <DragOverlay>

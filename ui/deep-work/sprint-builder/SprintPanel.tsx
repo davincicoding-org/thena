@@ -2,7 +2,7 @@
 import type { MenuProps, PaperProps } from "@mantine/core";
 import type { PropsWithChildren } from "react";
 import { useRef } from "react";
-import { useDndContext } from "@dnd-kit/core";
+import { useDndContext, useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
   useSortable,
@@ -160,39 +160,30 @@ export function SprintPanel({
       {...props}
     >
       <ScrollArea scrollbars="y" scrollHideDelay={300}>
-        <Stack gap="sm" p="sm" bg="neutral.8">
-          <SortableContext
-            id={sprintId}
-            items={tasks.map(
-              ({ taskId, subtaskId }) => `${taskId}-${subtaskId}`,
-            )}
-            strategy={verticalListSortingStrategy}
-          >
-            {items.map((taskOrGroup) => {
-              if (!isTaskGroup(taskOrGroup))
-                return (
-                  <StandaloneTaskItem
-                    key={`${taskOrGroup.taskId}-${taskOrGroup.subtaskId}`}
-                    item={taskOrGroup}
-                    otherSprints={otherSprints}
-                    dndEnabled={dndEnabled}
-                    onMoveTasks={onMoveTasks}
-                    onUnassignTasks={onUnassignTasks}
-                  />
-                );
-
+        <TasksContainer id={sprintId} items={tasks}>
+          {items.map((taskOrGroup) => {
+            if (!isTaskGroup(taskOrGroup))
               return (
-                <TaskItemsGroup
-                  key={taskOrGroup.taskId}
-                  group={taskOrGroup}
+                <StandaloneTaskItem
+                  key={`${taskOrGroup.taskId}-${taskOrGroup.subtaskId}`}
+                  item={taskOrGroup}
                   otherSprints={otherSprints}
+                  dndEnabled={dndEnabled}
                   onMoveTasks={onMoveTasks}
                   onUnassignTasks={onUnassignTasks}
                 />
               );
-            })}
-          </SortableContext>
 
+            return (
+              <TaskItemsGroup
+                key={taskOrGroup.taskId}
+                group={taskOrGroup}
+                otherSprints={otherSprints}
+                onMoveTasks={onMoveTasks}
+                onUnassignTasks={onUnassignTasks}
+              />
+            );
+          })}
           <Box className="empty:hidden">
             {canAddTasks ? (
               <Button
@@ -215,9 +206,31 @@ export function SprintPanel({
               </Text>
             ) : null}
           </Box>
-        </Stack>
+        </TasksContainer>
       </ScrollArea>
     </Panel>
+  );
+}
+
+function TasksContainer({
+  id,
+  items,
+  children,
+}: PropsWithChildren<{ id: string; items: TaskReference[] }>) {
+  const { setNodeRef } = useDroppable({
+    id,
+  });
+
+  return (
+    <SortableContext
+      id={id}
+      items={items.map(({ taskId, subtaskId }) => `${taskId}-${subtaskId}`)}
+      strategy={verticalListSortingStrategy}
+    >
+      <Stack gap="sm" p="sm" bg="neutral.8" ref={setNodeRef}>
+        {children}
+      </Stack>
+    </SortableContext>
   );
 }
 

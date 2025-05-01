@@ -48,6 +48,7 @@ type SprintPlannerAction =
         fromSprintId: string;
         toSprintId: string;
         tasks: TaskReference[];
+        insertIndex?: number;
       };
     }
   | {
@@ -297,7 +298,7 @@ export function useSprintsReducer(
       }
 
       case "MOVE_TASKS": {
-        const { fromSprintId, toSprintId, tasks } = action.payload;
+        const { fromSprintId, toSprintId, tasks, insertIndex } = action.payload;
 
         if (!sprintExists(fromSprintId, state)) {
           handleError("SPRINT_NOT_FOUND");
@@ -323,11 +324,18 @@ export function useSprintsReducer(
             };
 
           // Add tasks to destination sprint
-          if (sprint.id === toSprintId)
+          if (sprint.id === toSprintId) {
+            const indexToInsert = insertIndex ?? sprint.tasks.length;
+
             return {
               ...sprint,
-              tasks: [...sprint.tasks, ...validTaskReferences],
+              tasks: [
+                ...sprint.tasks.slice(0, indexToInsert),
+                ...validTaskReferences,
+                ...sprint.tasks.slice(indexToInsert),
+              ],
             };
+          }
 
           // Leave other sprints unchanged
           return sprint;

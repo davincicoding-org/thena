@@ -100,6 +100,7 @@ export interface SessionPlannerHookReturn {
     fromSprintId: SprintPlan["id"];
     toSprintId: SprintPlan["id"];
     tasks: TaskReference[];
+    insertIndex?: number;
   }) => void;
 
   /** Reorder tasks within a Sprint (for drag‑and‑drop UIs) */
