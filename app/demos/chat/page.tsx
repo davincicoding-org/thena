@@ -15,7 +15,7 @@ export default function ChatPage() {
         id: "assistant-intro",
         role: "assistant",
         content:
-          "Hello and welcome to concentrate! I will help you to plan your tasks. What do you want to achieve today?",
+          "Hello and welcome to Thena! I will help you to plan your tasks. What do you want to achieve today?",
       },
     ],
     body: {

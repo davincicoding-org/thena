@@ -94,20 +94,20 @@ export function Configuration() {
 }
 
 const VOICE_EXAMMPLES: Record<string, string> = {
-  de: "Hallo und willkommen bei Concentrate! Ich helfe dir, deine Aufgaben zu planen. Was möchtest du heute erreichen?",
-  en: "Hello and welcome to Concentrate! I will help you to plan your tasks. What do you want to achieve today?",
-  es: "¡Hola y bienvenido a Concentrate! Te ayudaré a planificar tus tareas. ¿Qué quieres lograr hoy?",
-  fr: "Bonjour et bienvenue sur Concentrate ! Je vais vous aider à planifier vos tâches. Que souhaitez-vous accomplir aujourd'hui ?",
-  hi: "नमस्ते और Concentrate में आपका स्वागत है! मैं आपकी कार्यों की योजना बनाने में मदद करूंगा। आप आज क्या हासिल करना चाहते हैं?",
-  id: "Halo dan selamat datang di Concentrate! Saya akan membantu Anda merencanakan tugas Anda. Apa yang ingin Anda capai hari ini?",
-  it: "Ciao e benvenuto su Concentrate! Ti aiuterò a pianificare i tuoi compiti. Cosa vuoi ottenere oggi?",
-  ja: "こんにちは、Concentrateへようこそ! あなたのタスクを計画するお手伝いをします。今日は何を達成したいですか？",
-  ko: "안녕하세요, Concentrate에 오신 것을 환영합니다! 당신의 작업을 계획하는 데 도와드리겠습니다. 오늘 무엇을 이루고 싶으신가요?",
-  nl: "Hallo en welkom bij Concentrate! Ik help je met het plannen van je taken. Wat wil je vandaag bereiken?",
-  pl: "Cześć i witaj w Concentrate! Pomogę Ci zaplanować Twoje zadania. Co chcesz dziś osiągnąć?",
-  pt: "Olá e bem-vindo ao Concentrate! Vou ajudá-lo a planejar suas tarefas. O que você quer alcançar hoje?",
-  ru: "Здравствуйте и добро пожаловать в Concentrate! Я помогу вам спланировать ваши задачи. Чего вы хотите достичь сегодня?",
-  zh: "你好, 欢迎使用Concentrate! 我将帮助你规划任务。你今天想要实现什么目标？",
+  de: "Hallo und willkommen bei Thena! Ich helfe dir, deine Aufgaben zu planen. Was möchtest du heute erreichen?",
+  en: "Hello and welcome to Thena! I will help you to plan your tasks. What do you want to achieve today?",
+  es: "¡Hola y bienvenido a Thena! Te ayudaré a planificar tus tareas. ¿Qué quieres lograr hoy?",
+  fr: "Bonjour et bienvenue sur Thena ! Je vais vous aider à planifier vos tâches. Que souhaitez-vous accomplir aujourd'hui ?",
+  hi: "नमस्ते और Thena में आपका स्वागत है! मैं आपकी कार्यों की योजना बनाने में मदद करूंगा। आप आज क्या हासिल करना चाहते हैं?",
+  id: "Halo dan selamat datang di Thena! Saya akan membantu Anda merencanakan tugas Anda. Apa yang ingin Anda capai hari ini?",
+  it: "Ciao e benvenuto su Thena! Ti aiuterò a pianificare i tuoi compiti. Cosa vuoi ottenere oggi?",
+  ja: "こんにちは、Thenaへようこそ! あなたのタスクを計画するお手伝いをします。今日は何を達成したいですか？",
+  ko: "안녕하세요, Thena에 오신 것을 환영합니다! 당신의 작업을 계획하는 데 도와드리겠습니다. 오늘 무엇을 이루고 싶으신가요?",
+  nl: "Hallo en welkom bij Thena! Ik help je met het plannen van je taken. Wat wil je vandaag bereiken?",
+  pl: "Cześć i witaj w Thena! Pomogę Ci zaplanować Twoje zadania. Co chcesz dziś osiągnąć?",
+  pt: "Olá e bem-vindo ao Thena! Vou ajudá-lo a planejar suas tarefas. O que você quer alcançar hoje?",
+  ru: "Здравствуйте и добро пожаловать в Thena! Я помогу вам спланировать ваши задачи. Чего вы хотите достичь сегодня?",
+  zh: "你好, 欢迎使用Thena! 我将帮助你规划任务。你今天想要实现什么目标？",
 };
 
 function SpeechConfig() {

@@ -16,7 +16,7 @@ export const createMockTasks = (subtasks: number[]) =>
   }));
 
 export const MOCK_PROJECTS: Project[] = [
-  { id: "con", name: "ConcentrAID", color: "teal" },
+  { id: "con", name: "Thena", color: "teal" },
   { id: "koc", name: "KOCO", color: "violet" },
   { id: "dvc", name: "DAVINCI CODING", image: "/dvc.png" },
   { id: "swi", name: "Swissinfluece" },
