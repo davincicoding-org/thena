@@ -52,6 +52,7 @@ export interface SprintPanelProps {
   duration: Duration;
   tasks: FlatTask[];
   disabled?: boolean;
+  isTargeted?: boolean;
   canAddTasks: boolean;
   otherSprints: { id: string; title: string }[];
   dndEnabled?: boolean;
@@ -72,6 +73,7 @@ export function SprintPanel({
   tasks,
   otherSprints,
   disabled,
+  isTargeted,
   canAddTasks,
   dndEnabled,
   onDrop,
@@ -160,7 +162,7 @@ export function SprintPanel({
       {...props}
     >
       <ScrollArea scrollbars="y" scrollHideDelay={300}>
-        <TasksContainer id={sprintId} items={tasks}>
+        <TasksContainer id={sprintId} items={tasks} dndEnabled={dndEnabled}>
           {items.map((taskOrGroup) => {
             if (!isTaskGroup(taskOrGroup))
               return (
@@ -185,9 +187,8 @@ export function SprintPanel({
             );
           })}
           <Box className="empty:hidden">
-            {canAddTasks ? (
+            {!dndEnabled && canAddTasks && !disabled && !isTargeted && (
               <Button
-                disabled={disabled}
                 variant="outline"
                 fullWidth
                 onClick={() => {
@@ -197,14 +198,23 @@ export function SprintPanel({
               >
                 Assign Tasks
               </Button>
-            ) : tasks.length === 0 ? (
+            )}
+            {tasks.length === 0 && (
               <Text
-                className="flex items-center justify-center opacity-30"
+                c={isTargeted ? "primary" : undefined}
+                opacity={isTargeted ? 0.7 : 0.3}
+                className={cn(
+                  "flex items-center justify-center transition-all not-first:hidden",
+                )}
                 h={36}
               >
-                No tasks assigned
+                {dndEnabled
+                  ? "Drag task here"
+                  : isTargeted
+                    ? "Tasks will be added here"
+                    : "No tasks assigned"}
               </Text>
-            ) : null}
+            )}
           </Box>
         </TasksContainer>
       </ScrollArea>
@@ -216,9 +226,15 @@ function TasksContainer({
   id,
   items,
   children,
-}: PropsWithChildren<{ id: string; items: TaskReference[] }>) {
+  dndEnabled,
+}: PropsWithChildren<{
+  id: string;
+  items: TaskReference[];
+  dndEnabled?: boolean;
+}>) {
   const { setNodeRef } = useDroppable({
     id,
+    disabled: !dndEnabled,
   });
 
   return (
@@ -252,12 +268,18 @@ function StandaloneTaskItem({
   onMoveTasks,
   onUnassignTasks,
 }: StandaloneTaskItemProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({
-      id: `${item.taskId}-${item.subtaskId}`,
-      disabled: !dndEnabled,
-      data: { item },
-    });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: `${item.taskId}-${item.subtaskId}`,
+    disabled: !dndEnabled,
+    data: { item },
+  });
 
   const { active } = useDndContext();
 
@@ -271,8 +293,11 @@ function StandaloneTaskItem({
     >
       <StandaloneTaskItemBase
         item={item}
+        className={cn("transition-opacity", {
+          "pointer-events-none opacity-30": isDragging,
+        })}
         rightSection={
-          active ? null : dndEnabled ? (
+          active && dndEnabled ? null : dndEnabled ? (
             <IconGripVertical size={12} />
           ) : (
             <IconDotsVertical size={12} />

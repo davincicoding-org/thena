@@ -138,6 +138,7 @@ const meta = {
   args: {
     tasks: TASKS,
     selectionEnabled: false,
+    dndEnabled: false,
     sprintOptions: [
       { id: "sprint1", title: "Sprint 1" },
       { id: "sprint2", title: "Sprint 2" },

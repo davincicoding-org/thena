@@ -33,7 +33,7 @@ import { StandaloneTaskItemBase } from "./components";
 import { SprintPanel } from "./SprintPanel";
 import { TaskPool } from "./TaskPool";
 
-interface SortableTaskData extends SortableData {
+interface DraggingTaskData extends Partial<SortableData> {
   item: FlatTask;
 }
 
@@ -148,24 +148,31 @@ export function SprintBuilder({
       collisionDetection={closestCorners}
       onDragStart={({ active }) => {
         if (!active.data.current) return;
-
-        const { item } = active.data.current as SortableTaskData;
-
+        const { item } = active.data.current as DraggingTaskData;
         setDraggedItem(item);
       }}
       onDragOver={(event) => {
         if (!event.active.data.current) return;
         if (!event.over) return;
 
+        const overData = event.over.data.current as SortableData | undefined;
+
         const targetContainerId =
-          (event.over.data.current as SortableData | undefined)?.sortable
-            .containerId ?? event.over.id;
+          overData?.sortable.containerId ?? event.over.id;
 
-        const active = event.active.data.current as SortableTaskData;
+        const active = event.active.data.current as DraggingTaskData;
 
-        if (active.sortable.containerId === targetContainerId) return;
+        if (active.sortable?.containerId === targetContainerId) return;
 
-        if (targetContainerId !== "TASK_POOL") {
+        if (active.sortable) {
+          if (targetContainerId === "TASK_POOL") {
+            onUnassignTasksFromSprint({
+              sprintId: active.sortable.containerId.toString(),
+              tasks: [active.item],
+            });
+            return;
+          }
+
           onMoveTasks({
             fromSprintId: active.sortable.containerId.toString(),
             toSprintId: targetContainerId.toString(),
@@ -176,29 +183,20 @@ export function SprintBuilder({
           return;
         }
 
-        // const over = event.over.data.current as SortableTaskData;
-
-        // console.log(over.sortable.containerId);
-
-        // if (active.sortable.containerId === "TASK_POOL") {
-        //   // TODO Assign task to sprint
-        //   console.log("Assign task to sprint");
-        //   return;
-        // }
-        // if (over.sortable.containerId === "TASK_POOL") {
-        //   // TODO Unassign task from sprint
-        //   // IDEA Maybe also if over is null
-        //   console.log("Unassign task from sprint");
-        //   return;
-        // }
+        onAssignTasksToSprint({
+          sprintId: targetContainerId.toString(),
+          tasks: [active.item],
+        });
       }}
       onDragEnd={(event) => {
         setDraggedItem(undefined);
         if (!event.active.data.current) return;
         if (!event.over?.data.current) return;
 
-        const active = event.active.data.current as SortableTaskData;
-        const over = event.over.data.current as SortableTaskData;
+        const active = event.active.data.current as DraggingTaskData;
+        const over = event.over.data.current as DraggingTaskData;
+
+        if (!active.sortable || !over.sortable) return;
 
         if (active.sortable.containerId !== over.sortable.containerId) return;
 
@@ -215,7 +213,12 @@ export function SprintBuilder({
       }}
     >
       <DragOverlay>
-        {draggedItem ? <StandaloneTaskItemBase item={draggedItem} /> : null}
+        {draggedItem && dndEnabled ? (
+          <StandaloneTaskItemBase
+            className="pointer-events-none"
+            item={draggedItem}
+          />
+        ) : null}
       </DragOverlay>
       <Paper
         withBorder
@@ -254,6 +257,7 @@ export function SprintBuilder({
                     (option) => option.id !== sprint.id,
                   )}
                   title={`Sprint ${index + 1}`}
+                  isTargeted={sprintToAddTaskTo === sprint.id}
                   canAddTasks={hasUnassignedTasks}
                   dndEnabled={dndEnabled}
                   disabled={
@@ -300,6 +304,7 @@ export function SprintBuilder({
               tasks={resolveTaskReferences(unassignedTasks, tasks)}
               sprintOptions={sprintOptions}
               selectionEnabled={sprintToAddTaskTo !== undefined}
+              dndEnabled={dndEnabled}
               onSubmitSelection={(tasks) => {
                 if (!sprintToAddTaskTo) return;
                 onAssignTasksToSprint({ sprintId: sprintToAddTaskTo, tasks });

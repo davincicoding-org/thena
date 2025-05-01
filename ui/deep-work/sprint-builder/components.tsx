@@ -8,11 +8,13 @@ export function StandaloneTaskItemBase({
   item,
   rightSection,
   className,
+  active,
   ...props
 }: {
   item: FlatTask;
   ref?: Ref<HTMLDivElement>;
   rightSection?: ReactNode;
+  active?: boolean;
 } & HTMLAttributes<HTMLDivElement>) {
   return (
     <Paper withBorder className={cn("overflow-clip", className)} {...props}>
@@ -22,8 +24,11 @@ export function StandaloneTaskItemBase({
         label={item.title}
         classNames={{
           body: cn("flex flex-col-reverse"),
+          label: cn("truncate text-nowrap"),
+          description: cn("truncate text-nowrap"),
         }}
         rightSection={rightSection}
+        active={active}
       />
     </Paper>
   );
@@ -47,20 +52,25 @@ export function TaskItemsGroupContainer({
 export function TaskItemsGroupHeader({
   label,
   rightSection,
-  className,
+  active,
   ...props
 }: {
   label: string;
   ref?: Ref<HTMLButtonElement>;
   rightSection?: ReactNode;
+  active?: boolean;
 } & HTMLAttributes<HTMLButtonElement>) {
   return (
     // @ts-expect-error - Poorly typed
     <NavLink
       component="button"
-      className={cn("px-1.5! py-1!", className)}
+      classNames={{
+        root: cn("py-1!"),
+        description: cn("truncate text-nowrap"),
+      }}
       description={label}
       rightSection={rightSection}
+      active={active}
       {...props}
     />
   );
@@ -69,23 +79,25 @@ export function TaskItemsGroupHeader({
 export function NestedTaskItemBase({
   item,
   rightSection,
-  className,
+  active,
   ...props
 }: {
   item: FlatTask;
   ref?: Ref<HTMLButtonElement>;
+  active?: boolean;
   rightSection?: ReactNode;
 } & HTMLAttributes<HTMLButtonElement>) {
   return (
     // @ts-expect-error - Poorly typed
     <NavLink
       component="button"
-      className={cn(
-        "border-t! border-t-(--paper-border-color)! px-2! py-1!",
-        className,
-      )}
+      classNames={{
+        root: cn("border-t! border-t-(--paper-border-color)! py-1!"),
+        label: cn("truncate text-nowrap"),
+      }}
       label={item.title}
       rightSection={rightSection}
+      active={active}
       {...props}
     />
   );
