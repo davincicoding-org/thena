@@ -17,11 +17,12 @@ export function StandaloneTaskItemBase({
   active?: boolean;
 } & HTMLAttributes<HTMLDivElement>) {
   return (
-    <Paper withBorder className={cn("overflow-clip", className)} {...props}>
+    <Paper withBorder className={cn("overflow-clip")} {...props}>
       <NavLink
         component="button"
         description={item.parentTitle}
         label={item.title}
+        className={className}
         classNames={{
           body: cn("flex flex-col-reverse"),
           label: cn("truncate text-nowrap"),

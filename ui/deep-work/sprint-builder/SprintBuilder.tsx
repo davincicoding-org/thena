@@ -241,7 +241,7 @@ export function SprintBuilder({
       <DragOverlay>
         {draggedItem && dndEnabled ? (
           <StandaloneTaskItemBase
-            className="pointer-events-none"
+            className="cursor-grabbing!"
             item={draggedItem}
           />
         ) : null}

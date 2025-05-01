@@ -344,6 +344,7 @@ function StandaloneTaskItem({
       <StandaloneTaskItemBase
         item={item}
         className={cn("transition-opacity", {
+          "cursor-grab!": dndEnabled,
           "pointer-events-none opacity-30": isDragging,
         })}
         rightSection={
