@@ -27,7 +27,7 @@ type SprintPlannerAction =
         updates: Partial<Pick<SprintPlan, "duration">>;
       };
     }
-  | { type: "REORDER_SPRINTS"; payload: { sprintIds: string[] } }
+  | { type: "REORDER_SPRINTS"; payload: { order: number[] } }
   | { type: "DROP_SPRINT"; payload: { sprintId: string } }
   | { type: "ASSIGN_TASK"; payload: { sprintId: string; task: TaskReference } }
   | {
@@ -70,7 +70,8 @@ export type SprintsReducerErrorCode =
   | "TASK_NOT_FOUND"
   | "TASK_NOT_PROVIDED"
   | "SUBTASK_NOT_FOUND"
-  | "INVALID_TASK_SELECTION";
+  | "INVALID_TASK_SELECTION"
+  | "INVALID_SPRINT_SELECTION";
 
 // MARK: Hook
 
@@ -154,37 +155,24 @@ export function useSprintsReducer(
       }
 
       case "REORDER_SPRINTS": {
-        const { sprintIds } = action.payload;
+        const { order } = action.payload;
 
-        // Verify all sprint IDs exist
-        const invalidSprintIds = sprintIds.filter(
-          (id) => !sprintExists(id, state),
-        );
-
-        if (invalidSprintIds.length) {
-          invalidSprintIds.forEach(() => handleError("SPRINT_NOT_FOUND"));
+        if (order.length !== state.length) {
+          handleError("INVALID_SPRINT_SELECTION");
           return state;
         }
 
-        // Verify all sprints are included in the update
-        const missingSprintIds = state.reduce<SprintPlan["id"][]>(
-          (acc, sprint) => {
-            if (sprintIds.includes(sprint.id)) return acc;
-            return [...acc, sprint.id];
-          },
-          [],
-        );
-
-        // If we're not rearranging all sprints, do nothing
-        if (missingSprintIds.length) {
-          missingSprintIds.forEach(() => handleError("SPRINT_NOT_PROVIDED"));
+        // Checks if the provided order includes ascending indexes starting from 0
+        if (![...order].sort().every((number, index) => number === index)) {
+          handleError("INVALID_SPRINT_SELECTION");
           return state;
         }
 
-        return [...state].sort((a, b) => {
-          const aIndex = sprintIds.indexOf(a.id);
-          const bIndex = sprintIds.indexOf(b.id);
-          return aIndex - bIndex;
+        return order.map((index) => {
+          const matchedSprint = state[index];
+          // Should not happen, since we already validated the order above
+          if (!matchedSprint) throw new Error("SPRINT_NOT_FOUND");
+          return matchedSprint;
         });
       }
 

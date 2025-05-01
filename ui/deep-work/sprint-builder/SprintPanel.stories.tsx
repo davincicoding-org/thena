@@ -48,6 +48,12 @@ const meta = {
         title: "Test the app",
       },
     ],
+    moveOptions: {
+      start: true,
+      left: true,
+      right: true,
+      end: true,
+    },
     disabled: false,
     canAddTasks: true,
     otherSprints: [
@@ -55,6 +61,7 @@ const meta = {
       { id: "2", title: "Sprint 2" },
     ],
     onDrop: fn(),
+    onMove: fn(),
     onDurationChange: fn(),
     onAddTasks: fn(),
     onUnassignTasks: fn(),

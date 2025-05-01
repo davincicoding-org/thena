@@ -47,6 +47,7 @@ export interface SprintBuilderProps {
     id: string,
     updates: Partial<Pick<SprintPlan, "duration">>,
   ) => void;
+  onReorderSprints: (order: number[]) => void;
   onAssignTasksToSprint: (options: {
     sprintId: string | null;
     tasks: TaskReference[];
@@ -74,6 +75,7 @@ export function SprintBuilder({
   onAddSprint,
   onDropSprint,
   onSprintChange,
+  onReorderSprints,
   onAssignTasksToSprint,
   onUnassignTasksFromSprint,
   onMoveTasks,
@@ -138,6 +140,30 @@ export function SprintBuilder({
     setSprintToAddTaskTo((current) =>
       current !== sprintId ? current : undefined,
     );
+  };
+
+  const handleMoveSprint = (
+    index: number,
+    direction: "start" | "left" | "right" | "end",
+  ) => {
+    const indexes = sprints.map((_, index) => index);
+
+    const newIndex = (() => {
+      switch (direction) {
+        case "start":
+          return 0;
+        case "left":
+          return index - 1;
+        case "right":
+          return index + 1;
+        case "end":
+          return sprints.length - 1;
+      }
+    })();
+
+    const order = arrayMove(indexes, index, newIndex);
+
+    onReorderSprints(order);
   };
 
   const [draggedItem, setDraggedItem] = useState<FlatTask>();
@@ -257,6 +283,13 @@ export function SprintBuilder({
                     (option) => option.id !== sprint.id,
                   )}
                   title={`Sprint ${index + 1}`}
+                  moveOptions={{
+                    start: index > 1,
+                    end: index < sprints.length - 2,
+                    left: index > 0,
+                    right: index < sprints.length - 1,
+                  }}
+                  onMove={(direction) => handleMoveSprint(index, direction)}
                   isTargeted={sprintToAddTaskTo === sprint.id}
                   canAddTasks={hasUnassignedTasks}
                   dndEnabled={dndEnabled}

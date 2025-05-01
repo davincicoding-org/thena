@@ -14,6 +14,7 @@ const Playground = () => {
     moveTasks,
     addSprint,
     dropSprint,
+    reorderSprints,
     reorderSprintTasks,
   } = useSprintBuilder(
     [
@@ -121,6 +122,7 @@ const Playground = () => {
       onAddSprint={() => addSprint({})}
       onDropSprint={dropSprint}
       onReorderSprintTasks={reorderSprintTasks}
+      onReorderSprints={reorderSprints}
     />
   );
 };

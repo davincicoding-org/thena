@@ -15,13 +15,16 @@ import {
   Button,
   Flex,
   Menu,
-  MenuDivider,
   NumberInput,
   ScrollArea,
   Stack,
   Text,
 } from "@mantine/core";
 import {
+  IconArrowBarToLeft,
+  IconArrowBarToRight,
+  IconArrowLeft,
+  IconArrowRight,
   IconClock,
   IconDotsVertical,
   IconGripVertical,
@@ -56,6 +59,13 @@ export interface SprintPanelProps {
   canAddTasks: boolean;
   otherSprints: { id: string; title: string }[];
   dndEnabled?: boolean;
+  moveOptions: {
+    start: boolean;
+    left: boolean;
+    right: boolean;
+    end: boolean;
+  };
+  onMove: (direction: "start" | "left" | "right" | "end") => void;
   onDrop: () => void;
   onDurationChange: (duration: Duration) => void;
   onAddTasks: (el: HTMLDivElement) => void;
@@ -74,6 +84,8 @@ export function SprintPanel({
   otherSprints,
   disabled,
   isTargeted,
+  moveOptions,
+  onMove,
   canAddTasks,
   dndEnabled,
   onDrop,
@@ -146,7 +158,44 @@ export function SprintPanel({
             </Menu.Target>
           </Flex>
           <Menu.Dropdown>
-            <Menu.Item color="red" onClick={onDrop}>
+            {moveOptions.start && (
+              <Menu.Item
+                leftSection={<IconArrowBarToLeft size={16} />}
+                onClick={() => onMove("start")}
+              >
+                Move to Start
+              </Menu.Item>
+            )}
+            {moveOptions.left && (
+              <Menu.Item
+                leftSection={<IconArrowLeft size={16} />}
+                onClick={() => onMove("left")}
+              >
+                Move to Left
+              </Menu.Item>
+            )}
+            {moveOptions.right && (
+              <Menu.Item
+                leftSection={<IconArrowRight size={16} />}
+                onClick={() => onMove("right")}
+              >
+                Move to Right
+              </Menu.Item>
+            )}
+            {moveOptions.end && (
+              <Menu.Item
+                leftSection={<IconArrowBarToRight size={16} />}
+                onClick={() => onMove("end")}
+              >
+                Move to End
+              </Menu.Item>
+            )}
+            <Menu.Divider className="first:hidden" />
+            <Menu.Item
+              color="red"
+              leftSection={<IconX size={16} />}
+              onClick={onDrop}
+            >
               Drop Sprint
             </Menu.Item>
           </Menu.Dropdown>
@@ -405,7 +454,7 @@ function ActionsMenu({
                 {option.title}
               </Menu.Item>
             ))}
-            <MenuDivider />
+            <Menu.Divider />
           </>
         )}
         <Menu.Item

@@ -66,7 +66,7 @@ export interface SessionPlannerHookReturn {
   ) => void;
 
   /** Reorder Sprints (for drag‑and‑drop UIs) */
-  reorderSprints: (sprintIds: SprintPlan["id"][]) => void;
+  reorderSprints: (order: number[]) => void;
 
   /** Delete a Sprint */
   dropSprint: (sprintId: SprintPlan["id"]) => void;
@@ -171,9 +171,9 @@ export function useSprintBuilder(
   };
 
   const reorderSprints: SessionPlannerHookReturn["reorderSprints"] = (
-    sprintIds,
+    order,
   ) => {
-    dispatch({ type: "REORDER_SPRINTS", payload: { sprintIds } });
+    dispatch({ type: "REORDER_SPRINTS", payload: { order } });
   };
 
   const dropSprint: SessionPlannerHookReturn["dropSprint"] = (sprintId) => {

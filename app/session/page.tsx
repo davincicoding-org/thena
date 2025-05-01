@@ -189,6 +189,7 @@ export default function SessionPage() {
               unassignedTasks={sprintBuilder.unassignedTasks}
               onAddSprint={(callback) => sprintBuilder.addSprint({}, callback)}
               onDropSprint={sprintBuilder.dropSprint}
+              onReorderSprints={sprintBuilder.reorderSprints}
               onSprintChange={sprintBuilder.updateSprint}
               onAssignTasksToSprint={sprintBuilder.assignTasks}
               onUnassignTasksFromSprint={sprintBuilder.unassignTasks}
