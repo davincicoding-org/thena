@@ -109,7 +109,7 @@ export function SprintPanel({
         <Menu position="bottom-end">
           <Flex align="center" gap={4} pl="sm" pr={4} py={4}>
             <Text
-              size="lg"
+              size="md"
               className={cn("text-nowrap transition-opacity", {
                 "opacity-50": disabled,
               })}
@@ -239,6 +239,7 @@ export function SprintPanel({
             {!dndEnabled && canAddTasks && !disabled && !isTargeted && (
               <Button
                 variant="outline"
+                size="xs"
                 fullWidth
                 onClick={() => {
                   if (!panelRef.current) return;
@@ -255,7 +256,7 @@ export function SprintPanel({
                 className={cn(
                   "flex items-center justify-center transition-all not-first:hidden",
                 )}
-                h={36}
+                h={30}
               >
                 {dndEnabled
                   ? "Drag task here"

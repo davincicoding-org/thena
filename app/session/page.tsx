@@ -202,7 +202,7 @@ export default function SessionPage() {
 
           <Flex align="center" px="xl" py="lg" gap={4}>
             <Button
-              size="xl"
+              size="md"
               flex={1}
               fullWidth
               variant="light"
@@ -219,7 +219,7 @@ export default function SessionPage() {
               <HoverCard.Target>
                 <Box flex={1}>
                   <Button
-                    size="xl"
+                    size="md"
                     fullWidth
                     disabled={sprintBuilderError !== undefined}
                     variant="light"
@@ -242,7 +242,7 @@ export default function SessionPage() {
               <HoverCard.Target>
                 <Box>
                   <Button
-                    size="xl"
+                    size="md"
                     disabled={startSessionError !== undefined}
                     onClick={handleStartSession}
                   >
