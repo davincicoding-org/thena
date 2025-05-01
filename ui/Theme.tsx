@@ -28,6 +28,7 @@ const theme = createTheme({
   },
   primaryColor: "primary",
   primaryShade: 7,
+  cursorType: "pointer",
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {

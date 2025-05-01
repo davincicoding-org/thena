@@ -1,5 +1,7 @@
+/* eslint-disable max-lines */
 import type { SortableData } from "@dnd-kit/sortable";
 import type { PaperProps } from "@mantine/core";
+import type { OS } from "@mantine/hooks";
 import { useEffect, useRef, useState } from "react";
 import {
   closestCorners,
@@ -17,11 +19,15 @@ import {
   Button,
   Divider,
   Flex,
+  Kbd,
   Paper,
   ScrollArea,
   Space,
+  Switch,
+  Text,
+  Tooltip,
 } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
+import { useDisclosure, useOs } from "@mantine/hooks";
 
 import type { SprintPlan } from "@/core/deep-work";
 import type { FlatTask, TaskReference } from "@/core/task-management";
@@ -92,6 +98,7 @@ export function SprintBuilder({
 
   const viewport = useRef<HTMLDivElement>(null);
 
+  const os = useOs();
   const [dndEnabled, setDndEnabled] = useState(false);
 
   useKeyHold({
@@ -363,6 +370,43 @@ export function SprintBuilder({
           <Button variant="light" onClick={handleAddSprint}>
             Add Sprint
           </Button>
+          <Tooltip
+            label={
+              <Text>
+                Pro Tip: Hold{" "}
+                <Kbd className="align-text-bottom">
+                  {os === "macos" ? "⌥ option" : "Alt"}
+                </Kbd>{" "}
+                to drag&drop
+              </Text>
+            }
+            disabled={!(["macos", "linux", "windows"] as OS[]).includes(os)}
+            openDelay={500}
+          >
+            <Badge
+              size="xl"
+              pr={4}
+              classNames={{
+                label: "normal-case font-normal",
+                section: "pl-1.5",
+              }}
+              variant="default"
+              rightSection={
+                <Switch
+                  checked={dndEnabled}
+                  onChange={(event) =>
+                    setDndEnabled(event.currentTarget.checked)
+                  }
+                  size="md"
+                  my={-1}
+                  mr={-1}
+                />
+              }
+            >
+              Drag&Drop
+            </Badge>
+          </Tooltip>
+
           <Button
             ml="auto"
             radius="xl"
