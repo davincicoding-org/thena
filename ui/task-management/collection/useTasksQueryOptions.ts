@@ -1,39 +1,39 @@
 import { useState } from "react";
 
 import type {
-  BacklogFilters,
-  BacklogSortOptions,
-  BacklogTask,
+  StoredTask,
+  TaskFilters,
+  TasksSortOptions,
 } from "@/core/task-management";
 
 import { hasFiltersApplied } from "./utils";
 
-export interface BacklogHookOptions {
-  defaultFilters?: BacklogFilters;
-  defaultSort?: BacklogSortOptions;
+export interface TasksHookOptions {
+  defaultFilters?: TaskFilters;
+  defaultSort?: TasksSortOptions;
 }
 
-export interface BacklogQueryOptionsHookReturn {
-  filters: BacklogFilters;
-  filterTasks: (tasks: BacklogTask[]) => BacklogTask[];
-  updateFilters: (updates: Partial<BacklogFilters>) => void;
-  sort: BacklogSortOptions;
-  sortFn: (a: BacklogTask, b: BacklogTask) => number;
-  updateSort: (updates: Partial<BacklogSortOptions>) => void;
+export interface TasksQueryOptionsHookReturn {
+  filters: TaskFilters;
+  filterTasks: (tasks: StoredTask[]) => StoredTask[];
+  updateFilters: (updates: Partial<TaskFilters>) => void;
+  sort: TasksSortOptions;
+  sortFn: (a: StoredTask, b: StoredTask) => number;
+  updateSort: (updates: Partial<TasksSortOptions>) => void;
 }
 
 /**
  * Manages filters and sorting for a backlog of tasks.
  */
-export function useBacklogQueryOptions({
+export function useTasksQueryOptions({
   defaultFilters = {},
-  defaultSort = { sortBy: "addedAt", direction: "desc" },
-}: BacklogHookOptions = {}) {
+  defaultSort = { sortBy: "createdAt", direction: "desc" },
+}: TasksHookOptions = {}) {
   const [{ sort, filters }, setOptions] = useState({
     filters: defaultFilters,
     sort: defaultSort,
   });
-  const updateFilters: BacklogQueryOptionsHookReturn["updateFilters"] = (
+  const updateFilters: TasksQueryOptionsHookReturn["updateFilters"] = (
     updates,
   ) => {
     setOptions((prev) => ({
@@ -42,10 +42,10 @@ export function useBacklogQueryOptions({
     }));
   };
 
-  const filterTasks: BacklogQueryOptionsHookReturn["filterTasks"] = (items) => {
+  const filterTasks: TasksQueryOptionsHookReturn["filterTasks"] = (items) => {
     if (!hasFiltersApplied(filters)) return items;
 
-    return items.reduce<BacklogTask[]>((acc, task) => {
+    return items.reduce<StoredTask[]>((acc, task) => {
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
         const titleHasSearch = task.title.toLowerCase().includes(searchLower);
@@ -76,16 +76,16 @@ export function useBacklogQueryOptions({
     }, []);
   };
 
-  const updateSort: BacklogQueryOptionsHookReturn["updateSort"] = (updates) => {
+  const updateSort: TasksQueryOptionsHookReturn["updateSort"] = (updates) => {
     setOptions((prev) => ({ ...prev, sort: { ...prev.sort, ...updates } }));
   };
 
-  const sortFn: BacklogQueryOptionsHookReturn["sortFn"] = (a, b) => {
+  const sortFn: TasksQueryOptionsHookReturn["sortFn"] = (a, b) => {
     const direction = sort.direction === "asc" ? 1 : -1;
-    if (sort.sortBy === "addedAt") {
+    if (sort.sortBy === "createdAt") {
       return (
         direction *
-        (new Date(a.addedAt).getTime() - new Date(b.addedAt).getTime())
+        (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
       );
     }
     return direction * a.title.localeCompare(b.title);

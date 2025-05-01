@@ -1,6 +1,5 @@
+import type { PaperProps } from "@mantine/core";
 import { useRef } from "react";
-import type {
-  PaperProps} from "@mantine/core";
 import {
   ActionIcon,
   Box,
@@ -25,13 +24,10 @@ import type {
   Tag,
   TagInput,
   Task,
-  TaskInput} from "@/core/task-management";
-import {
-  taskInputSchema,
-  taskSchema,
+  TaskInput,
 } from "@/core/task-management";
-import type {
-  TaskFormProps} from "@/ui/task-management";
+import type { TaskFormProps } from "@/ui/task-management";
+import { taskInputSchema, taskSchema } from "@/core/task-management";
 import {
   ProjectCreator,
   TagCreator,
@@ -43,10 +39,10 @@ import { cn } from "@/ui/utils";
 export interface TaskCollectorProps {
   items: Task[];
   onUpdateTask: (taskId: Task["id"], updates: Partial<Task>) => void;
-  onRemoveTask: (taskId: Task["id"]) => void;
+  onRemoveTask: (taskId: Task["id"], shouldDelete?: boolean) => void;
   onAddTask: (task: Omit<Task, "id">) => void;
   onRefineTask?: (task: Task) => void;
-  onMoveTaskToBacklog: (task: Task) => void;
+
   projects: Project[];
   onCreateProject: (
     project: ProjectInput,
@@ -54,8 +50,8 @@ export interface TaskCollectorProps {
   ) => void;
   tags: Tag[];
   onCreateTag: (tag: TagInput, onCreate: (tag: Tag) => void) => void;
-  allowPullFromBacklog?: boolean;
-  onRequestToPullFromBacklog?: () => void;
+  allowImport?: boolean;
+  onRequestImport?: () => void;
 }
 
 export function TaskCollector({
@@ -64,13 +60,12 @@ export function TaskCollector({
   onRemoveTask,
   onAddTask,
   onRefineTask,
-  onMoveTaskToBacklog,
   tags,
   onCreateProject,
   projects,
   onCreateTag,
-  allowPullFromBacklog,
-  onRequestToPullFromBacklog,
+  allowImport,
+  onRequestImport,
   className,
   ...paperProps
 }: TaskCollectorProps & PaperProps) {
@@ -161,9 +156,9 @@ export function TaskCollector({
                                   variant="subtle"
                                   color="gray"
                                   justify="flex-start"
-                                  onClick={() => onMoveTaskToBacklog(item)}
+                                  onClick={() => onRemoveTask(item.id, false)}
                                 >
-                                  Move to Backlog
+                                  Postpone for later
                                 </Button>
                                 <Divider />
                                 <Button
@@ -172,7 +167,7 @@ export function TaskCollector({
                                   variant="subtle"
                                   justify="flex-start"
                                   leftSection={<IconTrash size={16} />}
-                                  onClick={() => onRemoveTask(item.id)}
+                                  onClick={() => onRemoveTask(item.id, true)}
                                 >
                                   Delete
                                 </Button>
@@ -207,8 +202,8 @@ export function TaskCollector({
           />
           <TaskAdder
             onSubmit={onAddTask}
-            allowPullFromBacklog={allowPullFromBacklog}
-            onRequestToPullFromBacklog={onRequestToPullFromBacklog}
+            allowImport={allowImport}
+            onRequestImport={onRequestImport}
           />
         </ScrollArea>
       </Paper>
@@ -284,18 +279,11 @@ function Item({
 }
 
 interface TaskAdderProps
-  extends Pick<
-    TaskCollectorProps,
-    "allowPullFromBacklog" | "onRequestToPullFromBacklog"
-  > {
+  extends Pick<TaskCollectorProps, "allowImport" | "onRequestImport"> {
   onSubmit: (task: Omit<Task, "id">) => void;
 }
 
-function TaskAdder({
-  onSubmit,
-  allowPullFromBacklog,
-  onRequestToPullFromBacklog,
-}: TaskAdderProps) {
+function TaskAdder({ onSubmit, allowImport, onRequestImport }: TaskAdderProps) {
   const [visible, { open, close }] = useDisclosure(false);
 
   const [title, setTitle] = useInputState("");
@@ -359,12 +347,12 @@ function TaskAdder({
           >
             Create Task
           </Button>
-          {allowPullFromBacklog && (
+          {allowImport && (
             <Button
               className="grow-1"
               variant="default"
               size="md"
-              onClick={onRequestToPullFromBacklog}
+              onClick={onRequestImport}
             >
               Add from Backlog
             </Button>

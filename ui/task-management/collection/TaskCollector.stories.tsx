@@ -1,7 +1,7 @@
+import type { Meta, StoryObj } from "@storybook/react";
 import { useArgs } from "@storybook/preview-api";
 import { fn } from "@storybook/test";
 
-import type { Meta, StoryObj } from "@storybook/react";
 import { MOCK_PROJECTS, MOCK_TAGS } from "@/core/task-management/mock";
 
 import type { TaskCollectorProps } from "./TaskCollector";
@@ -49,9 +49,8 @@ const meta = {
     onRefineTask: fn(),
     onCreateProject: fn(),
     onCreateTag: fn(),
-    onMoveTaskToBacklog: fn(),
-    onRequestToPullFromBacklog: fn(),
-    allowPullFromBacklog: true,
+    onRequestImport: fn(),
+    allowImport: true,
   },
 } satisfies Meta<typeof TaskCollector>;
 
@@ -64,12 +63,11 @@ export const Showcase: Story = {
     onAddTask,
     onUpdateTask,
     onRemoveTask,
-    onMoveTaskToBacklog,
     onRefineTask,
     onCreateProject,
     onCreateTag,
-    allowPullFromBacklog,
-    onRequestToPullFromBacklog,
+    allowImport: allowPullFromBacklog,
+    onRequestImport: onRequestToPullFromBacklog,
     projects,
     tags,
   }) => {
@@ -97,14 +95,13 @@ export const Showcase: Story = {
           });
           onRemoveTask(id);
         }}
-        onMoveTaskToBacklog={onMoveTaskToBacklog}
         onRefineTask={onRefineTask}
         projects={projects}
         onCreateProject={onCreateProject}
         tags={tags}
         onCreateTag={onCreateTag}
-        allowPullFromBacklog={allowPullFromBacklog}
-        onRequestToPullFromBacklog={onRequestToPullFromBacklog}
+        allowImport={allowPullFromBacklog}
+        onRequestImport={onRequestToPullFromBacklog}
       />
     );
   },

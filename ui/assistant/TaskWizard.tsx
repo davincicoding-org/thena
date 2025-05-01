@@ -114,7 +114,6 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
                 tags={tags}
                 onUpdateTask={(taskId, updates) => updateTask(taskId, updates)}
                 onRemoveTask={(taskId) => removeTask(taskId)}
-                onMoveTaskToBacklog={(task) => removeTask(task.id)}
                 onAddTask={(task) => addTask(task)}
                 onRefineTask={(task) => {
                   void chat.append({

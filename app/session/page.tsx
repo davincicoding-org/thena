@@ -1,6 +1,7 @@
+/* eslint-disable max-lines */
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AppShell,
@@ -25,6 +26,7 @@ import { notifications } from "@mantine/notifications";
 import { IconChevronRight, IconTransfer } from "@tabler/icons-react";
 import { z } from "zod";
 
+import type { TaskCollectorProps } from "@/ui/task-management";
 import { sprintPlanSchema } from "@/core/deep-work";
 import { taskSchema } from "@/core/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
@@ -33,23 +35,26 @@ import { useLocalStorageSync } from "@/ui/hooks/useLocalStorageSync";
 import {
   Backlog,
   TaskCollector,
-  useBacklog,
-  useBacklogQueryOptions,
+  useMinimalTaskList,
   useProjects,
   useTags,
   useTaskList,
+  useTasks,
   useTaskSelection,
+  useTasksQueryOptions,
 } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
 export default function SessionPage() {
   const router = useRouter();
 
+  const tasks = useTasks();
+
   // MARK: State
 
   const [stage, setStage] = useState<"task-collector" | "sprint-builder">();
 
-  const taskList = useTaskList();
+  const taskList = useMinimalTaskList(tasks.items);
 
   const sprintBuilder = useSprintBuilder(taskList.tasks, {
     onError: (error) => console.error(error),
@@ -58,16 +63,16 @@ export default function SessionPage() {
   const localStorageSync = useLocalStorageSync({
     key: "session-page",
     state: {
-      tasks: taskList.tasks,
+      tasks: taskList.taskIds,
       sprints: sprintBuilder.sprints,
     },
     schema: z.object({
-      tasks: taskSchema.array(),
+      tasks: taskSchema.shape.id.array(),
       sprints: sprintPlanSchema.array(),
     }),
     read: (storedState) => {
       if (storedState === null) return setStage("task-collector");
-      taskList.setTasks(storedState.tasks);
+      taskList.setTaskIds(storedState.tasks);
       sprintBuilder.setSprints(storedState.sprints);
       if (storedState.tasks.length === 0) return setStage("task-collector");
       if (storedState.sprints.length === 0) return setStage("task-collector");
@@ -91,14 +96,19 @@ export default function SessionPage() {
 
   // MARK: Tasks
 
-  const handleUpdateTask = useDebouncedCallback(taskList.updateTask, 1_000);
+  const importableTasks = tasks.loading
+    ? []
+    : tasks.items.filter((task) => !taskList.taskIds.includes(task.id));
+  const handleUpdateTask = useDebouncedCallback<
+    TaskCollectorProps["onUpdateTask"]
+  >((taskId, updates) => tasks.updateTask(taskId, updates), 1_000);
 
   const { projects, createProject } = useProjects();
   const { tags, createTag } = useTags();
 
-  const backlog = useBacklog();
-  const { filterTasks, ...backlogQueryoptions } = useBacklogQueryOptions();
-  const backlogTasks = filterTasks(backlog.tasks).sort(
+  // const backlog = useBacklog();
+  const { filterTasks, ...backlogQueryoptions } = useTasksQueryOptions();
+  const backlogTasks = filterTasks(importableTasks).sort(
     backlogQueryoptions.sortFn,
   );
   const [isBacklogPanelOpen, backlogPanel] = useDisclosure();
@@ -108,13 +118,13 @@ export default function SessionPage() {
 
   const handleShowTaskCollector = () => {
     setStage("task-collector");
-    taskList.history.reset();
+    // taskList.history.reset();
   };
 
   const handleShowSprintBuilder = () => {
     if (sprintBuilder.sprints.length === 0) sprintBuilder.addSprints([{}, {}]);
     setStage("sprint-builder");
-    taskList.history.reset();
+    // taskList.history.reset();
   };
 
   const handleStartSession = () => {
@@ -125,10 +135,10 @@ export default function SessionPage() {
     sessionModal.open();
   };
 
-  useHotkeys([
-    ["mod+z", taskList.history.undo],
-    ["mod+shift+z", taskList.history.redo],
-  ]);
+  // useHotkeys([
+  //   ["mod+z", taskList.history.undo],
+  //   ["mod+shift+z", taskList.history.redo],
+  // ]);
 
   const [
     isDeleteModalOpen,
@@ -138,7 +148,7 @@ export default function SessionPage() {
   const handleReset = () => {
     if (taskList.tasks.length > 0) return openDeleteModal();
     localStorageSync.clear();
-    taskList.history.reset();
+    // taskList.history.reset();
     router.push("/");
   };
 
@@ -167,18 +177,19 @@ export default function SessionPage() {
               className="mx-auto max-h-full"
               items={taskList.tasks}
               onUpdateTask={handleUpdateTask}
-              onRemoveTask={taskList.removeTask}
-              onMoveTaskToBacklog={(task) => {
-                taskList.removeTask(task.id);
-                backlog.addTask(task);
+              onRemoveTask={(taskId, shouldDelete) => {
+                if (shouldDelete) tasks.deleteTask(taskId);
+                taskList.removeTask(taskId);
               }}
-              onAddTask={taskList.addTask}
+              onAddTask={(task) =>
+                tasks.addTask(task, ({ id }) => taskList.addTask(id))
+              }
               projects={projects}
               onCreateProject={createProject}
               tags={tags}
               onCreateTag={createTag}
-              allowPullFromBacklog={backlog.tasks.length > 0}
-              onRequestToPullFromBacklog={backlogPanel.open}
+              allowImport={importableTasks.length > 0}
+              onRequestImport={backlogPanel.open}
             />
           </Tabs.Panel>
           <Tabs.Panel value="sprint-builder" px="lg">
@@ -318,7 +329,7 @@ export default function SessionPage() {
           </Button>
           <Button
             onClick={() => {
-              backlog.addTasks(taskList.tasks);
+              // backlog.addTasks(taskList.tasks);
               handleReset();
               router.push("/");
             }}
@@ -358,37 +369,15 @@ export default function SessionPage() {
                 ({ taskId }) => taskId,
               );
 
-              const tasksToAdd = backlogTasks.filter(({ id }) =>
-                taskIds.includes(id),
-              );
-
-              taskList.addTasks(tasksToAdd, {
-                apply: () => {
-                  backlog.deleteTasks(
-                    backlogTaskSelection.selection.map(({ taskId }) => taskId),
-                  );
-                },
-                revert: () => {
-                  backlog.addTasks(tasksToAdd);
-                  notifications.show({
-                    message:
-                      tasksToAdd.length === 1
-                        ? "Moved Task Back to Backlog"
-                        : "Moved Tasks Back to Backlog",
-                    autoClose: 5000,
-                    icon: <IconTransfer size={20} />,
-                    position: "bottom-center",
-                  });
-                },
-              });
+              taskList.addTasks(taskIds);
 
               backlogTaskSelection.clearSelection();
               backlogPanel.close();
             }}
           >
             {backlogTaskSelection.selection.length === 0
-              ? "Select Tasks to Pull"
-              : "Pull Tasks"}
+              ? "Select Tasks to Add"
+              : "Add Tasks"}
           </Button>
         </Flex>
       </SidePanel>

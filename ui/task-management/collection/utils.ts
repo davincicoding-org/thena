@@ -1,9 +1,9 @@
-import type { BacklogFilters } from "@/core/task-management";
+import type { TaskFilters } from "@/core/task-management";
 
 export const hasFiltersApplied = ({
   projectIds,
   tags,
   search,
-}: BacklogFilters) => {
+}: TaskFilters) => {
   return Boolean(projectIds?.length ?? tags?.length ?? search);
 };

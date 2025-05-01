@@ -67,25 +67,25 @@ export interface FlatTaskGroup {
   items: FlatTask[];
 }
 
-/**
- * Task inside the backlog
- */
-export interface BacklogTask extends Task {
-  addedAt: string; // ISO date string
-}
+export const storedTaskSchema = taskSchema.extend({
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  completedAt: z.string().datetime().optional(),
+});
+export type StoredTask = z.infer<typeof storedTaskSchema>;
 
-const backlogSortOptionsSchema = z.object({
-  sortBy: z.enum(["title", "addedAt"]),
+const tasksSortOptionsSchema = z.object({
+  sortBy: z.enum(["title", "createdAt", "updatedAt"]),
   direction: z.enum(["asc", "desc"]),
 });
-export type BacklogSortOptions = z.infer<typeof backlogSortOptionsSchema>;
+export type TasksSortOptions = z.infer<typeof tasksSortOptionsSchema>;
 
-export const BACKLOG_SORT_OPTIONS = {
-  sortBy: backlogSortOptionsSchema.shape.sortBy.options,
-  direction: backlogSortOptionsSchema.shape.direction.options,
+export const TASKS_SORT_OPTIONS = {
+  sortBy: tasksSortOptionsSchema.shape.sortBy.options,
+  direction: tasksSortOptionsSchema.shape.direction.options,
 };
 
-export interface BacklogFilters {
+export interface TaskFilters {
   projectIds?: string[];
   tags?: string[];
   search?: string;

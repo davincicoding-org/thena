@@ -28,19 +28,19 @@ import {
   ProjectCreator,
   ProjectsTile,
   taskFormOpts,
-  useBacklog,
-  useBacklogQueryOptions,
   useProjects,
   useTags,
   useTaskForm,
+  useTasks,
+  useTasksQueryOptions,
 } from "@/ui/task-management";
 
 export default function HomePage() {
   const { projects, createProject, loading: loadingProjects } = useProjects();
   const [isCreatingProject, projectCreatorModal] = useDisclosure();
 
-  const { tasks } = useBacklog();
-  const taskCount = tasks.reduce(
+  const tasks = useTasks();
+  const taskCount = tasks.items.reduce(
     (acc, task) => acc + (task.subtasks?.length ?? 1),
     0,
   );
@@ -120,14 +120,14 @@ function BacklogPanel({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const backlog = useBacklog();
+  const tasks = useTasks();
   const { projects, createProject } = useProjects();
   const { tags, createTag } = useTags();
 
   const { filters, filterTasks, updateFilters, sort, sortFn, updateSort } =
-    useBacklogQueryOptions();
+    useTasksQueryOptions();
 
-  const tasks = filterTasks(backlog.tasks).sort(sortFn);
+  const items = filterTasks(tasks.items).sort(sortFn);
 
   // ------- Task Adder -------
 
@@ -143,7 +143,7 @@ function BacklogPanel({
         <Backlog
           mode="edit"
           flex={1}
-          tasks={tasks}
+          tasks={items}
           className="min-h-0 rounded-b-none!"
           filters={filters}
           onFiltersUpdate={updateFilters}
@@ -151,12 +151,12 @@ function BacklogPanel({
           onSortUpdate={updateSort}
           projects={projects}
           tags={tags}
-          onUpdateTask={backlog.updateTask}
-          onDeleteTask={backlog.deleteTask}
+          onUpdateTask={tasks.updateTask}
+          onDeleteTask={tasks.deleteTask}
           onCreateProject={createProject}
           onCreateTag={createTag}
         />
-        <BacklogTaskAdder onSubmit={backlog.addTask} />
+        <BacklogTaskAdder onSubmit={tasks.addTask} />
       </Flex>
     </SidePanel>
   );

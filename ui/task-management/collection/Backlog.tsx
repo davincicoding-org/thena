@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 "use client";
 
 import type { PaperProps } from "@mantine/core";
@@ -41,18 +42,18 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { isEqual } from "lodash-es";
 
 import type {
-  BacklogFilters,
-  BacklogSortOptions,
-  BacklogTask,
   Project,
   ProjectInput,
+  StoredTask,
   Tag,
   TagInput,
+  TaskFilters,
   TaskInput,
   TaskReference,
+  TasksSortOptions,
 } from "@/core/task-management";
 import type { TaskFormProps } from "@/ui/task-management";
-import { BACKLOG_SORT_OPTIONS } from "@/core/task-management";
+import { TASKS_SORT_OPTIONS } from "@/core/task-management";
 import { Panel } from "@/ui/components/Panel";
 import { useSyncInputState } from "@/ui/hooks/useSyncState";
 import {
@@ -65,7 +66,7 @@ import {
 } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
-import type { BacklogQueryOptionsHookReturn } from "./useBacklogQueryOptions";
+import type { TasksQueryOptionsHookReturn } from "./useTasksQueryOptions";
 
 dayjs.extend(relativeTime);
 
@@ -73,18 +74,18 @@ dayjs.extend(relativeTime);
 
 export interface BacklogProps {
   mode: "select" | "edit";
-  tasks: BacklogTask[];
-  filters: BacklogFilters;
-  sort: BacklogSortOptions;
-  onFiltersUpdate: BacklogQueryOptionsHookReturn["updateFilters"];
-  onSortUpdate: BacklogQueryOptionsHookReturn["updateSort"];
+  tasks: StoredTask[];
+  filters: TaskFilters;
+  sort: TasksSortOptions;
+  onFiltersUpdate: TasksQueryOptionsHookReturn["updateFilters"];
+  onSortUpdate: TasksQueryOptionsHookReturn["updateSort"];
   projects: Project[];
   tags: Tag[];
   onUpdateTask?: (
-    taskId: BacklogTask["id"],
-    values: Partial<BacklogTask>,
+    taskId: StoredTask["id"],
+    values: Partial<StoredTask>,
   ) => void;
-  onDeleteTask?: (taskId: BacklogTask["id"]) => void;
+  onDeleteTask?: (taskId: StoredTask["id"]) => void;
   onCreateProject?: (
     project: ProjectInput,
     onCreate: (project: Project) => void,
@@ -386,7 +387,7 @@ function BacklogHeader({
             </Button>
           </Menu.Target>
           <Menu.Dropdown>
-            {BACKLOG_SORT_OPTIONS.sortBy.map((sortBy) => (
+            {TASKS_SORT_OPTIONS.sortBy.map((sortBy) => (
               <Menu.Item
                 key={sortBy}
                 color={sort.sortBy === sortBy ? "primary" : undefined}
@@ -397,7 +398,7 @@ function BacklogHeader({
               </Menu.Item>
             ))}
             <Menu.Divider />
-            {BACKLOG_SORT_OPTIONS.direction.map((direction) => (
+            {TASKS_SORT_OPTIONS.direction.map((direction) => (
               <Menu.Item
                 key={direction}
                 color={sort.direction === direction ? "primary" : undefined}
@@ -485,10 +486,10 @@ interface TaskItemProps
     "projects" | "onAssignToNewProject" | "tags" | "onAttachNewTag"
   > {
   mode: "select" | "edit";
-  task: BacklogTask;
+  task: StoredTask;
   selected?: boolean;
   onToggleSelection: () => void;
-  onUpdate?: (values: Partial<BacklogTask>) => void;
+  onUpdate?: (values: Partial<StoredTask>) => void;
   onDelete?: () => void;
 }
 
@@ -574,29 +575,33 @@ function TaskItem({
 // MARK: Utility Functions
 
 const getSortByLabel = (
-  sort: BacklogSortOptions["sortBy"],
+  sort: TasksSortOptions["sortBy"],
 ): { full: string; short?: string } => {
   switch (sort) {
     case "title":
       return { full: "Title" };
-    case "addedAt":
-      return { full: "Date added", short: "Added" };
+    case "createdAt":
+      return { full: "Creation Date", short: "Created" };
+    case "updatedAt":
+      return { full: "Last Updated", short: "Updated" };
   }
 };
 
 function SortByIcon({
   sortBy,
   ...iconProps
-}: { sortBy: BacklogSortOptions["sortBy"] } & IconProps) {
+}: { sortBy: TasksSortOptions["sortBy"] } & IconProps) {
   switch (sortBy) {
     case "title":
       return <IconAbc {...iconProps} />;
-    case "addedAt":
+    case "createdAt":
+      return <IconCalendar {...iconProps} />;
+    case "updatedAt":
       return <IconCalendar {...iconProps} />;
   }
 }
 
-const getSortDirectionLabel = (direction: BacklogSortOptions["direction"]) => {
+const getSortDirectionLabel = (direction: TasksSortOptions["direction"]) => {
   switch (direction) {
     case "asc":
       return "Ascending";
@@ -608,7 +613,7 @@ const getSortDirectionLabel = (direction: BacklogSortOptions["direction"]) => {
 function SortDirectionIcon({
   sort,
   ...iconProps
-}: { sort: BacklogSortOptions["direction"] } & IconProps) {
+}: { sort: TasksSortOptions["direction"] } & IconProps) {
   switch (sort) {
     case "asc":
       return <IconSortAscending {...iconProps} />;

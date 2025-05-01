@@ -1,6 +1,5 @@
-import { fn } from "@storybook/test";
-
 import type { Meta, StoryObj } from "@storybook/react";
+import { fn } from "@storybook/test";
 
 import { Backlog } from "./Backlog";
 
@@ -23,22 +22,25 @@ const meta = {
           { id: "1", title: "Define tech stack" },
           { id: "2", title: "Setup codebase", tags: ["personal"] },
         ],
-        addedAt: "2025-04-18T00:32:10.504Z",
+        createdAt: "2025-04-18T00:32:10.504Z",
+        updatedAt: "2025-04-18T00:32:10.504Z",
       },
       {
         id: "2",
         title: "Reply to client email",
-        addedAt: "2025-04-18T00:32:10.504Z",
+        createdAt: "2025-04-18T00:32:10.504Z",
+        updatedAt: "2025-04-18T00:32:10.504Z",
       },
       {
         id: "3",
         title: "Buy groceries",
-        addedAt: "2025-04-18T00:32:10.504Z",
+        createdAt: "2025-04-18T00:32:10.504Z",
+        updatedAt: "2025-04-18T00:32:10.504Z",
         tags: ["personal"],
       },
     ],
     filters: {},
-    sort: { sortBy: "addedAt", direction: "desc" },
+    sort: { sortBy: "createdAt", direction: "desc" },
     projects: [
       { id: "dercampus", name: "dercampus" },
       { id: "con8", name: "Con8", color: "yellow" },
