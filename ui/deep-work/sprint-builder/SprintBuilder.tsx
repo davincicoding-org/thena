@@ -2,7 +2,7 @@ import type { SortableData } from "@dnd-kit/sortable";
 import type { PaperProps } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
 import {
-  closestCenter,
+  closestCorners,
   DndContext,
   DragOverlay,
   KeyboardSensor,
@@ -145,7 +145,7 @@ export function SprintBuilder({
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={closestCorners}
       onDragStart={({ active }) => {
         if (!active.data.current) return;
 
