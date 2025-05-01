@@ -51,7 +51,9 @@ export default function SessionPage() {
 
   const taskList = useTaskList();
 
-  const sprintBuilder = useSprintBuilder(taskList.tasks);
+  const sprintBuilder = useSprintBuilder(taskList.tasks, {
+    onError: (error) => console.error(error),
+  });
 
   const localStorageSync = useLocalStorageSync({
     key: "session-page",
@@ -191,6 +193,7 @@ export default function SessionPage() {
               onAssignTasksToSprint={sprintBuilder.assignTasks}
               onUnassignTasksFromSprint={sprintBuilder.unassignTasks}
               onMoveTasks={sprintBuilder.moveTasks}
+              onReorderSprintTasks={sprintBuilder.reorderSprintTasks}
             />
           </Tabs.Panel>
 
@@ -330,7 +333,6 @@ export default function SessionPage() {
           backlogTaskSelection.clearSelection();
           backlogPanel.close();
         }}
-        // eslint-disable-next-line max-lines
       >
         <Flex className="h-full" direction="column" gap="md">
           <Backlog

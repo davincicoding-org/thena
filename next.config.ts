@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // output: "export",
-  reactStrictMode: true,
+  reactStrictMode: false,
   eslint: {
     dirs: ["app", "core", "ui"],
   },

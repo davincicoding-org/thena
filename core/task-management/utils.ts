@@ -3,21 +3,32 @@ import type { FlatTask, FlatTaskGroup, Task, TaskReference } from "./types";
 export const countTasks = (tasks: Task[]): number =>
   tasks.reduce((acc, task) => acc + (task.subtasks?.length ?? 1), 0);
 
+export const doTaskReferencesMatch = (
+  a: TaskReference,
+  b: TaskReference,
+): boolean => a.taskId === b.taskId && a.subtaskId === b.subtaskId;
+
 // Checks if the task reference is valid
 export const doesTaskReferenceExist = (
   taskReference: TaskReference,
   tasks: TaskReference[],
 ): boolean =>
-  tasks.some(
-    ({ taskId, subtaskId }) =>
-      taskId === taskReference.taskId && subtaskId === taskReference.subtaskId,
+  tasks.some((validTaskReference) =>
+    doTaskReferencesMatch(taskReference, validTaskReference),
   );
 
-export const resolveTaskReferences = <T extends Task>(
+export const resolveTaskReferences = (
   taskReferences: TaskReference[],
   tasks: FlatTask[],
 ): FlatTask[] =>
-  tasks.filter((task) => doesTaskReferenceExist(task, taskReferences));
+  taskReferences.reduce<FlatTask[]>((acc, taskReference) => {
+    const task = tasks.find((task) =>
+      doTaskReferencesMatch(taskReference, task),
+    );
+    if (!task) return acc;
+
+    return [...acc, task];
+  }, []);
 
 export const tranformTasksToReferences = (tasks: Task[]): TaskReference[] => {
   return tasks.flatMap<TaskReference>((task) => {

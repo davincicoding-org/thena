@@ -2,29 +2,28 @@ import { useEffect, useState } from "react";
 import { useWindowEvent } from "@mantine/hooks";
 
 export const useKeyHold = ({
-  keyCode,
+  trigger,
   onStart,
   onRelease,
   disabled = false,
 }: {
-  keyCode: string | string[];
+  trigger: (e: KeyboardEvent) => boolean;
   onStart: () => void;
   onRelease: () => void | Promise<void>;
   disabled?: boolean;
 }) => {
   const [isHeld, setIsHeld] = useState(false);
-  const keyCodes = Array.isArray(keyCode) ? keyCode : [keyCode];
 
   useWindowEvent("keydown", (e) => {
     if (disabled) return;
-    if (!keyCodes.includes(e.code)) return;
+    if (!trigger(e)) return;
     e.preventDefault();
     setIsHeld(true);
   });
 
   useWindowEvent("keyup", (e) => {
     if (disabled) return;
-    if (!keyCodes.includes(e.code)) return;
+    if (!trigger(e)) return;
     e.preventDefault();
     setIsHeld(false);
   });

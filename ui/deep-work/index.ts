@@ -1,6 +1,6 @@
-export * from "./planning/SprintBuilder";
-export * from "./planning/useSprintBuilder";
+export * from "./sprint-builder/SprintBuilder";
+export * from "./sprint-builder/useSprintBuilder";
 
-export * from "./execution/SprintWidget";
-export * from "./execution/FocusSession";
-export * from "./execution/SessionBreak";
+export * from "./focus-session/SprintWidget";
+export * from "./focus-session/FocusSession";
+export * from "./focus-session/SessionBreak";

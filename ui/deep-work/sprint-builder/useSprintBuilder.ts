@@ -103,7 +103,10 @@ export interface SessionPlannerHookReturn {
   }) => void;
 
   /** Reorder tasks within a Sprint (for drag‑and‑drop UIs) */
-  reorderSprintTasks: (sprintId: SprintPlan["id"], tasks: Task["id"][]) => void;
+  reorderSprintTasks: (options: {
+    sprintId: SprintPlan["id"];
+    order: number[];
+  }) => void;
 }
 
 /**
@@ -199,10 +202,9 @@ export function useSprintBuilder(
   };
 
   const reorderSprintTasks: SessionPlannerHookReturn["reorderSprintTasks"] = (
-    sprintId,
-    taskIds,
+    options,
   ) => {
-    dispatch({ type: "REORDER_SPRINT_TASKS", payload: { sprintId, taskIds } });
+    dispatch({ type: "REORDER_SPRINT_TASKS", payload: options });
   };
 
   return {

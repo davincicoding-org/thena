@@ -9,6 +9,7 @@ const meta = {
     layout: "centered",
   },
   args: {
+    sprintId: "1",
     title: "Sprint 1",
     duration: { minutes: 25 },
     tasks: [

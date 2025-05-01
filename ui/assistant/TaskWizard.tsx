@@ -1,7 +1,7 @@
+import type { BoxProps } from "@mantine/core";
 import { useChat } from "@ai-sdk/react";
 import { Button, Center, Flex, Stack } from "@mantine/core";
 
-import type { BoxProps } from "@mantine/core";
 import { taskManagerResponseSchema } from "@/ui/assistant/schema";
 import { useKeyHold } from "@/ui/hooks/useKeyHold";
 import {
@@ -74,7 +74,7 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
 
   useKeyHold({
     disabled: tasks === undefined,
-    keyCode: ["AltLeft", "AltRight"],
+    trigger: (e) => e.key === "Alt",
     onStart: () => {
       void abortSpeech();
       void startListening();

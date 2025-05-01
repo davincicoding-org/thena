@@ -1,7 +1,7 @@
 import { useReducer } from "react";
 
 import type { Duration, SprintPlan } from "@/core/deep-work";
-import type { FlatTask, Task, TaskReference } from "@/core/task-management";
+import type { FlatTask, TaskReference } from "@/core/task-management";
 import {
   doesTaskReferenceExist,
   excludeTaskReferences,
@@ -52,7 +52,7 @@ type SprintPlannerAction =
     }
   | {
       type: "REORDER_SPRINT_TASKS";
-      payload: { sprintId: string; taskIds: string[] };
+      payload: { sprintId: string; order: number[] };
     }
   | { type: "SET_SPRINTS"; payload: { sprints: SprintPlan[] } };
 
@@ -335,9 +335,7 @@ export function useSprintsReducer(
       }
 
       case "REORDER_SPRINT_TASKS": {
-        const { sprintId, taskIds } = action.payload;
-
-        if (!taskIds.length) return state;
+        const { sprintId, order } = action.payload;
 
         const sprintToAdjust = state.find((sprint) => sprint.id === sprintId);
         if (!sprintToAdjust) {
@@ -345,16 +343,14 @@ export function useSprintsReducer(
           return state;
         }
 
-        const missingTaskIds = sprintToAdjust.tasks.reduce<Task["id"][]>(
-          (acc, { taskId }) => {
-            if (taskIds.includes(taskId)) return acc;
-            return [...acc, taskId];
-          },
-          [],
-        );
+        if (sprintToAdjust.tasks.length !== order.length) {
+          handleError("INVALID_TASK_SELECTION");
+          return state;
+        }
 
-        if (missingTaskIds.length > 0) {
-          missingTaskIds.forEach(() => handleError("TASK_NOT_PROVIDED"));
+        // Checks if the provided order includes ascending indexes starting from 0
+        if (![...order].sort().every((number, index) => number === index)) {
+          handleError("INVALID_TASK_SELECTION");
           return state;
         }
 
@@ -363,10 +359,11 @@ export function useSprintsReducer(
 
           return {
             ...sprint,
-            tasks: [...sprint.tasks].sort((a, b) => {
-              const aIndex = taskIds.indexOf(a.taskId);
-              const bIndex = taskIds.indexOf(b.taskId);
-              return aIndex - bIndex;
+            tasks: order.map((index) => {
+              const matchedTask = sprint.tasks[index];
+              // Should not happen, since we already validated the order above
+              if (!matchedTask) throw new Error("TASK_NOT_FOUND");
+              return matchedTask;
             }),
           };
         });

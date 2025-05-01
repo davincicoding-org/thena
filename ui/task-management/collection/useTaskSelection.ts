@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-import type { Task, TaskReference } from "@/core/task-management";
+import type { TaskReference } from "@/core/task-management";
 import {
   doesTaskReferenceExist,
   excludeTaskReferences,
@@ -67,30 +67,3 @@ export function useTaskSelection(): TaskSelectionHookReturn {
     toggleTaskGroupSelection,
   };
 }
-
-/* HELPER FUNCTIONS */
-
-const isTaskPartiallyIncluded = (
-  task: Task,
-  selection: TaskReference[],
-): boolean => selection.some((selectedTask) => selectedTask.taskId === task.id);
-
-const isTaskFullyIncluded = (
-  task: Task,
-  selection: TaskReference[],
-): boolean => {
-  if (!isTaskPartiallyIncluded(task, selection)) return false;
-  if (!task.subtasks?.length) return true;
-
-  return task.subtasks.every((subtask) =>
-    selection.some(({ subtaskId }) => subtaskId === subtask.id),
-  );
-};
-
-const isSubtaskIncluded = (
-  { taskId, subtaskId }: TaskReference,
-  selection: TaskReference[],
-): boolean =>
-  selection.some(
-    (entry) => subtaskId === entry.subtaskId && taskId === entry.taskId,
-  );

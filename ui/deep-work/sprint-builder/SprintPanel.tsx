@@ -1,37 +1,60 @@
+/* eslint-disable max-lines */
 import type { MenuProps, PaperProps } from "@mantine/core";
 import type { PropsWithChildren } from "react";
-import { Fragment, useRef } from "react";
+import { useRef } from "react";
+import { useDndContext } from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   ActionIcon,
   Box,
   Button,
-  Divider,
   Flex,
   Menu,
   MenuDivider,
-  NavLink,
   NumberInput,
-  Paper,
   ScrollArea,
   Stack,
   Text,
 } from "@mantine/core";
-import { IconClock, IconDotsVertical, IconX } from "@tabler/icons-react";
+import {
+  IconClock,
+  IconDotsVertical,
+  IconGripVertical,
+  IconX,
+} from "@tabler/icons-react";
 
-import type { Duration } from "@/core/deep-work";
-import type { FlatTask, TaskReference } from "@/core/task-management";
+import type { Duration, SprintPlan } from "@/core/deep-work";
+import type {
+  FlatTask,
+  FlatTaskGroup,
+  TaskReference,
+} from "@/core/task-management";
 import { resolveDuration } from "@/core/deep-work";
-import { groupFlatTasks } from "@/core/task-management";
+import { groupFlatTasks, isTaskGroup } from "@/core/task-management";
 import { Panel } from "@/ui/components/Panel";
 import { cn } from "@/ui/utils";
 
+import {
+  NestedTaskItemBase,
+  StandaloneTaskItemBase,
+  TaskItemsGroupContainer,
+  TaskItemsGroupHeader,
+} from "./components";
+
 export interface SprintPanelProps {
+  sprintId: SprintPlan["id"];
   title: string;
   duration: Duration;
   tasks: FlatTask[];
   disabled?: boolean;
   canAddTasks: boolean;
   otherSprints: { id: string; title: string }[];
+  dndEnabled?: boolean;
   onDrop: () => void;
   onDurationChange: (duration: Duration) => void;
   onAddTasks: (el: HTMLDivElement) => void;
@@ -43,12 +66,14 @@ export interface SprintPanelProps {
 }
 
 export function SprintPanel({
+  sprintId,
   title,
   duration,
   tasks,
   otherSprints,
   disabled,
   canAddTasks,
+  dndEnabled,
   onDrop,
   onDurationChange,
   onAddTasks,
@@ -59,7 +84,7 @@ export function SprintPanel({
 }: SprintPanelProps & PaperProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const items = groupFlatTasks(tasks);
+  const items = dndEnabled ? tasks : groupFlatTasks(tasks);
 
   const durationMinutes = resolveDuration(duration).asMinutes();
 
@@ -136,69 +161,37 @@ export function SprintPanel({
     >
       <ScrollArea scrollbars="y" scrollHideDelay={300}>
         <Stack gap="sm" p="sm" bg="neutral.8">
-          {items.map((taskOrGroup) => {
-            if (!("groupLabel" in taskOrGroup))
-              return (
-                <ActionsMenu
-                  key={`${taskOrGroup.taskId}-${taskOrGroup.subtaskId}`}
-                  tasks={[taskOrGroup]}
-                  otherSprints={otherSprints}
-                  onMoveTasks={onMoveTasks}
-                  onUnassignTasks={onUnassignTasks}
-                >
-                  <Paper
-                    className={cn(
-                      "cursor-pointer px-3",
-                      taskOrGroup.parentTitle ? "py-1.5" : "py-2",
-                    )}
-                    withBorder
-                  >
-                    {taskOrGroup.parentTitle ? (
-                      <Text size="xs" opacity={0.5}>
-                        {taskOrGroup.parentTitle}
-                      </Text>
-                    ) : null}
-                    <Text size="sm">{taskOrGroup.title}</Text>
-                  </Paper>
-                </ActionsMenu>
-              );
+          <SortableContext
+            id={sprintId}
+            items={tasks.map(
+              ({ taskId, subtaskId }) => `${taskId}-${subtaskId}`,
+            )}
+            strategy={verticalListSortingStrategy}
+          >
+            {items.map((taskOrGroup) => {
+              if (!isTaskGroup(taskOrGroup))
+                return (
+                  <StandaloneTaskItem
+                    key={`${taskOrGroup.taskId}-${taskOrGroup.subtaskId}`}
+                    item={taskOrGroup}
+                    otherSprints={otherSprints}
+                    dndEnabled={dndEnabled}
+                    onMoveTasks={onMoveTasks}
+                    onUnassignTasks={onUnassignTasks}
+                  />
+                );
 
-            return (
-              <Paper
-                key={taskOrGroup.taskId}
-                withBorder
-                className="overflow-clip"
-              >
-                <ActionsMenu
-                  tasks={taskOrGroup.items}
+              return (
+                <TaskItemsGroup
+                  key={taskOrGroup.taskId}
+                  group={taskOrGroup}
                   otherSprints={otherSprints}
                   onMoveTasks={onMoveTasks}
                   onUnassignTasks={onUnassignTasks}
-                >
-                  <Text
-                    size="xs"
-                    opacity={0.5}
-                    className="cursor-pointer px-1.5! py-1!"
-                  >
-                    {taskOrGroup.groupLabel}
-                  </Text>
-                </ActionsMenu>
-                {taskOrGroup.items.map((item) => (
-                  <Fragment key={`${item.taskId}-${item.subtaskId}`}>
-                    <Divider />
-                    <ActionsMenu
-                      tasks={[item]}
-                      otherSprints={otherSprints}
-                      onMoveTasks={onMoveTasks}
-                      onUnassignTasks={onUnassignTasks}
-                    >
-                      <NavLink className="px-2! py-1!" label={item.title} />
-                    </ActionsMenu>
-                  </Fragment>
-                ))}
-              </Paper>
-            );
-          })}
+                />
+              );
+            })}
+          </SortableContext>
 
           <Box className="empty:hidden">
             {canAddTasks ? (
@@ -228,6 +221,110 @@ export function SprintPanel({
   );
 }
 
+// MARK: Items
+
+interface StandaloneTaskItemProps
+  extends Pick<
+    SprintPanelProps,
+    "otherSprints" | "onMoveTasks" | "onUnassignTasks"
+  > {
+  item: FlatTask;
+  dndEnabled?: boolean;
+}
+
+function StandaloneTaskItem({
+  item,
+  otherSprints,
+  dndEnabled,
+  onMoveTasks,
+  onUnassignTasks,
+}: StandaloneTaskItemProps) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({
+      id: `${item.taskId}-${item.subtaskId}`,
+      disabled: !dndEnabled,
+      data: { item },
+    });
+
+  const { active } = useDndContext();
+
+  return (
+    <ActionsMenu
+      tasks={[item]}
+      disabled={dndEnabled}
+      otherSprints={otherSprints}
+      onMoveTasks={onMoveTasks}
+      onUnassignTasks={onUnassignTasks}
+    >
+      <StandaloneTaskItemBase
+        item={item}
+        rightSection={
+          active ? null : dndEnabled ? (
+            <IconGripVertical size={12} />
+          ) : (
+            <IconDotsVertical size={12} />
+          )
+        }
+        ref={setNodeRef}
+        style={{
+          transform: CSS.Transform.toString(transform),
+          transition,
+        }}
+        {...attributes}
+        {...listeners}
+      />
+    </ActionsMenu>
+  );
+}
+
+interface TaskItemsGroupProps
+  extends Pick<
+    SprintPanelProps,
+    "otherSprints" | "onMoveTasks" | "onUnassignTasks"
+  > {
+  group: FlatTaskGroup;
+}
+
+function TaskItemsGroup({
+  group,
+  otherSprints,
+  onMoveTasks,
+  onUnassignTasks,
+}: TaskItemsGroupProps) {
+  return (
+    <TaskItemsGroupContainer>
+      <ActionsMenu
+        tasks={group.items}
+        otherSprints={otherSprints}
+        onMoveTasks={onMoveTasks}
+        onUnassignTasks={onUnassignTasks}
+      >
+        <TaskItemsGroupHeader
+          label={group.groupLabel}
+          rightSection={<IconDotsVertical size={12} />}
+        />
+      </ActionsMenu>
+
+      {group.items.map((item) => (
+        <ActionsMenu
+          key={`${item.taskId}-${item.subtaskId}`}
+          tasks={[item]}
+          otherSprints={otherSprints}
+          onMoveTasks={onMoveTasks}
+          onUnassignTasks={onUnassignTasks}
+        >
+          <NestedTaskItemBase
+            item={item}
+            rightSection={<IconDotsVertical size={12} />}
+          />
+        </ActionsMenu>
+      ))}
+    </TaskItemsGroupContainer>
+  );
+}
+
+// MARK: Actions Menu
+
 interface ActionsMenuProps
   extends Pick<
     SprintPanelProps,
@@ -248,7 +345,7 @@ function ActionsMenu({
     <Menu
       position="bottom-end"
       offset={{
-        mainAxis: -20,
+        mainAxis: 0,
       }}
       {...props}
     >
