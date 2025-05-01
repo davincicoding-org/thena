@@ -1,18 +1,7 @@
-/* eslint-disable max-lines */
-import type { SortableData } from "@dnd-kit/sortable";
 import type { PaperProps } from "@mantine/core";
 import type { OS } from "@mantine/hooks";
 import { useEffect, useRef, useState } from "react";
-import {
-  closestCorners,
-  DndContext,
-  DragOverlay,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { arrayMove } from "@dnd-kit/sortable";
 import {
   Badge,
   Box,
@@ -35,13 +24,9 @@ import { resolveTaskReferences } from "@/core/task-management";
 import { useKeyHold } from "@/ui/hooks";
 import { cn } from "@/ui/utils";
 
-import { StandaloneTaskItemBase } from "./components";
+import { DndWrapper } from "./dnd";
 import { SprintPanel } from "./SprintPanel";
 import { TaskPool } from "./TaskPool";
-
-interface DraggingTaskData extends Partial<SortableData> {
-  item: FlatTask;
-}
 
 export interface SprintBuilderProps {
   sprints: SprintPlan[];
@@ -107,13 +92,6 @@ export function SprintBuilder({
     onRelease: () => setDndEnabled(false),
   });
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
-
   const sprintOptions = sprints.map((sprint, index) => ({
     id: sprint.id,
     title: `Sprint ${index + 1}`,
@@ -173,86 +151,14 @@ export function SprintBuilder({
     onReorderSprints(order);
   };
 
-  const [draggedItem, setDraggedItem] = useState<FlatTask>();
-
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={({ active }) => {
-        if (!active.data.current) return;
-        const { item } = active.data.current as DraggingTaskData;
-        setDraggedItem(item);
-      }}
-      onDragOver={(event) => {
-        if (!event.active.data.current) return;
-        if (!event.over) return;
-
-        const overData = event.over.data.current as SortableData | undefined;
-
-        const targetContainerId =
-          overData?.sortable.containerId ?? event.over.id;
-
-        const active = event.active.data.current as DraggingTaskData;
-
-        if (active.sortable?.containerId === targetContainerId) return;
-
-        if (active.sortable) {
-          if (targetContainerId === "TASK_POOL") {
-            onUnassignTasksFromSprint({
-              sprintId: active.sortable.containerId.toString(),
-              tasks: [active.item],
-            });
-            return;
-          }
-
-          onMoveTasks({
-            fromSprintId: active.sortable.containerId.toString(),
-            toSprintId: targetContainerId.toString(),
-            tasks: [active.item],
-            insertIndex: (event.over.data.current as SortableData | undefined)
-              ?.sortable.index,
-          });
-          return;
-        }
-
-        onAssignTasksToSprint({
-          sprintId: targetContainerId.toString(),
-          tasks: [active.item],
-        });
-      }}
-      onDragEnd={(event) => {
-        setDraggedItem(undefined);
-        if (!event.active.data.current) return;
-        if (!event.over?.data.current) return;
-
-        const active = event.active.data.current as DraggingTaskData;
-        const over = event.over.data.current as DraggingTaskData;
-
-        if (!active.sortable || !over.sortable) return;
-
-        if (active.sortable.containerId !== over.sortable.containerId) return;
-
-        const indexes = over.sortable.items.map((_, index) => index);
-        const order = arrayMove(
-          indexes,
-          active.sortable.index,
-          over.sortable.index,
-        );
-        onReorderSprintTasks({
-          sprintId: over.sortable.containerId.toString(),
-          order,
-        });
-      }}
+    <DndWrapper
+      enabled={dndEnabled}
+      onAssignTasksToSprint={onAssignTasksToSprint}
+      onUnassignTasksFromSprint={onUnassignTasksFromSprint}
+      onMoveTasks={onMoveTasks}
+      onReorderSprintTasks={onReorderSprintTasks}
     >
-      <DragOverlay>
-        {draggedItem && dndEnabled ? (
-          <StandaloneTaskItemBase
-            className="cursor-grabbing!"
-            item={draggedItem}
-          />
-        ) : null}
-      </DragOverlay>
       <Paper
         withBorder
         radius="md"
@@ -429,6 +335,6 @@ export function SprintBuilder({
           </Button>
         </Flex>
       </Paper>
-    </DndContext>
+    </DndWrapper>
   );
 }

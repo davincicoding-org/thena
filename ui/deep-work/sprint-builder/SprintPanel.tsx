@@ -2,13 +2,6 @@
 import type { MenuProps, PaperProps } from "@mantine/core";
 import type { PropsWithChildren } from "react";
 import { useRef } from "react";
-import { useDndContext, useDroppable } from "@dnd-kit/core";
-import {
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import {
   ActionIcon,
   Box,
@@ -17,7 +10,6 @@ import {
   Menu,
   NumberInput,
   ScrollArea,
-  Stack,
   Text,
 } from "@mantine/core";
 import {
@@ -48,6 +40,7 @@ import {
   TaskItemsGroupContainer,
   TaskItemsGroupHeader,
 } from "./components";
+import { SortableTasksContainer, useSortableTask } from "./dnd";
 
 export interface SprintPanelProps {
   sprintId: SprintPlan["id"];
@@ -87,7 +80,7 @@ export function SprintPanel({
   moveOptions,
   onMove,
   canAddTasks,
-  dndEnabled,
+  dndEnabled = false,
   onDrop,
   onDurationChange,
   onAddTasks,
@@ -211,7 +204,11 @@ export function SprintPanel({
       {...props}
     >
       <ScrollArea scrollbars="y" scrollHideDelay={300}>
-        <TasksContainer id={sprintId} items={tasks} dndEnabled={dndEnabled}>
+        <SortableTasksContainer
+          id={sprintId}
+          items={tasks}
+          enabled={dndEnabled}
+        >
           {items.map((taskOrGroup) => {
             if (!isTaskGroup(taskOrGroup))
               return (
@@ -235,68 +232,40 @@ export function SprintPanel({
               />
             );
           })}
-          <Box className="empty:hidden">
-            {!dndEnabled && canAddTasks && !disabled && !isTargeted && (
-              <Button
-                variant="outline"
-                size="xs"
-                fullWidth
-                onClick={() => {
-                  if (!panelRef.current) return;
-                  onAddTasks(panelRef.current);
-                }}
-              >
-                Assign Tasks
-              </Button>
-            )}
-            {tasks.length === 0 && (
-              <Text
-                c={isTargeted ? "primary" : undefined}
-                opacity={isTargeted ? 0.7 : 0.3}
-                className={cn(
-                  "flex items-center justify-center transition-all not-first:hidden",
-                )}
-                h={30}
-              >
-                {dndEnabled
-                  ? "Drag task here"
-                  : isTargeted
+          {!dndEnabled && (
+            <Box className="empty:hidden">
+              {canAddTasks && !disabled && !isTargeted && (
+                <Button
+                  variant="outline"
+                  size="xs"
+                  fullWidth
+                  onClick={() => {
+                    if (!panelRef.current) return;
+                    onAddTasks(panelRef.current);
+                  }}
+                >
+                  Assign Tasks
+                </Button>
+              )}
+              {tasks.length === 0 && (
+                <Text
+                  c={isTargeted ? "primary" : undefined}
+                  opacity={isTargeted ? 0.7 : 0.3}
+                  className={cn(
+                    "flex items-center justify-center transition-all not-first:hidden",
+                  )}
+                  h={30}
+                >
+                  {isTargeted
                     ? "Tasks will be added here"
                     : "No tasks assigned"}
-              </Text>
-            )}
-          </Box>
-        </TasksContainer>
+                </Text>
+              )}
+            </Box>
+          )}
+        </SortableTasksContainer>
       </ScrollArea>
     </Panel>
-  );
-}
-
-function TasksContainer({
-  id,
-  items,
-  children,
-  dndEnabled,
-}: PropsWithChildren<{
-  id: string;
-  items: TaskReference[];
-  dndEnabled?: boolean;
-}>) {
-  const { setNodeRef } = useDroppable({
-    id,
-    disabled: !dndEnabled,
-  });
-
-  return (
-    <SortableContext
-      id={id}
-      items={items.map(({ taskId, subtaskId }) => `${taskId}-${subtaskId}`)}
-      strategy={verticalListSortingStrategy}
-    >
-      <Stack gap="sm" p="sm" bg="neutral.8" ref={setNodeRef}>
-        {children}
-      </Stack>
-    </SortableContext>
   );
 }
 
@@ -308,7 +277,7 @@ interface StandaloneTaskItemProps
     "otherSprints" | "onMoveTasks" | "onUnassignTasks"
   > {
   item: FlatTask;
-  dndEnabled?: boolean;
+  dndEnabled: boolean;
 }
 
 function StandaloneTaskItem({
@@ -318,20 +287,8 @@ function StandaloneTaskItem({
   onMoveTasks,
   onUnassignTasks,
 }: StandaloneTaskItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: `${item.taskId}-${item.subtaskId}`,
-    disabled: !dndEnabled,
-    data: { item },
-  });
-
-  const { active } = useDndContext();
+  const { attributes, listeners, setNodeRef, style, isDragging, active } =
+    useSortableTask(item, dndEnabled);
 
   return (
     <ActionsMenu
@@ -355,10 +312,7 @@ function StandaloneTaskItem({
           )
         }
         ref={setNodeRef}
-        style={{
-          transform: CSS.Transform.toString(transform),
-          transition,
-        }}
+        style={style}
         {...attributes}
         {...listeners}
       />

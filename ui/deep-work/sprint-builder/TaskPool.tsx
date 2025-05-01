@@ -1,7 +1,6 @@
 import type { MenuProps, PaperProps } from "@mantine/core";
 import type { PropsWithChildren } from "react";
 import { useEffect } from "react";
-import { useDndContext, useDraggable, useDroppable } from "@dnd-kit/core";
 import {
   ActionIcon,
   Button,
@@ -27,14 +26,16 @@ import type {
   TaskReference,
 } from "@/core/task-management";
 import { groupFlatTasks, isTaskGroup } from "@/core/task-management";
+import { useTaskSelection } from "@/ui/task-management";
+import { cn } from "@/ui/utils";
+
 import {
   NestedTaskItemBase,
   StandaloneTaskItemBase,
   TaskItemsGroupContainer,
   TaskItemsGroupHeader,
-} from "@/ui/deep-work/sprint-builder/components";
-import { useTaskSelection } from "@/ui/task-management";
-import { cn } from "@/ui/utils";
+} from "./components";
+import { useDraggableTask, useDroppableTaskPool } from "./dnd";
 
 export interface TaskPoolProps {
   tasks: FlatTask[];
@@ -95,10 +96,7 @@ export function TaskPool({
 
   const items = dndEnabled ? tasks : groupFlatTasks(tasks);
 
-  const { setNodeRef } = useDroppable({
-    id: "TASK_POOL",
-    disabled: !dndEnabled,
-  });
+  const { setNodeRef } = useDroppableTaskPool(dndEnabled);
 
   return (
     <Paper
@@ -208,13 +206,8 @@ function StandaloneTaskItem({
   onClick,
   onAssignTasksToSprint,
 }: StandaloneTaskItemProps) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `${item.taskId}-${item.subtaskId}`,
-    disabled: !dndEnabled,
-    data: { item },
-  });
-
-  const { active } = useDndContext();
+  const { attributes, listeners, setNodeRef, isDragging, active } =
+    useDraggableTask(item, dndEnabled);
 
   return (
     <ActionsMenu
