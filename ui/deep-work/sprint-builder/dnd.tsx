@@ -104,11 +104,12 @@ export function DndWrapper({
           });
           return;
         }
-
-        onAssignTasksToSprint({
-          sprintId: targetContainerId.toString(),
-          tasks: [active.item],
-        });
+        if (targetContainerId !== TASK_POOL_ID) {
+          onAssignTasksToSprint({
+            sprintId: targetContainerId.toString(),
+            tasks: [active.item],
+          });
+        }
       }}
       onDragEnd={(event) => {
         setActiveItem(undefined);
