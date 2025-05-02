@@ -146,7 +146,11 @@ export default function SessionPage() {
 
   const handleCreateTask = timeTravel.createAction({
     name: "create-task",
-    apply: (task: TaskInput) => tasks.addTask(task),
+    apply: (input: TaskInput) =>
+      tasks.addTask(input).then((task) => {
+        taskList.addTask(task.id);
+        return task;
+      }),
     revert: (task) => {
       taskList.removeTask(task.id);
       void tasks.deleteTask(task.id);
