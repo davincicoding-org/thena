@@ -37,6 +37,11 @@ import {
 } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
+export interface TaskCollectorRef {
+  reset: () => void;
+  resetTask: (taskId: Task["id"], value: TaskInput) => void;
+}
+
 export interface TaskCollectorProps {
   items: Task[];
   onUpdateTask?: (taskId: Task["id"], updates: Partial<Task>) => void;
@@ -50,7 +55,7 @@ export interface TaskCollectorProps {
     onCreate: (project: Project) => void,
   ) => void;
   tags?: Tag[];
-  ref?: Ref<Record<string, (value: TaskInput) => void>>;
+  ref?: Ref<TaskCollectorRef>;
   onCreateTag?: (tag: TagInput, onCreate: (tag: Tag) => void) => void;
   allowImport?: boolean;
   onRequestImport?: () => void;
@@ -95,8 +100,15 @@ export function TaskCollector({
   const itemsReset = useRef<Record<string, (value: TaskInput) => void>>({});
 
   useImperativeHandle(ref, () => {
-    return itemsReset.current;
-  }, []);
+    return {
+      reset: () => {
+        form.reset();
+      },
+      resetTask: (taskId, value) => {
+        itemsReset.current[taskId]?.(value);
+      },
+    };
+  }, [form]);
 
   return (
     <>
@@ -111,7 +123,7 @@ export function TaskCollector({
           scrollbars="y"
           scrollHideDelay={300}
           classNames={{
-            scrollbar: "pb-20!",
+            scrollbar: "pb-12!",
           }}
         >
           <form.Field
