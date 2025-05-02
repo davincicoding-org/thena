@@ -7,7 +7,7 @@ export interface TimeTravelEvent {
 
 export interface TimeTravelActionConfig<Params extends unknown[], Artifact> {
   name: string;
-  apply: (...params: Params) => Promise<Artifact>;
+  apply: (...params: Params) => Artifact | Promise<Artifact>;
   revert: (artifact: Artifact) => void;
 }
 
@@ -49,7 +49,7 @@ export function useTimeTravel({ onNavigated }: TimeTravelHookOptions = {}) {
     revert,
   }: TimeTravelActionConfig<Params, Artifact>) => {
     return (...params: Params) => {
-      void apply(...params).then((artifact) => {
+      void Promise.resolve(apply(...params)).then((artifact) => {
         onNavigated?.({
           event: "push",
           action: name,

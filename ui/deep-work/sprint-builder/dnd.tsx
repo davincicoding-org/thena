@@ -6,7 +6,6 @@ import {
   closestCorners,
   DndContext,
   DragOverlay,
-  KeyboardSensor,
   PointerSensor,
   useDndContext,
   useDraggable,
@@ -17,7 +16,6 @@ import {
 import {
   arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
@@ -57,9 +55,9 @@ export function DndWrapper({
 }: PropsWithChildren<DndWrapperProps>) {
   const sensors = useSensors(
     useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
+    // useSensor(KeyboardSensor, {
+    //   coordinateGetter: sortableKeyboardCoordinates,
+    // }),
   );
 
   const [activeItem, setActiveItem] = useState<FlatTask>();

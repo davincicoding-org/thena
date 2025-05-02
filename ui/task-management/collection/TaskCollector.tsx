@@ -1,11 +1,12 @@
-/* eslint-disable */
 import type { PaperProps } from "@mantine/core";
-import { Ref, RefObject, useImperativeHandle, useRef, useState } from "react";
+import type { Ref } from "react";
+import { useImperativeHandle, useRef } from "react";
 import {
   ActionIcon,
   Button,
   Divider,
   Flex,
+  FocusTrap,
   Modal,
   Paper,
   ScrollArea,
@@ -36,7 +37,7 @@ import {
 } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
-export type TaskCollectorProps = {
+export interface TaskCollectorProps {
   items: Task[];
   onUpdateTask?: (taskId: Task["id"], updates: Partial<Task>) => void;
   onRemoveTask?: (taskId: Task["id"], shouldDelete?: boolean) => void;
@@ -54,7 +55,7 @@ export type TaskCollectorProps = {
   allowImport?: boolean;
   onRequestImport?: () => void;
   containerProps?: Omit<PaperProps, "className">;
-};
+}
 
 export function TaskCollector({
   items,
@@ -308,7 +309,6 @@ function TaskAdder({ onSubmit, allowImport, onRequestImport }: TaskAdderProps) {
   const [visible, { open, close }] = useDisclosure(false);
 
   const [title, setTitle] = useInputState("");
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = () => {
     if (title.trim() === "") return;
@@ -318,51 +318,52 @@ function TaskAdder({ onSubmit, allowImport, onRequestImport }: TaskAdderProps) {
 
   return (
     <Flex
-      gap="xs"
-      p="md"
       pos="sticky"
       bottom={0}
       className={cn(
-        "border-t border-t-[var(--paper-border-color)] backdrop-blur-sm",
+        "border-t border-t-[var(--paper-border-color)] backdrop-blur-sm transition-colors",
         {
-          "flex-col": visible,
+          "flex-col border-t-transparent": visible,
         },
       )}
     >
       {visible ? (
-        <TextInput
-          ref={inputRef}
-          autoFocus
-          size="md"
-          placeholder="New Task"
-          rightSection={
-            <ActionIcon
-              aria-label="Cancel"
-              variant="transparent"
-              color="gray"
-              onClick={() => {
-                setTitle("");
-                close();
-              }}
-            >
-              <IconX size={16} />
-            </ActionIcon>
-          }
-          value={title}
-          onChange={setTitle}
-          onBlur={close}
-          onKeyDown={(e) => {
-            if (e.key !== "Enter") return;
-            handleSubmit();
-            close();
-          }}
-        />
+        <FocusTrap active={visible}>
+          <TextInput
+            autoFocus
+            size="md"
+            radius="md"
+            placeholder="New Task"
+            rightSection={
+              <ActionIcon
+                aria-label="Cancel"
+                variant="transparent"
+                color="gray"
+                onClick={() => {
+                  setTitle("");
+                  close();
+                }}
+              >
+                <IconX size={16} />
+              </ActionIcon>
+            }
+            value={title}
+            onChange={setTitle}
+            onBlur={close}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              handleSubmit();
+              close();
+            }}
+          />
+        </FocusTrap>
       ) : (
         <>
           <Button
-            className="grow-1"
+            flex={1}
             variant="light"
             size="md"
+            radius={0}
             leftSection={<IconPlus size={20} />}
             onClick={open}
           >
@@ -370,12 +371,14 @@ function TaskAdder({ onSubmit, allowImport, onRequestImport }: TaskAdderProps) {
           </Button>
           {allowImport && (
             <Button
-              className="grow-1"
-              variant="default"
+              flex={1}
+              variant="light"
+              color="gray"
+              radius={0}
               size="md"
               onClick={onRequestImport}
             >
-              Add from Backlog
+              Add Existing Tasks
             </Button>
           )}
         </>

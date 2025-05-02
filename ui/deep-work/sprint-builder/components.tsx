@@ -9,11 +9,13 @@ export function StandaloneTaskItemBase({
   rightSection,
   className,
   active,
+  clickable,
   ...props
 }: {
   item: FlatTask;
   ref?: Ref<HTMLDivElement>;
   rightSection?: ReactNode;
+  clickable?: boolean;
   active?: boolean;
 } & HTMLAttributes<HTMLDivElement>) {
   return (
@@ -24,6 +26,9 @@ export function StandaloneTaskItemBase({
         label={item.title}
         className={className}
         classNames={{
+          root: cn({
+            "cursor-default! hover:bg-[unset]!": !clickable,
+          }),
           body: cn("flex flex-col-reverse"),
           label: cn("truncate text-nowrap"),
           description: cn("truncate text-nowrap"),

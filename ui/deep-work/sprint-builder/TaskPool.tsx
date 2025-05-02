@@ -219,20 +219,24 @@ function StandaloneTaskItem({
       <StandaloneTaskItemBase
         item={item}
         active={selected}
+        clickable={!active}
         className={cn("transition-opacity", {
-          "pointer-events-none opacity-30": isDragging,
+          "opacity-30": isDragging,
+          "cursor-grab!": dndEnabled,
         })}
+        ref={setNodeRef}
+        {...attributes}
         rightSection={
           active && dndEnabled ? null : dndEnabled ? (
-            <IconGripVertical size={12} />
+            <IconGripVertical
+              className="cursor-grab"
+              size={12}
+              {...listeners}
+            />
           ) : (
             <IconDotsVertical size={12} />
           )
         }
-        ref={setNodeRef}
-        {...attributes}
-        {...listeners}
-        // TODO Check if this doesn't break the dnd
         onClick={onClick}
       />
     </ActionsMenu>

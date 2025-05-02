@@ -157,6 +157,17 @@ export default function SessionPage() {
     },
   });
 
+  const handleAddTasks = timeTravel.createAction({
+    name: "add-tasks",
+    apply: (taskIds: Task["id"][]) => {
+      taskList.addTasks(taskIds);
+      return taskIds;
+    },
+    revert: (taskIds) => {
+      taskList.removeTasks(taskIds);
+    },
+  });
+
   const handleRemoveTask = timeTravel.createAction({
     name: "remove-task",
     apply: async (taskId: Task["id"], shouldDelete = false) => {
@@ -183,6 +194,8 @@ export default function SessionPage() {
       if (!prevState) return;
       tasks.insertTask(prevState);
 
+      // TODO This should only revert the actual change, not the whole task
+      // as some fields might have been chnaged externally
       taskReset.current[prevState.id]?.(prevState);
     },
   });
@@ -422,7 +435,7 @@ export default function SessionPage() {
                 ({ taskId }) => taskId,
               );
 
-              taskList.addTasks(taskIds);
+              handleAddTasks(taskIds);
 
               backlogTaskSelection.clearSelection();
               backlogPanel.close();
