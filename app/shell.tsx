@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ActionIcon, AppShell, Flex, Modal, Text } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
+import { ActionIcon, AppShell, Flex, Popover, Text } from "@mantine/core";
 import { IconAdjustmentsHorizontal } from "@tabler/icons-react";
 
 import { Configuration } from "@/ui/config";
@@ -11,7 +10,6 @@ import { cn } from "@/ui/utils";
 
 export default function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [isConfigOpen, configModal] = useDisclosure(false);
 
   return (
     <AppShell header={{ height: 60 }}>
@@ -32,28 +30,24 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             THENA
           </Text>
 
-          <ActionIcon
-            variant="subtle"
-            color="gray"
-            size="xl"
-            ml="auto"
-            aria-label="Configuration"
-            onClick={configModal.open}
-          >
-            <IconAdjustmentsHorizontal size={24} />
-          </ActionIcon>
+          <Popover withArrow arrowPosition="center" radius="md" offset={0}>
+            <Popover.Target>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                size="xl"
+                ml="auto"
+                aria-label="Configuration"
+              >
+                <IconAdjustmentsHorizontal size={24} />
+              </ActionIcon>
+            </Popover.Target>
+            <Popover.Dropdown>
+              <Configuration className="w-78" />
+            </Popover.Dropdown>
+          </Popover>
         </Flex>
       </AppShell.Header>
-
-      <Modal
-        title={<Text size="xl">Configuration</Text>}
-        opened={isConfigOpen}
-        centered
-        transitionProps={{ transition: "pop" }}
-        onClose={configModal.close}
-      >
-        <Configuration />
-      </Modal>
 
       {children}
     </AppShell>

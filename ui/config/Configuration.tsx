@@ -1,5 +1,6 @@
 "use client";
 
+import type { BoxProps } from "@mantine/core";
 import { useEffect } from "react";
 import {
   ActionIcon,
@@ -10,13 +11,15 @@ import {
   Paper,
   ScrollArea,
   Select,
+  SimpleGrid,
   Slider,
   Stack,
   Switch,
   Tabs,
   TextInput,
+  Tooltip,
 } from "@mantine/core";
-import { IconVolume, IconX } from "@tabler/icons-react";
+import { IconAlertCircle, IconVolume, IconX } from "@tabler/icons-react";
 
 import type { LLMConfig } from "@/core/config/models";
 import type { SupportedLang } from "@/ui/assistant";
@@ -32,12 +35,12 @@ const llmProviders = LLMConfigSchema.options.map(
   (option) => option.parse({}).provider,
 );
 
-export function Configuration() {
+export function Configuration({ ...boxProps }: BoxProps) {
   const { llm, switchLLMProvider, updateLLMConfig } = useModelsConfigStore();
 
   return (
     <>
-      <Tabs variant="pills" defaultValue="Features" radius="xs">
+      <Tabs variant="pills" defaultValue="Features" {...boxProps}>
         <Paper bg="neutral.8" radius="sm" withBorder mb="lg">
           <ScrollArea scrollbars="x">
             <Tabs.List style={{ flexWrap: "nowrap" }} grow>
@@ -107,19 +110,29 @@ function FeaturesConfig() {
     <Stack gap="sm">
       <Fieldset legend="Session Planning">
         <Switch
-          label="Time Travel"
+          label={
+            <Flex gap={8} align="center">
+              Time Travel
+              <Tooltip label='Currently only supported in "Collect Tasks" tab.'>
+                <IconAlertCircle size={16} className="stroke-amber-500" />
+              </Tooltip>
+            </Flex>
+          }
           checked={flags["sprint-planner--time-travel"]}
           onChange={() => toggleFlag("sprint-planner--time-travel")}
           description={
-            <>
-              Use <Kbd size="xs">⌘</Kbd>+<Kbd size="xs">Z</Kbd> to undo and{" "}
-              <Kbd size="xs">⌘</Kbd>+<Kbd size="xs">Shift</Kbd>+
-              <Kbd size="xs">Z</Kbd> to redo actions.
-              <br />
-              <span className="text-neutral-4 italic">
-                Currently only supported in &quot;Collect Tasks&quot; tab.
-              </span>
-            </>
+            <SimpleGrid cols={2} spacing="xs">
+              <div>
+                <Kbd size="xs">⌘</Kbd>+<Kbd size="xs">Z</Kbd>
+              </div>
+              <span>Undo last Action</span>
+
+              <div>
+                <Kbd size="xs">⌘</Kbd>+<Kbd size="xs">Shift</Kbd>+
+                <Kbd size="xs">Z</Kbd>
+              </div>
+              <span>Redo Action</span>
+            </SimpleGrid>
           }
         />
       </Fieldset>
