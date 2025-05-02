@@ -11,7 +11,6 @@ export * from "./collection/useTasks";
 export * from "./collection/useTasksQueryOptions";
 export * from "./collection/utils";
 
-export * from "./metadata/ProjectCreator";
 export * from "./metadata/useProjects";
 export * from "./metadata/ProjectAvatar";
 export * from "./metadata/ProjectsTile";

@@ -1,9 +1,9 @@
+import type { Meta, StoryObj } from "@storybook/react";
 import { Fragment } from "react";
 import { Button, Divider } from "@mantine/core";
 import { action } from "@storybook/addon-actions";
 import { fn } from "@storybook/test";
 
-import type { Meta, StoryObj } from "@storybook/react";
 import type { TaskInput } from "@/core/task-management";
 import { MOCK_PROJECTS, MOCK_TAGS } from "@/core/task-management/mock";
 
@@ -36,8 +36,8 @@ const meta = {
     projects: MOCK_PROJECTS,
     tags: MOCK_TAGS,
     onSubmit: fn(),
-    onAssignToNewProject: fn(),
-    onAttachNewTag: fn(),
+    onCreateProject: fn(),
+    onCreateTag: fn(),
   },
 } satisfies Meta<typeof Playground>;
 

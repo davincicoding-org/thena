@@ -25,7 +25,6 @@ import { SidePanel } from "@/ui/components/SidePanel";
 import { IntelligenceTile } from "@/ui/intelligence";
 import {
   Backlog,
-  ProjectCreator,
   ProjectsTile,
   taskFormOpts,
   useProjects,
@@ -34,6 +33,11 @@ import {
   useTasks,
   useTasksQueryOptions,
 } from "@/ui/task-management";
+import { ProjectForm } from "@/ui/task-management/metadata/ProjectForm";
+import {
+  projectFormOpts,
+  useProjectForm,
+} from "@/ui/task-management/metadata/useProjectForm";
 
 export default function HomePage() {
   const { projects, createProject, loading: loadingProjects } = useProjects();
@@ -44,6 +48,15 @@ export default function HomePage() {
     (acc, task) => acc + (task.subtasks?.length ?? 1),
     0,
   );
+
+  const projectForm = useProjectForm({
+    ...projectFormOpts,
+    onSubmit: ({ value }) => {
+      createProject(value);
+      projectCreatorModal.close();
+      projectForm.reset();
+    },
+  });
 
   const [isBacklogPanelOpen, backlogPanel] = useDisclosure();
   return (
@@ -100,12 +113,30 @@ export default function HomePage() {
         withCloseButton={false}
         onClose={projectCreatorModal.close}
       >
-        <ProjectCreator
-          onCreate={(project) => {
-            createProject(project);
-            projectCreatorModal.close();
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void projectForm.handleSubmit();
           }}
-        />
+        >
+          <ProjectForm form={projectForm} />
+
+          <Divider />
+          <projectForm.Subscribe
+            selector={(state) => state.isValid && state.isDirty}
+            children={(isValid) => (
+              <Button
+                fullWidth
+                radius={0}
+                size="md"
+                type="submit"
+                disabled={!isValid}
+              >
+                Create Project
+              </Button>
+            )}
+          />
+        </form>
       </Modal>
 
       <BacklogPanel isOpen={isBacklogPanelOpen} onClose={backlogPanel.close} />

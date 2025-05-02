@@ -199,9 +199,12 @@ export default function SessionPage() {
         name: "remove-task",
         apply: async (taskId: Task["id"], shouldDelete = false) => {
           taskList.removeTask(taskId);
+          // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
+          taskCollectorFormRef.current?.reset();
           const taskToRestore = shouldDelete
             ? await tasks.deleteTask(taskId)
             : undefined;
+
           return {
             taskId,
             taskToRestore,
@@ -209,11 +212,15 @@ export default function SessionPage() {
         },
         revert: ({ taskId, taskToRestore }) => {
           taskList.addTask(taskId);
+          // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
+          taskCollectorFormRef.current?.reset();
           if (taskToRestore) void tasks.insertTask(taskToRestore);
         },
       })
     : (taskId: Task["id"], shouldDelete = false) => {
         taskList.removeTask(taskId);
+        // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
+        taskCollectorFormRef.current?.reset();
         if (shouldDelete) void tasks.deleteTask(taskId);
       };
 

@@ -1,3 +1,9 @@
+import type {
+  AvatarProps,
+  FlexProps,
+  TextareaProps,
+  TextInputProps,
+} from "@mantine/core";
 import { useState } from "react";
 import {
   ActionIcon,
@@ -15,46 +21,42 @@ import {
 } from "@mantine/core";
 import { useClickOutside, useDisclosure } from "@mantine/hooks";
 import { IconUpload } from "@tabler/icons-react";
-import { useForm } from "@tanstack/react-form";
 
-import type { ProjectInput } from "@/core/task-management";
-import { colorsEnum, projectInputSchema } from "@/core/task-management";
+import { colorsEnum } from "@/core/task-management";
 import { cn } from "@/ui/utils";
 
-export interface ProjectCreatorProps {
-  onCreate: (project: ProjectInput) => void;
-  className?: string;
-}
+import { projectFormOpts, withProjectForm } from "./useProjectForm";
 
-export function ProjectCreator({ onCreate }: ProjectCreatorProps) {
-  const form = useForm({
-    defaultValues: {
-      name: "",
-      description: "",
-    } as ProjectInput,
-    validators: {
-      onChange: projectInputSchema,
-    },
-    onSubmit: ({ value }) => {
-      onCreate(value);
-      form.reset();
-    },
-  });
+export type ProjectFormProps = {
+  withImage?: boolean;
+  NameFieldProps?: TextInputProps;
+  DescriptionFieldProps?: TextareaProps;
+  ImageFieldProps?: AvatarProps;
+} & FlexProps &
+  Record<string, unknown>;
 
-  const [isAvatarPanelOpen, avatarPanel] = useDisclosure(false);
-  const avatarPanelRef = useClickOutside(() => avatarPanel.close());
+export const ProjectForm = withProjectForm({
+  ...projectFormOpts,
+  props: {} as ProjectFormProps,
+  render: ({
+    form,
+    NameFieldProps,
+    DescriptionFieldProps,
+    ImageFieldProps,
+    withImage = true,
+    gap = "md" as FlexProps["gap"],
+    ...flexProps
+  }) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [isAvatarPanelOpen, avatarPanel] = useDisclosure(false);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const avatarPanelRef = useClickOutside(() => avatarPanel.close());
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const [imagePreview, setImagePreview] = useState<string>();
 
-  const [imagePreview, setImagePreview] = useState<string>();
-
-  return (
-    <Box>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void form.handleSubmit();
-        }}
-      >
-        <Flex gap="md" p="lg">
+    return (
+      <Flex gap={gap} p="lg" {...flexProps}>
+        {withImage && (
           <Popover
             opened={isAvatarPanelOpen}
             position="bottom-start"
@@ -72,6 +74,7 @@ export function ProjectCreator({ onCreate }: ProjectCreatorProps) {
                     color={color}
                     name={name || "P"}
                     onClick={avatarPanel.toggle}
+                    {...ImageFieldProps}
                   />
                 </Popover.Target>
               )}
@@ -161,47 +164,35 @@ export function ProjectCreator({ onCreate }: ProjectCreatorProps) {
               />
             </Popover.Dropdown>
           </Popover>
-          <Stack flex={1}>
-            <form.Field
-              name="name"
-              children={(field) => (
-                <TextInput
-                  placeholder="Project name"
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-              )}
-            />
+        )}
+        {/* @ts-expect-error - poorly typed */}
+        <Stack flex={1} gap={gap}>
+          <form.Field
+            name="name"
+            children={(field) => (
+              <TextInput
+                placeholder="Project name"
+                value={field.state.value}
+                onChange={(e) => field.handleChange(e.target.value)}
+                {...NameFieldProps}
+              />
+            )}
+          />
 
-            <form.Field
-              name="description"
-              children={(field) => (
-                <Textarea
-                  placeholder="Description (optional)"
-                  rows={3}
-                  value={field.state.value}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                />
-              )}
-            />
-          </Stack>
-        </Flex>
-        <Divider />
-        <form.Subscribe
-          selector={(state) => state.isValid && state.isDirty}
-          children={(isValid) => (
-            <Button
-              fullWidth
-              radius={0}
-              size="md"
-              type="submit"
-              disabled={!isValid}
-            >
-              Create Project
-            </Button>
-          )}
-        />
-      </form>
-    </Box>
-  );
-}
+          <form.Field
+            name="description"
+            children={(field) => (
+              <Textarea
+                placeholder="Description (optional)"
+                rows={3}
+                value={field.state.value}
+                onChange={(e) => field.handleChange(e.target.value)}
+                {...DescriptionFieldProps}
+              />
+            )}
+          />
+        </Stack>
+      </Flex>
+    );
+  },
+});

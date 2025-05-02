@@ -21,9 +21,9 @@ export const baseTaskSchema = z.object({
   id: z.string(),
   title: z.string().trim().min(1),
   tags: z.array(z.string()).optional(),
-  estimatedTime: z.number().optional(),
-  complexity: taskComplexityEnum.optional(),
-  priority: taskPriorityEnum.optional(),
+  estimatedTime: z.number().optional().nullable(),
+  complexity: taskComplexityEnum.optional().nullable(),
+  priority: taskPriorityEnum.optional().nullable(),
 });
 export type BaseTask = z.infer<typeof baseTaskSchema>;
 
@@ -31,7 +31,7 @@ export const subtaskSchema = baseTaskSchema;
 export type Subtask = z.infer<typeof subtaskSchema>;
 
 export const taskSchema = baseTaskSchema.extend({
-  projectId: z.string().optional(),
+  projectId: z.string().optional().nullable(),
   subtasks: z.array(subtaskSchema).optional(),
 });
 export type Task = z.infer<typeof taskSchema>;
@@ -55,7 +55,7 @@ export const flatTaskSchema = baseTaskSchema
   .omit({ id: true })
   .extend({
     parentTitle: z.string().optional(),
-    projectId: z.string().optional(),
+    projectId: z.string().optional().nullable(),
   })
   .and(taskReferenceSchema);
 
@@ -126,13 +126,11 @@ export type ProjectInput = z.infer<typeof projectInputSchema>;
 
 export const tagSchema = z.object({
   id: z.string(),
-  name: z.string(),
+  name: z.string().min(1),
   description: z.string().optional(),
   color: colorsEnum.optional(),
 });
 export type Tag = z.infer<typeof tagSchema>;
 
-export const tagInputSchema = tagSchema.extend({
-  id: z.never(),
-});
+export const tagInputSchema = tagSchema.omit({ id: true });
 export type TagInput = z.infer<typeof tagInputSchema>;

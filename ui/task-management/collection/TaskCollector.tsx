@@ -29,12 +29,7 @@ import type {
 } from "@/core/task-management";
 import type { TaskFormProps } from "@/ui/task-management";
 import { taskInputSchema, taskSchema } from "@/core/task-management";
-import {
-  ProjectCreator,
-  TagCreator,
-  TaskForm,
-  useTaskForm,
-} from "@/ui/task-management";
+import { TaskForm, useTaskForm } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
 export interface TaskCollectorRef {
@@ -56,7 +51,7 @@ export interface TaskCollectorProps {
   ) => void;
   tags?: Tag[];
   ref?: Ref<TaskCollectorRef>;
-  onCreateTag?: (tag: TagInput, onCreate: (tag: Tag) => void) => void;
+  onCreateTag?: (input: TagInput, callback: (tag: Tag) => void) => void;
   allowImport?: boolean;
   onRequestImport?: () => void;
   containerProps?: Omit<PaperProps, "className">;
@@ -91,11 +86,6 @@ export function TaskCollector({
       }),
     },
   });
-  const [isCreatingProject, projectAdder] = useDisclosure(false);
-  const createProjectCallback = useRef<(project: Project) => void>(null);
-
-  const [isCreatingTag, tagAdder] = useDisclosure(false);
-  const createTagCallback = useRef<(tag: Tag) => void>(null);
 
   const itemsReset = useRef<Record<string, (value: TaskInput) => void>>({});
 
@@ -111,170 +101,122 @@ export function TaskCollector({
   }, [form]);
 
   return (
-    <>
-      <Paper
-        withBorder
-        display="grid"
-        radius="md"
-        className={cn("max-w-96 grid-rows-[1fr_auto] overflow-clip", className)}
-        {...paperProps}
-      >
-        <ScrollArea
-          scrollbars="y"
-          scrollHideDelay={300}
-          classNames={{
-            scrollbar: "pb-12!",
-          }}
-        >
-          <form.Field
-            name="items"
-            mode="array"
-            children={(itemsField) =>
-              itemsField.state.value.length ? (
-                <Stack p="md">
-                  {itemsField.state.value.map((item, index) => (
-                    <form.Field
-                      key={item.id}
-                      name={`items[${index}]`}
-                      children={(itemField) => (
-                        <>
-                          <form.Field
-                            name={`items[${index}].id`}
-                            defaultValue={item.id}
-                            children={() => null}
-                          />
-                          <Item
-                            item={itemField.state.value}
-                            onChange={(update) => {
-                              itemField.handleChange({
-                                id: item.id,
-                                ...update,
-                              });
-                              onUpdateTask?.(item.id, update);
-                            }}
-                            ref={(reset) => {
-                              if (!reset) return;
-                              itemsReset.current[item.id] = reset;
-                            }}
-                            projects={projects}
-                            tags={tags}
-                            TaskActions={({ defaultActions }) => (
-                              <>
-                                {onRefineTask && (
-                                  <>
-                                    <Button
-                                      fullWidth
-                                      variant="subtle"
-                                      color="gray"
-                                      justify="flex-start"
-                                      onClick={() => onRefineTask(item)}
-                                    >
-                                      Refine
-                                    </Button>
-                                    <Divider />
-                                  </>
-                                )}
-                                {defaultActions}
-                                <Divider />
-                                <Button
-                                  fullWidth
-                                  variant="subtle"
-                                  color="gray"
-                                  justify="flex-start"
-                                  onClick={() => onRemoveTask?.(item.id, false)}
-                                >
-                                  Postpone for later
-                                </Button>
-                                <Divider />
-                                <Button
-                                  fullWidth
-                                  color="red"
-                                  variant="subtle"
-                                  justify="flex-start"
-                                  leftSection={<IconTrash size={16} />}
-                                  onClick={() => onRemoveTask?.(item.id, true)}
-                                >
-                                  Delete
-                                </Button>
-                              </>
-                            )}
-                            onAssignToNewProject={(callback) => {
-                              createProjectCallback.current = callback;
-                              projectAdder.open();
-                            }}
-                            onAttachNewTag={(callback) => {
-                              createTagCallback.current = callback;
-                              tagAdder.open();
-                            }}
-                          />
-                        </>
-                      )}
-                    />
-                  ))}
-                </Stack>
-              ) : (
-                <Text
-                  p="lg"
-                  size="xl"
-                  opacity={0.5}
-                  className="min-w-0 text-center leading-normal! text-balance"
-                >
-                  Start planning your next session by adding all the tasks you
-                  want to achieve.
-                </Text>
-              )
-            }
-          />
-          <TaskAdder
-            onSubmit={onAddTask}
-            allowImport={allowImport}
-            onRequestImport={onRequestImport}
-          />
-        </ScrollArea>
-      </Paper>
-      <Modal
-        opened={isCreatingProject}
-        centered
-        withCloseButton={false}
-        transitionProps={{ transition: "pop" }}
-        onClose={() => {
-          projectAdder.close();
-          createProjectCallback.current = null;
+    <Paper
+      withBorder
+      display="grid"
+      radius="md"
+      className={cn("max-w-96 grid-rows-[1fr_auto] overflow-clip", className)}
+      {...paperProps}
+    >
+      <ScrollArea
+        scrollbars="y"
+        scrollHideDelay={300}
+        classNames={{
+          scrollbar: "pb-12!",
         }}
       >
-        <ProjectCreator
-          onCreate={(values) => {
-            projectAdder.close();
-            onCreateProject?.(values, (project) => {
-              if (createProjectCallback.current === null) return;
-              createProjectCallback.current(project);
-              createProjectCallback.current = null;
-            });
-          }}
+        <form.Field
+          name="items"
+          mode="array"
+          children={(itemsField) =>
+            itemsField.state.value.length ? (
+              <Stack p="md">
+                {itemsField.state.value.map((item, index) => (
+                  <form.Field
+                    key={item.id}
+                    name={`items[${index}]`}
+                    children={(itemField) => (
+                      <>
+                        <form.Field
+                          name={`items[${index}].id`}
+                          defaultValue={item.id}
+                          children={() => null}
+                        />
+                        <Item
+                          item={itemField.state.value}
+                          onChange={(update) => {
+                            itemField.handleChange({
+                              id: item.id,
+                              ...update,
+                            });
+                            onUpdateTask?.(item.id, update);
+                          }}
+                          ref={(reset) => {
+                            if (!reset) return;
+                            itemsReset.current[item.id] = reset;
+                          }}
+                          projects={projects}
+                          tags={tags}
+                          TaskActions={({ defaultActions }) => (
+                            <>
+                              {onRefineTask && (
+                                <>
+                                  <Button
+                                    fullWidth
+                                    variant="subtle"
+                                    color="gray"
+                                    justify="flex-start"
+                                    onClick={() => onRefineTask(item)}
+                                  >
+                                    Refine
+                                  </Button>
+                                  <Divider />
+                                </>
+                              )}
+                              {defaultActions}
+                              <Divider />
+                              <Button
+                                fullWidth
+                                variant="subtle"
+                                radius={0}
+                                color="gray"
+                                justify="flex-start"
+                                onClick={() => onRemoveTask?.(item.id, false)}
+                              >
+                                Postpone for later
+                              </Button>
+                              <Divider />
+                              <Button
+                                fullWidth
+                                color="red"
+                                radius={0}
+                                variant="subtle"
+                                justify="flex-start"
+                                leftSection={<IconTrash size={16} />}
+                                onClick={() => onRemoveTask?.(item.id, true)}
+                              >
+                                Delete
+                              </Button>
+                            </>
+                          )}
+                          onCreateProject={onCreateProject}
+                          onCreateTag={onCreateTag}
+                        />
+                      </>
+                    )}
+                  />
+                ))}
+              </Stack>
+            ) : (
+              <Text
+                p="lg"
+                size="xl"
+                opacity={0.5}
+                className="min-w-0 text-center leading-normal! text-balance"
+              >
+                Start planning your next session by adding all the tasks you
+                want to achieve.
+              </Text>
+            )
+          }
         />
-      </Modal>
-      <Modal
-        opened={isCreatingTag}
-        centered
-        withCloseButton={false}
-        transitionProps={{ transition: "pop" }}
-        onClose={() => {
-          tagAdder.close();
-          createTagCallback.current = null;
-        }}
-      >
-        <TagCreator
-          onCreate={(values) => {
-            tagAdder.close();
-            onCreateTag?.(values, (tag) => {
-              if (createTagCallback.current === null) return;
-              createTagCallback.current(tag);
-              createTagCallback.current = null;
-            });
-          }}
+        <TaskAdder
+          onSubmit={onAddTask}
+          allowImport={allowImport}
+          onRequestImport={onRequestImport}
         />
-      </Modal>
-    </>
+      </ScrollArea>
+    </Paper>
   );
 }
 

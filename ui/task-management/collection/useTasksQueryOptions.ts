@@ -53,7 +53,7 @@ export function useTasksQueryOptions({
       }
 
       if (filters.projectIds?.length) {
-        if (task.projectId === undefined) return acc;
+        if (!task.projectId) return acc;
         if (!filters.projectIds.includes(task.projectId)) return acc;
       }
 

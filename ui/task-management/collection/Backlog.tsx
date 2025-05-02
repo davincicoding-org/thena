@@ -3,7 +3,6 @@
 
 import type { PaperProps } from "@mantine/core";
 import type { IconProps } from "@tabler/icons-react";
-import { useRef } from "react";
 import {
   ActionIcon,
   Avatar,
@@ -16,7 +15,6 @@ import {
   Fieldset,
   Flex,
   Menu,
-  Modal,
   NavLink,
   Popover,
   ScrollArea,
@@ -25,7 +23,6 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
 import {
   IconAbc,
   IconCalendar,
@@ -58,8 +55,6 @@ import { Panel } from "@/ui/components/Panel";
 import { useSyncInputState } from "@/ui/hooks/useSyncState";
 import {
   hasFiltersApplied,
-  ProjectCreator,
-  TagCreator,
   TaskForm,
   taskFormOpts,
   useTaskForm,
@@ -112,117 +107,61 @@ export function Backlog({
   onToggleTaskSelection,
   ...paperProps
 }: BacklogProps & PaperProps) {
-  const [isCreatingProject, projectAdder] = useDisclosure(false);
-  const createProjectCallback = useRef<(project: Project) => void>(null);
-
-  const [isCreatingTag, tagAdder] = useDisclosure(false);
-  const createTagCallback = useRef<(tag: Tag) => void>(null);
-
   return (
-    <>
-      <Panel
-        header={
-          <BacklogHeader
-            disabled={tasks.length === 0}
-            filters={filters}
-            onFiltersUpdate={onFiltersUpdate}
-            projects={projects}
-            tags={tags}
-            sort={sort}
-            onSortUpdate={onSortUpdate}
-          />
-        }
-        {...paperProps}
-      >
-        {tasks.length > 0 ? (
-          <ScrollArea bg="neutral.8">
-            <Stack px="md" py="lg">
-              {tasks.map((task) => (
-                <TaskItem
-                  key={task.id}
-                  mode={mode}
-                  task={task}
-                  projects={projects}
-                  tags={tags}
-                  onUpdate={(values) => onUpdateTask?.(task.id, values)}
-                  onDelete={() => onDeleteTask?.(task.id)}
-                  onAssignToNewProject={(callback) => {
-                    createProjectCallback.current = callback;
-                    projectAdder.open();
-                  }}
-                  onAttachNewTag={(callback) => {
-                    createTagCallback.current = callback;
-                    tagAdder.open();
-                  }}
-                  selected={selectedTasks?.some(
-                    (selectedTask) => selectedTask.taskId === task.id,
-                  )}
-                  onToggleSelection={() =>
-                    onToggleTaskSelection?.({
-                      taskId: task.id,
-                      subtaskId: null,
-                    })
-                  }
-                />
-              ))}
-              <Text className="not-first:hidden" my="auto">
-                Your Backlog is empty
-              </Text>
-            </Stack>
-          </ScrollArea>
-        ) : (
-          <Center>
-            <Text opacity={0.5} size="xl">
-              {hasFiltersApplied(filters)
-                ? "No tasks match your filters"
-                : "Your Backlog is empty"}
+    <Panel
+      header={
+        <BacklogHeader
+          disabled={tasks.length === 0}
+          filters={filters}
+          onFiltersUpdate={onFiltersUpdate}
+          projects={projects}
+          tags={tags}
+          sort={sort}
+          onSortUpdate={onSortUpdate}
+        />
+      }
+      {...paperProps}
+    >
+      {tasks.length > 0 ? (
+        <ScrollArea bg="neutral.8">
+          <Stack px="md" py="lg">
+            {tasks.map((task) => (
+              <TaskItem
+                key={task.id}
+                mode={mode}
+                task={task}
+                projects={projects}
+                tags={tags}
+                onUpdate={(values) => onUpdateTask?.(task.id, values)}
+                onDelete={() => onDeleteTask?.(task.id)}
+                onCreateProject={onCreateProject}
+                onCreateTag={onCreateTag}
+                selected={selectedTasks?.some(
+                  (selectedTask) => selectedTask.taskId === task.id,
+                )}
+                onToggleSelection={() =>
+                  onToggleTaskSelection?.({
+                    taskId: task.id,
+                    subtaskId: null,
+                  })
+                }
+              />
+            ))}
+            <Text className="not-first:hidden" my="auto">
+              Your Backlog is empty
             </Text>
-          </Center>
-        )}
-      </Panel>
-      <Modal
-        opened={isCreatingProject}
-        centered
-        withCloseButton={false}
-        transitionProps={{ transition: "pop" }}
-        onClose={() => {
-          projectAdder.close();
-          createProjectCallback.current = null;
-        }}
-      >
-        <ProjectCreator
-          onCreate={(values) => {
-            projectAdder.close();
-            onCreateProject?.(values, (project) => {
-              if (createProjectCallback.current === null) return;
-              createProjectCallback.current(project);
-              createProjectCallback.current = null;
-            });
-          }}
-        />
-      </Modal>
-      <Modal
-        opened={isCreatingTag}
-        centered
-        withCloseButton={false}
-        transitionProps={{ transition: "pop" }}
-        onClose={() => {
-          tagAdder.close();
-          createTagCallback.current = null;
-        }}
-      >
-        <TagCreator
-          onCreate={(values) => {
-            tagAdder.close();
-            onCreateTag?.(values, (tag) => {
-              if (createTagCallback.current === null) return;
-              createTagCallback.current(tag);
-              createTagCallback.current = null;
-            });
-          }}
-        />
-      </Modal>
-    </>
+          </Stack>
+        </ScrollArea>
+      ) : (
+        <Center>
+          <Text opacity={0.5} size="xl">
+            {hasFiltersApplied(filters)
+              ? "No tasks match your filters"
+              : "Your Backlog is empty"}
+          </Text>
+        </Center>
+      )}
+    </Panel>
   );
 }
 
@@ -483,7 +422,7 @@ function BacklogHeader({
 interface TaskItemProps
   extends Pick<
     TaskFormProps,
-    "projects" | "onAssignToNewProject" | "tags" | "onAttachNewTag"
+    "projects" | "onCreateProject" | "tags" | "onCreateTag"
   > {
   mode: "select" | "edit";
   task: StoredTask;
@@ -501,8 +440,8 @@ function TaskItem({
   projects,
   tags,
   selected,
-  onAssignToNewProject,
-  onAttachNewTag,
+  onCreateProject,
+  onCreateTag,
   onToggleSelection,
 }: TaskItemProps) {
   const form = useTaskForm({
@@ -547,8 +486,8 @@ function TaskItem({
             </Button>
           </>
         )}
-        onAssignToNewProject={onAssignToNewProject}
-        onAttachNewTag={onAttachNewTag}
+        onCreateProject={onCreateProject}
+        onCreateTag={onCreateTag}
       />
       <form.Subscribe
         selector={(state) => !isEqual(state.values, task) && state.isValid}
