@@ -31,6 +31,7 @@ import type { TaskCollectorRef } from "@/ui/task-management";
 import { sprintPlanSchema } from "@/core/deep-work";
 import { taskSchema } from "@/core/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
+import { useFlagsStore } from "@/ui/config";
 import { FocusSession, SprintBuilder, useSprintBuilder } from "@/ui/deep-work";
 import { useLocalStorageSync } from "@/ui/hooks/useLocalStorageSync";
 import { useTimeTravel } from "@/ui/hooks/useTimeTravel";
@@ -46,10 +47,11 @@ import {
 } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
-const TIME_TRAVEL_ENABLED = true;
-
 export default function SessionPage() {
   const router = useRouter();
+
+  const TIME_TRAVEL_ENABLED =
+    useFlagsStore().flags["sprint-planner--time-travel"];
 
   const tasks = useTasks();
 
@@ -153,21 +155,21 @@ export default function SessionPage() {
         apply: (input: TaskInput) =>
           tasks.addTask(input).then((task) => {
             taskList.addTask(task.id);
-            // QUICKFIX - This is needed because new tasks are not displayed in the form anymore after updating an existing task
+            // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
             taskCollectorFormRef.current?.reset();
             return task;
           }),
         revert: (task) => {
           taskList.removeTask(task.id);
           void tasks.deleteTask(task.id);
-          // QUICKFIX - This is needed because new tasks are not displayed in the form anymore after updating an existing task
+          // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
           taskCollectorFormRef.current?.reset();
         },
       })
     : (input: TaskInput) =>
         void tasks.addTask(input).then((task) => {
           taskList.addTask(task.id);
-          // QUICKFIX - This is needed because new tasks are not displayed in the form anymore after updating an existing task
+          // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
           taskCollectorFormRef.current?.reset();
         });
 
@@ -176,19 +178,19 @@ export default function SessionPage() {
         name: "add-tasks",
         apply: (taskIds: Task["id"][]) => {
           taskList.addTasks(taskIds);
-          // QUICKFIX - This is needed because new tasks are not displayed in the form anymore after updating an existing task
+          // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
           taskCollectorFormRef.current?.reset();
           return taskIds;
         },
         revert: (taskIds) => {
           taskList.removeTasks(taskIds);
-          // QUICKFIX - This is needed because new tasks are not displayed in the form anymore after updating an existing task
+          // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
           taskCollectorFormRef.current?.reset();
         },
       })
     : (taskIds: Task["id"][]) => {
         taskList.addTasks(taskIds);
-        // QUICKFIX - This is needed because new tasks are not displayed in the form anymore after updating an existing task
+        // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
         taskCollectorFormRef.current?.reset();
       };
 

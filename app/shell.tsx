@@ -6,7 +6,7 @@ import { ActionIcon, AppShell, Flex, Modal, Text } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconAdjustmentsHorizontal } from "@tabler/icons-react";
 
-import { Configuration } from "@/ui/misc/Configuration";
+import { Configuration } from "@/ui/config";
 import { cn } from "@/ui/utils";
 
 export default function Shell({ children }: { children: React.ReactNode }) {

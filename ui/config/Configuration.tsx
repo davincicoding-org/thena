@@ -6,11 +6,13 @@ import {
   Fieldset,
   Flex,
   InputLabel,
+  Kbd,
   Paper,
   ScrollArea,
   Select,
   Slider,
   Stack,
+  Switch,
   Tabs,
   TextInput,
 } from "@mantine/core";
@@ -24,6 +26,7 @@ import {
   useSpeechConfigStore,
   useSpeechSynthesis,
 } from "@/ui/assistant";
+import { useFlagsStore } from "@/ui/config";
 
 const llmProviders = LLMConfigSchema.options.map(
   (option) => option.parse({}).provider,
@@ -34,10 +37,11 @@ export function Configuration() {
 
   return (
     <>
-      <Tabs variant="pills" defaultValue="Speech" radius="xs">
+      <Tabs variant="pills" defaultValue="Features" radius="xs">
         <Paper bg="neutral.8" radius="sm" withBorder mb="lg">
           <ScrollArea scrollbars="x">
             <Tabs.List style={{ flexWrap: "nowrap" }} grow>
+              <Tabs.Tab value="Features">Features</Tabs.Tab>
               <Tabs.Tab value="Speech">Speech</Tabs.Tab>
               <Tabs.Tab value="LLM" disabled>
                 LLM
@@ -45,6 +49,9 @@ export function Configuration() {
             </Tabs.List>
           </ScrollArea>
         </Paper>
+        <Tabs.Panel value="Features">
+          <FeaturesConfig />
+        </Tabs.Panel>
         <Tabs.Panel value="Speech">
           <SpeechConfig />
         </Tabs.Panel>
@@ -90,6 +97,33 @@ export function Configuration() {
         </Tabs.Panel>
       </Tabs>
     </>
+  );
+}
+
+function FeaturesConfig() {
+  const { flags, toggleFlag } = useFlagsStore();
+
+  return (
+    <Stack gap="sm">
+      <Fieldset legend="Session Planning">
+        <Switch
+          label="Time Travel"
+          checked={flags["sprint-planner--time-travel"]}
+          onChange={() => toggleFlag("sprint-planner--time-travel")}
+          description={
+            <>
+              Use <Kbd size="xs">⌘</Kbd>+<Kbd size="xs">Z</Kbd> to undo and{" "}
+              <Kbd size="xs">⌘</Kbd>+<Kbd size="xs">Shift</Kbd>+
+              <Kbd size="xs">Z</Kbd> to redo actions.
+              <br />
+              <span className="text-neutral-4 italic">
+                Currently only supported in &quot;Collect Tasks&quot; tab.
+              </span>
+            </>
+          }
+        />
+      </Fieldset>
+    </Stack>
   );
 }
 
