@@ -2,11 +2,8 @@ import type { StackProps, TextareaProps, TextInputProps } from "@mantine/core";
 import {
   ActionIcon,
   Box,
-  Card,
-  Collapse,
   Flex,
   Overlay,
-  Paper,
   ScrollArea,
   Stack,
   Textarea,

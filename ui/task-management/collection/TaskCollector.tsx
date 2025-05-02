@@ -7,7 +7,6 @@ import {
   Divider,
   Flex,
   FocusTrap,
-  Modal,
   Paper,
   ScrollArea,
   Stack,
@@ -22,8 +21,6 @@ import { z } from "zod";
 import type {
   Project,
   ProjectInput,
-  Tag,
-  TagInput,
   Task,
   TaskInput,
 } from "@/core/task-management";
@@ -49,9 +46,7 @@ export interface TaskCollectorProps {
     project: ProjectInput,
     onCreate: (project: Project) => void,
   ) => void;
-  tags?: Tag[];
   ref?: Ref<TaskCollectorRef>;
-  onCreateTag?: (input: TagInput, callback: (tag: Tag) => void) => void;
   allowImport?: boolean;
   onRequestImport?: () => void;
   containerProps?: Omit<PaperProps, "className">;
@@ -65,8 +60,6 @@ export function TaskCollector({
   onRefineTask,
   projects = [],
   onCreateProject,
-  tags = [],
-  onCreateTag,
   allowImport,
   onRequestImport,
   className,
@@ -146,7 +139,7 @@ export function TaskCollector({
                             itemsReset.current[item.id] = reset;
                           }}
                           projects={projects}
-                          tags={tags}
+                          onCreateProject={onCreateProject}
                           TaskActions={({ defaultActions }) => (
                             <>
                               {onRefineTask && (
@@ -189,8 +182,6 @@ export function TaskCollector({
                               </Button>
                             </>
                           )}
-                          onCreateProject={onCreateProject}
-                          onCreateTag={onCreateTag}
                         />
                       </>
                     )}
@@ -249,7 +240,7 @@ function Item({
         form.setFieldValue(key as keyof TaskInput, value);
       });
     };
-  }, []);
+  }, [form]);
 
   return <TaskForm form={form} {...props} />;
 }

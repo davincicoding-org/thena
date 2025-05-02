@@ -1,21 +1,8 @@
-import {
-  ActionIcon,
-  Box,
-  Button,
-  Flex,
-  Paper,
-  Popover,
-  SimpleGrid,
-  Stack,
-  Textarea,
-  TextInput,
-} from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
+import { Button, Paper, Stack } from "@mantine/core";
 import { useForm } from "@tanstack/react-form";
 
 import type { TagInput } from "@/core/task-management";
-import { colorsEnum, tagInputSchema } from "@/core/task-management";
-import { cn } from "@/ui/utils";
+import { tagInputSchema } from "@/core/task-management";
 
 export interface TagCreatorProps {
   onCreate: (tag: TagInput) => void;

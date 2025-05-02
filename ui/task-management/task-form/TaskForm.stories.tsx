@@ -34,10 +34,8 @@ const meta = {
   args: {
     initialValues: taskFormOpts.defaultValues,
     projects: MOCK_PROJECTS,
-    tags: MOCK_TAGS,
     onSubmit: fn(),
     onCreateProject: fn(),
-    onCreateTag: fn(),
   },
 } satisfies Meta<typeof Playground>;
 

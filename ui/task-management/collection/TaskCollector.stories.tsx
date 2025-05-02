@@ -42,13 +42,11 @@ const meta = {
       },
     ],
     projects: MOCK_PROJECTS,
-    tags: MOCK_TAGS,
     onUpdateTask: fn(),
     onRemoveTask: fn(),
     onAddTask: fn(),
     onRefineTask: fn(),
     onCreateProject: fn(),
-    onCreateTag: fn(),
     onRequestImport: fn(),
     allowImport: true,
   },
@@ -65,11 +63,9 @@ export const Showcase: Story = {
     onRemoveTask,
     onRefineTask,
     onCreateProject,
-    onCreateTag,
     allowImport: allowPullFromBacklog,
     onRequestImport: onRequestToPullFromBacklog,
     projects,
-    tags,
   }) => {
     const [, updateArgs] = useArgs<TaskCollectorProps>();
     return (
@@ -98,8 +94,6 @@ export const Showcase: Story = {
         onRefineTask={onRefineTask}
         projects={projects}
         onCreateProject={onCreateProject}
-        tags={tags}
-        onCreateTag={onCreateTag}
         allowImport={allowPullFromBacklog}
         onRequestImport={onRequestToPullFromBacklog}
       />

@@ -1,5 +1,5 @@
-export * from "./task/TaskForm";
-export * from "./task/useTaskForm";
+export * from "./task-form/TaskForm";
+export * from "./task-form/useTaskForm";
 
 export * from "./collection/useTaskList";
 export * from "./collection/useMinimalTaskList";

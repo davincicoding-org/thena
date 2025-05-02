@@ -18,7 +18,6 @@ import {
   NavLink,
   Popover,
   ScrollArea,
-  Space,
   Stack,
   Text,
   TextInput,
@@ -30,7 +29,6 @@ import {
   IconSearch,
   IconSortAscending,
   IconSortDescending,
-  IconTag,
   IconTrash,
   IconX,
 } from "@tabler/icons-react";
@@ -42,8 +40,6 @@ import type {
   Project,
   ProjectInput,
   StoredTask,
-  Tag,
-  TagInput,
   TaskFilters,
   TaskInput,
   TaskReference,
@@ -75,7 +71,6 @@ export interface BacklogProps {
   onFiltersUpdate: TasksQueryOptionsHookReturn["updateFilters"];
   onSortUpdate: TasksQueryOptionsHookReturn["updateSort"];
   projects: Project[];
-  tags: Tag[];
   onUpdateTask?: (
     taskId: StoredTask["id"],
     values: Partial<StoredTask>,
@@ -85,7 +80,6 @@ export interface BacklogProps {
     project: ProjectInput,
     onCreate: (project: Project) => void,
   ) => void;
-  onCreateTag?: (tag: TagInput, onCreate: (tag: Tag) => void) => void;
   selectedTasks?: TaskReference[];
   onToggleTaskSelection?: (task: TaskReference) => void;
 }
@@ -98,11 +92,9 @@ export function Backlog({
   onFiltersUpdate,
   onSortUpdate,
   projects,
-  tags,
   onUpdateTask,
   onDeleteTask,
   onCreateProject,
-  onCreateTag,
   selectedTasks,
   onToggleTaskSelection,
   ...paperProps
@@ -115,7 +107,6 @@ export function Backlog({
           filters={filters}
           onFiltersUpdate={onFiltersUpdate}
           projects={projects}
-          tags={tags}
           sort={sort}
           onSortUpdate={onSortUpdate}
         />
@@ -131,11 +122,9 @@ export function Backlog({
                 mode={mode}
                 task={task}
                 projects={projects}
-                tags={tags}
                 onUpdate={(values) => onUpdateTask?.(task.id, values)}
                 onDelete={() => onDeleteTask?.(task.id)}
                 onCreateProject={onCreateProject}
-                onCreateTag={onCreateTag}
                 selected={selectedTasks?.some(
                   (selectedTask) => selectedTask.taskId === task.id,
                 )}
@@ -170,12 +159,7 @@ export function Backlog({
 interface BacklogHeaderProps
   extends Pick<
     BacklogProps,
-    | "filters"
-    | "onFiltersUpdate"
-    | "projects"
-    | "tags"
-    | "sort"
-    | "onSortUpdate"
+    "filters" | "onFiltersUpdate" | "projects" | "sort" | "onSortUpdate"
   > {
   disabled?: boolean;
 }
@@ -185,7 +169,6 @@ function BacklogHeader({
   filters,
   onFiltersUpdate,
   projects,
-  tags,
   sort,
   onSortUpdate,
 }: BacklogHeaderProps) {
@@ -195,12 +178,6 @@ function BacklogHeader({
     projects.find((project) => project.id === projectId) ?? {
       id: projectId,
       name: projectId,
-    };
-
-  const resolveTag = (tagId: string): Tag =>
-    tags.find((tag) => tag.id === tagId) ?? {
-      id: tagId,
-      name: tagId,
     };
 
   return (
@@ -217,7 +194,7 @@ function BacklogHeader({
             onFiltersUpdate({ search: e.target.value });
           }}
         />
-        {(projects.length > 0 || tags.length > 0) && (
+        {projects.length > 0 && (
           <Popover
             position="bottom-start"
             withArrow
@@ -269,37 +246,6 @@ function BacklogHeader({
                                     (id) => id !== project.id,
                                   )
                                 : [...(filters.projectIds ?? []), project.id],
-                            });
-                          }}
-                        />
-                      ))}
-                    </ScrollArea>
-                  </Fieldset>
-                )}
-                {tags.length > 0 && (
-                  <Fieldset
-                    legend="Tags"
-                    p={0}
-                    classNames={{ legend: "text-center" }}
-                  >
-                    <ScrollArea scrollbars="y" h={180}>
-                      {tags.map((tag) => (
-                        <NavLink
-                          key={tag.id}
-                          label={tag.name}
-                          leftSection={
-                            <Box
-                              bg={tag.color ?? "gray"}
-                              className="h-4 w-4 rounded-full"
-                            />
-                          }
-                          component="button"
-                          active={filters.tags?.includes(tag.id)}
-                          onClick={() => {
-                            onFiltersUpdate({
-                              tags: filters.tags?.includes(tag.id)
-                                ? filters.tags?.filter((id) => id !== tag.id)
-                                : [...(filters.tags ?? []), tag.id],
                             });
                           }}
                         />
@@ -381,35 +327,6 @@ function BacklogHeader({
                 </Badge>
               );
             })}
-            <Divider
-              orientation="vertical"
-              color="neutral.2"
-              className="first:hidden last:hidden"
-            />
-            {filters.tags?.map((tagId) => {
-              const tag = resolveTag(tagId);
-              return (
-                <Badge
-                  key={tagId}
-                  component="button"
-                  className="shrink-0 cursor-pointer!"
-                  color={tag.color ?? "gray"}
-                  size="md"
-                  variant="light"
-                  autoContrast
-                  leftSection={<IconTag size={12} />}
-                  rightSection={<IconX size={12} />}
-                  onClick={() => {
-                    onFiltersUpdate({
-                      tags: filters.tags?.filter((id) => id !== tagId),
-                    });
-                  }}
-                >
-                  {tag.name}
-                </Badge>
-              );
-            })}
-            <Space w={2} />
           </Flex>
         </ScrollArea>
       </Collapse>
@@ -420,10 +337,7 @@ function BacklogHeader({
 // MARK: Task Item
 
 interface TaskItemProps
-  extends Pick<
-    TaskFormProps,
-    "projects" | "onCreateProject" | "tags" | "onCreateTag"
-  > {
+  extends Pick<TaskFormProps, "projects" | "onCreateProject"> {
   mode: "select" | "edit";
   task: StoredTask;
   selected?: boolean;
@@ -438,10 +352,8 @@ function TaskItem({
   onUpdate,
   onDelete,
   projects,
-  tags,
   selected,
   onCreateProject,
-  onCreateTag,
   onToggleSelection,
 }: TaskItemProps) {
   const form = useTaskForm({
@@ -468,7 +380,6 @@ function TaskItem({
         }
         readOnly={mode !== "edit"}
         projects={projects}
-        tags={tags}
         TaskActions={({ defaultActions }) => (
           <>
             {defaultActions}
@@ -487,7 +398,6 @@ function TaskItem({
           </>
         )}
         onCreateProject={onCreateProject}
-        onCreateTag={onCreateTag}
       />
       <form.Subscribe
         selector={(state) => !isEqual(state.values, task) && state.isValid}

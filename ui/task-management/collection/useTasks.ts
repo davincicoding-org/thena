@@ -20,7 +20,7 @@ export function useTasks() {
     task: TaskInput,
     callback?: (task: StoredTask) => void,
   ): void | Promise<StoredTask> {
-    const backendCall = (result: StoredTask) => {
+    const backendCall = (_result: StoredTask) => {
       // TODO store tag in backend
     };
 
@@ -47,7 +47,7 @@ export function useTasks() {
     tasks: TaskInput[],
     callback?: (tasks: StoredTask[]) => void,
   ): void | Promise<StoredTask[]> {
-    const backendCall = (result: StoredTask[]) => {
+    const backendCall = (_result: StoredTask[]) => {
       // TODO store tag in backend
     };
 
@@ -84,7 +84,7 @@ export function useTasks() {
     ) => void,
   ): void | Promise<Record<"updated" | "prev", StoredTask> | undefined> {
     const backendCall = (
-      result: Record<"updated" | "prev", StoredTask> | undefined,
+      _result: Record<"updated" | "prev", StoredTask> | undefined,
     ) => {
       // TODO store tag in backend
     };
@@ -117,7 +117,7 @@ export function useTasks() {
     taskId: Task["id"],
     callback?: (task: StoredTask | undefined) => void,
   ): void | Promise<StoredTask | undefined> {
-    const backendCall = (result: StoredTask | undefined) => {
+    const backendCall = (_result: StoredTask | undefined) => {
       // TODO delete in backend
     };
 
@@ -144,7 +144,7 @@ export function useTasks() {
     taskIds: Task["id"][],
     callback?: (tasks: StoredTask[]) => void,
   ): void | Promise<StoredTask[]> {
-    const backendCall = (result: StoredTask[]) => {
+    const backendCall = (_result: StoredTask[]) => {
       // TODO delete in backend
     };
 

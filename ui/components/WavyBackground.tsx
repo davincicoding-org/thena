@@ -129,6 +129,7 @@ export const WavyBackground = ({
         cancelAnimationFrame(animationId);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [disabled]);
 
   const [isSafari, setIsSafari] = useState(false);

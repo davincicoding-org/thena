@@ -28,7 +28,6 @@ import {
   ProjectsTile,
   taskFormOpts,
   useProjects,
-  useTags,
   useTaskForm,
   useTasks,
   useTasksQueryOptions,
@@ -153,7 +152,6 @@ function BacklogPanel({
 }) {
   const tasks = useTasks();
   const { projects, createProject } = useProjects();
-  const { tags, createTag } = useTags();
 
   const { filters, filterTasks, updateFilters, sort, sortFn, updateSort } =
     useTasksQueryOptions();
@@ -181,11 +179,9 @@ function BacklogPanel({
           sort={sort}
           onSortUpdate={updateSort}
           projects={projects}
-          tags={tags}
           onUpdateTask={tasks.updateTask}
           onDeleteTask={tasks.deleteTask}
           onCreateProject={createProject}
-          onCreateTag={createTag}
         />
         <BacklogTaskAdder onSubmit={tasks.addTask} />
       </Flex>

@@ -40,7 +40,6 @@ import {
   TaskCollector,
   useMinimalTaskList,
   useProjects,
-  useTags,
   useTasks,
   useTaskSelection,
   useTasksQueryOptions,
@@ -108,7 +107,6 @@ export default function SessionPage() {
     : tasks.items.filter((task) => !taskList.taskIds.includes(task.id));
 
   const { projects, createProject } = useProjects();
-  const { tags, createTag } = useTags();
 
   const { filterTasks, ...backlogQueryoptions } = useTasksQueryOptions();
   const backlogTasks = filterTasks(importableTasks).sort(
@@ -297,8 +295,6 @@ export default function SessionPage() {
               onAddTask={handleCreateTask}
               projects={projects}
               onCreateProject={createProject}
-              tags={tags}
-              onCreateTag={createTag}
               allowImport={importableTasks.length > 0}
               onRequestImport={backlogPanel.open}
             />
@@ -466,7 +462,6 @@ export default function SessionPage() {
             filters={backlogQueryoptions.filters}
             sort={backlogQueryoptions.sort}
             projects={projects}
-            tags={tags}
             onFiltersUpdate={backlogQueryoptions.updateFilters}
             onSortUpdate={backlogQueryoptions.updateSort}
             selectedTasks={backlogTaskSelection.selection}

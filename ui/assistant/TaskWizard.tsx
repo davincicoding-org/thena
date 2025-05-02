@@ -4,12 +4,7 @@ import { Button, Center, Flex, Stack } from "@mantine/core";
 
 import { taskManagerResponseSchema } from "@/ui/assistant/schema";
 import { useKeyHold } from "@/ui/hooks/useKeyHold";
-import {
-  TaskCollector,
-  useProjects,
-  useTags,
-  useTaskList,
-} from "@/ui/task-management";
+import { TaskCollector, useProjects, useTaskList } from "@/ui/task-management";
 
 import type { AssistantIndicatorProps } from "../assistant/AssistantIndicator";
 import { AssistantIndicator } from "../assistant/AssistantIndicator";
@@ -35,7 +30,6 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
 
   const { tasks, setTasks, addTask, updateTask, removeTask } = useTaskList();
   const { projects, createProject } = useProjects();
-  const { tags, createTag } = useTags();
 
   const chat = useChat({
     api: "/api/task-manager",
@@ -111,7 +105,6 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
                 maw={500}
                 items={tasks}
                 projects={projects}
-                tags={tags}
                 onUpdateTask={(taskId, updates) => updateTask(taskId, updates)}
                 onRemoveTask={(taskId) => removeTask(taskId)}
                 onAddTask={(task) => addTask(task)}
@@ -122,7 +115,6 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
                   });
                 }}
                 onCreateProject={createProject}
-                onCreateTag={createTag}
               />
             </Stack>
           )}

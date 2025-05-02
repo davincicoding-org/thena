@@ -45,10 +45,6 @@ const meta = {
       { id: "dercampus", name: "dercampus" },
       { id: "con8", name: "Con8", color: "yellow" },
     ],
-    tags: [
-      { id: "work", name: "Work" },
-      { id: "personal", name: "Personal", color: "green" },
-    ],
     onFiltersUpdate: fn(),
     onSortUpdate: fn(),
     onUpdateTask: fn(),
