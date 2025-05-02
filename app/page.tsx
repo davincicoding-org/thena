@@ -32,11 +32,11 @@ import {
   useTasks,
   useTasksQueryOptions,
 } from "@/ui/task-management";
-import { ProjectForm } from "@/ui/task-management/metadata/ProjectForm";
+import { ProjectForm } from "@/ui/task-management/project/ProjectForm";
 import {
   projectFormOpts,
   useProjectForm,
-} from "@/ui/task-management/metadata/useProjectForm";
+} from "@/ui/task-management/project/useProjectForm";
 
 export default function HomePage() {
   const { projects, createProject, loading: loadingProjects } = useProjects();

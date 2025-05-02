@@ -46,18 +46,13 @@ import type {
   TasksSortOptions,
 } from "@/core/task-management";
 import type { TaskFormProps } from "@/ui/task-management";
-import { TASKS_SORT_OPTIONS } from "@/core/task-management";
+import { hasFiltersApplied, TASKS_SORT_OPTIONS } from "@/core/task-management";
 import { Panel } from "@/ui/components/Panel";
 import { useSyncInputState } from "@/ui/hooks/useSyncState";
-import {
-  hasFiltersApplied,
-  TaskForm,
-  taskFormOpts,
-  useTaskForm,
-} from "@/ui/task-management";
+import { TaskForm, taskFormOpts, useTaskForm } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
-import type { TasksQueryOptionsHookReturn } from "./useTasksQueryOptions";
+import type { TasksQueryOptionsHookReturn } from "../tasks/useTasksQueryOptions";
 
 dayjs.extend(relativeTime);
 

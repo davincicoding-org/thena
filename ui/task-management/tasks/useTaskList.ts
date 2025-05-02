@@ -3,11 +3,11 @@ import { useMemo, useState } from "react";
 import type { Task } from "@/core/task-management";
 import type { ActionSideEffect } from "@/ui/hooks/useHistory";
 
-export interface MinimalTaskListHookOptions {
+export interface TaskListHookOptions {
   initialTasks?: Task["id"][];
 }
 
-export interface MinimalTaskListHookReturn {
+export interface TaskListHookReturn {
   taskIds: Task["id"][];
   setTaskIds: (taskIds: Task["id"][]) => void;
 
@@ -23,19 +23,19 @@ export interface MinimalTaskListHookReturn {
   removeTasks: (taskIds: Task["id"][], sideEffect?: ActionSideEffect) => void;
 }
 
-export function useMinimalTaskList(
+export function useTaskList(
   taskPool: Task[],
-  options: MinimalTaskListHookOptions = {},
-): MinimalTaskListHookReturn {
+  options: TaskListHookOptions = {},
+): TaskListHookReturn {
   // TODO tasks ids need to be revalidated when taskPool shrinks OR MAYBE NOT
   // TODO ensure uniquness
-  const [taskIds, setTaskIds] = useState<MinimalTaskListHookReturn["taskIds"]>(
+  const [taskIds, setTaskIds] = useState<TaskListHookReturn["taskIds"]>(
     options.initialTasks ?? [],
   );
 
   const tasks = useMemo(
     () =>
-      taskIds.reduce<MinimalTaskListHookReturn["tasks"]>((acc, id) => {
+      taskIds.reduce<TaskListHookReturn["tasks"]>((acc, id) => {
         const task = taskPool.find((task) => task.id === id);
         if (!task) return acc;
         return [...acc, task];

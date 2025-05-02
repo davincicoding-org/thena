@@ -5,8 +5,7 @@ import type {
   TaskFilters,
   TasksSortOptions,
 } from "@/core/task-management";
-
-import { hasFiltersApplied } from "./utils";
+import { hasFiltersApplied } from "@/core/task-management";
 
 export interface TasksHookOptions {
   defaultFilters?: TaskFilters;

@@ -14,12 +14,10 @@ import { useDisclosure, useInputState } from "@mantine/hooks";
 import { IconChevronLeft, IconX } from "@tabler/icons-react";
 
 import type { Tag, TagInput, TaskInput } from "@/core/task-management";
-import { TagForm } from "@/ui/task-management/metadata/TagForm";
-import {
-  tagFormOpts,
-  useTagForm,
-} from "@/ui/task-management/metadata/useTagForm";
 import { cn } from "@/ui/utils";
+
+import { TagForm } from "../tags/TagForm";
+import { tagFormOpts, useTagForm } from "../tags/useTagForm";
 
 export interface TagsPickerProps {
   value: TaskInput["tags"];

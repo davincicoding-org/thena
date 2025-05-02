@@ -1,22 +1,21 @@
 export * from "./task-form/TaskForm";
 export * from "./task-form/useTaskForm";
 
-export * from "./collection/useTaskList";
-export * from "./collection/useMinimalTaskList";
-export * from "./collection/TaskCollector";
-export * from "./collection/useTaskSelection";
-
 export * from "./collection/Backlog";
-export * from "./collection/useTasks";
-export * from "./collection/useTasksQueryOptions";
-export * from "./collection/utils";
 
-export * from "./metadata/useProjects";
-export * from "./metadata/ProjectAvatar";
-export * from "./metadata/ProjectsTile";
-export * from "./metadata/TagCreator";
-export * from "./metadata/useTags";
-export * from "./metadata/TagBadge";
+export * from "./tasks/TaskCollector";
+export * from "./tasks/useTaskList";
+export * from "./tasks/useTaskSelection";
+export * from "./tasks/useTasks";
+export * from "./tasks/useTasksQueryOptions";
+
+export * from "./project/useProjects";
+export * from "./project/ProjectAvatar";
+export * from "./project/ProjectsTile";
+
+export * from "./tags/TagCreator";
+export * from "./tags/useTags";
+export * from "./tags/TagBadge";
 
 export * from "./metadata/PriorityBadge";
 export * from "./metadata/ComplexityBadge";

@@ -15,9 +15,9 @@ import { IconChevronLeft, IconX } from "@tabler/icons-react";
 import type { Project, ProjectInput, TaskInput } from "@/core/task-management";
 import { cn } from "@/ui/utils";
 
-import { ProjectAvatar } from "../metadata/ProjectAvatar";
-import { ProjectForm } from "../metadata/ProjectForm";
-import { projectFormOpts, useProjectForm } from "../metadata/useProjectForm";
+import { ProjectAvatar } from "../project/ProjectAvatar";
+import { ProjectForm } from "../project/ProjectForm";
+import { projectFormOpts, useProjectForm } from "../project/useProjectForm";
 
 export interface ProjectPickerProps {
   value: TaskInput["projectId"];

@@ -38,8 +38,8 @@ import { useTimeTravel } from "@/ui/hooks/useTimeTravel";
 import {
   Backlog,
   TaskCollector,
-  useMinimalTaskList,
   useProjects,
+  useTaskList,
   useTasks,
   useTaskSelection,
   useTasksQueryOptions,
@@ -54,7 +54,7 @@ export default function SessionPage() {
 
   const tasks = useTasks();
 
-  const taskList = useMinimalTaskList(tasks.items);
+  const taskList = useTaskList(tasks.items);
 
   const taskCollectorFormRef = useRef<TaskCollectorRef>(null);
 

@@ -1,7 +1,7 @@
+import type { AvatarProps, TooltipProps } from "@mantine/core";
 import { Avatar, Tooltip } from "@mantine/core";
 
 import type { Project } from "@/core/task-management";
-import type { AvatarProps, TooltipProps } from "@mantine/core";
 
 export interface ProjectAvatarProps {
   project: Project;

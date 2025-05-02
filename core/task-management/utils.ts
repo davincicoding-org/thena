@@ -1,4 +1,10 @@
-import type { FlatTask, FlatTaskGroup, Task, TaskReference } from "./types";
+import type {
+  FlatTask,
+  FlatTaskGroup,
+  Task,
+  TaskFilters,
+  TaskReference,
+} from "./types";
 
 export const countTasks = (tasks: Task[]): number =>
   tasks.reduce((acc, task) => acc + (task.subtasks?.length ?? 1), 0);
@@ -141,3 +147,11 @@ export const excludeTaskReferences = (
 
     return [...acc, { taskId, subtaskId }];
   }, []);
+
+export const hasFiltersApplied = ({
+  projectIds,
+  tags,
+  search,
+}: TaskFilters) => {
+  return Boolean(projectIds?.length ?? tags?.length ?? search);
+};

@@ -1,7 +1,7 @@
+import type { BadgeProps } from "@mantine/core";
 import { Badge } from "@mantine/core";
 
 import type { Tag } from "@/core/task-management";
-import type { BadgeProps } from "@mantine/core";
 
 export interface TagBadgeProps {
   tag: Tag;
