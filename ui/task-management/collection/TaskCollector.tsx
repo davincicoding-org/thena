@@ -1,8 +1,8 @@
+/* eslint-disable */
 import type { PaperProps } from "@mantine/core";
-import { useRef } from "react";
+import { Ref, RefObject, useImperativeHandle, useRef, useState } from "react";
 import {
   ActionIcon,
-  Box,
   Button,
   Divider,
   Flex,
@@ -36,23 +36,25 @@ import {
 } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
-export interface TaskCollectorProps {
+export type TaskCollectorProps = {
   items: Task[];
-  onUpdateTask: (taskId: Task["id"], updates: Partial<Task>) => void;
-  onRemoveTask: (taskId: Task["id"], shouldDelete?: boolean) => void;
-  onAddTask: (task: Omit<Task, "id">) => void;
+  onUpdateTask?: (taskId: Task["id"], updates: Partial<Task>) => void;
+  onRemoveTask?: (taskId: Task["id"], shouldDelete?: boolean) => void;
+  onAddTask?: (task: Omit<Task, "id">) => void;
   onRefineTask?: (task: Task) => void;
 
-  projects: Project[];
-  onCreateProject: (
+  projects?: Project[];
+  onCreateProject?: (
     project: ProjectInput,
     onCreate: (project: Project) => void,
   ) => void;
-  tags: Tag[];
-  onCreateTag: (tag: TagInput, onCreate: (tag: Tag) => void) => void;
+  tags?: Tag[];
+  ref?: Ref<Record<string, (value: TaskInput) => void>>;
+  onCreateTag?: (tag: TagInput, onCreate: (tag: Tag) => void) => void;
   allowImport?: boolean;
   onRequestImport?: () => void;
-}
+  containerProps?: Omit<PaperProps, "className">;
+};
 
 export function TaskCollector({
   items,
@@ -60,18 +62,19 @@ export function TaskCollector({
   onRemoveTask,
   onAddTask,
   onRefineTask,
-  tags,
+  projects = [],
   onCreateProject,
-  projects,
+  tags = [],
   onCreateTag,
   allowImport,
   onRequestImport,
   className,
+  ref,
   ...paperProps
 }: TaskCollectorProps & PaperProps) {
   const form = useForm({
     defaultValues: {
-      items,
+      items: items,
     },
     validators: {
       onChange: z.object({
@@ -82,12 +85,17 @@ export function TaskCollector({
       }),
     },
   });
-
   const [isCreatingProject, projectAdder] = useDisclosure(false);
   const createProjectCallback = useRef<(project: Project) => void>(null);
 
   const [isCreatingTag, tagAdder] = useDisclosure(false);
   const createTagCallback = useRef<(tag: Tag) => void>(null);
+
+  const itemsReset = useRef<Record<string, (value: TaskInput) => void>>({});
+
+  useImperativeHandle(ref, () => {
+    return itemsReset.current;
+  }, []);
 
   return (
     <>
@@ -129,7 +137,11 @@ export function TaskCollector({
                                 id: item.id,
                                 ...update,
                               });
-                              onUpdateTask(item.id, update);
+                              onUpdateTask?.(item.id, update);
+                            }}
+                            ref={(reset) => {
+                              if (!reset) return;
+                              itemsReset.current[item.id] = reset;
                             }}
                             projects={projects}
                             tags={tags}
@@ -156,7 +168,7 @@ export function TaskCollector({
                                   variant="subtle"
                                   color="gray"
                                   justify="flex-start"
-                                  onClick={() => onRemoveTask(item.id, false)}
+                                  onClick={() => onRemoveTask?.(item.id, false)}
                                 >
                                   Postpone for later
                                 </Button>
@@ -167,7 +179,7 @@ export function TaskCollector({
                                   variant="subtle"
                                   justify="flex-start"
                                   leftSection={<IconTrash size={16} />}
-                                  onClick={() => onRemoveTask(item.id, true)}
+                                  onClick={() => onRemoveTask?.(item.id, true)}
                                 >
                                   Delete
                                 </Button>
@@ -220,7 +232,7 @@ export function TaskCollector({
         <ProjectCreator
           onCreate={(values) => {
             projectAdder.close();
-            onCreateProject(values, (project) => {
+            onCreateProject?.(values, (project) => {
               if (createProjectCallback.current === null) return;
               createProjectCallback.current(project);
               createProjectCallback.current = null;
@@ -241,7 +253,7 @@ export function TaskCollector({
         <TagCreator
           onCreate={(values) => {
             tagAdder.close();
-            onCreateTag(values, (tag) => {
+            onCreateTag?.(values, (tag) => {
               if (createTagCallback.current === null) return;
               createTagCallback.current(tag);
               createTagCallback.current = null;
@@ -256,9 +268,11 @@ export function TaskCollector({
 function Item({
   item,
   onChange,
+  ref,
   ...props
 }: {
   item: TaskInput;
+  ref: Ref<(value: TaskInput) => void>;
   onChange: (update: TaskInput) => void;
 } & TaskFormProps) {
   const form = useTaskForm({
@@ -274,13 +288,20 @@ function Item({
       },
     },
   });
+  useImperativeHandle(ref, () => {
+    return (value: TaskInput) => {
+      Object.entries(value).forEach(([key, value]) => {
+        form.setFieldValue(key as keyof TaskInput, value);
+      });
+    };
+  }, []);
 
   return <TaskForm form={form} {...props} />;
 }
 
 interface TaskAdderProps
   extends Pick<TaskCollectorProps, "allowImport" | "onRequestImport"> {
-  onSubmit: (task: Omit<Task, "id">) => void;
+  onSubmit?: (task: Omit<Task, "id">) => void;
 }
 
 function TaskAdder({ onSubmit, allowImport, onRequestImport }: TaskAdderProps) {
@@ -291,7 +312,7 @@ function TaskAdder({ onSubmit, allowImport, onRequestImport }: TaskAdderProps) {
 
   const handleSubmit = () => {
     if (title.trim() === "") return;
-    onSubmit({ title: title.trim() });
+    onSubmit?.({ title: title.trim() });
     setTitle("");
   };
 
@@ -361,6 +382,4 @@ function TaskAdder({ onSubmit, allowImport, onRequestImport }: TaskAdderProps) {
       )}
     </Flex>
   );
-
-  return <Box></Box>;
 }

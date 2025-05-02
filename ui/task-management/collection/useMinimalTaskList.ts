@@ -27,7 +27,8 @@ export function useMinimalTaskList(
   taskPool: Task[],
   options: MinimalTaskListHookOptions = {},
 ): MinimalTaskListHookReturn {
-  // TODO tasks ids need to be revalidated when taskPool shrinks
+  // TODO tasks ids need to be revalidated when taskPool shrinks OR MAYBE NOT
+  // TODO ensure uniquness
   const [taskIds, setTaskIds] = useState<MinimalTaskListHookReturn["taskIds"]>(
     options.initialTasks ?? [],
   );
@@ -46,10 +47,11 @@ export function useMinimalTaskList(
     taskIds,
     setTaskIds,
     tasks,
-    addTask: (taskId) => setTaskIds([...taskIds, taskId]),
-    addTasks: (taskIds) => setTaskIds([...taskIds, ...taskIds]),
-    removeTask: (taskId) => setTaskIds(taskIds.filter((id) => id !== taskId)),
+    addTask: (taskId) => setTaskIds((prev) => [...prev, taskId]),
+    addTasks: (taskIds) => setTaskIds((prev) => [...prev, ...taskIds]),
+    removeTask: (taskId) =>
+      setTaskIds((prev) => prev.filter((id) => id !== taskId)),
     removeTasks: (taskIds) =>
-      setTaskIds(taskIds.filter((id) => !taskIds.includes(id))),
+      setTaskIds((prev) => prev.filter((id) => !taskIds.includes(id))),
   };
 }

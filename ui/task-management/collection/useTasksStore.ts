@@ -11,21 +11,27 @@ interface TasksStoreState {
   ready: boolean;
 
   // Mutation actions
-  addTask: (
-    task: TaskInput,
-    callback?: (task: StoredTask) => void | Promise<void>,
-  ) => void;
+  addTask: (task: TaskInput, callback?: (task: StoredTask) => void) => void;
   addTasks: (
     tasks: TaskInput[],
-    callback?: (tasks: StoredTask[]) => void | Promise<void>,
+    callback?: (tasks: StoredTask[]) => void,
   ) => void;
   updateTask: (
     taskId: StoredTask["id"],
     update: Partial<TaskInput>,
-    callback?: (task: StoredTask) => void | Promise<void>,
+    callback?: (
+      state: Record<"updated" | "prev", StoredTask> | undefined,
+    ) => void,
   ) => void;
-  removeTask: (taskId: StoredTask["id"]) => void;
-  removeTasks: (taskIds: StoredTask["id"][]) => void;
+  insertTask: (task: StoredTask) => void;
+  removeTask: (
+    taskId: StoredTask["id"],
+    callback?: (task: StoredTask | undefined) => void,
+  ) => void;
+  removeTasks: (
+    taskIds: StoredTask["id"][],
+    callback?: (tasks: StoredTask[]) => void,
+  ) => void;
 }
 
 export const useTasksStore = create<TasksStoreState>()(
@@ -93,7 +99,10 @@ export const useTasksStore = create<TasksStoreState>()(
         updateTask: (taskId, updates, callback) => {
           set((state) => {
             const existingTask = state.pool[taskId];
-            if (!existingTask) return state;
+            if (!existingTask) {
+              void callback?.(undefined);
+              return state;
+            }
 
             const updatedAt = new Date().toISOString();
 
@@ -102,7 +111,10 @@ export const useTasksStore = create<TasksStoreState>()(
               ...updates,
               updatedAt,
             };
-            void callback?.({ id: taskId, ...updatedTask });
+            callback?.({
+              updated: { id: taskId, ...updatedTask },
+              prev: { id: taskId, ...existingTask },
+            });
 
             return {
               pool: {
@@ -112,25 +124,66 @@ export const useTasksStore = create<TasksStoreState>()(
             };
           });
         },
-        removeTask: (taskId) => {
+        insertTask: ({ id, ...task }) => {
           set((state) => {
-            const { [taskId]: _removedTask, ...remainingTasks } = state.pool;
+            return {
+              pool: {
+                ...state.pool,
+                [id]: task,
+              },
+            };
+          });
+        },
+        removeTask: (taskId, callback) => {
+          set((state) => {
+            const { [taskId]: removedTask, ...remainingTasks } = state.pool;
+
+            void callback?.(removedTask && { id: taskId, ...removedTask });
 
             return {
               pool: remainingTasks,
             };
           });
         },
-        removeTasks: (taskIds) => {
+        removeTasks: (taskIds, callback) => {
           set((state) => {
-            const result = Object.fromEntries(
-              Object.entries(state.pool).filter(
-                ([id]) => !taskIds.includes(id),
-              ),
+            const result = Object.entries(state.pool).reduce<
+              Record<"removed" | "remaining", TasksStoreState["pool"]>
+            >(
+              ({ removed, remaining }, [id, task]) => {
+                if (taskIds.includes(id)) {
+                  return {
+                    remaining,
+                    removed: {
+                      ...removed,
+                      [id]: task,
+                    },
+                  };
+                }
+
+                return {
+                  removed,
+                  remaining: {
+                    ...removed,
+                    [id]: task,
+                  },
+                };
+              },
+              {
+                removed: {},
+                remaining: {},
+              },
+            );
+
+            void callback?.(
+              Object.entries(result.remaining).map(([id, task]) => ({
+                id,
+                ...task,
+              })),
             );
 
             return {
-              pool: result,
+              pool: result.remaining,
             };
           });
         },

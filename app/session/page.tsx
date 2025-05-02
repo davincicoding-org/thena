@@ -1,7 +1,7 @@
 /* eslint-disable max-lines */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AppShell,
@@ -23,22 +23,22 @@ import {
   useHotkeys,
 } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
-import { IconChevronRight, IconTransfer } from "@tabler/icons-react";
+import { IconChevronRight } from "@tabler/icons-react";
 import { z } from "zod";
 
-import type { TaskCollectorProps } from "@/ui/task-management";
+import type { Task, TaskInput } from "@/core/task-management";
 import { sprintPlanSchema } from "@/core/deep-work";
 import { taskSchema } from "@/core/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
 import { FocusSession, SprintBuilder, useSprintBuilder } from "@/ui/deep-work";
 import { useLocalStorageSync } from "@/ui/hooks/useLocalStorageSync";
+import { useTimeTravel } from "@/ui/hooks/useTimeTravel";
 import {
   Backlog,
   TaskCollector,
   useMinimalTaskList,
   useProjects,
   useTags,
-  useTaskList,
   useTasks,
   useTaskSelection,
   useTasksQueryOptions,
@@ -50,11 +50,13 @@ export default function SessionPage() {
 
   const tasks = useTasks();
 
+  const taskList = useMinimalTaskList(tasks.items);
+
+  const taskReset = useRef<Record<string, (value: TaskInput) => void>>({});
+
   // MARK: State
 
   const [stage, setStage] = useState<"task-collector" | "sprint-builder">();
-
-  const taskList = useMinimalTaskList(tasks.items);
 
   const sprintBuilder = useSprintBuilder(taskList.tasks, {
     onError: (error) => console.error(error),
@@ -99,14 +101,10 @@ export default function SessionPage() {
   const importableTasks = tasks.loading
     ? []
     : tasks.items.filter((task) => !taskList.taskIds.includes(task.id));
-  const handleUpdateTask = useDebouncedCallback<
-    TaskCollectorProps["onUpdateTask"]
-  >((taskId, updates) => tasks.updateTask(taskId, updates), 1_000);
 
   const { projects, createProject } = useProjects();
   const { tags, createTag } = useTags();
 
-  // const backlog = useBacklog();
   const { filterTasks, ...backlogQueryoptions } = useTasksQueryOptions();
   const backlogTasks = filterTasks(importableTasks).sort(
     backlogQueryoptions.sortFn,
@@ -135,10 +133,65 @@ export default function SessionPage() {
     sessionModal.open();
   };
 
-  // useHotkeys([
-  //   ["mod+z", taskList.history.undo],
-  //   ["mod+shift+z", taskList.history.redo],
-  // ]);
+  const timeTravel = useTimeTravel({
+    onNavigated: ({ event, action }) => {
+      if (event === "push") return;
+      notifications.show({
+        title: event,
+        message: action,
+        position: "top-right",
+      });
+    },
+  });
+
+  const handleCreateTask = timeTravel.createAction({
+    name: "create-task",
+    apply: (task: TaskInput) => tasks.addTask(task),
+    revert: (task) => {
+      taskList.removeTask(task.id);
+      void tasks.deleteTask(task.id);
+    },
+  });
+
+  const handleRemoveTask = timeTravel.createAction({
+    name: "remove-task",
+    apply: async (taskId: Task["id"], shouldDelete = false) => {
+      taskList.removeTask(taskId);
+      const taskToRestore = shouldDelete
+        ? await tasks.deleteTask(taskId)
+        : undefined;
+      return {
+        taskId,
+        taskToRestore,
+      };
+    },
+    revert: ({ taskId, taskToRestore }) => {
+      taskList.addTask(taskId);
+      if (taskToRestore) void tasks.insertTask(taskToRestore);
+    },
+  });
+
+  const handleUpdateTask = timeTravel.createAction({
+    name: "update-task",
+    apply: (taskId: Task["id"], updates: Partial<TaskInput>) =>
+      tasks.updateTask(taskId, updates).then((state) => state?.prev),
+    revert: (prevState) => {
+      if (!prevState) return;
+      tasks.insertTask(prevState);
+
+      taskReset.current[prevState.id]?.(prevState);
+    },
+  });
+
+  const handleUpdateTaskDebounced = useDebouncedCallback(
+    handleUpdateTask,
+    1_000,
+  );
+
+  useHotkeys([
+    ["mod+z", timeTravel.undo],
+    ["mod+shift+z", timeTravel.redo],
+  ]);
 
   const [
     isDeleteModalOpen,
@@ -176,14 +229,10 @@ export default function SessionPage() {
             <TaskCollector
               className="mx-auto max-h-full"
               items={taskList.tasks}
-              onUpdateTask={handleUpdateTask}
-              onRemoveTask={(taskId, shouldDelete) => {
-                if (shouldDelete) tasks.deleteTask(taskId);
-                taskList.removeTask(taskId);
-              }}
-              onAddTask={(task) =>
-                tasks.addTask(task, ({ id }) => taskList.addTask(id))
-              }
+              ref={taskReset}
+              onUpdateTask={handleUpdateTaskDebounced}
+              onRemoveTask={handleRemoveTask}
+              onAddTask={handleCreateTask}
               projects={projects}
               onCreateProject={createProject}
               tags={tags}

@@ -79,7 +79,7 @@ export const Showcase: Story = {
           updateArgs({
             items: [...items, { ...task, id: Date.now().toString() }],
           });
-          onAddTask(task);
+          onAddTask?.(task);
         }}
         onUpdateTask={(id, updates) => {
           updateArgs({
@@ -87,13 +87,13 @@ export const Showcase: Story = {
               task.id === id ? { ...task, ...updates } : task,
             ),
           });
-          onUpdateTask(id, updates);
+          onUpdateTask?.(id, updates);
         }}
         onRemoveTask={(id) => {
           updateArgs({
             items: items.filter((task) => task.id !== id),
           });
-          onRemoveTask(id);
+          onRemoveTask?.(id);
         }}
         onRefineTask={onRefineTask}
         projects={projects}

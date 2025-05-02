@@ -1,3 +1,5 @@
+import type { MenuProps, PaperProps } from "@mantine/core";
+import type { Updater } from "@tanstack/react-form";
 import type {
   FunctionComponent,
   HTMLAttributes,
@@ -33,8 +35,6 @@ import type {
   TaskComplexity,
   TaskPriority,
 } from "@/core/task-management";
-import type { MenuProps, PaperProps } from "@mantine/core";
-import type { Updater } from "@tanstack/react-form";
 import {
   baseTaskSchema,
   taskComplexityEnum,
@@ -384,11 +384,7 @@ const SubtaskForm = withTaskForm({
   props: {} as SubtaskFormProps,
   render: ({ form, readOnly, index, tags, onRemove, onAttachNewTag }) => {
     return (
-      <Popover
-        position="bottom-end"
-        offset={{ mainAxis: 4, crossAxis: 12 }}
-        withinPortal={false}
-      >
+      <Popover position="bottom-end" offset={{ mainAxis: 4, crossAxis: 12 }}>
         <Flex p={4} gap={4} className="group" align="center">
           <form.Field
             name={`subtasks[${index}].title`}
