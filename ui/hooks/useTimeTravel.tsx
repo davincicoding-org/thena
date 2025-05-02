@@ -57,6 +57,7 @@ export function useTimeTravel({ onNavigated }: TimeTravelHookOptions = {}) {
         pastStack.current.push({
           action: name,
           artifact,
+          // @ts-expect-error - poorly typed
           apply: () => apply(...params),
           // @ts-expect-error - poorly typed
           restore: revert,
