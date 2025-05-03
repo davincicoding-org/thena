@@ -42,7 +42,11 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
     api: "/api/task-manager",
     body: { tasks: taskList.tasks },
     onResponse: async (response) => {
-      const { reply, tasks, usage } = await response
+      const {
+        reply,
+        tasks: _tasks,
+        usage,
+      } = await response
         .json()
         .then((data) => taskManagerResponseSchema.parse(data));
 
@@ -112,12 +116,12 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
                 maw={500}
                 items={taskList.tasks}
                 projects={projects}
-                onUpdateTask={(taskId, updates) =>
-                  tasks.updateTask(taskId, updates)
-                }
+                onUpdateTask={tasks.updateTask}
                 onRemoveTask={(taskId) => taskList.removeTask(taskId)}
                 onAddTask={(task) =>
-                  tasks.addTask(task).then(({ id }) => taskList.addTask(id))
+                  tasks.addTask
+                    .asPromise(task)
+                    .then(({ id }) => taskList.addTask(id))
                 }
                 onRefineTask={(task) => {
                   void chat.append({

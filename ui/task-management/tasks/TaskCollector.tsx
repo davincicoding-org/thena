@@ -36,7 +36,7 @@ export interface TaskCollectorRef {
 
 export interface TaskCollectorProps {
   items: Task[];
-  onUpdateTask?: (taskId: Task["id"], updates: Partial<Task>) => void;
+  onUpdateTask?: (args: { taskId: Task["id"]; updates: Partial<Task> }) => void;
   onRemoveTask?: (taskId: Task["id"], shouldDelete?: boolean) => void;
   onAddTask?: (task: Omit<Task, "id">) => void;
   onRefineTask?: (task: Task) => void;
@@ -127,12 +127,15 @@ export function TaskCollector({
                         />
                         <Item
                           item={itemField.state.value}
-                          onChange={(update) => {
+                          onChange={(updates) => {
                             itemField.handleChange({
                               id: item.id,
-                              ...update,
+                              ...updates,
                             });
-                            onUpdateTask?.(item.id, update);
+                            onUpdateTask?.({
+                              taskId: item.id,
+                              updates: updates,
+                            });
                           }}
                           ref={(reset) => {
                             if (!reset) return;

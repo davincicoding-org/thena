@@ -151,7 +151,7 @@ export default function SessionPage() {
     ? timeTravel.createAction({
         name: "create-task",
         apply: (input: TaskInput) =>
-          tasks.addTask(input).then((task) => {
+          tasks.addTask.asPromise(input).then((task) => {
             taskList.addTask(task.id);
             // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
             taskCollectorFormRef.current?.reset();
@@ -165,7 +165,7 @@ export default function SessionPage() {
         },
       })
     : (input: TaskInput) =>
-        void tasks.addTask(input).then((task) => {
+        void tasks.addTask.asPromise(input).then((task) => {
           taskList.addTask(task.id);
           // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
           taskCollectorFormRef.current?.reset();
@@ -200,7 +200,7 @@ export default function SessionPage() {
           // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
           taskCollectorFormRef.current?.reset();
           const taskToRestore = shouldDelete
-            ? await tasks.deleteTask(taskId)
+            ? await tasks.deleteTask.asPromise(taskId)
             : undefined;
 
           return {
@@ -225,8 +225,8 @@ export default function SessionPage() {
   const handleUpdateTask = TIME_TRAVEL_ENABLED
     ? timeTravel.createAction({
         name: "update-task",
-        apply: (taskId: Task["id"], updates: Partial<TaskInput>) =>
-          tasks.updateTask(taskId, updates).then((state) => state?.prev),
+        apply: (args: { taskId: Task["id"]; updates: Partial<TaskInput> }) =>
+          tasks.updateTask.asPromise(args).then((state) => state?.prev),
         revert: (prevState) => {
           if (!prevState) return;
           tasks.insertTask(prevState);
@@ -236,8 +236,7 @@ export default function SessionPage() {
           taskCollectorFormRef.current?.resetTask(prevState.id, prevState);
         },
       })
-    : (taskId: Task["id"], updates: Partial<TaskInput>) =>
-        void tasks.updateTask(taskId, updates);
+    : tasks.updateTask;
 
   const handleUpdateTaskDebounced = useDebouncedCallback(
     handleUpdateTask,

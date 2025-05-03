@@ -66,10 +66,10 @@ export interface BacklogProps {
   onFiltersUpdate: TasksQueryOptionsHookReturn["updateFilters"];
   onSortUpdate: TasksQueryOptionsHookReturn["updateSort"];
   projects: Project[];
-  onUpdateTask?: (
-    taskId: StoredTask["id"],
-    values: Partial<StoredTask>,
-  ) => void;
+  onUpdateTask?: (args: {
+    taskId: StoredTask["id"];
+    updates: Partial<TaskInput>;
+  }) => void;
   onDeleteTask?: (taskId: StoredTask["id"]) => void;
   onCreateProject?: (
     project: ProjectInput,
@@ -117,7 +117,9 @@ export function Backlog({
                 mode={mode}
                 task={task}
                 projects={projects}
-                onUpdate={(values) => onUpdateTask?.(task.id, values)}
+                onUpdate={(values) =>
+                  onUpdateTask?.({ taskId: task.id, updates: values })
+                }
                 onDelete={() => onDeleteTask?.(task.id)}
                 onCreateProject={onCreateProject}
                 selected={selectedTasks?.some(

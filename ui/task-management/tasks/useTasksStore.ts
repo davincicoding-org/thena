@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import type { StoredTask, TaskInput } from "@/core/task-management";
+import type { SyncMutationAction } from "@/ui/utils";
 import { localDB } from "@/ui/store";
 import { createUniqueId } from "@/ui/utils";
 
@@ -11,27 +12,18 @@ interface TasksStoreState {
   ready: boolean;
 
   // Mutation actions
-  addTask: (task: TaskInput, callback?: (task: StoredTask) => void) => void;
-  addTasks: (
-    tasks: TaskInput[],
-    callback?: (tasks: StoredTask[]) => void,
-  ) => void;
-  updateTask: (
-    taskId: StoredTask["id"],
-    update: Partial<TaskInput>,
-    callback?: (
-      state: Record<"updated" | "prev", StoredTask> | undefined,
-    ) => void,
-  ) => void;
-  insertTask: (task: StoredTask) => void;
-  removeTask: (
-    taskId: StoredTask["id"],
-    callback?: (task: StoredTask | undefined) => void,
-  ) => void;
-  removeTasks: (
-    taskIds: StoredTask["id"][],
-    callback?: (tasks: StoredTask[]) => void,
-  ) => void;
+  addTask: SyncMutationAction<TaskInput, StoredTask>;
+  addTasks: SyncMutationAction<TaskInput[], StoredTask[]>;
+  updateTask: SyncMutationAction<
+    {
+      taskId: StoredTask["id"];
+      updates: Partial<TaskInput>;
+    },
+    Record<"updated" | "prev", StoredTask> | undefined
+  >;
+  insertTask: SyncMutationAction<StoredTask>;
+  removeTask: SyncMutationAction<StoredTask["id"], StoredTask | undefined>;
+  removeTasks: SyncMutationAction<StoredTask["id"][], StoredTask[]>;
 }
 
 export const useTasksStore = create<TasksStoreState>()(
@@ -96,7 +88,7 @@ export const useTasksStore = create<TasksStoreState>()(
             };
           });
         },
-        updateTask: (taskId, updates, callback) => {
+        updateTask: ({ taskId, updates }, callback) => {
           set((state) => {
             const existingTask = state.pool[taskId];
             if (!existingTask) {

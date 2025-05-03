@@ -77,13 +77,13 @@ export const Showcase: Story = {
           });
           onAddTask?.(task);
         }}
-        onUpdateTask={(id, updates) => {
+        onUpdateTask={({ taskId, updates }) => {
           updateArgs({
             items: items.map((task) =>
-              task.id === id ? { ...task, ...updates } : task,
+              task.id === taskId ? { ...task, ...updates } : task,
             ),
           });
-          onUpdateTask?.(id, updates);
+          onUpdateTask?.(taskId, updates);
         }}
         onRemoveTask={(id) => {
           updateArgs({
