@@ -34,6 +34,7 @@
     "@opentelemetry/api-logs": "^0.200.0",
     "@opentelemetry/instrumentation": "^0.200.0",
     "@opentelemetry/sdk-logs": "^0.200.0",
+    "@sentry/nextjs": "^9.15.0",
     "@tabler/icons-react": "^3.31.0",
     "@tailwindcss/postcss": "^4.1.4",
     "@tanstack/react-form": "^1.7.0",
