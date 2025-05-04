@@ -121,16 +121,16 @@ function FeaturesConfig() {
           checked={flags["sprint-planner--time-travel"]}
           onChange={() => toggleFlag("sprint-planner--time-travel")}
           description={
-            <SimpleGrid cols={2} spacing="xs">
-              <div>
+            <SimpleGrid component="span" cols={2} spacing="xs">
+              <span>
                 <Kbd size="xs">⌘</Kbd>+<Kbd size="xs">Z</Kbd>
-              </div>
+              </span>
               <span>Undo last Action</span>
 
-              <div>
+              <span>
                 <Kbd size="xs">⌘</Kbd>+<Kbd size="xs">Shift</Kbd>+
                 <Kbd size="xs">Z</Kbd>
-              </div>
+              </span>
               <span>Redo Action</span>
             </SimpleGrid>
           }
