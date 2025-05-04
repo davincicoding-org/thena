@@ -31,7 +31,6 @@ import type { TaskCollectorRef } from "@/ui/task-management";
 import { sprintPlanSchema } from "@/core/deep-work";
 import { taskSchema } from "@/core/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
-import { useFlagsStore } from "@/ui/config";
 import { FocusSession, SprintBuilder, useSprintBuilder } from "@/ui/deep-work";
 import { useLocalStorageSync } from "@/ui/hooks/useLocalStorageSync";
 import { useTimeTravel } from "@/ui/hooks/useTimeTravel";
@@ -49,8 +48,7 @@ import { cn } from "@/ui/utils";
 export default function SessionPage() {
   const router = useRouter();
 
-  const TIME_TRAVEL_ENABLED =
-    useFlagsStore().flags["sprint-planner--time-travel"];
+  const TIME_TRAVEL_ENABLED = false;
 
   const tasks = useTasks();
 
@@ -147,96 +145,74 @@ export default function SessionPage() {
     },
   });
 
-  const handleCreateTask = TIME_TRAVEL_ENABLED
-    ? timeTravel.createAction({
-        name: "create-task",
-        apply: (input: TaskInput) =>
-          tasks.addTask.asPromise(input).then((task) => {
-            taskList.addTask(task.id);
-            // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
-            taskCollectorFormRef.current?.reset();
-            return task;
-          }),
-        revert: (task) => {
-          taskList.removeTask(task.id);
-          void tasks.deleteTask(task.id);
-          // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
-          taskCollectorFormRef.current?.reset();
-        },
-      })
-    : (input: TaskInput) =>
-        void tasks.addTask.asPromise(input).then((task) => {
-          taskList.addTask(task.id);
-          // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
-          taskCollectorFormRef.current?.reset();
-        });
-
-  const handleAddTasks = TIME_TRAVEL_ENABLED
-    ? timeTravel.createAction({
-        name: "add-tasks",
-        apply: (taskIds: Task["id"][]) => {
-          taskList.addTasks(taskIds);
-          // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
-          taskCollectorFormRef.current?.reset();
-          return taskIds;
-        },
-        revert: (taskIds) => {
-          taskList.removeTasks(taskIds);
-          // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
-          taskCollectorFormRef.current?.reset();
-        },
-      })
-    : (taskIds: Task["id"][]) => {
-        taskList.addTasks(taskIds);
+  const handleCreateTask = timeTravel.createAction({
+    name: "create-task",
+    apply: (input: TaskInput) =>
+      tasks.addTask.asPromise(input).then((task) => {
+        taskList.addTask(task.id);
         // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
         taskCollectorFormRef.current?.reset();
+        return task;
+      }),
+    revert: (task) => {
+      taskList.removeTask(task.id);
+      void tasks.deleteTask(task.id);
+      // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
+      taskCollectorFormRef.current?.reset();
+    },
+  });
+
+  const handleAddTasks = timeTravel.createAction({
+    name: "add-tasks",
+    apply: (taskIds: Task["id"][]) => {
+      taskList.addTasks(taskIds);
+      // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
+      taskCollectorFormRef.current?.reset();
+      return taskIds;
+    },
+    revert: (taskIds) => {
+      taskList.removeTasks(taskIds);
+      // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
+      taskCollectorFormRef.current?.reset();
+    },
+  });
+
+  const handleRemoveTask = timeTravel.createAction({
+    name: "remove-task",
+    apply: async (taskId: Task["id"], shouldDelete = false) => {
+      taskList.removeTask(taskId);
+      // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
+      taskCollectorFormRef.current?.reset();
+      const taskToRestore = shouldDelete
+        ? await tasks.deleteTask.asPromise(taskId)
+        : undefined;
+
+      return {
+        taskId,
+        taskToRestore,
       };
+    },
+    revert: ({ taskId, taskToRestore }) => {
+      taskList.addTask(taskId);
+      // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
+      taskCollectorFormRef.current?.reset();
+      if (taskToRestore) void tasks.insertTask(taskToRestore);
+    },
+  });
 
-  const handleRemoveTask = TIME_TRAVEL_ENABLED
-    ? timeTravel.createAction({
-        name: "remove-task",
-        apply: async (taskId: Task["id"], shouldDelete = false) => {
-          taskList.removeTask(taskId);
-          // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
-          taskCollectorFormRef.current?.reset();
-          const taskToRestore = shouldDelete
-            ? await tasks.deleteTask.asPromise(taskId)
-            : undefined;
+  const handleUpdateTask = timeTravel.createAction({
+    name: "update-task",
+    apply: (args: { taskId: Task["id"]; updates: Partial<TaskInput> }) =>
+      tasks.updateTask.asPromise(args).then((state) => state?.prev),
+    revert: (prevState) => {
+      if (!prevState) return;
+      tasks.insertTask(prevState);
 
-          return {
-            taskId,
-            taskToRestore,
-          };
-        },
-        revert: ({ taskId, taskToRestore }) => {
-          taskList.addTask(taskId);
-          // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
-          taskCollectorFormRef.current?.reset();
-          if (taskToRestore) void tasks.insertTask(taskToRestore);
-        },
-      })
-    : (taskId: Task["id"], shouldDelete = false) => {
-        taskList.removeTask(taskId);
-        // HACK - This is needed because new tasks are not displayed in the form anymore after updating an existing task
-        taskCollectorFormRef.current?.reset();
-        if (shouldDelete) void tasks.deleteTask(taskId);
-      };
-
-  const handleUpdateTask = TIME_TRAVEL_ENABLED
-    ? timeTravel.createAction({
-        name: "update-task",
-        apply: (args: { taskId: Task["id"]; updates: Partial<TaskInput> }) =>
-          tasks.updateTask.asPromise(args).then((state) => state?.prev),
-        revert: (prevState) => {
-          if (!prevState) return;
-          tasks.insertTask(prevState);
-
-          // TODO This should only revert the actual change, not the whole task
-          // as some fields might have been chnaged externally
-          taskCollectorFormRef.current?.resetTask(prevState.id, prevState);
-        },
-      })
-    : tasks.updateTask;
+      // TODO This should only revert the actual change, not the whole task
+      // as some fields might have been chnaged externally
+      taskCollectorFormRef.current?.resetTask(prevState.id, prevState);
+    },
+  });
 
   const handleUpdateTaskDebounced = useDebouncedCallback(
     handleUpdateTask,

@@ -118,7 +118,8 @@ function FeaturesConfig() {
               </Tooltip>
             </Flex>
           }
-          checked={flags["sprint-planner--time-travel"]}
+          disabled
+          checked={false}
           onChange={() => toggleFlag("sprint-planner--time-travel")}
           description={
             <SimpleGrid component="span" cols={2} spacing="xs">
