@@ -1,7 +1,7 @@
 /* eslint-disable max-lines */
 import type { MenuProps, PaperProps } from "@mantine/core";
 import type { PropsWithChildren } from "react";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import {
   ActionIcon,
   Box,
@@ -25,20 +25,21 @@ import {
 
 import type { Duration, SprintPlan } from "@/core/deep-work";
 import type {
+  AnyTask,
   FlatTask,
-  FlatTaskGroup,
-  TaskReference,
+  TaskId,
+  TaskTree,
 } from "@/core/task-management";
 import { resolveDuration } from "@/core/deep-work";
-import { groupFlatTasks, isTaskGroup } from "@/core/task-management";
+import { flattenTasks, isTaskTree } from "@/core/task-management";
 import { Panel } from "@/ui/components/Panel";
 import { cn } from "@/ui/utils";
 
 import {
-  NestedTaskItemBase,
-  StandaloneTaskItemBase,
-  TaskItemsGroupContainer,
-  TaskItemsGroupHeader,
+  FlatTaskBase,
+  NestedSubtaskBase,
+  TaskTreeHeader,
+  TaskTreeWrapper,
 } from "./components";
 import { SortableTasksContainer, useSortableTask } from "./dnd";
 
@@ -46,7 +47,7 @@ export interface SprintPanelProps {
   sprintId: SprintPlan["id"];
   title: string;
   duration: Duration;
-  tasks: FlatTask[];
+  tasks: AnyTask[];
   disabled?: boolean;
   isTargeted?: boolean;
   canAddTasks: boolean;
@@ -62,11 +63,8 @@ export interface SprintPanelProps {
   onDrop: () => void;
   onDurationChange: (duration: Duration) => void;
   onAddTasks: (el: HTMLDivElement) => void;
-  onUnassignTasks: (tasks: TaskReference[]) => void;
-  onMoveTasks: (options: {
-    toSprintId: string;
-    tasks: TaskReference[];
-  }) => void;
+  onUnassignTasks: (tasks: TaskId[]) => void;
+  onMoveTasks: (options: { targetSprint: string; tasks: TaskId[] }) => void;
 }
 
 export function SprintPanel({
@@ -91,7 +89,10 @@ export function SprintPanel({
 }: SprintPanelProps & PaperProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const items = dndEnabled ? tasks : groupFlatTasks(tasks);
+  const items = useMemo((): AnyTask[] => {
+    if (!dndEnabled) return tasks;
+    return flattenTasks(tasks);
+  }, [dndEnabled, tasks]);
 
   const durationMinutes = resolveDuration(duration).asMinutes();
 
@@ -206,15 +207,15 @@ export function SprintPanel({
       <ScrollArea scrollbars="y" scrollHideDelay={300}>
         <SortableTasksContainer
           id={sprintId}
-          items={tasks}
+          items={items.map((task) => task.uid)}
           enabled={dndEnabled}
         >
-          {items.map((taskOrGroup) => {
-            if (!isTaskGroup(taskOrGroup))
+          {items.map((task) => {
+            if (!isTaskTree(task))
               return (
-                <StandaloneTaskItem
-                  key={`${taskOrGroup.taskId}-${taskOrGroup.subtaskId}`}
-                  item={taskOrGroup}
+                <FlatTaskItem
+                  key={task.uid}
+                  item={task}
                   otherSprints={otherSprints}
                   dndEnabled={dndEnabled}
                   onMoveTasks={onMoveTasks}
@@ -223,9 +224,9 @@ export function SprintPanel({
               );
 
             return (
-              <TaskItemsGroup
-                key={taskOrGroup.taskId}
-                group={taskOrGroup}
+              <TaskTreeItem
+                key={task.uid}
+                task={task}
                 otherSprints={otherSprints}
                 onMoveTasks={onMoveTasks}
                 onUnassignTasks={onUnassignTasks}
@@ -271,7 +272,7 @@ export function SprintPanel({
 
 // MARK: Items
 
-interface StandaloneTaskItemProps
+interface FlatTaskItemProps
   extends Pick<
     SprintPanelProps,
     "otherSprints" | "onMoveTasks" | "onUnassignTasks"
@@ -280,26 +281,27 @@ interface StandaloneTaskItemProps
   dndEnabled: boolean;
 }
 
-function StandaloneTaskItem({
+function FlatTaskItem({
   item,
   otherSprints,
   dndEnabled,
   onMoveTasks,
   onUnassignTasks,
-}: StandaloneTaskItemProps) {
+}: FlatTaskItemProps) {
   const { attributes, listeners, setNodeRef, style, isDragging, active } =
     useSortableTask(item, dndEnabled);
 
   return (
     <ActionsMenu
-      tasks={[item]}
+      tasks={[item.uid]}
       disabled={dndEnabled}
       otherSprints={otherSprints}
       onMoveTasks={onMoveTasks}
       onUnassignTasks={onUnassignTasks}
     >
-      <StandaloneTaskItemBase
-        item={item}
+      <FlatTaskBase
+        group={"parent" in item ? item.parent.title : undefined}
+        label={item.title}
         className={cn("transition-opacity", {
           "cursor-grab!": dndEnabled,
           "pointer-events-none opacity-30": isDragging,
@@ -320,49 +322,49 @@ function StandaloneTaskItem({
   );
 }
 
-interface TaskItemsGroupProps
+interface TaskTreeItemProps
   extends Pick<
     SprintPanelProps,
     "otherSprints" | "onMoveTasks" | "onUnassignTasks"
   > {
-  group: FlatTaskGroup;
+  task: TaskTree;
 }
 
-function TaskItemsGroup({
-  group,
+function TaskTreeItem({
+  task,
   otherSprints,
   onMoveTasks,
   onUnassignTasks,
-}: TaskItemsGroupProps) {
+}: TaskTreeItemProps) {
   return (
-    <TaskItemsGroupContainer>
+    <TaskTreeWrapper>
       <ActionsMenu
-        tasks={group.items}
+        tasks={task.subtasks.map((subtask) => subtask.uid)}
         otherSprints={otherSprints}
         onMoveTasks={onMoveTasks}
         onUnassignTasks={onUnassignTasks}
       >
-        <TaskItemsGroupHeader
-          label={group.groupLabel}
+        <TaskTreeHeader
+          label={task.title}
           rightSection={<IconDotsVertical size={12} />}
         />
       </ActionsMenu>
 
-      {group.items.map((item) => (
+      {task.subtasks.map((subtask) => (
         <ActionsMenu
-          key={`${item.taskId}-${item.subtaskId}`}
-          tasks={[item]}
+          key={subtask.uid}
+          tasks={[subtask.uid]}
           otherSprints={otherSprints}
           onMoveTasks={onMoveTasks}
           onUnassignTasks={onUnassignTasks}
         >
-          <NestedTaskItemBase
-            item={item}
+          <NestedSubtaskBase
+            label={subtask.title}
             rightSection={<IconDotsVertical size={12} />}
           />
         </ActionsMenu>
       ))}
-    </TaskItemsGroupContainer>
+    </TaskTreeWrapper>
   );
 }
 
@@ -373,7 +375,7 @@ interface ActionsMenuProps
     SprintPanelProps,
     "onMoveTasks" | "onUnassignTasks" | "otherSprints"
   > {
-  tasks: TaskReference[];
+  tasks: TaskId[];
 }
 
 function ActionsMenu({
@@ -402,7 +404,7 @@ function ActionsMenu({
                 key={option.id}
                 onClick={() =>
                   onMoveTasks({
-                    toSprintId: option.id,
+                    targetSprint: option.id,
                     tasks,
                   })
                 }

@@ -14,7 +14,6 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import {
-  arrayMove,
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
@@ -22,11 +21,11 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Stack, Text } from "@mantine/core";
 
-import type { FlatTask, TaskReference } from "@/core/task-management";
+import type { FlatTask, TaskId } from "@/core/task-management";
 import { cn } from "@/ui/utils";
 
 import type { SprintBuilderProps } from "./SprintBuilder";
-import { StandaloneTaskItemBase } from "./components";
+import { FlatTaskBase } from "./components";
 
 export const TASK_POOL_ID = "$TASK_POOL$";
 
@@ -38,7 +37,7 @@ export interface DndWrapperProps
   extends Pick<
     SprintBuilderProps,
     | "onUnassignTasksFromSprint"
-    | "onMoveTasks"
+    | "onMoveTask"
     | "onAssignTasksToSprint"
     | "onReorderSprintTasks"
   > {
@@ -50,7 +49,7 @@ export function DndWrapper({
   enabled,
   onAssignTasksToSprint,
   onUnassignTasksFromSprint,
-  onMoveTasks,
+  onMoveTask: onMoveTasks,
   onReorderSprintTasks,
 }: PropsWithChildren<DndWrapperProps>) {
   const sensors = useSensors(
@@ -88,16 +87,16 @@ export function DndWrapper({
           if (targetContainerId === TASK_POOL_ID) {
             onUnassignTasksFromSprint({
               sprintId: active.sortable.containerId.toString(),
-              tasks: [active.item],
+              tasks: [active.item.uid],
             });
             return;
           }
 
           onMoveTasks({
-            fromSprintId: active.sortable.containerId.toString(),
-            toSprintId: targetContainerId.toString(),
-            tasks: [active.item],
-            insertIndex: (event.over.data.current as SortableData | undefined)
+            sourceSprint: active.sortable.containerId.toString(),
+            targetSprint: targetContainerId.toString(),
+            tasks: [active.item.uid],
+            targetIndex: (event.over.data.current as SortableData | undefined)
               ?.sortable.index,
           });
           return;
@@ -105,7 +104,7 @@ export function DndWrapper({
         if (targetContainerId !== TASK_POOL_ID) {
           onAssignTasksToSprint({
             sprintId: targetContainerId.toString(),
-            tasks: [active.item],
+            tasks: [active.item.uid],
           });
         }
       }}
@@ -121,23 +120,19 @@ export function DndWrapper({
 
         if (active.sortable.containerId !== over.sortable.containerId) return;
 
-        const indexes = over.sortable.items.map((_, index) => index);
-        const order = arrayMove(
-          indexes,
-          active.sortable.index,
-          over.sortable.index,
-        );
         onReorderSprintTasks({
           sprintId: over.sortable.containerId.toString(),
-          order,
+          from: active.sortable.index,
+          to: over.sortable.index,
         });
       }}
     >
       <DragOverlay>
         {activeItem && enabled ? (
-          <StandaloneTaskItemBase
+          <FlatTaskBase
             className="cursor-grabbing!"
-            item={activeItem}
+            label={activeItem.title}
+            group={"parent" in activeItem ? activeItem.parent.title : undefined}
           />
         ) : null}
       </DragOverlay>
@@ -154,7 +149,7 @@ export function SortableTasksContainer({
   enabled,
 }: PropsWithChildren<{
   id: string;
-  items: TaskReference[];
+  items: TaskId[];
   enabled?: boolean;
   stackProps?: StackProps;
 }>) {
@@ -166,7 +161,7 @@ export function SortableTasksContainer({
   return (
     <SortableContext
       id={id}
-      items={items.map(({ taskId, subtaskId }) => `${taskId}-${subtaskId}`)}
+      items={items}
       strategy={verticalListSortingStrategy}
     >
       <Stack gap="sm" p="sm" bg="neutral.8" ref={setNodeRef} {...stackProps}>
@@ -190,7 +185,7 @@ export function SortableTasksContainer({
 
 export const useSortableTask = (item: FlatTask, dndEnabled: boolean) => {
   const sortable = useSortable({
-    id: `${item.taskId}-${item.subtaskId}`,
+    id: item.uid,
     disabled: !dndEnabled,
     data: { item } satisfies DraggingTaskData,
   });
@@ -209,7 +204,7 @@ export const useSortableTask = (item: FlatTask, dndEnabled: boolean) => {
 
 export const useDraggableTask = (item: FlatTask, dndEnabled: boolean) => {
   const draggable = useDraggable({
-    id: `${item.taskId}-${item.subtaskId}`,
+    id: item.uid,
     disabled: !dndEnabled,
     data: { item } satisfies DraggingTaskData,
   });

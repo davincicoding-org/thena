@@ -1,18 +1,19 @@
 import type { HTMLAttributes, ReactNode, Ref } from "react";
 import { NavLink, Paper } from "@mantine/core";
 
-import type { FlatTask } from "@/core/task-management";
 import { cn } from "@/ui/utils";
 
-export function StandaloneTaskItemBase({
-  item,
+export function FlatTaskBase({
+  label,
+  group,
   rightSection,
   className,
   active,
   clickable,
   ...props
 }: {
-  item: FlatTask;
+  label: string;
+  group?: string;
   ref?: Ref<HTMLDivElement>;
   rightSection?: ReactNode;
   clickable?: boolean;
@@ -22,8 +23,8 @@ export function StandaloneTaskItemBase({
     <Paper withBorder className={cn("overflow-clip")} {...props}>
       <NavLink
         component="button"
-        description={item.parentTitle}
-        label={item.title}
+        description={group}
+        label={label}
         className={className}
         classNames={{
           root: cn({
@@ -40,7 +41,7 @@ export function StandaloneTaskItemBase({
   );
 }
 
-export function TaskItemsGroupContainer({
+export function TaskTreeWrapper({
   children,
   className,
   ...props
@@ -55,7 +56,7 @@ export function TaskItemsGroupContainer({
   );
 }
 
-export function TaskItemsGroupHeader({
+export function TaskTreeHeader({
   label,
   rightSection,
   active,
@@ -82,13 +83,13 @@ export function TaskItemsGroupHeader({
   );
 }
 
-export function NestedTaskItemBase({
-  item,
+export function NestedSubtaskBase({
+  label,
   rightSection,
   active,
   ...props
 }: {
-  item: FlatTask;
+  label: string;
   ref?: Ref<HTMLButtonElement>;
   active?: boolean;
   rightSection?: ReactNode;
@@ -101,7 +102,7 @@ export function NestedTaskItemBase({
         root: cn("border-t! border-t-(--paper-border-color)! py-1!"),
         label: cn("truncate text-nowrap"),
       }}
-      label={item.title}
+      label={label}
       rightSection={rightSection}
       active={active}
       {...props}

@@ -1,0 +1,56 @@
+import "client-only";
+
+import type { PgliteDatabase } from "drizzle-orm/pglite";
+import { drizzle } from "drizzle-orm/pglite";
+
+import MIGRATION_META from "./migrations/meta/_journal.json";
+import * as schema from "./schema";
+
+let dbPromise: Promise<PgliteDatabase<typeof schema>> | undefined;
+
+const db = drizzle({
+  connection: { dataDir: "idb://thena" },
+  schema,
+  casing: "snake_case",
+});
+
+export const getClientDB = async (): Promise<PgliteDatabase<typeof schema>> => {
+  if (dbPromise) return dbPromise;
+
+  dbPromise = (async () => {
+    console.time("INIT_DB");
+    const latestClientMigration = await db.query.clientMigrations
+      .findFirst({
+        orderBy: (migrations, { desc }) => [desc(migrations.appliedAt)],
+      })
+      .catch(() => undefined);
+
+    const migrations = MIGRATION_META.entries.map((entry) => entry.tag);
+
+    const migrationsToApply = latestClientMigration?.tag
+      ? migrations.slice(migrations.indexOf(latestClientMigration.tag) + 1)
+      : migrations;
+
+    for (const migration of migrationsToApply) {
+      const migrationFile = (await import(`./migrations/${migration}.sql`)) as {
+        default: string;
+      };
+
+      const statements = migrationFile.default.split(
+        "--> statement-breakpoint\n",
+      );
+
+      for (const statement of statements) {
+        await db.execute(statement).catch((e) => console.error(e));
+      }
+
+      await db.insert(schema.clientMigrations).values({ tag: migration });
+    }
+
+    console.timeEnd("INIT_DB");
+
+    return db;
+  })();
+
+  return dbPromise;
+};

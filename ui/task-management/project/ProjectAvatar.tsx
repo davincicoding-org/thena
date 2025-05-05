@@ -1,10 +1,10 @@
 import type { AvatarProps, TooltipProps } from "@mantine/core";
 import { Avatar, Tooltip } from "@mantine/core";
 
-import type { Project } from "@/core/task-management";
+import type { ProjectSelect } from "@/core/task-management";
 
 export interface ProjectAvatarProps {
-  project: Project;
+  project: ProjectSelect;
   tooltipProps?: Omit<TooltipProps, "label" | "children">;
 }
 
@@ -14,12 +14,12 @@ export function ProjectAvatar({
   ...props
 }: ProjectAvatarProps & AvatarProps) {
   return (
-    <Tooltip label={project.name} {...tooltipProps}>
+    <Tooltip label={project.title} {...tooltipProps}>
       <Avatar
         src={project.image}
-        alt={project.name}
-        name={project.name}
-        color={project.color ?? "gray"}
+        alt={project.title}
+        name={project.title}
+        // color={project.color ?? "gray"}
         {...props}
       />
     </Tooltip>

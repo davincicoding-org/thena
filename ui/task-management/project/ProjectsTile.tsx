@@ -10,7 +10,7 @@ import {
   Tooltip,
 } from "@mantine/core";
 
-import type { Project } from "@/core/task-management";
+import type { ProjectSelect } from "@/core/task-management";
 
 const PROJECT_SKELETONS = Array.from({ length: 10 }, (_, index) => (
   <Skeleton key={index} height={38} width={38} radius="sm" />
@@ -18,7 +18,7 @@ const PROJECT_SKELETONS = Array.from({ length: 10 }, (_, index) => (
 
 export interface ProjectsTileProps {
   loading?: boolean;
-  items: Project[];
+  items: ProjectSelect[];
   onCreate: () => void;
 }
 
@@ -37,7 +37,7 @@ export function ProjectsTile({
               PROJECT_SKELETONS
             ) : items.length ? (
               items.map((project) => (
-                <Tooltip key={project.id} label={project.name}>
+                <Tooltip key={project.uid} label={project.title}>
                   <Avatar
                     // component={Link}
                     // href={`/projects/${project.id}`}
@@ -46,9 +46,9 @@ export function ProjectsTile({
                     size="md"
                     radius="md"
                     src={project.image}
-                    alt={project.name}
-                    color={project.color ?? "gray"}
-                    name={project.name}
+                    alt={project.title}
+                    // color={project.color ?? "gray"}
+                    name={project.title}
                   />
                 </Tooltip>
               ))

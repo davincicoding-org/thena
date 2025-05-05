@@ -1,26 +1,31 @@
-import type { Project, Subtask, Tag, Task } from "./types";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+
+import type { ProjectSelect } from "./db";
+import type { StandaloneTask, Tag, TaskTree } from "./types";
 
 export const createMockTasks = (subtasks: number[]) =>
-  subtasks.map<Task>((subtask = 0, index) => ({
-    id: `task-${index + 1}`,
+  subtasks.map<TaskTree | StandaloneTask>((subtask = 0, index) => ({
+    uid: index,
     title: `Task ${index + 1}`,
     subtasks: subtask
-      ? Array.from(
-          { length: subtask },
-          (_, i): Subtask => ({
-            id: `subtask-${index + 1}-${i + 1}`,
-            title: `Subtask ${index + 1}-${i + 1}`,
-          }),
-        )
+      ? Array.from({ length: subtask }, (_, i) => ({
+          uid: index * 1000 + i,
+          title: `Subtask ${index + 1}-${i + 1}`,
+          parrent: {
+            uid: index,
+            title: `Task ${index + 1}`,
+          },
+        }))
       : undefined,
   }));
 
-export const MOCK_PROJECTS: Project[] = [
-  { id: "con", name: "Thena", color: "teal" },
-  { id: "koc", name: "KOCO", color: "violet" },
-  { id: "dvc", name: "DAVINCI CODING", image: "/dvc.png" },
-  { id: "swi", name: "Swissinfluece" },
-  { id: "t4c", name: "T4 Capital", color: "blue" },
+export const MOCK_PROJECTS: ProjectSelect[] = [
+  { uid: 1, title: "Thena", description: null, image: null },
+  { uid: 2, title: "KOCO", description: null, image: null },
+  { uid: 3, title: "DAVINCI CODING", description: null, image: "/dvc.png" },
+  { uid: 4, title: "Swissinfluece", description: null, image: null },
+  { uid: 5, title: "T4 Capital", description: null, image: null },
 ];
 
 export const MOCK_TAGS: Tag[] = [

@@ -1,31 +1,22 @@
 import { z } from "zod";
 
 import type { FlatTask } from "@/core/task-management";
-import { taskReferenceSchema } from "@/core/task-management";
+import { taskIdSchema } from "@/core/task-management";
 
-// TODO remove this after CARO ran the app
-export const durationSchema = z.preprocess(
-  (value) => {
-    if (typeof value === "number") {
-      return {
-        minutes: value,
-      };
-    }
-    return value;
-  },
-  z.object({
-    seconds: z.number().optional(),
-    hours: z.number().optional(),
-    minutes: z.number().optional(),
-  }),
-);
+export const durationSchema = z.object({
+  seconds: z.number().optional(),
+  hours: z.number().optional(),
+  minutes: z.number().optional(),
+});
 
 export type Duration = z.infer<typeof durationSchema>;
 
 export const sprintPlanSchema = z.object({
   id: z.string(),
   duration: durationSchema,
-  tasks: z.array(taskReferenceSchema),
+  scheduledStart: z.date().optional(),
+  recoveryTime: durationSchema.optional(),
+  tasks: z.array(taskIdSchema),
 });
 export type SprintPlan = z.infer<typeof sprintPlanSchema>;
 
@@ -38,7 +29,7 @@ export type WithRunMetrics<T> = T & {
   pulledIn?: boolean;
 };
 
-export interface RunnableSprint extends SprintPlan {
+export interface RunnableSprint extends Omit<SprintPlan, "tasks"> {
   tasks: WithRunMetrics<FlatTask>[];
 }
 

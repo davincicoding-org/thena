@@ -1,0 +1,44 @@
+import {
+  createInsertSchema,
+  createSelectSchema,
+  createUpdateSchema,
+} from "drizzle-zod";
+import { z } from "zod";
+
+import { projects, taskComplexity, taskPriority, tasks } from "@/db/schema";
+
+// MARK: Task
+
+export const taskInsertSchema = createInsertSchema(tasks);
+export type TaskInsert = z.infer<typeof taskInsertSchema>;
+
+export const taskUpdateSchema = createUpdateSchema(tasks);
+export type TaskUpdate = z.infer<typeof taskUpdateSchema>;
+
+export const taskSelectSchema = createSelectSchema(tasks);
+export type TaskSelect = z.infer<typeof taskSelectSchema>;
+
+export const taskIdSchema = taskSelectSchema.shape.uid;
+export type TaskId = z.infer<typeof taskIdSchema>;
+
+export const taskPriorityEnum = createSelectSchema(taskPriority);
+export type TaskPriority = z.infer<typeof taskPriorityEnum>;
+
+export const taskComplexityEnum = createSelectSchema(taskComplexity);
+export type TaskComplexity = z.infer<typeof taskComplexityEnum>;
+
+// MARK: Project
+
+export const projectInsertSchema = createInsertSchema(projects);
+export type ProjectInsert = z.infer<typeof projectInsertSchema>;
+
+export const projectInsertExtendedSchema = projectInsertSchema.extend({
+  imageFile: z.instanceof(File).nullable().optional(),
+});
+export type ProjectInsertExtended = z.infer<typeof projectInsertExtendedSchema>;
+
+export const projectUpdateSchema = createUpdateSchema(projects);
+export type ProjectUpdate = z.infer<typeof projectUpdateSchema>;
+
+export const projectSelectSchema = createSelectSchema(projects);
+export type ProjectSelect = z.infer<typeof projectSelectSchema>;

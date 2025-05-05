@@ -1,59 +1,47 @@
 import { useCallback, useState } from "react";
 
-import type { TaskReference } from "@/core/task-management";
-import {
-  doesTaskReferenceExist,
-  excludeTaskReferences,
-} from "@/core/task-management";
+import type { TaskId } from "@/core/task-management";
 
 export interface TaskSelectionHookReturn {
-  selection: TaskReference[];
+  selection: TaskId[];
   clearSelection: () => void;
-  isTaskSelected: (task: TaskReference) => boolean;
-  isTaskGroupSelected: (tasks: TaskReference[]) => boolean;
-  toggleTaskSelection: (task: TaskReference) => void;
-  toggleTaskGroupSelection: (tasks: TaskReference[]) => void;
+  isTaskSelected: (task: TaskId) => boolean;
+  areAllTasksSelected: (tasks: TaskId[]) => boolean;
+  toggleTaskSelection: (task: TaskId) => void;
+  toggleTasksSelection: (tasks: TaskId[]) => void;
 }
 
 export function useTaskSelection(): TaskSelectionHookReturn {
-  const [selection, setSelection] = useState<TaskReference[]>([]);
+  const [selection, setSelection] = useState<TaskId[]>([]);
 
   const clearSelection = useCallback(() => setSelection([]), []);
 
   const isTaskSelected: TaskSelectionHookReturn["isTaskSelected"] = (task) =>
-    doesTaskReferenceExist(task, selection);
+    selection.includes(task);
 
-  const isTaskGroupSelected: TaskSelectionHookReturn["isTaskGroupSelected"] = (
+  const areAllTasksSelected: TaskSelectionHookReturn["areAllTasksSelected"] = (
     tasks,
-  ) => tasks.every((task) => doesTaskReferenceExist(task, selection));
+  ) => tasks.every((task) => selection.includes(task));
 
   const toggleTaskSelection: TaskSelectionHookReturn["toggleTaskSelection"] = (
     task,
   ) =>
     setSelection((prev) => {
-      const isSelected = doesTaskReferenceExist(task, prev);
+      const isSelected = prev.includes(task);
 
-      if (isSelected) {
-        return excludeTaskReferences(prev, [task]);
-      }
+      if (isSelected) return prev.filter((entry) => entry !== task);
 
       return [...prev, task];
     });
 
-  const toggleTaskGroupSelection: TaskSelectionHookReturn["toggleTaskGroupSelection"] =
+  const toggleTasksSelection: TaskSelectionHookReturn["toggleTasksSelection"] =
     (tasks) =>
       setSelection((prev) => {
-        const areAllSelected = tasks.every((task) =>
-          doesTaskReferenceExist(task, prev),
-        );
+        const areAllSelected = tasks.every((task) => prev.includes(task));
 
-        if (areAllSelected) {
-          return excludeTaskReferences(prev, tasks);
-        }
+        if (areAllSelected) return prev.filter((task) => !tasks.includes(task));
 
-        const notSelectedTasks = tasks.filter(
-          (task) => !doesTaskReferenceExist(task, prev),
-        );
+        const notSelectedTasks = tasks.filter((task) => !prev.includes(task));
 
         return [...prev, ...notSelectedTasks];
       });
@@ -62,8 +50,8 @@ export function useTaskSelection(): TaskSelectionHookReturn {
     selection,
     clearSelection,
     isTaskSelected,
-    isTaskGroupSelected,
+    areAllTasksSelected,
     toggleTaskSelection,
-    toggleTaskGroupSelection,
+    toggleTasksSelection,
   };
 }

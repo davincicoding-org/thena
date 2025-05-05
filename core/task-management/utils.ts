@@ -1,157 +1,84 @@
-import type {
-  FlatTask,
-  FlatTaskGroup,
-  Task,
-  TaskFilters,
-  TaskReference,
-} from "./types";
+import type { TaskId, TaskSelect } from "@/core/task-management/db";
 
-export const countTasks = (tasks: Task[]): number =>
-  tasks.reduce((acc, task) => acc + (task.subtasks?.length ?? 1), 0);
+import type { AnyTask, FlatTask, Subtask, TaskFilters } from "./types";
+import { isTaskTree } from "./types";
 
-export const doTaskReferencesMatch = (
-  a: TaskReference,
-  b: TaskReference,
-): boolean => a.taskId === b.taskId && a.subtaskId === b.subtaskId;
-
-// Checks if the task reference is valid
-export const doesTaskReferenceExist = (
-  taskReference: TaskReference,
-  tasks: TaskReference[],
-): boolean =>
-  tasks.some((validTaskReference) =>
-    doTaskReferencesMatch(taskReference, validTaskReference),
+export const countTasks = (tasks: AnyTask[]): number =>
+  tasks.reduce(
+    (acc, task) => acc + (isTaskTree(task) ? task.subtasks.length : 1),
+    0,
   );
 
-export const resolveTaskReferences = (
-  taskReferences: TaskReference[],
-  tasks: FlatTask[],
-): FlatTask[] =>
-  taskReferences.reduce<FlatTask[]>((acc, taskReference) => {
-    const task = tasks.find((task) =>
-      doTaskReferencesMatch(taskReference, task),
+export const flattenTask = (task: AnyTask): FlatTask[] => {
+  if (!isTaskTree(task)) return [task];
+
+  return task.subtasks.map<Subtask>((subtask) => ({
+    parent: task,
+    ...subtask,
+  }));
+};
+
+export const flattenTasks = (tasks: AnyTask[]): FlatTask[] => {
+  return tasks.flatMap<FlatTask>(flattenTask);
+};
+
+export const isTaskIncluded = <T extends Pick<TaskSelect, "uid">>(
+  tasks: T[],
+  taskIdToCheck: T["uid"],
+): boolean => tasks.some((task) => task.uid === taskIdToCheck);
+
+export const areTasksIncluded = <T extends Pick<TaskSelect, "uid">>(
+  tasks: T[],
+  taskIdsToFind: T["uid"][],
+): boolean => taskIdsToFind.every((taskId) => isTaskIncluded(tasks, taskId));
+
+export const excludeTasks = <T extends Pick<TaskSelect, "uid">>(
+  tasks: T[],
+  tasksToExclude: TaskId[],
+): T[] => tasks.filter((task) => !tasksToExclude.includes(task.uid));
+
+export const excludeTasksAndCompact = (
+  tasks: AnyTask[],
+  toExclude: TaskId[],
+): AnyTask[] =>
+  tasks.flatMap((task) => {
+    if (toExclude.includes(task.uid)) return [];
+    if (!isTaskTree(task)) return [task];
+    const remainingSubtasks = task.subtasks.filter(
+      (subtask) => !toExclude.includes(subtask.uid),
     );
-    if (!task) return acc;
+    if (remainingSubtasks.length === 0) return [];
+    if (remainingSubtasks.length === 1)
+      return flattenTask({
+        ...task,
+        subtasks: remainingSubtasks,
+      });
 
-    return [...acc, task];
-  }, []);
-
-export const tranformTasksToReferences = (tasks: Task[]): TaskReference[] => {
-  return tasks.flatMap<TaskReference>((task) => {
-    if (!task.subtasks?.length) return [{ taskId: task.id, subtaskId: null }];
-
-    return task.subtasks.map((subtask) => ({
-      taskId: task.id,
-      subtaskId: subtask.id,
-    }));
+    return [{ ...task, subtasks: remainingSubtasks }];
   });
-};
 
-export const flattenTasks = (tasks: Task[]): FlatTask[] => {
-  return tasks.flatMap<FlatTask>(({ id: taskId, ...task }) => {
-    if (!task.subtasks?.length) return [{ taskId, subtaskId: null, ...task }];
+export const includeTasksAndCompact = (
+  tasks: AnyTask[],
+  toInclude: TaskId[],
+): AnyTask[] =>
+  tasks.flatMap((task) => {
+    if (!isTaskTree(task)) return toInclude.includes(task.uid) ? [task] : [];
 
-    return task.subtasks.map<FlatTask>(({ id, ...subtask }) => ({
-      taskId,
-      subtaskId: id,
-      parentTitle: task.title,
-      projectId: task.projectId,
-      ...subtask,
-    }));
+    const includedSubtasks = task.subtasks.filter((subtask) =>
+      toInclude.includes(subtask.uid),
+    );
+
+    if (includedSubtasks.length === 0) return [];
+    if (includedSubtasks.length === 1)
+      return flattenTask({
+        ...task,
+        subtasks: includedSubtasks,
+      });
+
+    return [{ ...task, subtasks: includedSubtasks }];
   });
-};
 
-export const resolveTaskReferencesFlat = (
-  taskReferences: TaskReference[],
-  tasks: Task[],
-): FlatTask[] => {
-  return taskReferences.reduce<FlatTask[]>((acc, taskReference) => {
-    const task = tasks.find(({ id }) => id === taskReference.taskId);
-    if (!task) return acc;
-
-    const { id: _id, ...taskData } = task;
-    if (!task.subtasks?.length && taskReference.subtaskId === null)
-      return [
-        ...acc,
-        {
-          ...taskReference,
-          ...taskData,
-        },
-      ];
-
-    if (!task.subtasks?.length && taskReference.subtaskId === null) return acc;
-
-    const subtask = task.subtasks?.find(
-      ({ id }) => id === taskReference.subtaskId,
-    );
-    if (!subtask) return acc;
-
-    const { id: _subtaskId, ...subtaskData } = subtask;
-
-    return [
-      ...acc,
-      {
-        ...taskReference,
-        ...taskData,
-        ...subtaskData,
-        parentTitle: task.title,
-        projectId: task.projectId,
-      },
-    ];
-  }, []);
-};
-
-export const isTaskGroup = (
-  item: FlatTaskGroup | FlatTask,
-): item is FlatTaskGroup => "groupLabel" in item;
-
-export const groupFlatTasks = (tasks: FlatTask[]) =>
-  tasks.reduce<(FlatTaskGroup | FlatTask)[]>((acc, task) => {
-    const prevItem = acc[acc.length - 1];
-
-    if (!prevItem) return [...acc, task];
-
-    if (prevItem.taskId !== task.taskId) return [...acc, task];
-
-    if (isTaskGroup(prevItem))
-      return [
-        ...acc.slice(0, -1),
-        {
-          ...prevItem,
-          items: [...prevItem.items, task],
-        },
-      ];
-
-    return [
-      ...acc.slice(0, -1),
-      {
-        taskId: task.taskId,
-        groupLabel: task.parentTitle ?? task.title,
-        items: [prevItem, task],
-      },
-    ];
-  }, []);
-
-export const excludeTaskReferences = (
-  targetSelection: TaskReference[],
-  excludedSelection: TaskReference[],
-) =>
-  // Reduce is used, because `targetSelection` items could be an extension of TaskReference
-  targetSelection.reduce<TaskReference[]>((acc, { taskId, subtaskId }) => {
-    const isIncluded = excludedSelection.some(
-      (taskReferenceToExclude) =>
-        taskReferenceToExclude.taskId === taskId &&
-        taskReferenceToExclude.subtaskId === subtaskId,
-    );
-    if (isIncluded) return acc;
-
-    return [...acc, { taskId, subtaskId }];
-  }, []);
-
-export const hasFiltersApplied = ({
-  projectIds,
-  tags,
-  search,
-}: TaskFilters) => {
-  return Boolean(projectIds?.length ?? tags?.length ?? search);
+// MARK: Possibly deprecated
+export const hasFiltersApplied = ({ projectIds, search }: TaskFilters) => {
+  return Boolean(projectIds?.length ?? search);
 };

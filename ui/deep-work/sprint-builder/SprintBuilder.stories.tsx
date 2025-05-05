@@ -115,7 +115,7 @@ const Playground = () => {
       sprints={sprints}
       tasks={tasks}
       unassignedTasks={unassignedTasks}
-      onSprintChange={updateSprint}
+      onUpdateSprint={updateSprint}
       onAssignTasksToSprint={assignTasks}
       onUnassignTasksFromSprint={unassignTasks}
       onMoveTasks={moveTasks}

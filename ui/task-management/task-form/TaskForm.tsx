@@ -1,13 +1,11 @@
-import type { PaperProps } from "@mantine/core";
-import type { FunctionComponent, HTMLAttributes, ReactNode } from "react";
-import { Fragment, useState } from "react";
+import type { UseMutateFunction } from "@tanstack/react-query";
+import type { FunctionComponent, ReactNode } from "react";
+import { useState } from "react";
 import {
   ActionIcon,
-  Box,
   Button,
   Divider,
   Flex,
-  Paper,
   Popover,
   Tabs,
   TextInput,
@@ -20,17 +18,18 @@ import {
   IconPlus,
 } from "@tabler/icons-react";
 
-import type { Project, ProjectInput, Subtask } from "@/core/task-management";
+import type {
+  ProjectInsertExtended,
+  ProjectSelect,
+} from "@/core/task-management";
 import {
   ComplexityBadge,
   PriorityBadge,
   ProjectAvatar,
 } from "@/ui/task-management";
-import { cn, createUniqueId } from "@/ui/utils";
+import { cn } from "@/ui/utils";
 
 import { ProjectPicker } from "./ProjectPicker";
-import { SubtaskAdder } from "./SubtaskAdder";
-import { SubtaskForm } from "./SubtaskForm";
 import { taskFormOpts, withTaskForm } from "./useTaskForm";
 
 type TaskActionsComponent = FunctionComponent<{ defaultActions: ReactNode }>;
@@ -39,12 +38,13 @@ type TaskActionsComponent = FunctionComponent<{ defaultActions: ReactNode }>;
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type TaskFormProps = {
-  containerProps?: PaperProps & HTMLAttributes<HTMLDivElement>;
-  projects: Project[];
-  onCreateProject?: (
-    input: ProjectInput,
-    callback: (project: Project) => void,
-  ) => void;
+  onAddSubtask?: () => void;
+  projects: ProjectSelect[];
+  onCreateProject?: UseMutateFunction<
+    ProjectSelect | undefined,
+    Error,
+    ProjectInsertExtended
+  >;
   readOnly?: boolean;
   TaskActions?: TaskActionsComponent;
 };
@@ -54,7 +54,7 @@ export const TaskForm = withTaskForm({
   props: {} as TaskFormProps,
   render: ({
     form,
-    containerProps,
+    onAddSubtask,
     projects,
     onCreateProject,
     readOnly,
@@ -62,7 +62,6 @@ export const TaskForm = withTaskForm({
       defaultActions) as TaskActionsComponent,
   }) => {
     /* eslint-disable react-hooks/rules-of-hooks */
-    const [isAddingSubtask, subtaskAdder] = useDisclosure(false);
     const [isActionsPanelOpen, actionsPanel] = useDisclosure(false);
     const actionsPanelRef = useClickOutside(() => actionsPanel.close());
     const [tab, setTab] = useState<"actions" | "tags" | "projects">("actions");
@@ -78,7 +77,7 @@ export const TaskForm = withTaskForm({
           color="gray"
           leftSection={<IconPlus size={16} />}
           onClick={() => {
-            subtaskAdder.open();
+            onAddSubtask?.();
             actionsPanel.close();
           }}
         >
@@ -134,172 +133,127 @@ export const TaskForm = withTaskForm({
     );
 
     return (
-      <Paper
-        withBorder
-        className={cn("overflow-clip", containerProps?.className)}
-        {...containerProps}
+      <Popover
+        position="bottom-end"
+        opened={isActionsPanelOpen}
+        onClose={() => {
+          setTimeout(() => {
+            setTab("actions");
+          }, 300);
+        }}
       >
-        <Popover
-          position="bottom-end"
-          opened={isActionsPanelOpen}
-          onClose={() => {
-            setTimeout(() => {
-              setTab("actions");
-            }, 300);
-          }}
-        >
-          <Flex align="center" p={4} bg="dark.6">
-            <form.Field
-              name="projectId"
-              children={({ state: { value } }) => {
-                const project = projects.find(
-                  (project) => project.id === value,
-                );
-                if (!project) return null;
+        <Flex align="center" p={4} bg="dark.6">
+          <form.Field
+            name="projectId"
+            children={({ state: { value } }) => {
+              const project = projects.find((project) => project.uid === value);
+              if (!project) return null;
 
-                return (
-                  <ProjectAvatar ml={4} mr={4} project={project} size="sm" />
-                );
-              }}
-            />
-            <form.Field
-              name="title"
-              children={(field) => (
-                <TextInput
-                  size="md"
-                  flex={1}
-                  readOnly={readOnly}
-                  classNames={{
-                    input: cn(
-                      "mr-auto h-8! min-h-0! truncate px-1.5! not-focus:border-transparent! read-only:border-transparent!",
-                    ),
-                  }}
-                  placeholder="Title"
-                  value={field.state.value}
-                  error={field.state.meta.errors.length > 0}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      void form.handleSubmit();
-                      e.currentTarget.blur();
-                    }
-                  }}
-                />
-              )}
-            />
-            <form.Field
-              name="priority"
-              children={(priorityField) => {
-                if (!priorityField.state.value) return null;
-                if (priorityField.state.value === "default") return null;
-
-                return (
-                  <PriorityBadge
-                    priority={priorityField.state.value}
-                    className="cursor-pointer!"
-                    size="xs"
-                  />
-                );
-              }}
-            />
-            <form.Field
-              name="complexity"
-              children={(complexityField) => {
-                if (!complexityField.state.value) return null;
-                if (complexityField.state.value === "default") return null;
-
-                return (
-                  <ComplexityBadge
-                    className="cursor-pointer!"
-                    complexity={complexityField.state.value}
-                    size="xs"
-                  />
-                );
-              }}
-            />
-            {!readOnly && (
-              <Popover.Target>
-                <ActionIcon
-                  aria-label="Task Actions"
-                  className="disabled:cursor-default!"
-                  disabled={isActionsPanelOpen}
-                  variant="transparent"
-                  color="gray"
-                  onClick={actionsPanel.open}
-                >
-                  <IconDotsVertical size={16} />
-                </ActionIcon>
-              </Popover.Target>
+              return (
+                <ProjectAvatar ml={4} mr={4} project={project} size="sm" />
+              );
+            }}
+          />
+          <form.Field
+            name="title"
+            children={(field) => (
+              <TextInput
+                size="md"
+                flex={1}
+                readOnly={readOnly}
+                classNames={{
+                  input: cn(
+                    "mr-auto h-8! min-h-0! truncate px-1.5! not-focus:border-transparent! read-only:border-transparent!",
+                  ),
+                }}
+                placeholder="Title"
+                value={field.state.value}
+                error={field.state.meta.errors.length > 0}
+                onChange={(e) => field.handleChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    void form.handleSubmit();
+                    e.currentTarget.blur();
+                  }
+                }}
+              />
             )}
-          </Flex>
+          />
+          <form.Field
+            name="priority"
+            children={(priorityField) => {
+              if (!priorityField.state.value) return null;
+              if (priorityField.state.value === "default") return null;
 
-          <Popover.Dropdown
-            p={0}
-            ref={actionsPanelRef}
-            className="overflow-clip"
-          >
-            <Tabs value={tab}>
-              <Tabs.Panel value="actions">
-                <TaskActions defaultActions={defaultActions} />
-              </Tabs.Panel>
-              <Tabs.Panel value="projects">
-                <form.Field
-                  name="projectId"
-                  children={(projectField) => (
-                    <ProjectPicker
-                      value={projectField.state.value}
-                      projects={projects}
-                      onClose={() => setTab("actions")}
-                      onChange={(projectId) => {
-                        projectField.handleChange(projectId);
-                        actionsPanel.close();
-                      }}
-                      onCreate={(project, callback) => {
-                        onCreateProject?.(project, callback);
-                        actionsPanel.close();
-                      }}
-                    />
-                  )}
+              return (
+                <PriorityBadge
+                  priority={priorityField.state.value}
+                  className="cursor-pointer!"
+                  size="xs"
                 />
-              </Tabs.Panel>
-            </Tabs>
-          </Popover.Dropdown>
-        </Popover>
-        <form.Field
-          name="subtasks"
-          mode="array"
-          children={(subtasksField) => {
-            const handleAddSubtask = (values: Omit<Subtask, "id">) => {
-              subtasksField.pushValue({
-                id: createUniqueId(subtasksField.state.value ?? [], 4),
-                ...values,
-              });
-            };
-            return (
-              <>
-                <Box>
-                  {subtasksField.state.value?.map((subtask, index) => (
-                    <Fragment key={subtask.id}>
-                      <Divider />
-                      <SubtaskForm
-                        form={form}
-                        index={index}
-                        readOnly={readOnly}
-                        onRemove={() => subtasksField.removeValue(index)}
-                      />
-                    </Fragment>
-                  ))}
-                </Box>
-                <SubtaskAdder
-                  visible={isAddingSubtask}
-                  onSubmit={handleAddSubtask}
-                  onCancel={subtaskAdder.close}
+              );
+            }}
+          />
+          <form.Field
+            name="complexity"
+            children={(complexityField) => {
+              if (!complexityField.state.value) return null;
+              if (complexityField.state.value === "default") return null;
+
+              return (
+                <ComplexityBadge
+                  className="cursor-pointer!"
+                  complexity={complexityField.state.value}
+                  size="xs"
                 />
-              </>
-            );
-          }}
-        />
-      </Paper>
+              );
+            }}
+          />
+          {!readOnly && (
+            <Popover.Target>
+              <ActionIcon
+                aria-label="Task Actions"
+                className="disabled:cursor-default!"
+                disabled={isActionsPanelOpen}
+                variant="transparent"
+                color="gray"
+                onClick={actionsPanel.open}
+              >
+                <IconDotsVertical size={16} />
+              </ActionIcon>
+            </Popover.Target>
+          )}
+        </Flex>
+
+        <Popover.Dropdown p={0} ref={actionsPanelRef} className="overflow-clip">
+          <Tabs value={tab}>
+            <Tabs.Panel value="actions">
+              <TaskActions defaultActions={defaultActions} />
+            </Tabs.Panel>
+            <Tabs.Panel value="projects">
+              <form.Field
+                name="projectId"
+                children={(projectField) => (
+                  <ProjectPicker
+                    projects={projects}
+                    onClose={() => setTab("actions")}
+                    onChange={(projectId) => {
+                      projectField.handleChange(projectId);
+                      actionsPanel.close();
+                    }}
+                    onCreate={(project, callback) => {
+                      onCreateProject?.(project, {
+                        onSuccess: callback,
+                      });
+                      actionsPanel.close();
+                    }}
+                  />
+                )}
+              />
+            </Tabs.Panel>
+          </Tabs>
+        </Popover.Dropdown>
+      </Popover>
     );
   },
 });

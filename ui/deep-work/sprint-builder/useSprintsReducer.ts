@@ -1,61 +1,61 @@
+/* eslint-disable */
 import { useReducer } from "react";
 
 import type { Duration, SprintPlan } from "@/core/deep-work";
-import type { FlatTask, TaskReference } from "@/core/task-management";
-import {
-  doesTaskReferenceExist,
-  excludeTaskReferences,
-} from "@/core/task-management";
+import type { FlatTask, TaskId } from "@/core/task-management";
+import { isTaskIncluded } from "@/core/task-management";
 import { createUniqueId } from "@/ui/utils";
 
 // MARK: Actions
 
-type SprintPlannerAction =
+export type SprintPlannerAction =
   | {
-      type: "ADD_SPRINT";
-      payload: { duration?: Duration; tasks?: TaskReference[] };
+      action: "ADD_SPRINT";
+      payload: { duration?: Duration; tasks?: TaskId[] };
       callback?: (sprintId: SprintPlan["id"]) => void;
     }
   | {
-      type: "ADD_SPRINTS";
-      payload: { sprints: { duration?: Duration; tasks?: TaskReference[] }[] };
+      action: "ADD_SPRINTS";
+      payload: { sprints: { duration?: Duration; tasks?: TaskId[] }[] };
     }
   | {
-      type: "UPDATE_SPRINT";
+      action: "UPDATE_SPRINT";
       payload: {
-        sprintId: string;
-        updates: Partial<Pick<SprintPlan, "duration">>;
+        sprintId: SprintPlan["id"];
+        updates: Partial<
+          Pick<SprintPlan, "duration" | "scheduledStart" | "recoveryTime">
+        >;
       };
     }
-  | { type: "REORDER_SPRINTS"; payload: { order: number[] } }
-  | { type: "DROP_SPRINT"; payload: { sprintId: string } }
-  | { type: "ASSIGN_TASK"; payload: { sprintId: string; task: TaskReference } }
+  | { action: "REORDER_SPRINTS"; payload: { order: number[] } }
+  | { action: "DROP_SPRINT"; payload: { sprintId: string } }
+  | { action: "ASSIGN_TASK"; payload: { sprintId: string; task: TaskId } }
   | {
-      type: "ASSIGN_TASKS";
-      payload: { sprintId: string | null; tasks: TaskReference[] };
+      action: "ASSIGN_TASKS";
+      payload: { sprintId: string | null; tasks: TaskId[] };
     }
   | {
-      type: "UNASSIGN_TASK";
-      payload: { sprintId: string; task: TaskReference };
+      action: "UNASSIGN_TASK";
+      payload: { sprintId: string; task: TaskId };
     }
   | {
-      type: "UNASSIGN_TASKS";
-      payload: { sprintId: string; tasks: TaskReference[] };
+      action: "UNASSIGN_TASKS";
+      payload: { sprintId: string; tasks: TaskId[] };
     }
   | {
-      type: "MOVE_TASKS";
+      action: "MOVE_TASKS";
       payload: {
         fromSprintId: string;
         toSprintId: string;
-        tasks: TaskReference[];
+        tasks: TaskId[];
         insertIndex?: number;
       };
     }
   | {
-      type: "REORDER_SPRINT_TASKS";
+      action: "REORDER_SPRINT_TASKS";
       payload: { sprintId: string; order: number[] };
     }
-  | { type: "SET_SPRINTS"; payload: { sprints: SprintPlan[] } };
+  | { action: "SET_SPRINTS"; payload: { sprints: SprintPlan[] } };
 
 // MARK: Errors
 
@@ -99,7 +99,7 @@ export function useSprintsReducer(
     const sprintExists = (sprintId: string, sprints: SprintPlan[]): boolean =>
       sprints.some((sprint) => sprint.id === sprintId);
 
-    switch (action.type) {
+    switch (action.action) {
       case "ADD_SPRINT": {
         const { duration = sprintDuration, tasks = [] } = action.payload;
 
@@ -111,10 +111,7 @@ export function useSprintsReducer(
           {
             id: newSprintId,
             duration,
-            tasks: tasks.reduce<SprintPlan["tasks"]>((acc, task) => {
-              if (!doesTaskReferenceExist(task, taskPool)) return acc;
-              return [...acc, task];
-            }, []),
+            tasks: tasks.filter((task) => isTaskIncluded(taskPool, task)),
           },
         ];
       }
@@ -129,9 +126,9 @@ export function useSprintsReducer(
               id: createUniqueId(acc, 4),
               duration: sprint.duration ?? sprintDuration,
               tasks: (sprint.tasks ?? []).reduce<SprintPlan["tasks"]>(
-                (acc, task) => {
-                  if (!doesTaskReferenceExist(task, taskPool)) return acc;
-                  return [...acc, task];
+                (acc, taskId) => {
+                  if (!isTaskIncluded(taskPool, taskId)) return acc;
+                  return [...acc, taskId];
                 },
                 [],
               ),
@@ -189,7 +186,7 @@ export function useSprintsReducer(
           return state;
         }
 
-        if (!doesTaskReferenceExist(task, taskPool)) return state;
+        if (!isTaskIncluded(taskPool, task)) return state;
 
         return state.map((sprint) => {
           if (sprint.id !== sprintId) return sprint;
@@ -209,8 +206,8 @@ export function useSprintsReducer(
           return state;
         }
 
-        const validTaskReferences = tasks.filter((task) =>
-          doesTaskReferenceExist(task, taskPool),
+        const validTaskReferences = tasks.filter((taskId) =>
+          isTaskIncluded(taskPool, taskId),
         );
         if (!validTaskReferences.length) return state;
 
@@ -233,7 +230,7 @@ export function useSprintsReducer(
             tasks: validTaskReferences.reduce<SprintPlan["tasks"]>(
               (acc, task) => {
                 const indexToInsert = acc.findLastIndex(
-                  ({ taskId }) => taskId === task.taskId,
+                  (taskId) => taskId === task,
                 );
                 if (indexToInsert === -1) return [...acc, task];
 
@@ -262,7 +259,7 @@ export function useSprintsReducer(
 
           return {
             ...sprint,
-            tasks: excludeTaskReferences(sprint.tasks, [taskToExclude]),
+            tasks: sprint.tasks.filter((task) => task !== taskToExclude),
           };
         });
       }
@@ -280,7 +277,9 @@ export function useSprintsReducer(
 
           return {
             ...sprint,
-            tasks: excludeTaskReferences(sprint.tasks, tasksToExclude),
+            tasks: sprint.tasks.filter(
+              (task) => !tasksToExclude.includes(task),
+            ),
           };
         });
       }
@@ -299,7 +298,7 @@ export function useSprintsReducer(
         }
 
         const validTaskReferences = tasks.filter((task) =>
-          doesTaskReferenceExist(task, taskPool),
+          isTaskIncluded(taskPool, task),
         );
         if (!validTaskReferences.length) return state;
 
@@ -308,7 +307,9 @@ export function useSprintsReducer(
           if (sprint.id === fromSprintId)
             return {
               ...sprint,
-              tasks: excludeTaskReferences(sprint.tasks, validTaskReferences),
+              tasks: sprint.tasks.filter(
+                (task) => !validTaskReferences.includes(task),
+              ),
             };
 
           // Add tasks to destination sprint

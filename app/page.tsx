@@ -20,17 +20,22 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { IconPlus } from "@tabler/icons-react";
 
-import type { TaskInput } from "@/core/task-management";
+import type { TaskInsert } from "@/core/task-management";
+import { countTasks } from "@/core/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
 import { IntelligenceTile } from "@/ui/intelligence";
 import {
   Backlog,
   ProjectsTile,
   taskFormOpts,
-  useProjects,
+  useCreateProject,
+  useCreateTask,
+  useDeleteTask,
+  useProjectsQuery,
   useTaskForm,
-  useTasks,
   useTasksQueryOptions,
+  useTasksWithSubtasksQuery,
+  useUpdateTask,
 } from "@/ui/task-management";
 import { ProjectForm } from "@/ui/task-management/project/ProjectForm";
 import {
@@ -39,14 +44,16 @@ import {
 } from "@/ui/task-management/project/useProjectForm";
 
 export default function HomePage() {
-  const { projects, createProject, loading: loadingProjects } = useProjects();
+  const { data: projects = [], isLoading: loadingProjects } =
+    useProjectsQuery();
+  const { mutate: createProject } = useCreateProject();
   const [isCreatingProject, projectCreatorModal] = useDisclosure();
 
-  const tasks = useTasks();
-  const taskCount = tasks.items.reduce(
-    (acc, task) => acc + (task.subtasks?.length ?? 1),
-    0,
-  );
+  const tasks = useTasksWithSubtasksQuery({
+    ids: [],
+    where: "exclude",
+  });
+  const taskCount = countTasks(tasks.data ?? []);
 
   const projectForm = useProjectForm({
     ...projectFormOpts,
@@ -150,13 +157,22 @@ function BacklogPanel({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const tasks = useTasks();
-  const { projects, createProject } = useProjects();
+  const tasks = useTasksWithSubtasksQuery({
+    ids: [],
+    where: "exclude",
+  });
+
+  const { mutate: createTask } = useCreateTask();
+  const { mutate: updateTask } = useUpdateTask();
+  const { mutate: deleteTask } = useDeleteTask();
+
+  const { data: projects = [] } = useProjectsQuery();
+  const { mutate: createProject } = useCreateProject();
 
   const { filters, filterTasks, updateFilters, sort, sortFn, updateSort } =
     useTasksQueryOptions();
 
-  const items = filterTasks(tasks.items).sort(sortFn);
+  const items = filterTasks(tasks.data ?? []).sort(sortFn);
 
   // ------- Task Adder -------
 
@@ -179,11 +195,11 @@ function BacklogPanel({
           sort={sort}
           onSortUpdate={updateSort}
           projects={projects}
-          onUpdateTask={tasks.updateTask}
-          onDeleteTask={tasks.deleteTask}
+          onUpdateTask={updateTask}
+          onDeleteTask={deleteTask}
           onCreateProject={createProject}
         />
-        <BacklogTaskAdder onSubmit={tasks.addTask} />
+        <BacklogTaskAdder onSubmit={createTask} />
       </Flex>
     </SidePanel>
   );
@@ -193,7 +209,7 @@ function BacklogPanel({
 function BacklogTaskAdder({
   onSubmit,
 }: {
-  onSubmit: (task: TaskInput) => void;
+  onSubmit: (task: TaskInsert) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isAdding, { open: showForm, close: hideForm }] = useDisclosure(false);

@@ -1,78 +1,46 @@
 import { z } from "zod";
 
-export const taskPriorityEnum = z.enum([
-  "critical",
-  "urgent",
-  "default",
-  "deferred",
-  "optional",
-]);
-export type TaskPriority = z.infer<typeof taskPriorityEnum>;
+import type { ProjectSelect } from "./db";
+import { taskSelectSchema } from "./db";
 
-export const taskComplexityEnum = z.enum([
-  "trivial",
-  "simple",
-  "default",
-  "complex",
-]);
-export type TaskComplexity = z.infer<typeof taskComplexityEnum>;
+export const taskTreeSchema = taskSelectSchema
+  .omit({
+    parentTaskId: true,
+  })
+  .extend({
+    subtasks: z.array(taskSelectSchema).min(1),
+  });
+export type TaskTree = z.infer<typeof taskTreeSchema>;
 
-export const baseTaskSchema = z.object({
-  id: z.string(),
-  title: z.string().trim().min(1),
-  tags: z.array(z.string()).optional(),
-  estimatedTime: z.number().optional().nullable(),
-  complexity: taskComplexityEnum.optional().nullable(),
-  priority: taskPriorityEnum.optional().nullable(),
+export const standaloneTaskSchema = taskSelectSchema.omit({
+  parentTaskId: true,
 });
-export type BaseTask = z.infer<typeof baseTaskSchema>;
+export type StandaloneTask = z.infer<typeof standaloneTaskSchema>;
 
-export const subtaskSchema = baseTaskSchema;
+export const subtaskSchema = taskSelectSchema
+  .omit({
+    parentTaskId: true,
+  })
+  .extend({
+    parent: standaloneTaskSchema,
+  });
 export type Subtask = z.infer<typeof subtaskSchema>;
 
-export const taskSchema = baseTaskSchema.extend({
-  projectId: z.string().optional().nullable(),
-  subtasks: z.array(subtaskSchema).optional(),
-});
-export type Task = z.infer<typeof taskSchema>;
-
-export const taskInputSchema = taskSchema.omit({
-  id: true,
-});
-export type TaskInput = z.infer<typeof taskInputSchema>;
-
-/**
- * Task reference
- */
-
-export const taskReferenceSchema = z.object({
-  taskId: z.string(),
-  subtaskId: z.string().nullable(),
-});
-export type TaskReference = z.infer<typeof taskReferenceSchema>;
-
-export const flatTaskSchema = baseTaskSchema
-  .omit({ id: true })
-  .extend({
-    parentTitle: z.string().optional(),
-    projectId: z.string().optional().nullable(),
-  })
-  .and(taskReferenceSchema);
-
+export const flatTaskSchema = z.union([standaloneTaskSchema, subtaskSchema]);
 export type FlatTask = z.infer<typeof flatTaskSchema>;
 
-export interface FlatTaskGroup {
-  taskId: TaskReference["taskId"];
-  groupLabel: string;
-  items: FlatTask[];
-}
+export const anyTaskSchema = z.union([
+  standaloneTaskSchema,
+  subtaskSchema,
+  taskTreeSchema,
+]);
+export type AnyTask = z.infer<typeof anyTaskSchema>;
 
-export const storedTaskSchema = taskSchema.extend({
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
-  completedAt: z.string().datetime().optional(),
-});
-export type StoredTask = z.infer<typeof storedTaskSchema>;
+export const isTaskTree = (task: AnyTask): task is TaskTree => {
+  if (!("subtasks" in task)) return false;
+  if (!task.subtasks) return false;
+  return task.subtasks.length > 0;
+};
 
 const tasksSortOptionsSchema = z.object({
   sortBy: z.enum(["title", "createdAt", "updatedAt"]),
@@ -86,10 +54,12 @@ export const TASKS_SORT_OPTIONS = {
 };
 
 export interface TaskFilters {
-  projectIds?: string[];
-  tags?: string[];
+  projectIds?: ProjectSelect["uid"][];
+  // tags?: string[];
   search?: string;
 }
+
+// MARK: Unused
 
 export const colorsEnum = z.enum([
   "primary",
@@ -109,20 +79,6 @@ export const colorsEnum = z.enum([
 ]);
 
 export type Color = z.infer<typeof colorsEnum>;
-
-export const projectSchema = z.object({
-  id: z.string(),
-  name: z.string().min(1),
-  image: z.string().optional(),
-  color: colorsEnum.optional(),
-  description: z.string().optional(),
-});
-export type Project = z.infer<typeof projectSchema>;
-
-export const projectInputSchema = projectSchema.omit({ id: true }).extend({
-  imageFile: z.instanceof(File).optional(),
-});
-export type ProjectInput = z.infer<typeof projectInputSchema>;
 
 export const tagSchema = z.object({
   id: z.string(),

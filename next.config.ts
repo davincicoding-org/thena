@@ -1,3 +1,4 @@
+/* eslint-disable */
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
@@ -9,6 +10,28 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     reactCompiler: true,
+  },
+  webpack: (config, { isServer }) => {
+    config.experiments = {
+      ...(config.experiments ?? {}),
+      asyncWebAssembly: true, // Webpack 5 flag
+    };
+
+    config.module.rules.push({
+      test: /\.sql$/,
+      use: "raw-loader",
+    });
+
+    // PGlite’s fallback Node deps aren’t available in the browser
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        os: false,
+      };
+    }
+    return config;
   },
 };
 

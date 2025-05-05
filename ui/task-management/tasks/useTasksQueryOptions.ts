@@ -1,9 +1,10 @@
 import { useState } from "react";
 
 import type {
-  StoredTask,
+  StandaloneTask,
   TaskFilters,
   TasksSortOptions,
+  TaskTree,
 } from "@/core/task-management";
 import { hasFiltersApplied } from "@/core/task-management";
 
@@ -14,10 +15,15 @@ export interface TasksHookOptions {
 
 export interface TasksQueryOptionsHookReturn {
   filters: TaskFilters;
-  filterTasks: (tasks: StoredTask[]) => StoredTask[];
+  filterTasks: (
+    tasks: (TaskTree | StandaloneTask)[],
+  ) => (TaskTree | StandaloneTask)[];
   updateFilters: (updates: Partial<TaskFilters>) => void;
   sort: TasksSortOptions;
-  sortFn: (a: StoredTask, b: StoredTask) => number;
+  sortFn: (
+    a: TaskTree | StandaloneTask,
+    b: TaskTree | StandaloneTask,
+  ) => number;
   updateSort: (updates: Partial<TasksSortOptions>) => void;
 }
 
@@ -44,7 +50,7 @@ export function useTasksQueryOptions({
   const filterTasks: TasksQueryOptionsHookReturn["filterTasks"] = (items) => {
     if (!hasFiltersApplied(filters)) return items;
 
-    return items.reduce<StoredTask[]>((acc, task) => {
+    return items.reduce<(TaskTree | StandaloneTask)[]>((acc, task) => {
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
         const titleHasSearch = task.title.toLowerCase().includes(searchLower);
@@ -56,21 +62,21 @@ export function useTasksQueryOptions({
         if (!filters.projectIds.includes(task.projectId)) return acc;
       }
 
-      if (filters.tags?.length) {
-        const taskHasTag = task.tags?.some((tag) =>
-          filters.tags?.includes(tag),
-        );
-        const subtaskHasTag = task.subtasks?.some((subtask) =>
-          subtask.tags?.some((tag) => filters.tags?.includes(tag)),
-        );
+      // if (filters.tags?.length) {
+      //   const taskHasTag = task.tags?.some((tag) =>
+      //     filters.tags?.includes(tag),
+      //   );
+      //   const subtaskHasTag = task.subtasks?.some((subtask) =>
+      //     subtask.tags?.some((tag) => filters.tags?.includes(tag)),
+      //   );
 
-        if (!taskHasTag && !subtaskHasTag) return acc;
+      //   if (!taskHasTag && !subtaskHasTag) return acc;
 
-        if (!taskHasTag)
-          task.subtasks = task.subtasks?.filter((subtask) =>
-            subtask.tags?.some((tag) => filters.tags?.includes(tag)),
-          );
-      }
+      //   if (!taskHasTag)
+      //     task.subtasks = task.subtasks?.filter((subtask) =>
+      //       subtask.tags?.some((tag) => filters.tags?.includes(tag)),
+      //     );
+      // }
       return [...acc, task];
     }, []);
   };

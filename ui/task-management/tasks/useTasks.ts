@@ -1,46 +1,95 @@
-import type { StoredTask, TaskInput } from "@/core/task-management";
-import type { MutationAction } from "@/ui/utils";
-import { createMutationAction } from "@/ui/utils";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { and, eq, inArray, isNull, notInArray } from "drizzle-orm";
 
-import { useTasksStore } from "./useTasksStore";
+import type {
+  StandaloneTask,
+  TaskId,
+  TaskInsert,
+  TaskSelect,
+  TaskTree,
+  TaskUpdate,
+} from "@/core/task-management";
+import { getClientDB } from "@/db/client";
+import { tasks } from "@/db/schema";
 
-export interface TasksHookReturn {
-  loading: boolean;
-  items: StoredTask[];
-  addTask: MutationAction<TaskInput, StoredTask>;
-  addTasks: MutationAction<TaskInput[], StoredTask[]>;
-  updateTask: MutationAction<
+export const useTasksWithSubtasksQuery = (options: {
+  ids: TaskId[];
+  where: "include" | "exclude";
+}) => {
+  const queryClient = useQueryClient();
+  return useQuery<(TaskTree | StandaloneTask)[]>(
     {
-      taskId: StoredTask["id"];
-      updates: Partial<TaskInput>;
+      queryKey: ["tasks-with-subtasks", options.ids, options.where],
+      queryFn: async () => {
+        const db = await getClientDB();
+
+        const filterFn = options.where === "include" ? inArray : notInArray;
+
+        const result = await db.query.tasks.findMany({
+          where: and(
+            filterFn(tasks.uid, options.ids),
+            isNull(tasks.parentTaskId),
+          ),
+          with: {
+            subtasks: true,
+          },
+        });
+
+        return result;
+      },
+      placeholderData: keepPreviousData,
     },
-    Record<"updated" | "prev", StoredTask> | undefined
-  >;
-  insertTask: MutationAction<StoredTask>;
-  deleteTask: MutationAction<StoredTask["id"], StoredTask | undefined>;
-  deleteTasks: MutationAction<StoredTask["id"][], StoredTask[]>;
-}
+    queryClient,
+  );
+};
 
-/**
- * Manages stored tags.
- */
+// TODO add query invalidations
 
-export function useTasks(): TasksHookReturn {
-  const store = useTasksStore();
+export const useCreateTask = () => {
+  return useMutation<TaskSelect | undefined, Error, TaskInsert>({
+    mutationKey: ["create-task"],
+    mutationFn: async (input) => {
+      const db = await getClientDB();
+      const result = await db.insert(tasks).values(input).returning();
+      return result[0];
+    },
+  });
+};
 
-  const items = Object.entries(store.pool).map(([id, task]) => ({
-    id,
-    ...task,
-  }));
+export const useUpdateTask = () => {
+  return useMutation<
+    TaskSelect | undefined,
+    Error,
+    TaskUpdate & Pick<TaskSelect, "uid">
+  >({
+    mutationKey: ["update-task"],
+    mutationFn: async ({ uid, ...updates }) => {
+      const db = await getClientDB();
+      const result = await db
+        .update(tasks)
+        .set(updates)
+        .where(eq(tasks.uid, uid))
+        .returning();
+      return result[0];
+    },
+  });
+};
 
-  return {
-    loading: !store.ready,
-    items,
-    addTask: createMutationAction(store.addTask),
-    addTasks: createMutationAction(store.addTasks),
-    updateTask: createMutationAction(store.updateTask),
-    insertTask: createMutationAction(store.insertTask),
-    deleteTask: createMutationAction(store.removeTask),
-    deleteTasks: createMutationAction(store.removeTasks),
-  };
-}
+export const useDeleteTask = () => {
+  return useMutation<TaskSelect | undefined, Error, TaskId>({
+    mutationKey: ["delete-task"],
+    mutationFn: async (uid) => {
+      const db = await getClientDB();
+      const result = await db
+        .delete(tasks)
+        .where(eq(tasks.uid, uid))
+        .returning();
+      return result[0];
+    },
+  });
+};

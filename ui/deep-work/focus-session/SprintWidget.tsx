@@ -14,7 +14,7 @@ import {
 import { IconPlayerPause } from "@tabler/icons-react";
 
 import type { Duration, WithRunMetrics } from "@/core/deep-work";
-import type { FlatTask, TaskReference } from "@/core/task-management";
+import type { FlatTask, TaskId } from "@/core/task-management";
 import { isTaskRunnable, resolveDuration } from "@/core/deep-work";
 import { cn } from "@/ui/utils";
 
@@ -31,9 +31,9 @@ export interface SprintWidgetProps {
   allowToPause?: boolean;
   ref?: Ref<HTMLDivElement>;
   onStart?: () => void;
-  onCompleteTask?: (task: TaskReference) => void;
-  onSkipTask?: (task: TaskReference) => void;
-  onJumpToTask?: (task: TaskReference, tasksToSkip?: TaskReference[]) => void;
+  onCompleteTask?: (task: TaskId) => void;
+  onSkipTask?: (task: TaskId) => void;
+  onJumpToTask?: (task: TaskId, tasksToSkip?: TaskId[]) => void;
   onPause?: () => void;
   onResume?: () => void;
   onFinish?: () => void;
@@ -101,15 +101,15 @@ export function SprintWidget({
     onResume?.();
   };
 
-  const handleJumpToTask = (task: TaskReference) => {
-    const taskIndex = tasks.findIndex(
-      ({ taskId, subtaskId }) =>
-        taskId === task.taskId && subtaskId === task.subtaskId,
-    );
+  const handleJumpToTask = (task: TaskId) => {
+    const taskIndex = tasks.findIndex(({ uid }) => uid === task);
     if (taskIndex === -1) return;
 
     const tasksToSkip = tasks.slice(0, taskIndex).filter(isTaskRunnable);
-    onJumpToTask?.(task, tasksToSkip);
+    onJumpToTask?.(
+      task,
+      tasksToSkip.map(({ uid }) => uid),
+    );
   };
 
   return (
@@ -152,9 +152,9 @@ export function SprintWidget({
       <Box p="sm">
         <Paper className="overflow-clip" withBorder>
           {tasks.map((item) => (
-            <Fragment key={`${item.taskId}-${item.subtaskId}`}>
+            <Fragment key={item.uid}>
               <QueueTask
-                group={item.parentTitle}
+                group={"parent" in item ? item.parent.title : undefined}
                 label={item.title}
                 readOnly={viewOnly || status === "idle"}
                 status={
@@ -162,29 +162,13 @@ export function SprintWidget({
                     ? "completed"
                     : item.skipped
                       ? "skipped"
-                      : currentTask?.taskId === item.taskId &&
-                          currentTask?.subtaskId === item.subtaskId
+                      : currentTask?.uid === item.uid
                         ? "active"
                         : "upcoming"
                 }
-                onComplete={() =>
-                  onCompleteTask?.({
-                    taskId: item.taskId,
-                    subtaskId: item.subtaskId,
-                  })
-                }
-                onSkip={() =>
-                  onSkipTask?.({
-                    taskId: item.taskId,
-                    subtaskId: item.subtaskId,
-                  })
-                }
-                onRunManually={() =>
-                  handleJumpToTask?.({
-                    taskId: item.taskId,
-                    subtaskId: item.subtaskId,
-                  })
-                }
+                onComplete={() => onCompleteTask?.(item.uid)}
+                onSkip={() => onSkipTask?.(item.uid)}
+                onRunManually={() => handleJumpToTask?.(item.uid)}
               />
               <Divider className="last:hidden" />
             </Fragment>

@@ -6,24 +6,18 @@ import type {
 } from "@mantine/core";
 import { useState } from "react";
 import {
-  ActionIcon,
   Avatar,
-  Box,
   Button,
   Divider,
   FileButton,
   Flex,
   Popover,
-  SimpleGrid,
   Stack,
   Textarea,
   TextInput,
 } from "@mantine/core";
 import { useClickOutside, useDisclosure } from "@mantine/hooks";
 import { IconUpload } from "@tabler/icons-react";
-
-import { colorsEnum } from "@/core/task-management";
-import { cn } from "@/ui/utils";
 
 import { projectFormOpts, withProjectForm } from "./useProjectForm";
 
@@ -64,15 +58,15 @@ export const ProjectForm = withProjectForm({
           >
             <form.Subscribe
               selector={(state) => state.values}
-              children={({ color, name }) => (
+              children={({ title }) => (
                 <Popover.Target>
                   <Avatar
                     className="cursor-pointer"
                     size={130}
                     src={imagePreview}
                     radius="md"
-                    color={color}
-                    name={name || "P"}
+                    // color={color}
+                    name={title || "P"}
                     onClick={avatarPanel.toggle}
                     {...ImageFieldProps}
                   />
@@ -138,7 +132,7 @@ export const ProjectForm = withProjectForm({
               />
 
               <Divider />
-              <form.Field
+              {/* <form.Field
                 name="color"
                 children={(field) => (
                   <SimpleGrid cols={4} p="xs" className="gap-1!">
@@ -161,17 +155,17 @@ export const ProjectForm = withProjectForm({
                     ))}
                   </SimpleGrid>
                 )}
-              />
+              /> */}
             </Popover.Dropdown>
           </Popover>
         )}
         {/* @ts-expect-error - poorly typed */}
         <Stack flex={1} gap={gap}>
           <form.Field
-            name="name"
+            name="title"
             children={(field) => (
               <TextInput
-                placeholder="Project name"
+                placeholder="Project title"
                 value={field.state.value}
                 onChange={(e) => field.handleChange(e.target.value)}
                 {...NameFieldProps}
@@ -185,7 +179,7 @@ export const ProjectForm = withProjectForm({
               <Textarea
                 placeholder="Description (optional)"
                 rows={3}
-                value={field.state.value}
+                value={field.state.value ?? ""}
                 onChange={(e) => field.handleChange(e.target.value)}
                 {...DescriptionFieldProps}
               />

@@ -3,11 +3,11 @@
 
 import type { PaperProps } from "@mantine/core";
 import type { IconProps } from "@tabler/icons-react";
+import type { UseMutateFunction } from "@tanstack/react-query";
 import {
   ActionIcon,
   Avatar,
   Badge,
-  Box,
   Button,
   Center,
   Collapse,
@@ -34,25 +34,34 @@ import {
 } from "@tabler/icons-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { isEqual } from "lodash-es";
 
 import type {
-  Project,
-  ProjectInput,
-  StoredTask,
+  ProjectInsertExtended,
+  ProjectSelect,
+  StandaloneTask,
   TaskFilters,
-  TaskInput,
-  TaskReference,
+  TaskId,
+  TaskInsert,
+  TaskSelect,
   TasksSortOptions,
+  TaskTree,
+  TaskUpdate,
 } from "@/core/task-management";
 import type { TaskFormProps } from "@/ui/task-management";
-import { hasFiltersApplied, TASKS_SORT_OPTIONS } from "@/core/task-management";
+import {
+  hasFiltersApplied,
+  isTaskTree,
+  taskInsertSchema,
+  TASKS_SORT_OPTIONS,
+} from "@/core/task-management";
 import { Panel } from "@/ui/components/Panel";
 import { useSyncInputState } from "@/ui/hooks/useSyncState";
-import { TaskForm, taskFormOpts, useTaskForm } from "@/ui/task-management";
+import { TaskForm, useTaskForm } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
 import type { TasksQueryOptionsHookReturn } from "../tasks/useTasksQueryOptions";
+import { SubtaskForm } from "../task-form/SubtaskForm";
+import { TaskWrapper } from "../task-form/TaskWrapper";
 
 dayjs.extend(relativeTime);
 
@@ -60,23 +69,22 @@ dayjs.extend(relativeTime);
 
 export interface BacklogProps {
   mode: "select" | "edit";
-  tasks: StoredTask[];
+  tasks: (TaskTree | StandaloneTask)[];
   filters: TaskFilters;
   sort: TasksSortOptions;
   onFiltersUpdate: TasksQueryOptionsHookReturn["updateFilters"];
   onSortUpdate: TasksQueryOptionsHookReturn["updateSort"];
-  projects: Project[];
-  onUpdateTask?: (args: {
-    taskId: StoredTask["id"];
-    updates: Partial<TaskInput>;
-  }) => void;
-  onDeleteTask?: (taskId: StoredTask["id"]) => void;
-  onCreateProject?: (
-    project: ProjectInput,
-    onCreate: (project: Project) => void,
-  ) => void;
-  selectedTasks?: TaskReference[];
-  onToggleTaskSelection?: (task: TaskReference) => void;
+  projects: ProjectSelect[];
+  onAddTask?: (task: TaskInsert) => void;
+  onUpdateTask?: (task: TaskUpdate & Pick<TaskSelect, "uid">) => void;
+  onDeleteTask?: (taskId: TaskId) => void;
+  onCreateProject?: UseMutateFunction<
+    ProjectSelect | undefined,
+    Error,
+    ProjectInsertExtended
+  >;
+  selectedTasks?: TaskId[];
+  onToggleTaskSelection?: (task: TaskId) => void;
 }
 
 export function Backlog({
@@ -87,6 +95,7 @@ export function Backlog({
   onFiltersUpdate,
   onSortUpdate,
   projects,
+  onAddTask,
   onUpdateTask,
   onDeleteTask,
   onCreateProject,
@@ -112,23 +121,89 @@ export function Backlog({
         <ScrollArea bg="neutral.8">
           <Stack px="md" py="lg">
             {tasks.map((task) => (
-              <TaskItem
-                key={task.id}
-                mode={mode}
-                task={task}
-                projects={projects}
-                onUpdate={(values) =>
-                  onUpdateTask?.({ taskId: task.id, updates: values })
+              <TaskWrapper
+                key={task.uid}
+                className={
+                  mode === "select"
+                    ? cn(
+                        "cursor-pointer outline! transition-all [&_*]:cursor-pointer!",
+                        selectedTasks?.some(
+                          (selectedTask) => selectedTask === task.uid,
+                        )
+                          ? "outline-[var(--mantine-primary-color-filled)]!"
+                          : "outline-transparent! hover:outline! hover:outline-current!",
+                      )
+                    : undefined
                 }
-                onDelete={() => onDeleteTask?.(task.id)}
-                onCreateProject={onCreateProject}
-                selected={selectedTasks?.some(
-                  (selectedTask) => selectedTask.taskId === task.id,
-                )}
-                onToggleSelection={() =>
-                  onToggleTaskSelection?.({
-                    taskId: task.id,
-                    subtaskId: null,
+                onClick={
+                  mode === "select"
+                    ? () => onToggleTaskSelection?.(task.uid)
+                    : undefined
+                }
+                task={
+                  <TaskItem
+                    mode={mode}
+                    task={task}
+                    onUpdate={(updates) =>
+                      onUpdateTask?.({ uid: task.uid, ...updates })
+                    }
+                    projects={projects}
+                    onCreateProject={onCreateProject}
+                    TaskActions={({ defaultActions }) => (
+                      <>
+                        {/* {onRefineTask && (
+                          <>
+                            <Button
+                              fullWidth
+                              variant="subtle"
+                              color="gray"
+                              justify="flex-start"
+                              onClick={() => onRefineTask(mainTask)}
+                            >
+                              Refine
+                            </Button>
+                            <Divider />
+                          </>
+                        )} */}
+                        {defaultActions}
+                        <Divider />
+                        <Button
+                          fullWidth
+                          color="red"
+                          radius={0}
+                          variant="subtle"
+                          justify="flex-start"
+                          leftSection={<IconTrash size={16} />}
+                          onClick={() => onDeleteTask?.(task.uid)}
+                        >
+                          Delete
+                        </Button>
+                      </>
+                    )}
+                  />
+                }
+                subtasks={
+                  isTaskTree(task)
+                    ? task.subtasks.map((subtask) => (
+                        <TaskItem
+                          key={subtask.uid}
+                          task={subtask}
+                          mode={mode}
+                          isSubtask
+                          onUpdate={(updates) =>
+                            onUpdateTask?.({ uid: subtask.uid, ...updates })
+                          }
+                          onDelete={() => onDeleteTask?.(subtask.uid)}
+                          projects={projects}
+                          onCreateProject={onCreateProject}
+                        />
+                      ))
+                    : undefined
+                }
+                onAddSubtask={(subtask) =>
+                  onAddTask?.({
+                    parentTaskId: task.uid,
+                    ...subtask,
                   })
                 }
               />
@@ -171,11 +246,10 @@ function BacklogHeader({
 }: BacklogHeaderProps) {
   const [searchValue, setSearchValue] = useSyncInputState(filters.search ?? "");
 
-  const resolveProject = (projectId: string): Project =>
-    projects.find((project) => project.id === projectId) ?? {
-      id: projectId,
-      name: projectId,
-    };
+  const resolveProject = (
+    projectId: ProjectSelect["uid"],
+  ): ProjectSelect | undefined =>
+    projects.find((project) => project.uid === projectId);
 
   return (
     <>
@@ -220,29 +294,29 @@ function BacklogHeader({
                     <ScrollArea scrollbars="y" h={180}>
                       {projects.map((project) => (
                         <NavLink
-                          key={project.id}
-                          label={project.name}
+                          key={project.uid}
+                          label={project.title}
                           leftSection={
                             <Avatar
-                              color={project?.color}
+                              // color={project?.color}
                               src={project?.image}
                               size={24}
                               radius="xl"
-                              name={project.name}
-                              alt={project.name}
+                              name={project.title}
+                              alt={project.title}
                             />
                           }
                           component="button"
-                          active={filters.projectIds?.includes(project.id)}
+                          active={filters.projectIds?.includes(project.uid)}
                           onClick={() => {
                             onFiltersUpdate({
                               projectIds: filters.projectIds?.includes(
-                                project.id,
+                                project.uid,
                               )
                                 ? filters.projectIds?.filter(
-                                    (id) => id !== project.id,
+                                    (id) => id !== project.uid,
                                   )
-                                : [...(filters.projectIds ?? []), project.id],
+                                : [...(filters.projectIds ?? []), project.uid],
                             });
                           }}
                         />
@@ -293,21 +367,18 @@ function BacklogHeader({
           </Menu.Dropdown>
         </Menu>
       </Flex>
-      <Collapse
-        in={
-          Boolean(filters.projectIds?.length) || Boolean(filters.tags?.length)
-        }
-      >
+      <Collapse in={Boolean(filters.projectIds?.length)}>
         <ScrollArea scrollbars="x" scrollHideDelay={300}>
           <Flex gap="xs" p="sm" pt={0}>
             {filters.projectIds?.map((projectId) => {
               const project = resolveProject(projectId);
+              if (!project) return null;
               return (
                 <Badge
                   key={projectId}
                   component="button"
                   className="shrink-0 cursor-pointer!"
-                  color={project.color ?? "gray"}
+                  // color={project.color ?? "gray"}
                   size="md"
                   variant="light"
                   autoContrast
@@ -320,7 +391,7 @@ function BacklogHeader({
                     });
                   }}
                 >
-                  {project.name}
+                  {project.title}
                 </Badge>
               );
             })}
@@ -334,69 +405,52 @@ function BacklogHeader({
 // MARK: Task Item
 
 interface TaskItemProps
-  extends Pick<TaskFormProps, "projects" | "onCreateProject"> {
+  extends Pick<TaskFormProps, "TaskActions" | "projects" | "onCreateProject"> {
   mode: "select" | "edit";
-  task: StoredTask;
-  selected?: boolean;
-  onToggleSelection: () => void;
-  onUpdate?: (values: Partial<StoredTask>) => void;
+  task: TaskInsert;
+  isSubtask?: boolean;
+  onUpdate: (update: TaskInsert) => void;
   onDelete?: () => void;
 }
 
 function TaskItem({
   mode,
   task,
+  isSubtask,
   onUpdate,
   onDelete,
   projects,
-  selected,
+  TaskActions,
   onCreateProject,
-  onToggleSelection,
 }: TaskItemProps) {
   const form = useTaskForm({
-    ...taskFormOpts,
-    defaultValues: task as TaskInput,
-    onSubmit: ({ value }) => onUpdate?.(value),
+    defaultValues: task,
+    validators: {
+      onChange: taskInsertSchema,
+    },
+    onSubmit: ({ value }) => onUpdate(value),
+    listeners: {
+      onChange: ({ formApi }) => {
+        if (formApi.state.isValid) return;
+        onUpdate(formApi.state.values);
+      },
+    },
   });
+
+  if (isSubtask) return <SubtaskForm form={form} onRemove={onDelete} />;
+
   return (
-    <Box>
-      <TaskForm
-        form={form}
-        containerProps={
-          mode === "select"
-            ? {
-                className: cn(
-                  "cursor-pointer outline! transition-all [&_*]:cursor-pointer!",
-                  selected
-                    ? "outline-[var(--mantine-primary-color-filled)]!"
-                    : "outline-transparent! hover:outline! hover:outline-current!",
-                ),
-                onClick: onToggleSelection,
-              }
-            : undefined
-        }
-        readOnly={mode !== "edit"}
-        projects={projects}
-        TaskActions={({ defaultActions }) => (
-          <>
-            {defaultActions}
-            <Divider />
-            <Button
-              fullWidth
-              color="red"
-              variant="subtle"
-              justify="flex-start"
-              radius={0}
-              leftSection={<IconTrash size={16} />}
-              onClick={onDelete}
-            >
-              Delete
-            </Button>
-          </>
-        )}
-        onCreateProject={onCreateProject}
-      />
-      <form.Subscribe
+    <TaskForm
+      form={form}
+      readOnly={mode !== "edit"}
+      projects={projects}
+      TaskActions={TaskActions}
+      onCreateProject={onCreateProject}
+    />
+  );
+
+  {
+    /* <form.Subscribe
         selector={(state) => !isEqual(state.values, task) && state.isValid}
         children={(hasChanged) => (
           <Collapse in={hasChanged} mt={4}>
@@ -413,9 +467,8 @@ function TaskItem({
             </Button>
           </Collapse>
         )}
-      />
-    </Box>
-  );
+      /> */
+  }
 }
 
 // MARK: Utility Functions

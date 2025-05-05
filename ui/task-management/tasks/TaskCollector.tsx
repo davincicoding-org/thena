@@ -1,4 +1,5 @@
 import type { PaperProps } from "@mantine/core";
+import type { UseMutateFunction } from "@tanstack/react-query";
 import type { Ref } from "react";
 import { useImperativeHandle, useRef } from "react";
 import {
@@ -15,41 +16,46 @@ import {
 } from "@mantine/core";
 import { useDisclosure, useInputState } from "@mantine/hooks";
 import { IconPlus, IconTrash, IconX } from "@tabler/icons-react";
-import { useForm } from "@tanstack/react-form";
-import { z } from "zod";
 
 import type {
-  Project,
-  ProjectInput,
-  Task,
-  TaskInput,
+  ProjectInsertExtended,
+  ProjectSelect,
+  StandaloneTask,
+  TaskId,
+  TaskInsert,
+  TaskSelect,
+  TaskTree,
+  TaskUpdate,
 } from "@/core/task-management";
 import type { TaskFormProps } from "@/ui/task-management";
-import { taskInputSchema, taskSchema } from "@/core/task-management";
+import { isTaskTree, taskInsertSchema } from "@/core/task-management";
 import { TaskForm, useTaskForm } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
+import { SubtaskForm } from "../task-form/SubtaskForm";
+import { TaskWrapper } from "../task-form/TaskWrapper";
+
 export interface TaskCollectorRef {
-  reset: () => void;
-  resetTask: (taskId: Task["id"], value: TaskInput) => void;
+  resetTask: (task: TaskSelect) => void;
 }
 
 export interface TaskCollectorProps {
-  items: Task[];
-  onUpdateTask?: (args: { taskId: Task["id"]; updates: Partial<Task> }) => void;
-  onRemoveTask?: (taskId: Task["id"], shouldDelete?: boolean) => void;
-  onAddTask?: (task: Omit<Task, "id">) => void;
-  onRefineTask?: (task: Task) => void;
+  items: (TaskTree | StandaloneTask)[];
+  onUpdateTask?: (uid: TaskId, updates: TaskUpdate) => void;
+  onRemoveTask?: (taskId: TaskId, shouldDelete?: boolean) => void;
+  onAddTask?: (task: TaskInsert) => void;
+  onRefineTask?: (task: TaskInsert) => void;
 
-  projects?: Project[];
-  onCreateProject?: (
-    project: ProjectInput,
-    onCreate: (project: Project) => void,
-  ) => void;
+  projects?: ProjectSelect[];
+  onCreateProject?: UseMutateFunction<
+    ProjectSelect | undefined,
+    Error,
+    ProjectInsertExtended
+  >;
+
   ref?: Ref<TaskCollectorRef>;
   allowImport?: boolean;
   onRequestImport?: () => void;
-  containerProps?: Omit<PaperProps, "className">;
 }
 
 export function TaskCollector({
@@ -66,32 +72,15 @@ export function TaskCollector({
   ref,
   ...paperProps
 }: TaskCollectorProps & PaperProps) {
-  const form = useForm({
-    defaultValues: {
-      items: items,
-    },
-    validators: {
-      onChange: z.object({
-        items: z.array(taskSchema),
-      }),
-      onMount: z.object({
-        items: z.array(taskSchema),
-      }),
-    },
-  });
-
-  const itemsReset = useRef<Record<string, (value: TaskInput) => void>>({});
+  const itemsReset = useRef<Record<TaskId, (value: TaskSelect) => void>>({});
 
   useImperativeHandle(ref, () => {
     return {
-      reset: () => {
-        form.reset();
-      },
-      resetTask: (taskId, value) => {
-        itemsReset.current[taskId]?.(value);
+      resetTask: (task) => {
+        itemsReset.current[task.uid]?.(task);
       },
     };
-  }, [form]);
+  }, []);
 
   return (
     <Paper
@@ -108,102 +97,106 @@ export function TaskCollector({
           scrollbar: "pb-12!",
         }}
       >
-        <form.Field
-          name="items"
-          mode="array"
-          children={(itemsField) =>
-            itemsField.state.value.length ? (
-              <Stack p="md">
-                {itemsField.state.value.map((item, index) => (
-                  <form.Field
-                    key={item.id}
-                    name={`items[${index}]`}
-                    children={(itemField) => (
+        {items.length ? (
+          <Stack p="md">
+            {items.map((task) => (
+              <TaskWrapper
+                key={task.uid}
+                task={
+                  <Item
+                    item={task}
+                    onUpdate={(updates) => onUpdateTask?.(task.uid, updates)}
+                    ref={(reset) => {
+                      if (!reset) return;
+                      itemsReset.current[task.uid] = reset;
+                    }}
+                    projects={projects}
+                    onCreateProject={onCreateProject}
+                    TaskActions={({ defaultActions }) => (
                       <>
-                        <form.Field
-                          name={`items[${index}].id`}
-                          defaultValue={item.id}
-                          children={() => null}
-                        />
-                        <Item
-                          item={itemField.state.value}
-                          onChange={(updates) => {
-                            itemField.handleChange({
-                              id: item.id,
-                              ...updates,
-                            });
-                            onUpdateTask?.({
-                              taskId: item.id,
-                              updates: updates,
-                            });
-                          }}
-                          ref={(reset) => {
-                            if (!reset) return;
-                            itemsReset.current[item.id] = reset;
-                          }}
-                          projects={projects}
-                          onCreateProject={onCreateProject}
-                          TaskActions={({ defaultActions }) => (
-                            <>
-                              {onRefineTask && (
-                                <>
-                                  <Button
-                                    fullWidth
-                                    variant="subtle"
-                                    color="gray"
-                                    justify="flex-start"
-                                    onClick={() => onRefineTask(item)}
-                                  >
-                                    Refine
-                                  </Button>
-                                  <Divider />
-                                </>
-                              )}
-                              {defaultActions}
-                              <Divider />
-                              <Button
-                                fullWidth
-                                variant="subtle"
-                                radius={0}
-                                color="gray"
-                                justify="flex-start"
-                                onClick={() => onRemoveTask?.(item.id, false)}
-                              >
-                                Postpone for later
-                              </Button>
-                              <Divider />
-                              <Button
-                                fullWidth
-                                color="red"
-                                radius={0}
-                                variant="subtle"
-                                justify="flex-start"
-                                leftSection={<IconTrash size={16} />}
-                                onClick={() => onRemoveTask?.(item.id, true)}
-                              >
-                                Delete
-                              </Button>
-                            </>
-                          )}
-                        />
+                        {onRefineTask && (
+                          <>
+                            <Button
+                              fullWidth
+                              variant="subtle"
+                              color="gray"
+                              justify="flex-start"
+                              onClick={() => onRefineTask(task)}
+                            >
+                              Refine
+                            </Button>
+                            <Divider />
+                          </>
+                        )}
+                        {defaultActions}
+                        <Divider />
+                        <Button
+                          fullWidth
+                          variant="subtle"
+                          radius={0}
+                          color="gray"
+                          justify="flex-start"
+                          onClick={() => onRemoveTask?.(task.uid, false)}
+                        >
+                          Postpone for later
+                        </Button>
+                        <Divider />
+                        <Button
+                          fullWidth
+                          color="red"
+                          radius={0}
+                          variant="subtle"
+                          justify="flex-start"
+                          leftSection={<IconTrash size={16} />}
+                          onClick={() => onRemoveTask?.(task.uid, true)}
+                        >
+                          Delete
+                        </Button>
                       </>
                     )}
                   />
-                ))}
-              </Stack>
-            ) : (
-              <Text
-                p="lg"
-                size="xl"
-                opacity={0.5}
-                className="min-w-0 text-center leading-normal! text-balance"
-              >
-                Start planning your next session by adding all the tasks you
-                want to achieve.
-              </Text>
-            )
-          }
-        />
+                }
+                subtasks={
+                  isTaskTree(task)
+                    ? task.subtasks.map((subtask) => (
+                        <Item
+                          key={subtask.uid}
+                          item={subtask}
+                          isSubtask
+                          onUpdate={(updates) =>
+                            onUpdateTask?.(subtask.uid, updates)
+                          }
+                          ref={(reset) => {
+                            if (!reset) return;
+                            itemsReset.current[subtask.uid] = reset;
+                          }}
+                          projects={projects}
+                          onCreateProject={onCreateProject}
+                          onDelete={() => onRemoveTask?.(subtask.uid, true)}
+                        />
+                      ))
+                    : undefined
+                }
+                onAddSubtask={(subtask) =>
+                  onAddTask?.({
+                    parentTaskId: task.uid,
+                    ...subtask,
+                  })
+                }
+              />
+            ))}
+          </Stack>
+        ) : (
+          <Text
+            p="lg"
+            size="xl"
+            opacity={0.5}
+            className="min-w-0 text-center leading-normal! text-balance"
+          >
+            Start planning your next session by adding all the tasks you want to
+            achieve.
+          </Text>
+        )}
         <TaskAdder
           onSubmit={onAddTask}
           allowImport={allowImport}
@@ -216,41 +209,48 @@ export function TaskCollector({
 
 function Item({
   item,
-  onChange,
   ref,
+  isSubtask,
+  onUpdate,
+  onDelete,
   ...props
 }: {
-  item: TaskInput;
-  ref: Ref<(value: TaskInput) => void>;
-  onChange: (update: TaskInput) => void;
+  item: TaskInsert;
+  ref: Ref<(value: TaskInsert) => void>;
+  isSubtask?: boolean;
+  onUpdate: (update: TaskInsert) => void;
+  onDelete?: () => void;
 } & TaskFormProps) {
   const form = useTaskForm({
     defaultValues: item,
     validators: {
-      onChange: taskInputSchema,
-      onMount: taskInputSchema,
+      onChange: taskInsertSchema,
+      onMount: taskInsertSchema,
     },
-    onSubmit: ({ value }) => onChange(value),
+    onSubmit: ({ value }) => onUpdate(value),
     listeners: {
       onChange: ({ formApi }) => {
-        onChange(formApi.state.values);
+        if (formApi.state.isValid) return;
+        onUpdate(formApi.state.values);
       },
     },
   });
   useImperativeHandle(ref, () => {
-    return (value: TaskInput) => {
+    return (value: TaskInsert) =>
       Object.entries(value).forEach(([key, value]) => {
-        form.setFieldValue(key as keyof TaskInput, value);
+        form.setFieldValue(key as keyof TaskInsert, value);
       });
-    };
   }, [form]);
+  if (isSubtask) {
+    return <SubtaskForm form={form} onRemove={onDelete} {...props} />;
+  }
 
   return <TaskForm form={form} {...props} />;
 }
 
 interface TaskAdderProps
   extends Pick<TaskCollectorProps, "allowImport" | "onRequestImport"> {
-  onSubmit?: (task: Omit<Task, "id">) => void;
+  onSubmit?: (task: TaskInsert) => void;
 }
 
 function TaskAdder({ onSubmit, allowImport, onRequestImport }: TaskAdderProps) {

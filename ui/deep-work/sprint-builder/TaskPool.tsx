@@ -1,6 +1,6 @@
 import type { MenuProps, PaperProps } from "@mantine/core";
 import type { PropsWithChildren } from "react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import {
   ActionIcon,
   Button,
@@ -21,32 +21,34 @@ import {
 } from "@tabler/icons-react";
 
 import type {
+  AnyTask,
   FlatTask,
-  FlatTaskGroup,
-  TaskReference,
+  TaskId,
+  TaskTree,
 } from "@/core/task-management";
-import { groupFlatTasks, isTaskGroup } from "@/core/task-management";
+import { flattenTasks, isTaskTree } from "@/core/task-management";
 import { useTaskSelection } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
 import {
-  NestedTaskItemBase,
-  StandaloneTaskItemBase,
-  TaskItemsGroupContainer,
-  TaskItemsGroupHeader,
+  FlatTaskBase,
+  NestedSubtaskBase,
+  TaskTreeHeader,
+  TaskTreeWrapper,
 } from "./components";
 import { useDraggableTask, useDroppableTaskPool } from "./dnd";
 
 export interface TaskPoolProps {
-  tasks: FlatTask[];
+  tasks: AnyTask[];
   selectionEnabled: boolean;
   dndEnabled: boolean;
   sprintOptions: { id: string; title: string }[];
-  onSubmitSelection: (tasks: TaskReference[]) => void;
+  onSubmitSelection: (tasks: TaskId[]) => void;
   onAbortSelection: () => void;
+  onAssignTasksToNewSprint: (tasks: TaskId[]) => void;
   onAssignTasksToSprint: (options: {
-    sprintId: string | null;
-    tasks: TaskReference[];
+    sprintId: string;
+    tasks: TaskId[];
   }) => void;
 }
 
@@ -58,15 +60,16 @@ export function TaskPool({
   onSubmitSelection,
   onAbortSelection,
   onAssignTasksToSprint,
+  onAssignTasksToNewSprint,
   ...props
 }: TaskPoolProps & PaperProps) {
   const {
     selection,
     clearSelection,
     isTaskSelected,
-    isTaskGroupSelected,
+    areAllTasksSelected,
     toggleTaskSelection,
-    toggleTaskGroupSelection,
+    toggleTasksSelection,
   } = useTaskSelection();
 
   useEffect(() => {
@@ -75,13 +78,13 @@ export function TaskPool({
     }
   }, [selectionEnabled, clearSelection]);
 
-  const handleTaskClick = (taskReference: TaskReference) => {
+  const handleTaskClick = (taskId: TaskId) => {
     if (!selectionEnabled) return;
-    toggleTaskSelection(taskReference);
+    toggleTaskSelection(taskId);
   };
-  const handleTaskGroupClick = (taskReferences: TaskReference[]) => {
+  const handleTaskGroupClick = (taskIds: TaskId[]) => {
     if (!selectionEnabled) return;
-    toggleTaskGroupSelection(taskReferences);
+    toggleTasksSelection(taskIds);
   };
 
   const handleAbortSelection = () => {
@@ -94,7 +97,10 @@ export function TaskPool({
     clearSelection();
   };
 
-  const items = dndEnabled ? tasks : groupFlatTasks(tasks);
+  const items = useMemo((): AnyTask[] => {
+    if (!dndEnabled) return tasks;
+    return flattenTasks(tasks);
+  }, [dndEnabled, tasks]);
 
   const { setNodeRef } = useDroppableTaskPool(dndEnabled);
 
@@ -151,31 +157,39 @@ export function TaskPool({
         scrollHideDelay={300}
       >
         <Stack gap="sm" p="sm" bg="neutral.8">
-          {items.map((taskOrGroup) => {
-            if (!isTaskGroup(taskOrGroup))
+          {items.map((task) => {
+            if (!isTaskTree(task))
               return (
                 <StandaloneTaskItem
-                  key={`${taskOrGroup.taskId}-${taskOrGroup.subtaskId}`}
-                  item={taskOrGroup}
-                  selected={isTaskSelected(taskOrGroup)}
+                  key={task.uid}
+                  item={task}
+                  selected={isTaskSelected(task.uid)}
                   sprintOptions={sprintOptions}
                   dndEnabled={dndEnabled}
                   selectionEnabled={selectionEnabled}
                   onAssignTasksToSprint={onAssignTasksToSprint}
-                  onClick={() => handleTaskClick(taskOrGroup)}
+                  onAssignTasksToNewSprint={onAssignTasksToNewSprint}
+                  onClick={() => handleTaskClick(task.uid)}
                 />
               );
 
             return (
-              <TaskItemsGroup
-                key={taskOrGroup.taskId}
-                group={taskOrGroup}
+              <TaskTreeItem
+                key={task.uid}
+                task={task}
                 sprintOptions={sprintOptions}
                 selectionEnabled={selectionEnabled}
-                selected={isTaskGroupSelected(taskOrGroup.items)}
+                selected={areAllTasksSelected(
+                  task.subtasks?.map((subtask) => subtask.uid) ?? [],
+                )}
                 isItemSelected={(item) => isTaskSelected(item)}
                 onAssignTasksToSprint={onAssignTasksToSprint}
-                onGroupClick={() => handleTaskGroupClick(taskOrGroup.items)}
+                onAssignTasksToNewSprint={onAssignTasksToNewSprint}
+                onGroupClick={() =>
+                  handleTaskGroupClick(
+                    task.subtasks?.map((subtask) => subtask.uid) ?? [],
+                  )
+                }
                 onItemClick={(item) => handleTaskClick(item)}
               />
             );
@@ -189,7 +203,10 @@ export function TaskPool({
 // MARK: Items
 
 interface StandaloneTaskItemProps
-  extends Pick<TaskPoolProps, "sprintOptions" | "onAssignTasksToSprint"> {
+  extends Pick<
+    TaskPoolProps,
+    "sprintOptions" | "onAssignTasksToSprint" | "onAssignTasksToNewSprint"
+  > {
   item: FlatTask;
   dndEnabled: boolean;
   selectionEnabled: boolean;
@@ -205,19 +222,22 @@ function StandaloneTaskItem({
   selected,
   onClick,
   onAssignTasksToSprint,
+  onAssignTasksToNewSprint,
 }: StandaloneTaskItemProps) {
   const { attributes, listeners, setNodeRef, isDragging, active } =
     useDraggableTask(item, dndEnabled);
 
   return (
     <ActionsMenu
-      tasks={[item]}
+      tasks={[item.uid]}
       disabled={dndEnabled || selectionEnabled}
       sprintOptions={sprintOptions}
       onAssignTasksToSprint={onAssignTasksToSprint}
+      onAssignTasksToNewSprint={onAssignTasksToNewSprint}
     >
-      <StandaloneTaskItemBase
-        item={item}
+      <FlatTaskBase
+        group={"parent" in item ? item.parent.title : undefined}
+        label={item.title}
         active={selected}
         clickable={!active}
         className={cn("transition-opacity", {
@@ -226,13 +246,10 @@ function StandaloneTaskItem({
         })}
         ref={setNodeRef}
         {...attributes}
+        {...listeners}
         rightSection={
           active && dndEnabled ? null : dndEnabled ? (
-            <IconGripVertical
-              className="cursor-grab"
-              size={12}
-              {...listeners}
-            />
+            <IconGripVertical className="cursor-grab" size={12} />
           ) : (
             <IconDotsVertical size={12} />
           )
@@ -243,73 +260,83 @@ function StandaloneTaskItem({
   );
 }
 
-interface TaskItemsGroupProps
-  extends Pick<TaskPoolProps, "sprintOptions" | "onAssignTasksToSprint"> {
-  group: FlatTaskGroup;
+interface TaskTreeItemProps
+  extends Pick<
+    TaskPoolProps,
+    "sprintOptions" | "onAssignTasksToSprint" | "onAssignTasksToNewSprint"
+  > {
+  task: TaskTree;
   selectionEnabled: boolean;
   selected: boolean;
-  isItemSelected: (item: TaskReference) => boolean;
+  isItemSelected: (taskId: TaskId) => boolean;
   onGroupClick: () => void;
-  onItemClick: (item: FlatTask) => void;
+  onItemClick: (taskId: TaskId) => void;
 }
 
-function TaskItemsGroup({
-  group,
+function TaskTreeItem({
+  task,
   sprintOptions,
   selectionEnabled,
   selected,
   isItemSelected,
   onAssignTasksToSprint,
+  onAssignTasksToNewSprint,
   onGroupClick,
   onItemClick,
-}: TaskItemsGroupProps) {
+}: TaskTreeItemProps) {
   return (
-    <TaskItemsGroupContainer>
+    <TaskTreeWrapper>
       <ActionsMenu
-        tasks={group.items}
+        tasks={task.subtasks?.map((subtask) => subtask.uid) ?? []}
         sprintOptions={sprintOptions}
         disabled={selectionEnabled}
         onAssignTasksToSprint={onAssignTasksToSprint}
+        onAssignTasksToNewSprint={onAssignTasksToNewSprint}
       >
-        <TaskItemsGroupHeader
-          label={group.groupLabel}
+        <TaskTreeHeader
+          label={task.title}
           rightSection={<IconDotsVertical size={12} />}
           active={selected}
           onClick={onGroupClick}
         />
       </ActionsMenu>
 
-      {group.items.map((item) => (
+      {task.subtasks?.map((subtask) => (
         <ActionsMenu
-          key={`${item.taskId}-${item.subtaskId}`}
-          tasks={[item]}
+          key={subtask.uid}
+          tasks={[subtask.uid]}
           sprintOptions={sprintOptions}
           disabled={selectionEnabled}
           onAssignTasksToSprint={onAssignTasksToSprint}
+          onAssignTasksToNewSprint={onAssignTasksToNewSprint}
         >
-          <NestedTaskItemBase
-            item={item}
+          <NestedSubtaskBase
+            label={subtask.title}
             rightSection={<IconDotsVertical size={12} />}
-            active={isItemSelected(item)}
-            onClick={() => onItemClick(item)}
+            active={isItemSelected(subtask.uid)}
+            onClick={() => onItemClick(subtask.uid)}
           />
         </ActionsMenu>
       ))}
-    </TaskItemsGroupContainer>
+    </TaskTreeWrapper>
   );
 }
 
 // MARK: Actions Menu
 
 interface ActionsMenuProps
-  extends Pick<TaskPoolProps, "onAssignTasksToSprint" | "sprintOptions"> {
-  tasks: TaskReference[];
+  extends Pick<
+    TaskPoolProps,
+    "sprintOptions" | "onAssignTasksToSprint" | "onAssignTasksToNewSprint"
+  > {
+  tasks: TaskId[];
 }
 
 function ActionsMenu({
   tasks,
   sprintOptions,
   onAssignTasksToSprint,
+  onAssignTasksToNewSprint,
   children,
   ...props
 }: PropsWithChildren<ActionsMenuProps> & MenuProps) {
@@ -337,14 +364,7 @@ function ActionsMenu({
             {option.title}
           </Menu.Item>
         ))}
-        <Menu.Item
-          onClick={() =>
-            onAssignTasksToSprint({
-              sprintId: null,
-              tasks,
-            })
-          }
-        >
+        <Menu.Item onClick={() => onAssignTasksToNewSprint(tasks)}>
           New Sprint
         </Menu.Item>
       </Menu.Dropdown>

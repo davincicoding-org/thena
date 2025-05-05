@@ -4,7 +4,6 @@ export * from "./task-form/useTaskForm";
 export * from "./collection/Backlog";
 
 export * from "./tasks/TaskCollector";
-export * from "./tasks/useTaskList";
 export * from "./tasks/useTaskSelection";
 export * from "./tasks/useTasks";
 export * from "./tasks/useTasksQueryOptions";

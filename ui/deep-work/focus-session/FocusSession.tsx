@@ -5,7 +5,7 @@ import duration from "dayjs/plugin/duration";
 import { AnimatePresence, motion } from "motion/react";
 
 import type { SprintPlan } from "@/core/deep-work";
-import type { Task } from "@/core/task-management";
+import type { FlatTask } from "@/core/task-management";
 import { WavyBackground } from "@/ui/components/WavyBackground";
 import { cn } from "@/ui/utils";
 
@@ -17,7 +17,7 @@ dayjs.extend(duration);
 
 export interface FocusSessionProps {
   sprints: SprintPlan[];
-  tasks: Task[];
+  tasks: FlatTask[];
   className?: string;
 }
 

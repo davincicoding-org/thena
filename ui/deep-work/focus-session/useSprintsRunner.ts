@@ -7,12 +7,11 @@ import type {
   SprintRunSlot,
   WithRunMetrics,
 } from "@/core/deep-work";
-import type { Task, TaskReference } from "@/core/task-management";
-import { resolveTaskReferencesFlat } from "@/core/task-management";
+import type { FlatTask, TaskId } from "@/core/task-management";
 
 export interface SprintsRunnerHookOptions {
   plans: SprintPlan[];
-  tasks: Task[];
+  tasks: FlatTask[];
   onFinish?: () => void;
 }
 
@@ -22,16 +21,12 @@ export interface SprintsRunnerHookReturn {
   activeSprint: RunnableSprint | undefined;
   upcomingSprints: RunnableSprint[];
   startSprint: () => void;
-  completeTask: (task: TaskReference) => void;
-  skipTask: (task: TaskReference) => void;
-  jumpToTask: (task: TaskReference, skippedTasks?: TaskReference[]) => void;
+  completeTask: (task: TaskId) => void;
+  skipTask: (task: TaskId) => void;
+  jumpToTask: (task: TaskId, skippedTasks?: TaskId[]) => void;
   finishSprint: () => void;
   finishBreak: () => void;
 }
-
-type TaskRunKey = `${TaskReference["taskId"]}--${TaskReference["subtaskId"]}`;
-const taskRunKey = (task: TaskReference): TaskRunKey =>
-  `${task.taskId}--${task.subtaskId}`;
 
 export function useSprintsRunner({
   plans,
@@ -43,18 +38,28 @@ export function useSprintsRunner({
     useState<SprintsRunnerHookReturn["status"]>("idle");
 
   const [taskRuns, setTaskRuns] = useState<
-    Record<string, WithRunMetrics<Record<never, never>>>
+    Record<TaskId, WithRunMetrics<Record<never, never>>>
   >({});
 
-  const sprints = useMemo(() => {
-    return plans.map((plan) => ({
-      ...plan,
-      tasks: resolveTaskReferencesFlat(plan.tasks, tasks).map((task) => ({
-        ...task,
-        ...taskRuns[taskRunKey(task)],
+  const sprints = useMemo(
+    () =>
+      plans.map((plan) => ({
+        ...plan,
+        tasks: plan.tasks.reduce<RunnableSprint["tasks"]>((acc, task) => {
+          const flatTask = tasks.find((t) => t.uid === task);
+          if (!flatTask) return acc;
+
+          return [
+            ...acc,
+            {
+              ...flatTask,
+              ...taskRuns[task],
+            },
+          ];
+        }, []),
       })),
-    }));
-  }, [plans, tasks, taskRuns]);
+    [plans, taskRuns, tasks],
+  );
 
   const slots = useMemo(() => {
     return sprints.reduce<SprintsRunnerHookReturn["slots"]>((acc, sprint) => {
@@ -78,8 +83,8 @@ export function useSprintsRunner({
   const completeTask: SprintsRunnerHookReturn["completeTask"] = (task) => {
     setTaskRuns((prev) => ({
       ...prev,
-      [taskRunKey(task)]: {
-        ...prev[taskRunKey(task)],
+      [task]: {
+        ...prev[task],
         completedAt: Date.now(),
       },
     }));
@@ -88,8 +93,8 @@ export function useSprintsRunner({
   const skipTask: SprintsRunnerHookReturn["skipTask"] = (task) => {
     setTaskRuns((prev) => ({
       ...prev,
-      [taskRunKey(task)]: {
-        ...prev[taskRunKey(task)],
+      [task]: {
+        ...prev[task],
         skipped: true,
       },
     }));
@@ -99,13 +104,8 @@ export function useSprintsRunner({
     task,
     skippedTasks = [],
   ) => {
-    const targetTaskRunKey = taskRunKey(task);
-    const skippedTaskRunKeys = skippedTasks.map((skippedTask) =>
-      taskRunKey(skippedTask),
-    );
-
     setTaskRuns((prev) => {
-      const skipped = skippedTaskRunKeys.reduce<typeof prev>(
+      const skipped = skippedTasks.reduce<typeof prev>(
         (acc, taskToSkip) => ({
           ...acc,
           [taskToSkip]: {
@@ -114,8 +114,8 @@ export function useSprintsRunner({
           },
         }),
         {
-          [targetTaskRunKey]: {
-            ...prev[targetTaskRunKey],
+          [task]: {
+            ...prev[task],
             skipped: false,
           },
         },

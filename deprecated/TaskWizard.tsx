@@ -6,9 +6,9 @@ import { taskManagerResponseSchema } from "@/ui/assistant/schema";
 import { useKeyHold } from "@/ui/hooks/useKeyHold";
 import {
   TaskCollector,
-  useProjects,
+  useCreateProject,
+  useProjectsQuery,
   useTaskList,
-  useTasks,
 } from "@/ui/task-management";
 
 import type { AssistantIndicatorProps } from "./AssistantIndicator";
@@ -33,10 +33,9 @@ export function TaskWizard({ ...boxProps }: TaskWizardProps) {
     lang: speech.lang,
   });
 
-  const tasks = useTasks();
-
   const taskList = useTaskList(tasks.items);
-  const { projects, createProject } = useProjects();
+  const { data: projects = [] } = useProjectsQuery();
+  const { mutate: createProject } = useCreateProject();
 
   const chat = useChat({
     api: "/api/task-manager",

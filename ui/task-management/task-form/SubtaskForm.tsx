@@ -18,14 +18,13 @@ import { taskFormOpts, withTaskForm } from "./useTaskForm";
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type SubtaskFormProps = {
   readOnly?: boolean;
-  index: number;
-  onRemove: () => void;
+  onRemove?: () => void;
 };
 
 export const SubtaskForm = withTaskForm({
   ...taskFormOpts,
   props: {} as SubtaskFormProps,
-  render: ({ form, readOnly, index, onRemove }) => {
+  render: ({ form, readOnly, onRemove }) => {
     /* eslint-disable react-hooks/rules-of-hooks */
     const [isActionsPanelOpen, actionsPanel] = useDisclosure(false);
     const actionsPanelRef = useClickOutside(() => actionsPanel.close());
@@ -40,8 +39,8 @@ export const SubtaskForm = withTaskForm({
       >
         <Flex p={4} gap={4} className="group" align="center">
           <form.Field
-            name={`subtasks[${index}].title`}
-            children={(subField) => (
+            name="title"
+            children={(titleField) => (
               <TextInput
                 placeholder="Subtask"
                 size="md"
@@ -51,10 +50,10 @@ export const SubtaskForm = withTaskForm({
                     "h-8! min-h-0! truncate bg-transparent! px-1.5! not-focus:border-transparent! read-only:border-transparent!",
                   ),
                 }}
-                value={subField.state.value ?? ""}
+                value={titleField.state.value ?? ""}
                 readOnly={readOnly}
-                onChange={(e) => subField.handleChange(e.target.value)}
-                error={subField.state.meta.errors.length > 0}
+                onChange={(e) => titleField.handleChange(e.target.value)}
+                error={titleField.state.meta.errors.length > 0}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     void form.handleSubmit();
@@ -66,7 +65,7 @@ export const SubtaskForm = withTaskForm({
           />
 
           <form.Field
-            name={`subtasks[${index}].priority`}
+            name="priority"
             children={(priorityField) => {
               if (!priorityField.state.value) return null;
               if (priorityField.state.value === "default") return null;
@@ -81,7 +80,7 @@ export const SubtaskForm = withTaskForm({
             }}
           />
           <form.Field
-            name={`subtasks[${index}].complexity`}
+            name="complexity"
             children={(complexityField) => {
               if (!complexityField.state.value) return null;
               if (complexityField.state.value === "default") return null;
@@ -111,11 +110,11 @@ export const SubtaskForm = withTaskForm({
 
         <Popover.Dropdown p={0} ref={actionsPanelRef}>
           <form.AppField
-            name={`subtasks[${index}].priority`}
+            name="priority"
             children={(field) => <field.PriorityPicker />}
           />
           <form.AppField
-            name={`subtasks[${index}].complexity`}
+            name="complexity"
             children={(field) => <field.ComplexityPicker />}
           />
           <Divider />

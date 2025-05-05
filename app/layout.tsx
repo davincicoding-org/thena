@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Lexend_Giga } from "next/font/google";
 import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
 import { Analytics } from "@vercel/analytics/next";
 
+import { ReactQueryClientProvider } from "@/app/query-client";
 import { ThemeProvider } from "@/ui/Theme";
 
 import Shell from "./shell";
@@ -41,7 +42,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${logoFont.variable}`}
       >
         <ThemeProvider>
-          <Shell>{children}</Shell>
+          <Shell>
+            <ReactQueryClientProvider>{children}</ReactQueryClientProvider>
+          </Shell>
         </ThemeProvider>
         <Analytics />
       </body>

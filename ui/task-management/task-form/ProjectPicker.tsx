@@ -12,7 +12,11 @@ import {
 import { useDisclosure, useInputState } from "@mantine/hooks";
 import { IconChevronLeft, IconX } from "@tabler/icons-react";
 
-import type { Project, ProjectInput, TaskInput } from "@/core/task-management";
+import type {
+  ProjectInsertExtended,
+  ProjectSelect,
+  TaskInsert,
+} from "@/core/task-management";
 import { cn } from "@/ui/utils";
 
 import { ProjectAvatar } from "../project/ProjectAvatar";
@@ -20,18 +24,16 @@ import { ProjectForm } from "../project/ProjectForm";
 import { projectFormOpts, useProjectForm } from "../project/useProjectForm";
 
 export interface ProjectPickerProps {
-  value: TaskInput["projectId"];
-  projects: Project[];
-  onChange: (value: NonNullable<TaskInput["projectId"]>) => void;
+  projects: ProjectSelect[];
+  onChange: (value: NonNullable<TaskInsert["projectId"]>) => void;
   onCreate?: (
-    input: ProjectInput,
-    callback: (project: Project) => void,
+    input: ProjectInsertExtended,
+    callback: (project: ProjectSelect | undefined) => void,
   ) => void;
   onClose: () => void;
 }
 
 export function ProjectPicker({
-  value,
   projects,
   onChange,
   onCreate,
@@ -45,16 +47,17 @@ export function ProjectPicker({
     onSubmit: ({ value }) => {
       createPanel.close();
       onCreate?.(value, (project) => {
+        if (!project) return;
         form.reset();
-        onChange(project.id);
+        onChange(project.uid);
       });
     },
   });
 
   const trimmedSearch = search.trim();
-  const filteredOptions = projects.filter((tag) => {
+  const filteredOptions = projects.filter((project) => {
     if (!trimmedSearch) return true;
-    return tag.name.toLowerCase().includes(trimmedSearch.toLowerCase());
+    return project.title.toLowerCase().includes(trimmedSearch.toLowerCase());
   });
 
   return (
@@ -106,13 +109,12 @@ export function ProjectPicker({
 
           {filteredOptions.map((project) => (
             <NavLink
-              key={project.id}
+              key={project.uid}
               component="button"
               className="py-1!"
-              active={value?.includes(project.id)}
               color="gray"
-              onClick={() => onChange(project.id)}
-              label={project.name}
+              onClick={() => onChange(project.uid)}
+              label={project.title}
               leftSection={
                 <ProjectAvatar
                   project={project}

@@ -16,8 +16,8 @@ import { IconChevronLeft, IconX } from "@tabler/icons-react";
 import type { Tag, TagInput, TaskInput } from "@/core/task-management";
 import { cn } from "@/ui/utils";
 
-import { TagForm } from "../tags/TagForm";
-import { tagFormOpts, useTagForm } from "../tags/useTagForm";
+import { TagForm } from "../ui/task-management/tags/TagForm";
+import { tagFormOpts, useTagForm } from "../ui/task-management/tags/useTagForm";
 
 export interface TagsPickerProps {
   value: TaskInput["tags"];

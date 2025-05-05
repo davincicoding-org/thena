@@ -12,6 +12,7 @@ export type StateSetter<S> = Dispatch<SetStateAction<S>>;
 
 export type ExternalState<S> = [S, StateSetter<S>];
 
+/** @deprecated Ids should be generated on the db */
 export const createUniqueId = (
   excluded: Record<string, unknown> | { id: string }[],
   length?: number,
