@@ -32,10 +32,12 @@ import type {
 import type { SprintBuilderProps } from "@/ui/deep-work";
 import type { TaskCollectorRef } from "@/ui/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
-import { FocusSession, SprintBuilder } from "@/ui/deep-work";
+import {
+  FocusSession,
+  SprintBuilder,
+  useSessionPlanningState,
+} from "@/ui/deep-work";
 import { useTimeTravel } from "@/ui/hooks/useTimeTravel";
-import { useLocalFocusSessionPlan } from "@/ui/storage/useLocalFocusSessionPlan";
-import { useSessionPlanningState } from "@/ui/storage/useSessionPlanningState";
 import {
   Backlog,
   TaskCollector,

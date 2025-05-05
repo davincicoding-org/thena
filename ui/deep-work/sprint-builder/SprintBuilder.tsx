@@ -2,7 +2,6 @@
 import type { PaperProps } from "@mantine/core";
 import type { OS } from "@mantine/hooks";
 import { useMemo, useRef, useState } from "react";
-import { arrayMove } from "@dnd-kit/sortable";
 import {
   Badge,
   Box,

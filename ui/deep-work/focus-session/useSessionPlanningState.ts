@@ -364,7 +364,15 @@ export const useSessionPlanningState = create<SessionPlanningState>()(
       storage: {
         getItem: (name) => {
           const storedValue = localStorage.getItem(name);
-          if (!storedValue) return null;
+          if (!storedValue)
+            return {
+              version: undefined,
+              state: {
+                ready: true,
+                tasks: new Array<TaskId>(),
+                sprints: new Array<SprintPlan>(),
+              },
+            };
           const { state, version } =
             superjson.parse<StorageValue<Omit<SessionPlanningState, "ready">>>(
               storedValue,
