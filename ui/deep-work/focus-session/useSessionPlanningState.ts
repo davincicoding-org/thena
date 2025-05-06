@@ -187,7 +187,7 @@ export const useSessionPlanningState = create<SessionPlanningState>()(
         set((state) => ({
           ...state,
           sprints: state.sprints.filter((s, index) => {
-            if (s.id !== id) return;
+            if (s.id !== id) return true;
             removedSprint = { sprint: s, index };
             return false;
           }),
