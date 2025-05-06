@@ -166,6 +166,7 @@ function SpeechConfig() {
     lang: speech.lang,
     voiceURI: speech.synthesis.voice,
     rate: speech.synthesis.rate,
+    mode: "all",
   });
 
   const langOptions = supportedLangSchema.options.sort();
@@ -200,6 +201,7 @@ function SpeechConfig() {
           }}
         />
       </Flex>
+
       <Fieldset legend="Synthesis">
         <Flex
           display="grid"
@@ -214,6 +216,9 @@ function SpeechConfig() {
           <Flex gap="xs">
             <Select
               flex={1}
+              comboboxProps={{
+                withinPortal: false,
+              }}
               data={voiceOptions}
               disabled={voiceOptions.length < 2}
               value={speech.synthesis.voice}

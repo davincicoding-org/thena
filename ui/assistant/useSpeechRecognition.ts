@@ -17,7 +17,7 @@ export function useSpeechRecognition({
     result: SpeechRecognitionResult;
   }) => void;
   onEnd?: () => void;
-  onError?: (error: SpeechRecognitionErrorEvent) => void;
+  onError?: (error: SpeechRecognitionErrorCode) => void;
 }) {
   const [isListening, setIsListening] = useState(false);
   const hasSpoken = useRef(false);
@@ -50,11 +50,10 @@ export function useSpeechRecognition({
       hasSpoken.current = false;
 
       // Store handlers as refs so we can remove them
-      const errorHandler = (event: SpeechRecognitionErrorEvent) => {
-        onError?.(event);
+      const errorHandler = ({ error }: SpeechRecognitionErrorEvent) => {
+        onError?.(error);
 
-        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-        reject(event);
+        reject(new Error(`Speech recognition failed: ${error ?? "unknown"}`));
       };
 
       const resultHandler = (event: SpeechRecognitionEvent) => {
@@ -113,16 +112,15 @@ export function useSpeechRecognition({
         resolve(transcription);
       };
 
-      const errorHandler = (event: SpeechRecognitionErrorEvent) => {
+      const errorHandler = ({ error }: SpeechRecognitionErrorEvent) => {
         // Remove listeners on error
         if (recognition.current) {
           recognition.current.removeEventListener("result", resultHandler);
           recognition.current.removeEventListener("error", errorHandler);
         }
 
-        onError?.(event);
-        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-        reject(event);
+        onError?.(error);
+        reject(new Error(`Speech recognition failed: ${error ?? "unknown"}`));
       };
 
       recognition.current.addEventListener("result", resultHandler);

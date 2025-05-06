@@ -14,10 +14,10 @@ export function useSpeechSynthesis({
   lang: SupportedLang;
   voiceURI?: string;
   rate?: number;
-  mode?: "quality" | "privacy";
+  mode?: "quality" | "privacy" | "all";
   onStart?: () => void;
   onEnd?: () => void;
-  onError?: (error: SpeechSynthesisErrorEvent) => void;
+  onError?: (error: SpeechSynthesisErrorCode) => void;
 }) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -45,10 +45,19 @@ export function useSpeechSynthesis({
 
       return setVoices(() => {
         switch (mode) {
+          case "all":
+            return voicesForLang.reduce<SpeechSynthesisVoice[]>(
+              (acc, voice) => {
+                if (acc.find((v) => v.voiceURI === voice.voiceURI)) return acc;
+                return [...acc, voice];
+              },
+              [],
+            );
           case "quality":
             // TODO: Define quality voices based on https://github.com/HadrienGardeur/web-speech-recommended-voices/tree/main
             return voicesForLang.filter(
               (voice) =>
+                voice.name === "Samantha" ||
                 voice.voiceURI.startsWith("Google") ||
                 voice.voiceURI.startsWith("Microsoft"),
             );
@@ -109,16 +118,23 @@ export function useSpeechSynthesis({
         // setOutputVolume(0);
       };
 
-      utterance.onerror = (error) => {
+      utterance.onerror = ({ error }: SpeechSynthesisErrorEvent) => {
         setIsSpeaking(false);
-        if (error.error === "interrupted") {
-          onEnd?.();
-          resolve();
-        } else {
-          onError?.(error);
-          // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-          reject(error);
+        switch (error) {
+          case "canceled":
+          case "interrupted":
+            onEnd?.();
+            resolve();
+            break;
+          default:
+            onError?.(error);
+            reject(
+              new Error(
+                `Speech synthesis for language ${lang} failed: ${error ?? "unknown"}`,
+              ),
+            );
         }
+
         // if (volumeInterval) {
         //   clearInterval(volumeInterval);
         // }
