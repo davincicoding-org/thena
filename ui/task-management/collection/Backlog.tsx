@@ -1,39 +1,16 @@
-/* eslint-disable max-lines */
 "use client";
 
 import type { PaperProps } from "@mantine/core";
-import type { IconProps } from "@tabler/icons-react";
 import type { UseMutateFunction } from "@tanstack/react-query";
 import {
-  ActionIcon,
-  Avatar,
-  Badge,
   Button,
   Center,
-  Collapse,
   Divider,
-  Fieldset,
-  Flex,
-  Menu,
-  NavLink,
-  Popover,
   ScrollArea,
   Stack,
   Text,
-  TextInput,
 } from "@mantine/core";
-import {
-  IconAbc,
-  IconCalendar,
-  IconFilter,
-  IconSearch,
-  IconSortAscending,
-  IconSortDescending,
-  IconTrash,
-  IconX,
-} from "@tabler/icons-react";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
+import { IconTrash } from "@tabler/icons-react";
 
 import type {
   ProjectInsertExtended,
@@ -52,18 +29,15 @@ import {
   hasFiltersApplied,
   isTaskTree,
   taskInsertSchema,
-  TASKS_SORT_OPTIONS,
 } from "@/core/task-management";
 import { Panel } from "@/ui/components/Panel";
-import { useSyncInputState } from "@/ui/hooks/useSyncState";
 import { TaskForm, useTaskForm } from "@/ui/task-management";
+import { TasksQueryPanel } from "@/ui/task-management/tasks/TasksQueryPanel";
 import { cn } from "@/ui/utils";
 
 import type { TasksQueryOptionsHookReturn } from "../tasks/useTasksQueryOptions";
 import { SubtaskForm } from "../task-form/SubtaskForm";
 import { TaskWrapper } from "../task-form/TaskWrapper";
-
-dayjs.extend(relativeTime);
 
 // MARK: Component
 
@@ -87,6 +61,7 @@ export interface BacklogProps {
   onToggleTaskSelection?: (task: TaskId) => void;
 }
 
+// TODO turn content into a task list and reuse it in taskcolelctor
 export function Backlog({
   mode,
   filters,
@@ -106,8 +81,7 @@ export function Backlog({
   return (
     <Panel
       header={
-        <BacklogHeader
-          disabled={tasks.length === 0}
+        <TasksQueryPanel
           filters={filters}
           onFiltersUpdate={onFiltersUpdate}
           projects={projects}
@@ -226,182 +200,6 @@ export function Backlog({
   );
 }
 
-// MARK: Header
-
-interface BacklogHeaderProps
-  extends Pick<
-    BacklogProps,
-    "filters" | "onFiltersUpdate" | "projects" | "sort" | "onSortUpdate"
-  > {
-  disabled?: boolean;
-}
-
-function BacklogHeader({
-  disabled,
-  filters,
-  onFiltersUpdate,
-  projects,
-  sort,
-  onSortUpdate,
-}: BacklogHeaderProps) {
-  const [searchValue, setSearchValue] = useSyncInputState(filters.search ?? "");
-
-  const resolveProject = (
-    projectId: ProjectSelect["uid"],
-  ): ProjectSelect | undefined =>
-    projects.find((project) => project.uid === projectId);
-
-  return (
-    <>
-      <Flex p="xs" gap={4}>
-        <TextInput
-          placeholder="Search"
-          leftSection={<IconSearch size={20} />}
-          value={searchValue}
-          disabled={disabled}
-          mr="auto"
-          onChange={(e) => {
-            setSearchValue(e);
-            onFiltersUpdate({ search: e.target.value });
-          }}
-        />
-        {projects.length > 0 && (
-          <Popover
-            position="bottom-start"
-            withArrow
-            arrowPosition="center"
-            arrowSize={12}
-          >
-            <Popover.Target>
-              <ActionIcon
-                aria-label="Filter Tasks"
-                size="36"
-                color="gray"
-                variant="subtle"
-                disabled={disabled}
-              >
-                <IconFilter size={20} />
-              </ActionIcon>
-            </Popover.Target>
-            <Popover.Dropdown p="xs">
-              <Flex gap="sm">
-                {projects.length > 0 && (
-                  <Fieldset
-                    legend="Projects"
-                    p={0}
-                    classNames={{ legend: "text-center" }}
-                  >
-                    <ScrollArea scrollbars="y" h={180}>
-                      {projects.map((project) => (
-                        <NavLink
-                          key={project.uid}
-                          label={project.title}
-                          leftSection={
-                            <Avatar
-                              // color={project?.color}
-                              src={project?.image}
-                              size={24}
-                              radius="xl"
-                              name={project.title}
-                              alt={project.title}
-                            />
-                          }
-                          component="button"
-                          active={filters.projectIds?.includes(project.uid)}
-                          onClick={() => {
-                            onFiltersUpdate({
-                              projectIds: filters.projectIds?.includes(
-                                project.uid,
-                              )
-                                ? filters.projectIds?.filter(
-                                    (id) => id !== project.uid,
-                                  )
-                                : [...(filters.projectIds ?? []), project.uid],
-                            });
-                          }}
-                        />
-                      ))}
-                    </ScrollArea>
-                  </Fieldset>
-                )}
-              </Flex>
-            </Popover.Dropdown>
-          </Popover>
-        )}
-
-        <Menu>
-          <Menu.Target>
-            <Button
-              leftSection={
-                <SortDirectionIcon size={20} sort={sort.direction} />
-              }
-              variant="default"
-              size="sm"
-              disabled={disabled}
-            >
-              {getSortByLabel(sort.sortBy).short}
-            </Button>
-          </Menu.Target>
-          <Menu.Dropdown>
-            {TASKS_SORT_OPTIONS.sortBy.map((sortBy) => (
-              <Menu.Item
-                key={sortBy}
-                color={sort.sortBy === sortBy ? "primary" : undefined}
-                leftSection={<SortByIcon sortBy={sortBy} size={20} />}
-                onClick={() => onSortUpdate({ sortBy })}
-              >
-                {getSortByLabel(sortBy).full}
-              </Menu.Item>
-            ))}
-            <Menu.Divider />
-            {TASKS_SORT_OPTIONS.direction.map((direction) => (
-              <Menu.Item
-                key={direction}
-                color={sort.direction === direction ? "primary" : undefined}
-                leftSection={<SortDirectionIcon sort={direction} size={20} />}
-                onClick={() => onSortUpdate({ direction })}
-              >
-                {getSortDirectionLabel(direction)}
-              </Menu.Item>
-            ))}
-          </Menu.Dropdown>
-        </Menu>
-      </Flex>
-      <Collapse in={Boolean(filters.projectIds?.length)}>
-        <ScrollArea scrollbars="x" scrollHideDelay={300}>
-          <Flex gap="xs" p="sm" pt={0}>
-            {filters.projectIds?.map((projectId) => {
-              const project = resolveProject(projectId);
-              if (!project) return null;
-              return (
-                <Badge
-                  key={projectId}
-                  component="button"
-                  className="shrink-0 cursor-pointer!"
-                  // color={project.color ?? "gray"}
-                  size="md"
-                  variant="light"
-                  autoContrast
-                  rightSection={<IconX size={12} />}
-                  onClick={() => {
-                    onFiltersUpdate({
-                      projectIds: filters.projectIds?.filter(
-                        (id) => id !== projectId,
-                      ),
-                    });
-                  }}
-                >
-                  {project.title}
-                </Badge>
-              );
-            })}
-          </Flex>
-        </ScrollArea>
-      </Collapse>
-    </>
-  );
-}
-
 // MARK: Task Item
 
 interface TaskItemProps
@@ -468,55 +266,5 @@ function TaskItem({
           </Collapse>
         )}
       /> */
-  }
-}
-
-// MARK: Utility Functions
-
-const getSortByLabel = (
-  sort: TasksSortOptions["sortBy"],
-): { full: string; short?: string } => {
-  switch (sort) {
-    case "title":
-      return { full: "Title" };
-    case "createdAt":
-      return { full: "Creation Date", short: "Created" };
-    case "updatedAt":
-      return { full: "Last Updated", short: "Updated" };
-  }
-};
-
-function SortByIcon({
-  sortBy,
-  ...iconProps
-}: { sortBy: TasksSortOptions["sortBy"] } & IconProps) {
-  switch (sortBy) {
-    case "title":
-      return <IconAbc {...iconProps} />;
-    case "createdAt":
-      return <IconCalendar {...iconProps} />;
-    case "updatedAt":
-      return <IconCalendar {...iconProps} />;
-  }
-}
-
-const getSortDirectionLabel = (direction: TasksSortOptions["direction"]) => {
-  switch (direction) {
-    case "asc":
-      return "Ascending";
-    case "desc":
-      return "Descending";
-  }
-};
-
-function SortDirectionIcon({
-  sort,
-  ...iconProps
-}: { sort: TasksSortOptions["direction"] } & IconProps) {
-  switch (sort) {
-    case "asc":
-      return <IconSortAscending {...iconProps} />;
-    case "desc":
-      return <IconSortDescending {...iconProps} />;
   }
 }

@@ -12,8 +12,14 @@ import {
 
 import type { ProjectSelect } from "@/core/task-management";
 
-const PROJECT_SKELETONS = Array.from({ length: 10 }, (_, index) => (
-  <Skeleton key={index} height={38} width={38} radius="sm" />
+const PROJECT_SKELETONS = Array.from({ length: 3 }, (_, index) => (
+  <Skeleton
+    key={index}
+    className="shrink-0"
+    height={38}
+    width={38}
+    radius="sm"
+  />
 ));
 
 export interface ProjectsTileProps {

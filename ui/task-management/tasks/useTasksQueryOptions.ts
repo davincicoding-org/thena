@@ -87,13 +87,20 @@ export function useTasksQueryOptions({
 
   const sortFn: TasksQueryOptionsHookReturn["sortFn"] = (a, b) => {
     const direction = sort.direction === "asc" ? 1 : -1;
-    if (sort.sortBy === "createdAt") {
-      return (
-        direction *
-        (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-      );
+    switch (sort.sortBy) {
+      case "createdAt":
+        return (
+          direction *
+          (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+        );
+      case "updatedAt":
+        return (
+          direction *
+          (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime())
+        );
+      case "title":
+        return direction * a.title.localeCompare(b.title);
     }
-    return direction * a.title.localeCompare(b.title);
   };
 
   return {
