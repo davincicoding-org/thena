@@ -162,7 +162,7 @@ export function SprintPanel({
       )}
       {...props}
     >
-      <ScrollArea scrollbars="y" scrollHideDelay={300}>
+      <ScrollArea scrollbars="y" scrollHideDelay={300} type="never">
         <SortableTasksContainer
           id={sprintId}
           items={tasks.map((task) => task.uid)}

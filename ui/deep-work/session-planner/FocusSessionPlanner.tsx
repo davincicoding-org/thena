@@ -197,11 +197,12 @@ export function FocusSessionPlanner({
             withBorder
             display="grid"
             radius="md"
-            className={cn("shrink-0 overflow-clip", className)}
+            className={cn("h-full shrink-0 overflow-clip")}
           >
             <ScrollArea
               scrollbars="y"
               scrollHideDelay={300}
+              type="never"
               classNames={{
                 scrollbar: cn("pt-14!"),
               }}
@@ -506,12 +507,14 @@ export function FocusSessionPlanner({
             {tasks.length > 0 && sprints.length > 0 && (
               <motion.div
                 layout
+                className="h-full min-h-0"
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: "auto" }}
                 exit={{ opacity: 0, width: 0 }}
                 transition={{ duration: 0.3 }}
               >
                 <SprintBuilder
+                  className="h-full min-h-0"
                   dndEnabled={mode === "dnd"}
                   sprints={sprints}
                   taskPool={tasks}

@@ -326,9 +326,9 @@ export default function SessionPage() {
         )}
       </Transition>
       <AppShell.Main display="flex" className="h-dvh flex-col">
-        <Container className="py-16">
+        <Container className="min-h-0 py-16" fluid>
           <FocusSessionPlanner
-            className={cn("transition-opacity duration-500", {
+            className={cn("h-full min-h-0 transition-opacity duration-500", {
               "opacity-0": isLoading,
             })}
             tasks={taskPool.data ?? []}

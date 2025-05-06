@@ -22,6 +22,7 @@ export interface SprintBuilderProps {
   dndEnabled: boolean;
   sprints: SprintPlan[];
   taskPool: FlatTask[];
+  className?: string;
   onAddSprint: (
     tasks: TaskId[],
     callback?: (sprintId: SprintPlan["id"]) => void,
@@ -57,7 +58,8 @@ export function SprintBuilder({
   onUpdateSprint,
   onReorderSprints,
   onUnassignTasksFromSprint,
-}: SprintBuilderProps & BoxProps) {
+  className,
+}: SprintBuilderProps) {
   const viewport = useRef<HTMLDivElement>(null);
 
   const handleAddSprint = () => {
@@ -96,7 +98,7 @@ export function SprintBuilder({
       withBorder
       radius="md"
       display="grid"
-      className={cn("grid-rows-[auto_1fr] overflow-clip")}
+      className={cn("grid-rows-[auto_1fr] overflow-clip", className)}
     >
       <Box className="sticky top-0 z-10 h-12 bg-black/20 backdrop-blur-xs">
         <Flex justify="space-between" align="center" className="h-12 pr-2">
@@ -118,6 +120,7 @@ export function SprintBuilder({
       <Flex className="min-h-0 min-w-0 overflow-clip">
         <ScrollArea
           scrollbars="x"
+          type="never"
           className="w-full grow-0"
           classNames={{
             viewport: "[&>div]:block! [&>div]:h-full",
