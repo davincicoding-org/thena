@@ -1,24 +1,24 @@
 import "client-only";
 
 import type { PgliteDatabase } from "drizzle-orm/pglite";
-import { drizzle } from "drizzle-orm/pglite";
 
 import MIGRATION_META from "./migrations/meta/_journal.json";
 import * as schema from "./schema";
 
 let dbPromise: Promise<PgliteDatabase<typeof schema>> | undefined;
 
-const db = drizzle({
-  connection: { dataDir: "idb://thena" },
-  schema,
-  casing: "snake_case",
-});
-
 export const getClientDB = async (): Promise<PgliteDatabase<typeof schema>> => {
   if (dbPromise) return dbPromise;
 
   dbPromise = (async () => {
     console.time("INIT_DB");
+    const { drizzle } = await import("drizzle-orm/pglite");
+    const db = drizzle({
+      connection: { dataDir: "idb://thena" },
+      schema,
+      casing: "snake_case",
+    });
+
     const latestClientMigration = await db.query.clientMigrations
       .findFirst({
         orderBy: (migrations, { desc }) => [desc(migrations.appliedAt)],
