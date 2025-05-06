@@ -33,6 +33,7 @@ export interface SprintPanelProps {
   title: string;
   duration: Duration;
   tasks: FlatTask[];
+  dndEnabled: boolean;
   moveOptions: {
     start: boolean;
     left: boolean;
@@ -50,6 +51,7 @@ export function SprintPanel({
   title,
   duration,
   tasks,
+  dndEnabled,
   moveOptions,
   onMove,
   onDrop,
@@ -172,7 +174,7 @@ export function SprintPanel({
             <FlatTaskItem
               key={task.uid}
               item={task}
-              dndEnabled
+              dndEnabled={dndEnabled}
               onUnassignTasks={onUnassignTasks}
             />
           ))}
@@ -200,7 +202,7 @@ function FlatTaskItem({
   return (
     <Menu
       position="bottom-end"
-      disabled={!dndEnabled}
+      disabled={dndEnabled}
       offset={{
         mainAxis: 0,
       }}

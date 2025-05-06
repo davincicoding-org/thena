@@ -53,6 +53,7 @@ export interface SprintBuilderProps {
 export function SprintBuilder({
   sprints,
   taskPool,
+  dndEnabled,
   onAddSprint,
   onDropSprint,
   onUpdateSprint,
@@ -139,6 +140,7 @@ export function SprintBuilder({
             {sprints.map((sprint, index) => (
               <SprintPanel
                 key={sprint.id}
+                dndEnabled={dndEnabled}
                 sprintId={sprint.id}
                 duration={sprint.duration}
                 tasks={pickTasks(taskPool, sprint.tasks)}

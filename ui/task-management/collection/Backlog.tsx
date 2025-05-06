@@ -102,9 +102,14 @@ export function Backlog({
                   mode === "select"
                     ? cn(
                         "cursor-pointer outline! transition-all [&_*]:cursor-pointer!",
-                        selectedTasks?.some(
-                          (selectedTask) => selectedTask === task.uid,
-                        )
+                        (() => {
+                          if (!selectedTasks?.length) return false;
+                          if (!isTaskTree(task))
+                            return selectedTasks.includes(task.uid);
+                          return task.subtasks.every((subtask) =>
+                            selectedTasks.includes(subtask.uid),
+                          );
+                        })()
                           ? "outline-[var(--mantine-primary-color-filled)]!"
                           : "outline-transparent! hover:outline! hover:outline-current!",
                       )
@@ -115,10 +120,7 @@ export function Backlog({
                     ? () =>
                         onToggleTaskSelection?.(
                           isTaskTree(task)
-                            ? [
-                                task.uid,
-                                ...task.subtasks.map((subtask) => subtask.uid),
-                              ]
+                            ? [...task.subtasks.map((subtask) => subtask.uid)]
                             : [task.uid],
                         )
                     : undefined
