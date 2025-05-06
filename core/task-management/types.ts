@@ -8,7 +8,13 @@ export const taskTreeSchema = taskSelectSchema
     parentTaskId: true,
   })
   .extend({
-    subtasks: z.array(taskSelectSchema).min(1),
+    subtasks: z
+      .array(
+        taskSelectSchema.omit({
+          parentTaskId: true,
+        }),
+      )
+      .min(1),
   });
 export type TaskTree = z.infer<typeof taskTreeSchema>;
 

@@ -4,9 +4,17 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { and, eq, inArray, isNull, notInArray } from "drizzle-orm";
+import {
+  aliasedTable,
+  and,
+  eq,
+  inArray,
+  isNull,
+  notInArray,
+} from "drizzle-orm";
 
 import type {
+  FlatTask,
   StandaloneTask,
   TaskId,
   TaskInsert,
@@ -41,6 +49,46 @@ export const useTasksWithSubtasksQuery = (options: {
         });
 
         return result;
+      },
+      placeholderData: keepPreviousData,
+    },
+    queryClient,
+  );
+};
+
+export const useFlatTasksQuery = (options: {
+  ids: TaskId[];
+  where: "include" | "exclude";
+}) => {
+  const queryClient = useQueryClient();
+
+  return useQuery<FlatTask[]>(
+    {
+      queryKey: ["tasks-with-subtasks", options.ids, options.where],
+      queryFn: async () => {
+        const db = await getClientDB();
+
+        const filterFn = options.where === "include" ? inArray : notInArray;
+        const parent = aliasedTable(tasks, "parent");
+        const result = (await db
+          .select()
+          .from(tasks)
+          .where(filterFn(tasks.uid, options.ids))
+          .leftJoin(parent, eq(tasks.parentTaskId, parent.uid))) as unknown as {
+          tasks: TaskSelect;
+          parent: TaskSelect | null;
+        }[];
+        // FIX poorly typed query result
+
+        return result.map<FlatTask>(({ tasks, parent }) => {
+          if (parent) {
+            return {
+              ...tasks,
+              parent,
+            };
+          }
+          return tasks;
+        });
       },
       placeholderData: keepPreviousData,
     },

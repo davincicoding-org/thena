@@ -246,7 +246,8 @@ export const useSessionPlanningState = create<SessionPlanningState>()(
             (acc, t) => {
               const { id, index } =
                 typeof t === "object" ? t : { id: t, index: undefined };
-              if (!state.tasks.includes(id)) return acc;
+              // TEMP disabled
+              // if (!state.tasks.includes(id)) return acc;
 
               return [...acc, { id, index }];
             },

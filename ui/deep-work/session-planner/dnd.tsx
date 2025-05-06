@@ -19,12 +19,11 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Stack, Text } from "@mantine/core";
+import { Alert, Stack } from "@mantine/core";
 
 import type { FlatTask, TaskId } from "@/core/task-management";
-import { cn } from "@/ui/utils";
+import type { FocusSessionPlannerProps } from "@/ui/deep-work/session-planner/FocusSessionPlanner";
 
-import type { SprintBuilderProps } from "./SprintBuilder";
 import { FlatTaskBase } from "./components";
 
 export const TASK_POOL_ID = "$TASK_POOL$";
@@ -35,7 +34,7 @@ interface DraggingTaskData extends Partial<SortableData> {
 
 export interface DndWrapperProps
   extends Pick<
-    SprintBuilderProps,
+    FocusSessionPlannerProps,
     | "onUnassignTasksFromSprint"
     | "onMoveTask"
     | "onAssignTasksToSprint"
@@ -153,10 +152,14 @@ export function SortableTasksContainer({
   enabled?: boolean;
   stackProps?: StackProps;
 }>) {
-  const { setNodeRef } = useDroppable({
+  const { setNodeRef, over, active } = useDroppable({
     id,
     disabled: !enabled,
   });
+
+  const overContainerId =
+    (over?.data.current as undefined | Partial<SortableData>)?.sortable
+      ?.containerId ?? over?.id;
 
   return (
     <SortableContext
@@ -167,14 +170,30 @@ export function SortableTasksContainer({
       <Stack gap="sm" p="sm" bg="neutral.8" ref={setNodeRef} {...stackProps}>
         {children}
 
-        {enabled && items.length === 0 && (
-          <Text
+        {!active && items.length === 0 && (
+          <Alert
+            title="No Tasks Assigned"
+            color="gray"
+            className="w-xs"
+            variant="transparent"
+            p="xs"
             opacity={0.3}
-            className={cn("flex items-center justify-center")}
-            h={30}
-          >
-            Drag tasks here
-          </Text>
+            classNames={{
+              title: "mx-auto",
+            }}
+          />
+        )}
+        {active && overContainerId !== id && (
+          <Alert
+            title="Drop task here to assign it"
+            color="gray"
+            p="xs"
+            className="w-xs"
+            variant="transparent"
+            classNames={{
+              title: "mx-auto",
+            }}
+          />
         )}
       </Stack>
     </SortableContext>
@@ -217,8 +236,13 @@ export const useDraggableTask = (item: FlatTask, dndEnabled: boolean) => {
   };
 };
 
-export const useDroppableTaskPool = (enabled: boolean) =>
-  useDroppable({
+export const useDroppableTaskPool = (enabled: boolean) => {
+  const draggable = useDroppable({
     id: TASK_POOL_ID,
     disabled: !enabled,
   });
+  return {
+    ...draggable,
+    containerId: TASK_POOL_ID,
+  };
+};

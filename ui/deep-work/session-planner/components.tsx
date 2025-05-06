@@ -9,27 +9,25 @@ export function FlatTaskBase({
   rightSection,
   className,
   active,
-  clickable,
   ...props
 }: {
   label: string;
   group?: string;
   ref?: Ref<HTMLDivElement>;
   rightSection?: ReactNode;
-  clickable?: boolean;
   active?: boolean;
 } & HTMLAttributes<HTMLDivElement>) {
   return (
-    <Paper withBorder className={cn("overflow-clip")} {...props}>
+    <Paper
+      withBorder
+      className={cn("grid! overflow-clip", className)}
+      {...props}
+    >
       <NavLink
         component="button"
         description={group}
         label={label}
-        className={className}
         classNames={{
-          root: cn({
-            "cursor-default! hover:bg-[unset]!": !clickable,
-          }),
           body: cn("flex flex-col-reverse"),
           label: cn("truncate text-nowrap"),
           description: cn("truncate text-nowrap"),

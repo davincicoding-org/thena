@@ -13,15 +13,14 @@ import {
 import { IconTrash } from "@tabler/icons-react";
 
 import type {
+  FlatTask,
   ProjectInsertExtended,
   ProjectSelect,
-  StandaloneTask,
   TaskFilters,
   TaskId,
   TaskInsert,
   TaskSelect,
   TasksSortOptions,
-  TaskTree,
   TaskUpdate,
 } from "@/core/task-management";
 import type { TaskFormProps } from "@/ui/task-management";
@@ -29,6 +28,7 @@ import {
   hasFiltersApplied,
   isTaskTree,
   taskInsertSchema,
+  unflattenTasks,
 } from "@/core/task-management";
 import { Panel } from "@/ui/components/Panel";
 import { TaskForm, useTaskForm } from "@/ui/task-management";
@@ -43,7 +43,7 @@ import { TaskWrapper } from "../task-form/TaskWrapper";
 
 export interface BacklogProps {
   mode: "select" | "edit";
-  tasks: (TaskTree | StandaloneTask)[];
+  tasks: FlatTask[];
   filters: TaskFilters;
   sort: TasksSortOptions;
   onFiltersUpdate: TasksQueryOptionsHookReturn["updateFilters"];
@@ -58,7 +58,7 @@ export interface BacklogProps {
     ProjectInsertExtended
   >;
   selectedTasks?: TaskId[];
-  onToggleTaskSelection?: (task: TaskId) => void;
+  onToggleTaskSelection?: (tasks: TaskId[]) => void;
 }
 
 // TODO turn content into a task list and reuse it in taskcolelctor
@@ -78,6 +78,7 @@ export function Backlog({
   onToggleTaskSelection,
   ...paperProps
 }: BacklogProps & PaperProps) {
+  tasks = unflattenTasks(tasks);
   return (
     <Panel
       header={
@@ -111,7 +112,15 @@ export function Backlog({
                 }
                 onClick={
                   mode === "select"
-                    ? () => onToggleTaskSelection?.(task.uid)
+                    ? () =>
+                        onToggleTaskSelection?.(
+                          isTaskTree(task)
+                            ? [
+                                task.uid,
+                                ...task.subtasks.map((subtask) => subtask.uid),
+                              ]
+                            : [task.uid],
+                        )
                     : undefined
                 }
                 task={

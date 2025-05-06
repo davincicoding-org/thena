@@ -3,7 +3,7 @@
 import type { BoxProps } from "@mantine/core";
 import React, { useEffect, useState } from "react";
 import { Box } from "@mantine/core";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
 import { cn } from "../utils";
 

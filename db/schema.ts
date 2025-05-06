@@ -14,7 +14,8 @@ Per User:
  */
 
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
-import { relations, sql } from "drizzle-orm";
+import { aliasedTable, relations, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/gel-core";
 import {
   check,
   index,
