@@ -1,10 +1,11 @@
 import type { PaperProps } from "@mantine/core";
-import type { HTMLAttributes, ReactElement } from "react";
+import type { ReactElement, Ref } from "react";
 import { Children, cloneElement, Fragment, useEffect, useRef } from "react";
 import {
   ActionIcon,
   Box,
   Collapse,
+  createPolymorphicComponent,
   Divider,
   Paper,
   Text,
@@ -21,107 +22,113 @@ import { cn } from "@/ui/utils";
 export interface TaskWrapperProps {
   task: ReactElement<{ onAddSubtask?: () => void }>;
   subtasks: ReactElement[] | undefined;
+  ref?: Ref<HTMLDivElement>;
   onAddSubtask: (task: TaskInsert) => void;
 }
 
-export function TaskWrapper({
-  task,
-  subtasks,
-  className,
-  onAddSubtask,
-  ...paperProps
-}: TaskWrapperProps & PaperProps & HTMLAttributes<HTMLDivElement>) {
-  const [isAddingSubtask, subtaskAdder] = useDisclosure();
+export const TaskWrapper = createPolymorphicComponent<
+  "div",
+  TaskWrapperProps & PaperProps
+>(
+  ({
+    task,
+    subtasks,
+    className,
+    onAddSubtask,
+    ...paperProps
+  }: TaskWrapperProps & PaperProps) => {
+    const [isAddingSubtask, subtaskAdder] = useDisclosure();
 
-  const form = useForm({
-    defaultValues: {
-      title: "",
-    },
-    validators: {
-      onChange: taskInsertSchema,
-    },
-    onSubmit: ({ value }) => {
-      onAddSubtask(value);
+    const form = useForm({
+      defaultValues: {
+        title: "",
+      },
+      validators: {
+        onChange: taskInsertSchema,
+      },
+      onSubmit: ({ value }) => {
+        onAddSubtask(value);
+        form.reset();
+      },
+    });
+
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+      const timeout = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timeout);
+    }, [isAddingSubtask]);
+
+    const handleAbort = () => {
       form.reset();
-    },
-  });
+      subtaskAdder.close();
+    };
 
-  const inputRef = useRef<HTMLInputElement>(null);
+    return (
+      <Paper
+        withBorder
+        className={cn("overflow-clip", className)}
+        {...paperProps}
+      >
+        {cloneElement(task, { onAddSubtask: subtaskAdder.open })}
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      inputRef.current?.focus();
-    }, 100);
-    return () => clearTimeout(timeout);
-  }, [isAddingSubtask]);
-
-  const handleAbort = () => {
-    form.reset();
-    subtaskAdder.close();
-  };
-
-  return (
-    <Paper
-      withBorder
-      className={cn("overflow-clip", className)}
-      {...paperProps}
-    >
-      {cloneElement(task, { onAddSubtask: subtaskAdder.open })}
-
-      <Box>
-        {subtasks &&
-          Children.map(subtasks, (subtask) => (
-            <Fragment key={subtask.key}>
-              <Divider />
-              {subtask}
-            </Fragment>
-          ))}
-      </Box>
-      <Collapse in={isAddingSubtask}>
-        <Divider />
-        <Box p="xs">
-          <form.Field
-            name="title"
-            children={(field) => (
-              <>
-                <TextInput
-                  ref={inputRef}
-                  placeholder="New subtask"
-                  rightSection={
-                    <ActionIcon
-                      aria-label="Cancel"
-                      variant="transparent"
-                      color="gray"
-                      onClick={handleAbort}
-                    >
-                      <IconX size={16} />
-                    </ActionIcon>
-                  }
-                  value={field.state.value}
-                  error={field.state.meta.errors.length > 0}
-                  onChange={(e) => field.handleChange(e.target.value)}
-                  onBlur={subtaskAdder.close}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      void form.handleSubmit();
-                    }
-                  }}
-                />
-                <Collapse
-                  in={
-                    field.state.meta.isTouched &&
-                    field.state.meta.errors.length === 0
-                  }
-                >
-                  <Text size="xs" mt={2} opacity={0.5}>
-                    Press Enter to add
-                  </Text>
-                </Collapse>
-              </>
-            )}
-          />
+        <Box>
+          {subtasks &&
+            Children.map(subtasks, (subtask) => (
+              <Fragment key={subtask.key}>
+                <Divider />
+                {subtask}
+              </Fragment>
+            ))}
         </Box>
-      </Collapse>
-    </Paper>
-  );
-}
+        <Collapse in={isAddingSubtask}>
+          <Divider />
+          <Box p="xs">
+            <form.Field
+              name="title"
+              children={(field) => (
+                <>
+                  <TextInput
+                    ref={inputRef}
+                    placeholder="New subtask"
+                    rightSection={
+                      <ActionIcon
+                        aria-label="Cancel"
+                        variant="transparent"
+                        color="gray"
+                        onClick={handleAbort}
+                      >
+                        <IconX size={16} />
+                      </ActionIcon>
+                    }
+                    value={field.state.value}
+                    error={field.state.meta.errors.length > 0}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onBlur={subtaskAdder.close}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        void form.handleSubmit();
+                      }
+                    }}
+                  />
+                  <Collapse
+                    in={
+                      field.state.meta.isTouched &&
+                      field.state.meta.errors.length === 0
+                    }
+                  >
+                    <Text size="xs" mt={2} opacity={0.5}>
+                      Press Enter to add
+                    </Text>
+                  </Collapse>
+                </>
+              )}
+            />
+          </Box>
+        </Collapse>
+      </Paper>
+    );
+  },
+);

@@ -21,6 +21,7 @@ import {
 import { useDebouncedCallback, useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { IconChevronRight } from "@tabler/icons-react";
+import { s } from "vitest/dist/types-198fd1d9.js";
 
 import type { SprintPlan } from "@/core/deep-work";
 import type {
@@ -30,7 +31,6 @@ import type {
   TaskUpdate,
 } from "@/core/task-management";
 import type { SprintBuilderProps } from "@/ui/deep-work";
-import type { TaskCollectorRef } from "@/ui/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
 import {
   FocusSession,
@@ -87,11 +87,11 @@ export default function SessionPage() {
     where: "include",
   });
 
+  const isLoading = taskPool.isLoading || status === undefined;
+
   const { mutateAsync: createTask } = useCreateTask();
   const { mutateAsync: updateTask } = useUpdateTask();
   const { mutateAsync: deleteTask } = useDeleteTask();
-
-  const taskCollectorFormRef = useRef<TaskCollectorRef>(null);
 
   const { data: importableTasks = [] } = useTasksWithSubtasksQuery({
     ids: planning.tasks,
@@ -141,7 +141,10 @@ export default function SessionPage() {
     apply: async (taskId: TaskTree["uid"], shouldDelete = false) => {
       planning.removeTasks([taskId]);
 
-      const taskToRestore = shouldDelete ? await deleteTask(taskId) : undefined;
+      if (!shouldDelete) return { uid: taskId };
+
+      const taskToRestore = await deleteTask(taskId);
+      void taskPool.refetch();
 
       return { uid: taskId, taskToRestore };
     },
@@ -353,11 +356,7 @@ export default function SessionPage() {
 
   return (
     <>
-      <Transition
-        mounted={status === undefined}
-        transition="fade"
-        duration={500}
-      >
+      <Transition mounted={isLoading} transition="fade" duration={500}>
         {(styles) => (
           <LoadingOverlay
             loaderProps={{ type: "dots" }}
@@ -373,7 +372,7 @@ export default function SessionPage() {
           className={cn(
             "flex! h-full min-h-0 grow-0 flex-col! transition-opacity duration-500",
             {
-              "opacity-0": status === undefined,
+              "opacity-0": isLoading,
             },
           )}
           classNames={{
@@ -385,7 +384,6 @@ export default function SessionPage() {
             <TaskCollector
               className="mx-auto max-h-full"
               items={taskPool.data ?? []}
-              ref={taskCollectorFormRef}
               onUpdateTask={handleUpdateTaskDebounced}
               onRemoveTask={handleRemoveTask}
               onAddTask={handleCreateTask}
@@ -413,7 +411,7 @@ export default function SessionPage() {
 
           <Box
             className={cn("mt-auto transition-transform delay-500", {
-              "translate-y-full": status === undefined,
+              "translate-y-full": isLoading,
             })}
           >
             <Divider />

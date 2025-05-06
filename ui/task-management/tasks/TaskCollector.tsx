@@ -1,10 +1,11 @@
 import type { PaperProps } from "@mantine/core";
 import type { UseMutateFunction } from "@tanstack/react-query";
 import type { Ref } from "react";
-import { useImperativeHandle, useRef } from "react";
+import { forwardRef, useImperativeHandle, useRef } from "react";
 import {
   ActionIcon,
   Button,
+  createPolymorphicComponent,
   Divider,
   Flex,
   FocusTrap,
@@ -16,6 +17,7 @@ import {
 } from "@mantine/core";
 import { useDisclosure, useInputState } from "@mantine/hooks";
 import { IconPlus, IconTrash, IconX } from "@tabler/icons-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 import type {
   ProjectInsertExtended,
@@ -35,10 +37,6 @@ import { cn } from "@/ui/utils";
 import { SubtaskForm } from "../task-form/SubtaskForm";
 import { TaskWrapper } from "../task-form/TaskWrapper";
 
-export interface TaskCollectorRef {
-  resetTask: (task: TaskSelect) => void;
-}
-
 export interface TaskCollectorProps {
   items: (TaskTree | StandaloneTask)[];
   onUpdateTask?: (uid: TaskId, updates: TaskUpdate) => void;
@@ -53,7 +51,6 @@ export interface TaskCollectorProps {
     ProjectInsertExtended
   >;
 
-  ref?: Ref<TaskCollectorRef>;
   allowImport?: boolean;
   onRequestImport?: () => void;
 }
@@ -69,19 +66,8 @@ export function TaskCollector({
   allowImport,
   onRequestImport,
   className,
-  ref,
   ...paperProps
 }: TaskCollectorProps & PaperProps) {
-  const itemsReset = useRef<Record<TaskId, (value: TaskSelect) => void>>({});
-
-  useImperativeHandle(ref, () => {
-    return {
-      resetTask: (task) => {
-        itemsReset.current[task.uid]?.(task);
-      },
-    };
-  }, []);
-
   return (
     <Paper
       withBorder
@@ -99,92 +85,102 @@ export function TaskCollector({
       >
         {items.length ? (
           <Stack p="md">
-            {items.map((task) => (
-              <TaskWrapper
-                key={task.uid}
-                task={
-                  <Item
-                    item={task}
-                    onUpdate={(updates) => onUpdateTask?.(task.uid, updates)}
-                    ref={(reset) => {
-                      if (!reset) return;
-                      itemsReset.current[task.uid] = reset;
-                    }}
-                    projects={projects}
-                    onCreateProject={onCreateProject}
-                    TaskActions={({ defaultActions }) => (
-                      <>
-                        {onRefineTask && (
-                          <>
-                            <Button
-                              fullWidth
-                              variant="subtle"
-                              color="gray"
-                              justify="flex-start"
-                              onClick={() => onRefineTask(task)}
-                            >
-                              Refine
-                            </Button>
-                            <Divider />
-                          </>
-                        )}
-                        {defaultActions}
-                        <Divider />
-                        <Button
-                          fullWidth
-                          variant="subtle"
-                          radius={0}
-                          color="gray"
-                          justify="flex-start"
-                          onClick={() => onRemoveTask?.(task.uid, false)}
-                        >
-                          Postpone for later
-                        </Button>
-                        <Divider />
-                        <Button
-                          fullWidth
-                          color="red"
-                          radius={0}
-                          variant="subtle"
-                          justify="flex-start"
-                          leftSection={<IconTrash size={16} />}
-                          onClick={() => onRemoveTask?.(task.uid, true)}
-                        >
-                          Delete
-                        </Button>
-                      </>
-                    )}
-                  />
-                }
-                subtasks={
-                  isTaskTree(task)
-                    ? task.subtasks.map((subtask) => (
-                        <Item
-                          key={subtask.uid}
-                          item={subtask}
-                          isSubtask
-                          onUpdate={(updates) =>
-                            onUpdateTask?.(subtask.uid, updates)
-                          }
-                          ref={(reset) => {
-                            if (!reset) return;
-                            itemsReset.current[subtask.uid] = reset;
-                          }}
-                          projects={projects}
-                          onCreateProject={onCreateProject}
-                          onDelete={() => onRemoveTask?.(subtask.uid, true)}
-                        />
-                      ))
-                    : undefined
-                }
-                onAddSubtask={(subtask) =>
-                  onAddTask?.({
-                    parentTaskId: task.uid,
-                    ...subtask,
-                  })
-                }
-              />
-            ))}
+            <AnimatePresence>
+              {items.map((task) => (
+                <TaskWrapper
+                  component={motion.div}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 25 }}
+                  layout
+                  transition={{ duration: 0.3 }}
+                  key={task.uid}
+                  task={
+                    <Item
+                      item={task}
+                      onUpdate={(updates) => onUpdateTask?.(task.uid, updates)}
+                      projects={projects}
+                      onCreateProject={onCreateProject}
+                      TaskActions={({ defaultActions, closeMenu }) => (
+                        <>
+                          {onRefineTask && (
+                            <>
+                              <Button
+                                fullWidth
+                                variant="subtle"
+                                color="gray"
+                                justify="flex-start"
+                                onClick={() => onRefineTask(task)}
+                              >
+                                Refine
+                              </Button>
+                              <Divider />
+                            </>
+                          )}
+                          {defaultActions}
+                          <Divider />
+                          <Button
+                            fullWidth
+                            variant="subtle"
+                            radius={0}
+                            color="gray"
+                            justify="flex-start"
+                            onClick={() => {
+                              closeMenu();
+                              onRemoveTask?.(task.uid, false);
+                            }}
+                          >
+                            Postpone for later
+                          </Button>
+                          <Divider />
+                          <Button
+                            fullWidth
+                            color="red"
+                            radius={0}
+                            variant="subtle"
+                            justify="flex-start"
+                            leftSection={<IconTrash size={16} />}
+                            onClick={() => {
+                              closeMenu();
+                              onRemoveTask?.(task.uid, true);
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </>
+                      )}
+                    />
+                  }
+                  subtasks={
+                    isTaskTree(task)
+                      ? task.subtasks.map((subtask) => (
+                          <Item
+                            key={subtask.uid}
+                            item={subtask}
+                            isSubtask
+                            component={motion.div}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.3 }}
+                            onUpdate={(updates) =>
+                              onUpdateTask?.(subtask.uid, updates)
+                            }
+                            projects={projects}
+                            onCreateProject={onCreateProject}
+                            onDelete={() => onRemoveTask?.(subtask.uid, true)}
+                          />
+                        ))
+                      : undefined
+                  }
+                  onAddSubtask={(subtask) =>
+                    onAddTask?.({
+                      parentTaskId: task.uid,
+                      ...subtask,
+                    })
+                  }
+                />
+              ))}
+            </AnimatePresence>
           </Stack>
         ) : (
           <Text
@@ -207,46 +203,38 @@ export function TaskCollector({
   );
 }
 
-function Item({
-  item,
-  ref,
-  isSubtask,
-  onUpdate,
-  onDelete,
-  ...props
-}: {
+interface ItemProps extends TaskFormProps {
   item: TaskInsert;
-  ref: Ref<(value: TaskInsert) => void>;
+  ref?: Ref<HTMLDivElement>;
   isSubtask?: boolean;
   onUpdate: (update: TaskInsert) => void;
   onDelete?: () => void;
-} & TaskFormProps) {
-  const form = useTaskForm({
-    defaultValues: item,
-    validators: {
-      onChange: taskInsertSchema,
-      onMount: taskInsertSchema,
-    },
-    onSubmit: ({ value }) => onUpdate(value),
-    listeners: {
-      onChange: ({ formApi }) => {
-        if (formApi.state.isValid) return;
-        onUpdate(formApi.state.values);
-      },
-    },
-  });
-  useImperativeHandle(ref, () => {
-    return (value: TaskInsert) =>
-      Object.entries(value).forEach(([key, value]) => {
-        form.setFieldValue(key as keyof TaskInsert, value);
-      });
-  }, [form]);
-  if (isSubtask) {
-    return <SubtaskForm form={form} onRemove={onDelete} {...props} />;
-  }
-
-  return <TaskForm form={form} {...props} />;
 }
+
+const Item = createPolymorphicComponent<"div", ItemProps>(
+  ({ item, isSubtask, onUpdate, onDelete, ...props }: ItemProps) => {
+    const form = useTaskForm({
+      defaultValues: item,
+      validators: {
+        onChange: taskInsertSchema,
+        onMount: taskInsertSchema,
+      },
+      onSubmit: ({ value }) => onUpdate(value),
+      listeners: {
+        onChange: ({ formApi }) => {
+          if (formApi.state.isValid) return;
+          onUpdate(formApi.state.values);
+        },
+      },
+    });
+
+    if (isSubtask) {
+      return <SubtaskForm form={form} onRemove={onDelete} {...props} />;
+    }
+
+    return <TaskForm form={form} {...props} />;
+  },
+);
 
 interface TaskAdderProps
   extends Pick<TaskCollectorProps, "allowImport" | "onRequestImport"> {
@@ -319,6 +307,9 @@ function TaskAdder({ onSubmit, allowImport, onRequestImport }: TaskAdderProps) {
           </Button>
           {allowImport && (
             <Button
+              component={motion.button}
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: "auto" }}
               flex={1}
               variant="light"
               color="gray"

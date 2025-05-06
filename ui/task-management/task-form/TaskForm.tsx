@@ -32,7 +32,10 @@ import { cn } from "@/ui/utils";
 import { ProjectPicker } from "./ProjectPicker";
 import { taskFormOpts, withTaskForm } from "./useTaskForm";
 
-type TaskActionsComponent = FunctionComponent<{ defaultActions: ReactNode }>;
+type TaskActionsComponent = FunctionComponent<{
+  defaultActions: ReactNode;
+  closeMenu: () => void;
+}>;
 
 // MARK: Component
 
@@ -228,7 +231,10 @@ export const TaskForm = withTaskForm({
         <Popover.Dropdown p={0} ref={actionsPanelRef} className="overflow-clip">
           <Tabs value={tab}>
             <Tabs.Panel value="actions">
-              <TaskActions defaultActions={defaultActions} />
+              <TaskActions
+                defaultActions={defaultActions}
+                closeMenu={actionsPanel.close}
+              />
             </Tabs.Panel>
             <Tabs.Panel value="projects">
               <form.Field
