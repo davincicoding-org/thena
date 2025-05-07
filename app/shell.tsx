@@ -6,6 +6,7 @@ import { SignedIn, UserButton } from "@clerk/nextjs";
 import { ActionIcon, AppShell, Flex, Popover, Text } from "@mantine/core";
 import { IconAdjustmentsHorizontal } from "@tabler/icons-react";
 
+import { BugReporter } from "@/ui/components/BugReporter";
 import { Configuration } from "@/ui/config";
 import { cn } from "@/ui/utils";
 
@@ -15,7 +16,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   return (
     <AppShell header={{ height: 60 }}>
       <AppShell.Header withBorder={false}>
-        <Flex py="xs" px="md" align="center" className="h-full">
+        <Flex py="xs" px="md" gap={4} align="center" className="h-full">
           <Text
             size="xl"
             component={Link}
@@ -34,7 +35,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
 
           <SignedIn>
             <UserButton />
-            <Popover withArrow arrowPosition="center" radius="md" offset={0}>
+            {/* <Popover withArrow arrowPosition="center" radius="md" offset={0}>
               <Popover.Target>
                 <ActionIcon
                   variant="subtle"
@@ -48,8 +49,9 @@ export default function Shell({ children }: { children: React.ReactNode }) {
               <Popover.Dropdown>
                 <Configuration className="w-78" />
               </Popover.Dropdown>
-            </Popover>
+            </Popover> */}
           </SignedIn>
+          <BugReporter variant="subtle" color="gray" size="xl" />
         </Flex>
       </AppShell.Header>
 

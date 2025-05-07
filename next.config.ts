@@ -4,13 +4,14 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   // output: "export",
-  reactStrictMode: false,
+  reactStrictMode: true,
   eslint: {
     dirs: ["app", "core", "ui"],
   },
   transpilePackages: ["@electric-sql/pglite"],
   experimental: {
     reactCompiler: true,
+    optimizePackageImports: ["@mantine/core", "@mantine/hooks"],
   },
   webpack: (config) => {
     config.module.rules.push({
