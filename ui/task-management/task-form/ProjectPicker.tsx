@@ -13,7 +13,7 @@ import { useDisclosure, useInputState } from "@mantine/hooks";
 import { IconChevronLeft, IconX } from "@tabler/icons-react";
 
 import type {
-  ProjectInsertExtended,
+  ProjectInput,
   ProjectSelect,
   TaskInput,
 } from "@/core/task-management";
@@ -27,7 +27,7 @@ export interface ProjectPickerProps {
   projects: ProjectSelect[];
   onChange: (value: NonNullable<TaskInput["projectId"]>) => void;
   onCreate?: (
-    input: ProjectInsertExtended,
+    input: ProjectInput,
     callback: (project: ProjectSelect | undefined) => void,
   ) => void;
   onClose: () => void;

@@ -1,12 +1,21 @@
 import { z } from "zod";
 
 import type { ProjectSelect } from "./db";
-import { taskInsertSchema, taskSelectSchema } from "./db";
+import { projectInsertSchema, taskInsertSchema, taskSelectSchema } from "./db";
 
 export const taskInputSchema = taskInsertSchema.omit({
   userId: true,
 });
 export type TaskInput = z.infer<typeof taskInputSchema>;
+
+export const projectInputSchema = projectInsertSchema
+  .omit({
+    userId: true,
+  })
+  .extend({
+    imageFile: z.instanceof(File).nullable().optional(),
+  });
+export type ProjectInput = z.infer<typeof projectInputSchema>;
 
 export const taskTreeSchema = taskSelectSchema
   .omit({

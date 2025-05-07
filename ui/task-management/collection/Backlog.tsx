@@ -14,7 +14,7 @@ import { IconTrash } from "@tabler/icons-react";
 
 import type {
   FlatTask,
-  ProjectInsertExtended,
+  ProjectInput,
   ProjectSelect,
   TaskFilters,
   TaskId,
@@ -54,7 +54,7 @@ export interface BacklogProps {
   onCreateProject?: UseMutateFunction<
     ProjectSelect | undefined,
     Error,
-    ProjectInsertExtended
+    ProjectInput
   >;
   selectedTasks?: TaskId[];
   onToggleTaskSelection?: (tasks: TaskId[]) => void;

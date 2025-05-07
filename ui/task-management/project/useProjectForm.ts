@@ -4,8 +4,8 @@ import {
   formOptions,
 } from "@tanstack/react-form";
 
-import type { ProjectInsertExtended } from "@/core/task-management";
-import { projectInsertExtendedSchema } from "@/core/task-management";
+import type { ProjectInput } from "@/core/task-management";
+import { projectInputSchema } from "@/core/task-management";
 
 export const { fieldContext, formContext, useFieldContext } =
   createFormHookContexts();
@@ -22,8 +22,8 @@ export const projectFormOpts = formOptions({
   defaultValues: {
     title: "",
     description: "",
-  } as ProjectInsertExtended,
+  } as ProjectInput,
   validators: {
-    onChange: projectInsertExtendedSchema,
+    onChange: projectInputSchema,
   },
 });

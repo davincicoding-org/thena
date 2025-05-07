@@ -1,9 +1,9 @@
+import type { z } from "zod";
 import {
   createInsertSchema,
   createSelectSchema,
   createUpdateSchema,
 } from "drizzle-zod";
-import { z } from "zod";
 
 import { projects, taskComplexity, taskPriority, tasks } from "@/db/schema";
 
@@ -31,11 +31,6 @@ export type TaskComplexity = z.infer<typeof taskComplexityEnum>;
 
 export const projectInsertSchema = createInsertSchema(projects);
 export type ProjectInsert = z.infer<typeof projectInsertSchema>;
-
-export const projectInsertExtendedSchema = projectInsertSchema.extend({
-  imageFile: z.instanceof(File).nullable().optional(),
-});
-export type ProjectInsertExtended = z.infer<typeof projectInsertExtendedSchema>;
 
 export const projectUpdateSchema = createUpdateSchema(projects);
 export type ProjectUpdate = z.infer<typeof projectUpdateSchema>;

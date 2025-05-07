@@ -40,7 +40,7 @@ import { AnimatePresence, motion } from "motion/react";
 import type { SprintPlan } from "@/core/deep-work";
 import type {
   FlatTask,
-  ProjectInsertExtended,
+  ProjectInput,
   ProjectSelect,
   TaskId,
   TaskInput,
@@ -109,7 +109,7 @@ export interface FocusSessionPlannerProps {
   onCreateProject: UseMutateFunction<
     ProjectSelect | undefined,
     Error,
-    ProjectInsertExtended
+    ProjectInput
   >;
   className?: string;
 }

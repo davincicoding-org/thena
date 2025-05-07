@@ -1,8 +1,9 @@
+import { useUser } from "@clerk/nextjs";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { eq } from "drizzle-orm";
 
 import type {
-  ProjectInsertExtended,
+  ProjectInput,
   ProjectSelect,
   ProjectUpdate,
 } from "@/core/task-management";
@@ -26,12 +27,17 @@ export const useProjectsQuery = () => {
 
 export const useCreateProject = () => {
   const queryClient = useQueryClient();
+  const { user } = useUser();
 
-  return useMutation<ProjectSelect | undefined, Error, ProjectInsertExtended>({
+  return useMutation<ProjectSelect | undefined, Error, ProjectInput>({
     mutationKey: ["create-project"],
     mutationFn: async ({ imageFile, ...project }) => {
       const db = await getClientDB();
-      const [result] = await db.insert(projects).values(project).returning();
+      if (!user) throw new Error("User not found");
+      const [result] = await db
+        .insert(projects)
+        .values({ ...project, userId: user.id })
+        .returning();
 
       if (!result) return undefined;
 

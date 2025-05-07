@@ -18,10 +18,7 @@ import {
   IconPlus,
 } from "@tabler/icons-react";
 
-import type {
-  ProjectInsertExtended,
-  ProjectSelect,
-} from "@/core/task-management";
+import type { ProjectInput, ProjectSelect } from "@/core/task-management";
 import {
   ComplexityBadge,
   PriorityBadge,
@@ -46,7 +43,7 @@ export type TaskFormProps = {
   onCreateProject?: UseMutateFunction<
     ProjectSelect | undefined,
     Error,
-    ProjectInsertExtended
+    ProjectInput
   >;
   readOnly?: boolean;
   TaskActions?: TaskActionsComponent;
