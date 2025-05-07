@@ -14,7 +14,6 @@ import {
   FocusTrap,
   Kbd,
   Paper,
-  Popover,
   ScrollArea,
   SegmentedControl,
   Stack,
@@ -24,6 +23,7 @@ import {
 } from "@mantine/core";
 import {
   useDisclosure,
+  useHotkeys,
   useOs,
   useToggle,
   useWindowEvent,
@@ -53,6 +53,7 @@ import {
   taskInputSchema,
   unflattenTasks,
 } from "@/core/task-management";
+import { HotKeyHint, useHotKeyHint } from "@/ui/components/HotKeyHint";
 import { SidePanel } from "@/ui/components/SidePanel";
 import { FlatTaskBase } from "@/ui/deep-work/session-planner/components";
 import {
@@ -141,21 +142,10 @@ export function FocusSessionPlanner({
   useWindowEvent("keydown", (e) => {
     if (e.key === "Alt") {
       toggleMode();
-      if (!shouldShowToggleTip) return;
-      setShouldShowToggleTipReaction(true);
-      setTimeout(() => {
-        toggleTip.close();
-        setTimeout(() => {
-          setShouldShowToggleTipReaction(false);
-        }, 500);
-      }, 2000);
+      modeSwitchTip.markAsExecuted();
     }
   });
-
-  // TODO show success message when tip was followed for the first time
-  const [shouldShowToggleTipReaction, setShouldShowToggleTipReaction] =
-    useState(false);
-  const [shouldShowToggleTip, toggleTip] = useDisclosure(false);
+  const modeSwitchTip = useHotKeyHint();
 
   const unassignedTasks = useMemo(() => {
     const assignedTasks = sprints.flatMap((sprint) => sprint.tasks);
@@ -165,6 +155,18 @@ export function FocusSessionPlanner({
   const taskTrees = unflattenTasks(tasks);
 
   const [isCreatingTask, setIsCreatingTask] = useState(false);
+
+  useHotkeys([
+    [
+      "space",
+      () => {
+        if (mode !== "edit") return;
+        setIsCreatingTask(true);
+        createTaskTip.markAsExecuted();
+      },
+    ],
+  ]);
+  const createTaskTip = useHotKeyHint();
 
   const taskForm = useTaskForm({
     ...taskFormOpts,
@@ -231,75 +233,40 @@ export function FocusSessionPlanner({
                   </AnimatePresence>
 
                   {tasks.length > 0 && sprints.length > 0 && (
-                    <Popover
-                      position="bottom"
-                      radius="md"
-                      opened={shouldShowToggleTip}
-                      onClose={toggleTip.close}
-                      disabled={
-                        !(["macos", "linux", "windows"] as OS[]).includes(os)
-                      }
-                    >
-                      <Popover.Target>
-                        <SegmentedControl
-                          bg="transparent"
-                          classNames={{
-                            root: "rounded-none!",
-                          }}
-                          data={[
-                            { label: "Edit", value: "edit" },
-                            {
-                              label: "Assign",
-                              value: "dnd",
-                            },
-                          ]}
-                          value={mode}
-                          onPointerEnter={toggleTip.open}
-                          onPointerLeave={toggleTip.close}
-                          onFocus={toggleTip.close}
-                          onChange={(value) =>
-                            toggleMode(value as "edit" | "dnd")
-                          }
-                        />
-                      </Popover.Target>
-                      <Popover.Dropdown
-                        className="max-w-64 overflow-clip"
-                        p={0}
-                      >
-                        {shouldShowToggleTipReaction && (
-                          <motion.div
-                            className="absolute inset-0 z-10 flex items-center justify-center backdrop-blur-xs"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            <Text
-                              component={motion.p}
-                              size="xl"
-                              fw={700}
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              transition={{ duration: 0.2 }}
-                            >
-                              WHAT A PRO!
-                            </Text>
-                          </motion.div>
-                        )}
-
-                        <Alert
-                          color="primary"
-                          title="Pro Tip"
-                          p="xs"
-                          radius={0}
-                        >
+                    <HotKeyHint
+                      opened={modeSwitchTip.opened}
+                      onClose={modeSwitchTip.close}
+                      message={
+                        <>
                           Press{" "}
                           <Kbd className="align-text-bottom">
                             {os === "macos" ? "⌥ option" : "Alt"}
                           </Kbd>{" "}
                           to quickly toggle between editing and assigning tasks
-                        </Alert>
-                      </Popover.Dropdown>
-                    </Popover>
+                        </>
+                      }
+                    >
+                      <SegmentedControl
+                        bg="transparent"
+                        classNames={{
+                          root: "rounded-none!",
+                        }}
+                        data={[
+                          { label: "Edit", value: "edit" },
+                          {
+                            label: "Assign",
+                            value: "dnd",
+                          },
+                        ]}
+                        value={mode}
+                        onMouseEnter={modeSwitchTip.open}
+                        onMouseLeave={modeSwitchTip.close}
+                        onFocus={modeSwitchTip.close}
+                        onChange={(value) =>
+                          toggleMode(value as "edit" | "dnd")
+                        }
+                      />
+                    </HotKeyHint>
                   )}
                 </Flex>
                 <Divider />
@@ -473,13 +440,32 @@ export function FocusSessionPlanner({
                           exit={{ opacity: 0 }}
                           transition={{ duration: 0.3 }}
                         >
-                          <Button
-                            flex={1}
-                            leftSection={<IconPlus size={16} />}
-                            onClick={() => setIsCreatingTask(true)}
+                          <HotKeyHint
+                            opened={createTaskTip.opened}
+                            withinPortal={false}
+                            onClose={createTaskTip.close}
+                            isExecuted={createTaskTip.isExecuted}
+                            message={
+                              <>
+                                Press{" "}
+                                <Kbd className="align-text-bottom">space</Kbd>{" "}
+                                to create a new task
+                              </>
+                            }
                           >
-                            Create Task
-                          </Button>
+                            <Button
+                              flex={1}
+                              leftSection={<IconPlus size={16} />}
+                              onMouseEnter={createTaskTip.open}
+                              onMouseLeave={createTaskTip.close}
+                              onClick={() => {
+                                createTaskTip.close();
+                                setIsCreatingTask(true);
+                              }}
+                            >
+                              Create Task
+                            </Button>
+                          </HotKeyHint>
                           {importableTasks.length > 0 && (
                             <Button
                               flex={1}

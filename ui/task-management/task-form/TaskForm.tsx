@@ -12,8 +12,8 @@ import {
 } from "@mantine/core";
 import { useClickOutside, useDisclosure } from "@mantine/hooks";
 import {
-  IconClipboardOff,
-  IconClipboardText,
+  IconCube,
+  IconCubeOff,
   IconDotsVertical,
   IconPlus,
 } from "@tabler/icons-react";
@@ -92,7 +92,7 @@ export const TaskForm = withTaskForm({
                 <Button
                   variant="subtle"
                   justify="flex-start"
-                  leftSection={<IconClipboardOff size={16} />}
+                  leftSection={<IconCubeOff size={16} />}
                   fullWidth
                   radius={0}
                   color="gray"
@@ -109,7 +109,7 @@ export const TaskForm = withTaskForm({
               <Button
                 variant="subtle"
                 justify="flex-start"
-                leftSection={<IconClipboardText size={16} />}
+                leftSection={<IconCube size={16} />}
                 fullWidth
                 radius={0}
                 color="gray"
