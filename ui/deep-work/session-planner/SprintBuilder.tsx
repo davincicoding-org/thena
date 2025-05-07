@@ -106,7 +106,7 @@ export function SprintBuilder({
             SPRINTS
           </Text>
           <Button
-            variant="light"
+            variant="outline"
             size="xs"
             disabled={sprints.some(({ tasks }) => tasks.length === 0)}
             onClick={handleAddSprint}

@@ -199,7 +199,7 @@ export function FocusSessionPlanner({
             withBorder
             display="grid"
             radius="md"
-            className={cn("h-full shrink-0 overflow-clip")}
+            className={cn("max-h-full shrink-0 grid-rows-1 overflow-clip")}
           >
             <ScrollArea
               scrollbars="y"
@@ -422,6 +422,11 @@ export function FocusSessionPlanner({
                                 <TextInput
                                   placeholder="New Task"
                                   value={field.state.value}
+                                  onFocus={(e) => {
+                                    e.currentTarget.scrollIntoView({
+                                      behavior: "smooth",
+                                    });
+                                  }}
                                   onChange={(e) =>
                                     field.handleChange(e.target.value)
                                   }
@@ -493,14 +498,14 @@ export function FocusSessionPlanner({
             {tasks.length > 0 && sprints.length > 0 && (
               <motion.div
                 layout
-                className="h-full min-h-0"
+                className="grid max-h-full min-h-0 grid-rows-1"
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: "auto" }}
                 exit={{ opacity: 0, width: 0 }}
                 transition={{ duration: 0.3 }}
               >
                 <SprintBuilder
-                  className="h-full min-h-0"
+                  className="max-h-full min-h-0"
                   dndEnabled={mode === "dnd"}
                   sprints={sprints}
                   taskPool={tasks}
