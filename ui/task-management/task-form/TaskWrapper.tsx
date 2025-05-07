@@ -1,14 +1,14 @@
 import type { PaperProps } from "@mantine/core";
 import type { ReactElement, Ref } from "react";
-import { Children, cloneElement, Fragment, useEffect, useRef } from "react";
+import { Children, cloneElement, Fragment } from "react";
 import {
   ActionIcon,
   Box,
   Collapse,
   createPolymorphicComponent,
   Divider,
+  FocusTrap,
   Paper,
-  Text,
   TextInput,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
@@ -49,15 +49,6 @@ export const TaskWrapper = createPolymorphicComponent<
       },
     });
 
-    const inputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-      const timeout = setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
-      return () => clearTimeout(timeout);
-    }, [isAddingSubtask]);
-
     const handleAbort = () => {
       form.reset();
       subtaskAdder.close();
@@ -86,9 +77,8 @@ export const TaskWrapper = createPolymorphicComponent<
             <form.Field
               name="title"
               children={(field) => (
-                <>
+                <FocusTrap active={isAddingSubtask}>
                   <TextInput
-                    ref={inputRef}
                     placeholder="New subtask"
                     rightSection={
                       <ActionIcon
@@ -103,6 +93,11 @@ export const TaskWrapper = createPolymorphicComponent<
                     value={field.state.value}
                     error={field.state.meta.errors.length > 0}
                     onChange={(e) => field.handleChange(e.target.value)}
+                    onFocus={(e) =>
+                      e.currentTarget.scrollIntoView({
+                        behavior: "smooth",
+                      })
+                    }
                     onBlur={subtaskAdder.close}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
@@ -110,17 +105,7 @@ export const TaskWrapper = createPolymorphicComponent<
                       }
                     }}
                   />
-                  <Collapse
-                    in={
-                      field.state.meta.isTouched &&
-                      field.state.meta.errors.length === 0
-                    }
-                  >
-                    <Text size="xs" mt={2} opacity={0.5}>
-                      Press Enter to add
-                    </Text>
-                  </Collapse>
-                </>
+                </FocusTrap>
               )}
             />
           </Box>

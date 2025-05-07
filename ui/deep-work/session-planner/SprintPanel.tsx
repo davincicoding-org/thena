@@ -30,7 +30,6 @@ import { SortableTasksContainer, useSortableTask } from "./dnd";
 
 export interface SprintPanelProps {
   sprintId: SprintPlan["id"];
-  title: string;
   duration: Duration;
   tasks: FlatTask[];
   dndEnabled: boolean;
@@ -48,7 +47,6 @@ export interface SprintPanelProps {
 
 export function SprintPanel({
   sprintId,
-  title,
   duration,
   tasks,
   dndEnabled,
@@ -69,13 +67,15 @@ export function SprintPanel({
       ref={panelRef}
       header={
         <Menu position="bottom-end">
-          <Flex align="center" gap={4} pl="sm" pr={4} py={4}>
-            <Text size="md" className={cn("text-nowrap")}>
-              {title}
-            </Text>
-
+          <Flex
+            align="center"
+            justify="space-between"
+            gap={4}
+            pl="xs"
+            pr={4}
+            py={4}
+          >
             <NumberInput
-              ml="auto"
               className="-my-1 -mr-1 shrink-0 not-focus-within:cursor-pointer"
               classNames={{
                 input: cn("not-focus:cursor-pointer!"),

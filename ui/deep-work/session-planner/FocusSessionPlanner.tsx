@@ -77,6 +77,7 @@ export interface FocusSessionPlannerProps {
   onUpdateTask?: (uid: TaskId, updates: TaskUpdate) => void;
   onRemoveTasks?: (tasks: TaskId[], shouldDelete?: boolean) => void;
   onCreateTask?: (task: TaskInput) => void;
+  // onReplaceTask?: (task: TaskId) => void;
   onAddTasks?: (tasks: TaskId[]) => void;
   onRefineTask?: (task: TaskInput) => void;
   sprints: SprintPlan[];
@@ -232,41 +233,54 @@ export function FocusSessionPlanner({
                     </Text>
                   </AnimatePresence>
 
-                  {tasks.length > 0 && sprints.length > 0 && (
-                    <HotKeyHint
-                      opened={modeSwitchTip.opened}
-                      onClose={modeSwitchTip.close}
-                      message={
-                        <>
-                          Press{" "}
-                          <Kbd className="align-text-bottom">
-                            {os === "macos" ? "⌥ option" : "Alt"}
-                          </Kbd>{" "}
-                          to quickly toggle between editing and assigning tasks
-                        </>
-                      }
-                    >
-                      <SegmentedControl
-                        bg="transparent"
-                        classNames={{
-                          root: "rounded-none!",
-                        }}
-                        data={[
-                          { label: "Edit", value: "edit" },
-                          {
-                            label: "Assign",
-                            value: "dnd",
-                          },
-                        ]}
-                        value={mode}
-                        onMouseEnter={modeSwitchTip.open}
-                        onMouseLeave={modeSwitchTip.close}
-                        onFocus={modeSwitchTip.close}
-                        onChange={(value) =>
-                          toggleMode(value as "edit" | "dnd")
-                        }
-                      />
-                    </HotKeyHint>
+                  {tasks.length > 0 && (
+                    <>
+                      {sprints.length === 0 && (
+                        <Button
+                          variant="outline"
+                          size="xs"
+                          mr={4}
+                          onClick={() => onAddSprint([])}
+                        >
+                          Create Sprint
+                        </Button>
+                      )}
+                      {sprints.length > 0 && (
+                        <HotKeyHint
+                          opened={modeSwitchTip.opened}
+                          onClose={modeSwitchTip.close}
+                          message={
+                            <>
+                              Press{" "}
+                              <Kbd>{os === "macos" ? "⌥ option" : "Alt"}</Kbd>{" "}
+                              to quickly toggle between editing and assigning
+                              tasks.
+                            </>
+                          }
+                        >
+                          <SegmentedControl
+                            bg="transparent"
+                            classNames={{
+                              root: "rounded-none!",
+                            }}
+                            data={[
+                              { label: "Edit", value: "edit" },
+                              {
+                                label: "Assign",
+                                value: "dnd",
+                              },
+                            ]}
+                            value={mode}
+                            onMouseEnter={modeSwitchTip.open}
+                            onMouseLeave={modeSwitchTip.close}
+                            onFocus={modeSwitchTip.close}
+                            onChange={(value) =>
+                              toggleMode(value as "edit" | "dnd")
+                            }
+                          />
+                        </HotKeyHint>
+                      )}
+                    </>
                   )}
                 </Flex>
                 <Divider />
@@ -386,9 +400,12 @@ export function FocusSessionPlanner({
                                     }
                                     projects={projects}
                                     onCreateProject={onCreateProject}
-                                    onDelete={() =>
-                                      onRemoveTasks?.([subtask.uid], true)
-                                    }
+                                    onDelete={() => {
+                                      onRemoveTasks?.([subtask.uid], true);
+                                      if (task.subtasks.length === 1) {
+                                        onAddTasks?.([task.uid]);
+                                      }
+                                    }}
                                   />
                                 ))
                               : undefined

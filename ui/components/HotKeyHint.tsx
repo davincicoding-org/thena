@@ -6,6 +6,8 @@ import { Alert, Popover, Text } from "@mantine/core";
 import { useDisclosure, useOs } from "@mantine/hooks";
 import { motion } from "motion/react";
 
+import { cn } from "@/ui/utils";
+
 export interface HotKeyHintProps extends PopoverProps {
   isExecuted?: boolean;
   message: ReactNode;
@@ -48,7 +50,16 @@ export function HotKeyHint({
             </Text>
           </motion.div>
         )}
-        <Alert color="primary" title="Pro Tip" p="xs" radius={0}>
+        <Alert
+          color="primary"
+          title="Pro Tip"
+          p="xs"
+          radius={0}
+          classNames={{
+            body: cn("gap-1!"),
+            message: cn("[&>kbd]:align-middle"),
+          }}
+        >
           {message}
         </Alert>
       </Popover.Dropdown>

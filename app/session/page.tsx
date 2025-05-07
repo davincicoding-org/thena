@@ -86,6 +86,7 @@ export default function SessionPage() {
           onSuccess: (task) => {
             if (!task) return;
             planning.addTasks([task.uid]);
+            if (task.parentTaskId) planning.removeTasks([task.parentTaskId]);
           },
         }),
       revert: (task) => {
@@ -119,7 +120,6 @@ export default function SessionPage() {
         const tasksToRestore = await Promise.all(
           taskIds.map((taskId) => deleteTask(taskId)),
         );
-        void taskPool.refetch();
 
         return { ids: taskIds, tasksToRestore };
       },
@@ -366,28 +366,14 @@ export default function SessionPage() {
           >
             Reset Session
           </Button>
-          {planning.sprints.length === 0 && (
-            <Button
-              size="lg"
-              radius="md"
-              disabled={planning.tasks.length === 0}
-              onClick={() => handleAddSprint([])}
-            >
-              Add First Sprint
-            </Button>
-          )}
-          {planning.sprints.length > 0 && (
-            <Button
-              size="lg"
-              radius="md"
-              disabled={planning.sprints.every(
-                ({ tasks }) => tasks.length === 0,
-              )}
-              onClick={handleStartSession}
-            >
-              Start Session
-            </Button>
-          )}
+          <Button
+            size="lg"
+            radius="md"
+            disabled={planning.sprints.every(({ tasks }) => tasks.length === 0)}
+            onClick={handleStartSession}
+          >
+            Start Session
+          </Button>
         </Flex>
       </AppShell.Main>
 

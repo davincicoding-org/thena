@@ -144,7 +144,6 @@ export function SprintBuilder({
                 duration={sprint.duration}
                 tasks={pickTasks(taskPool, sprint.tasks)}
                 className="max-h-full shrink-0"
-                title={`Sprint ${index + 1}`}
                 moveOptions={{
                   start: index > 1,
                   end: index < sprints.length - 2,
