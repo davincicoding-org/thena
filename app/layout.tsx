@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Lexend_Giga } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -34,20 +35,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" {...mantineHtmlProps}>
-      <head>
-        <ColorSchemeScript forceColorScheme="dark" />
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${logoFont.variable}`}
-      >
-        <ThemeProvider>
-          <Shell>
-            <ReactQueryClientProvider>{children}</ReactQueryClientProvider>
-          </Shell>
-        </ThemeProvider>
-        <Analytics />
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" {...mantineHtmlProps}>
+        <head>
+          <ColorSchemeScript forceColorScheme="dark" />
+        </head>
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} ${logoFont.variable}`}
+        >
+          <ThemeProvider>
+            <Shell>
+              <ReactQueryClientProvider>{children}</ReactQueryClientProvider>
+            </Shell>
+          </ThemeProvider>
+          <Analytics />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

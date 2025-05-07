@@ -20,7 +20,7 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { IconPlus } from "@tabler/icons-react";
 
-import type { TaskInsert } from "@/core/task-management";
+import type { TaskInput } from "@/core/task-management";
 import { countTasks } from "@/core/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
 import { IntelligenceTile } from "@/ui/intelligence";
@@ -29,7 +29,6 @@ import {
   ProjectsTile,
   taskFormOpts,
   useCreateProject,
-  useCreateTask,
   useDeleteTask,
   useProjectsQuery,
   useTaskForm,
@@ -162,7 +161,6 @@ function BacklogPanel({
     where: "exclude",
   });
 
-  const { mutate: createTask } = useCreateTask();
   const { mutate: updateTask } = useUpdateTask();
   const { mutate: deleteTask } = useDeleteTask();
 
@@ -199,7 +197,7 @@ function BacklogPanel({
           onDeleteTask={deleteTask}
           onCreateProject={createProject}
         />
-        <BacklogTaskAdder onSubmit={createTask} />
+        {/* <BacklogTaskAdder onSubmit={createTask} /> */}
       </Flex>
     </SidePanel>
   );
@@ -209,7 +207,7 @@ function BacklogPanel({
 function BacklogTaskAdder({
   onSubmit,
 }: {
-  onSubmit: (task: TaskInsert) => void;
+  onSubmit: (task: TaskInput) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isAdding, { open: showForm, close: hideForm }] = useDisclosure(false);

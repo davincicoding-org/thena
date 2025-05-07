@@ -127,7 +127,7 @@ export function FocusSession({ sprints, tasks, className }: FocusSessionProps) {
           scrollbars="x"
           type="never"
         >
-          <div className="flex gap-12 px-[50vw]">
+          <div className="flex gap-12">
             <AnimatePresence>
               {slots.map((slot) => {
                 if (
@@ -138,7 +138,7 @@ export function FocusSession({ sprints, tasks, className }: FocusSessionProps) {
                     <motion.div
                       key={slot.sprint.id}
                       layout
-                      className="shrink-0 snap-center snap-always"
+                      className="shrink-0 snap-center snap-always first:ml-[calc((100vw-100%)*0.5)] last:mr-[calc((100vw-100%)*0.5)]"
                       style={
                         status === "sprint-run"
                           ? {

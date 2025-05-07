@@ -27,6 +27,7 @@ export type WithRunMetrics<T> = T & {
   completedAt?: number;
   skipped?: boolean;
   pulledIn?: boolean;
+  promoted?: boolean;
 };
 
 export interface RunnableSprint extends Omit<SprintPlan, "tasks"> {

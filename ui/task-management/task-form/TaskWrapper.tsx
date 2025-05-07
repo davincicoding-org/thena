@@ -13,17 +13,19 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconX } from "@tabler/icons-react";
-import { useForm } from "@tanstack/react-form";
 
-import type { TaskInsert } from "@/core/task-management";
-import { taskInsertSchema } from "@/core/task-management";
+import type { TaskInput } from "@/core/task-management";
+import {
+  taskFormOpts,
+  useTaskForm,
+} from "@/ui/task-management/task-form/useTaskForm";
 import { cn } from "@/ui/utils";
 
 export interface TaskWrapperProps {
   task: ReactElement<{ onAddSubtask?: () => void }>;
   subtasks: ReactElement[] | undefined;
   ref?: Ref<HTMLDivElement>;
-  onAddSubtask: (task: TaskInsert) => void;
+  onAddSubtask: (task: TaskInput) => void;
 }
 
 export const TaskWrapper = createPolymorphicComponent<
@@ -39,13 +41,8 @@ export const TaskWrapper = createPolymorphicComponent<
   }: TaskWrapperProps & PaperProps) => {
     const [isAddingSubtask, subtaskAdder] = useDisclosure();
 
-    const form = useForm({
-      defaultValues: {
-        title: "",
-      },
-      validators: {
-        onChange: taskInsertSchema,
-      },
+    const form = useTaskForm({
+      ...taskFormOpts,
       onSubmit: ({ value }) => {
         onAddSubtask(value);
         form.reset();

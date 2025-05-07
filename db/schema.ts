@@ -1,21 +1,5 @@
-/*
-
-Per User:
-- get all open tasks (there is either no sprintTask of this task or its status is "deferred")
-- get amount of open tasks
-- get all completed tasks (there is a sprintTask of this task and its status is "completed")
-- get amount of completed tasks
-- get all projects
-- get all open tasks assigned to a project
-- get amount of open tasks assigned to a project
-- get all completed tasks of a project
-- get amount of completed tasks assigned to a project
- 
- */
-
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
-import { aliasedTable, relations, sql } from "drizzle-orm";
-import { alias } from "drizzle-orm/gel-core";
+import { relations, sql } from "drizzle-orm";
 import {
   check,
   index,
@@ -26,18 +10,8 @@ import {
   text,
   timestamp,
   uniqueIndex,
+  uuid,
 } from "drizzle-orm/pg-core";
-
-/* ═════════ USERS (remote-only) ═════════ */
-export const users = pgTable(
-  "users",
-  {
-    uid: integer().primaryKey().generatedAlwaysAsIdentity(),
-    email: text().notNull(),
-    name: text(),
-  },
-  (t) => [uniqueIndex("uniq_users_email").on(t.email)],
-);
 
 /* ═════════ TASKS  ═════════ */
 
@@ -59,19 +33,16 @@ export const taskComplexity = pgEnum("task_complexity", [
 export const tasks = pgTable(
   "tasks",
   {
-    uid: integer().primaryKey().generatedByDefaultAsIdentity(),
+    uid: uuid().defaultRandom().primaryKey(),
     createdAt: timestamp().defaultNow().notNull(),
     updatedAt: timestamp().defaultNow().notNull(),
+    userId: text().notNull(),
 
-    // owner: integer()
-    //   .references(() => users.uid, { onDelete: "cascade" })
-    //   .notNull(),
-
-    projectId: integer().references(() => projects.uid, {
+    projectId: uuid().references(() => projects.uid, {
       onDelete: "set null",
     }),
 
-    parentTaskId: integer().references((): AnyPgColumn => tasks.uid, {
+    parentTaskId: uuid().references((): AnyPgColumn => tasks.uid, {
       onDelete: "cascade",
     }),
 
@@ -119,10 +90,8 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
 
 /* ═════════ PROJECTS ═════════ */
 export const projects = pgTable("projects", {
-  uid: integer().primaryKey().generatedAlwaysAsIdentity(),
-  // owner: integer()
-  //   .references(() => users.uid, { onDelete: "cascade" })
-  //   .notNull(),
+  uid: uuid().defaultRandom().primaryKey(),
+  userId: text().notNull(),
   title: text().notNull(),
   description: text(),
   image: text(),
@@ -130,10 +99,8 @@ export const projects = pgTable("projects", {
 
 /* ═════════ FOCUS SESSIONS ═════════ */
 export const focusSessions = pgTable("focus_sessions", {
-  uid: integer().primaryKey().generatedAlwaysAsIdentity(),
-  // owner: integer()
-  //   .references(() => users.uid, { onDelete: "cascade" })
-  //   .notNull(),
+  uid: uuid().defaultRandom().primaryKey(),
+  userId: text().notNull(),
   createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -141,12 +108,10 @@ export const focusSessions = pgTable("focus_sessions", {
 export const sprints = pgTable(
   "sprints",
   {
-    uid: integer().primaryKey().generatedAlwaysAsIdentity(),
-    // owner: integer()
-    //   .references(() => users.uid, { onDelete: "cascade" })
-    //   .notNull(),
+    uid: uuid().defaultRandom().primaryKey(),
+    userId: text().notNull(),
 
-    sessionId: integer().references(() => focusSessions.uid, {
+    sessionId: uuid().references(() => focusSessions.uid, {
       onDelete: "cascade",
     }),
 
@@ -173,12 +138,13 @@ export const sprintTaskStatusEnum = pgEnum("sprint_task_status", [
 export const sprintTasks = pgTable(
   "sprint_tasks",
   {
-    sprintId: integer()
+    sprintId: uuid()
       .references(() => sprints.uid, {
         onDelete: "cascade",
       })
       .notNull(),
-    taskId: integer()
+    userId: text().notNull(),
+    taskId: uuid()
       .references(() => tasks.uid, {
         // Fixed reference to tasks.uid instead of sprints.uid
         onDelete: "cascade",
@@ -208,11 +174,12 @@ export const sprintTaskEventEnum = pgEnum("sprint_task_event", [
 export const sprintTaskEvents = pgTable(
   "sprint_task_events",
   {
-    uid: integer().primaryKey().generatedAlwaysAsIdentity(),
-    sprintId: integer()
+    uid: uuid().defaultRandom().primaryKey(),
+    userId: text().notNull(),
+    sprintId: uuid()
       .references(() => sprints.uid, { onDelete: "cascade" })
       .notNull(),
-    taskId: integer()
+    taskId: uuid()
       .references(() => tasks.uid, { onDelete: "cascade" })
       .notNull(),
     timestamp: timestamp({ withTimezone: true }).defaultNow().notNull(),

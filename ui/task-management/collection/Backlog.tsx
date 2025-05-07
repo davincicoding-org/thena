@@ -18,7 +18,7 @@ import type {
   ProjectSelect,
   TaskFilters,
   TaskId,
-  TaskInsert,
+  TaskInput,
   TaskSelect,
   TasksSortOptions,
   TaskUpdate,
@@ -27,11 +27,10 @@ import type { TaskFormProps } from "@/ui/task-management";
 import {
   hasFiltersApplied,
   isTaskTree,
-  taskInsertSchema,
   unflattenTasks,
 } from "@/core/task-management";
 import { Panel } from "@/ui/components/Panel";
-import { TaskForm, useTaskForm } from "@/ui/task-management";
+import { TaskForm, taskFormOpts, useTaskForm } from "@/ui/task-management";
 import { TasksQueryPanel } from "@/ui/task-management/tasks/TasksQueryPanel";
 import { cn } from "@/ui/utils";
 
@@ -49,7 +48,7 @@ export interface BacklogProps {
   onFiltersUpdate: TasksQueryOptionsHookReturn["updateFilters"];
   onSortUpdate: TasksQueryOptionsHookReturn["updateSort"];
   projects: ProjectSelect[];
-  onAddTask?: (task: TaskInsert) => void;
+  onAddTask?: (task: TaskInput) => void;
   onUpdateTask?: (task: TaskUpdate & Pick<TaskSelect, "uid">) => void;
   onDeleteTask?: (taskId: TaskId) => void;
   onCreateProject?: UseMutateFunction<
@@ -216,9 +215,9 @@ export function Backlog({
 interface TaskItemProps
   extends Pick<TaskFormProps, "TaskActions" | "projects" | "onCreateProject"> {
   mode: "select" | "edit";
-  task: TaskInsert;
+  task: TaskInput;
   isSubtask?: boolean;
-  onUpdate: (update: TaskInsert) => void;
+  onUpdate: (update: TaskInput) => void;
   onDelete?: () => void;
 }
 
@@ -233,10 +232,8 @@ function TaskItem({
   onCreateProject,
 }: TaskItemProps) {
   const form = useTaskForm({
+    ...taskFormOpts,
     defaultValues: task,
-    validators: {
-      onChange: taskInsertSchema,
-    },
     onSubmit: ({ value }) => onUpdate(value),
     listeners: {
       onChange: ({ formApi }) => {

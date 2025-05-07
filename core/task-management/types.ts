@@ -1,7 +1,12 @@
 import { z } from "zod";
 
 import type { ProjectSelect } from "./db";
-import { taskSelectSchema } from "./db";
+import { taskInsertSchema, taskSelectSchema } from "./db";
+
+export const taskInputSchema = taskInsertSchema.omit({
+  userId: true,
+});
+export type TaskInput = z.infer<typeof taskInputSchema>;
 
 export const taskTreeSchema = taskSelectSchema
   .omit({

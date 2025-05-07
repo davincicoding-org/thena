@@ -18,7 +18,7 @@ import { useDebouncedCallback, useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 
 import type { SprintPlan } from "@/core/deep-work";
-import type { TaskId, TaskInsert } from "@/core/task-management";
+import type { TaskId, TaskInput } from "@/core/task-management";
 import type { FocusSessionPlannerProps } from "@/ui/deep-work";
 import {
   FocusSession,
@@ -81,7 +81,7 @@ export default function SessionPage() {
   const handleCreateTask: FocusSessionPlannerProps["onCreateTask"] =
     timeTravel.createAction({
       name: "create-task",
-      apply: (input: TaskInsert) =>
+      apply: (input: TaskInput) =>
         createTask(input, {
           onSuccess: (task) => {
             if (!task) return;

@@ -43,17 +43,16 @@ import type {
   ProjectInsertExtended,
   ProjectSelect,
   TaskId,
-  TaskInsert,
+  TaskInput,
   TaskUpdate,
 } from "@/core/task-management";
 import type { TaskFormProps } from "@/ui/task-management";
 import {
   excludeTasksAndCompact,
   isTaskTree,
-  taskInsertSchema,
+  taskInputSchema,
   unflattenTasks,
 } from "@/core/task-management";
-import { tasks } from "@/db/schema";
 import { SidePanel } from "@/ui/components/SidePanel";
 import { FlatTaskBase } from "@/ui/deep-work/session-planner/components";
 import {
@@ -76,9 +75,9 @@ export interface FocusSessionPlannerProps {
   importableTasks: FlatTask[];
   onUpdateTask?: (uid: TaskId, updates: TaskUpdate) => void;
   onRemoveTasks?: (tasks: TaskId[], shouldDelete?: boolean) => void;
-  onCreateTask?: (task: TaskInsert) => void;
+  onCreateTask?: (task: TaskInput) => void;
   onAddTasks?: (tasks: TaskId[]) => void;
-  onRefineTask?: (task: TaskInsert) => void;
+  onRefineTask?: (task: TaskInput) => void;
   sprints: SprintPlan[];
   onAddSprint: (
     tasks: TaskId[],
@@ -575,10 +574,10 @@ export function FocusSessionPlanner({
 }
 
 interface EditableTaskProps extends TaskFormProps {
-  item: TaskInsert;
+  item: TaskInput;
   ref?: Ref<HTMLDivElement>;
   isSubtask?: boolean;
-  onUpdate: (update: TaskInsert) => void;
+  onUpdate: (update: TaskInput) => void;
   onDelete?: () => void;
 }
 
@@ -587,8 +586,8 @@ const EditableTask = createPolymorphicComponent<"div", EditableTaskProps>(
     const form = useTaskForm({
       defaultValues: item,
       validators: {
-        onChange: taskInsertSchema,
-        onMount: taskInsertSchema,
+        onChange: taskInputSchema,
+        onMount: taskInputSchema,
       },
       onSubmit: ({ value }) => onUpdate(value),
       listeners: {

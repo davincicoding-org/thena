@@ -1,10 +1,8 @@
 import { create } from "zustand";
-import { devtools, persist } from "zustand/middleware";
+import { devtools } from "zustand/middleware";
 
 import type { Tag } from "@/core/task-management";
 import { createUniqueId } from "@/ui/utils";
-
-import { localDB } from "../../store";
 
 export type TagMatcher = (tag: Tag) => boolean;
 
@@ -24,100 +22,73 @@ interface TagsStoreState {
 }
 
 export const useTagsStore = create<TagsStoreState>()(
-  devtools(
-    persist(
-      (set) => ({
-        pool: {},
-        items: [],
-        ready: false,
-        addTag: (tag, callback) =>
-          set((state) => {
-            const id = createUniqueId(state.pool);
+  devtools((set) => ({
+    pool: {},
+    items: [],
+    ready: false,
+    addTag: (tag, callback) =>
+      set((state) => {
+        const id = createUniqueId(state.pool);
 
-            callback?.({ ...tag, id });
+        callback?.({ ...tag, id });
 
-            return {
-              pool: {
-                ...state.pool,
-                [id]: tag,
-              },
-            };
-          }),
-        addTags: (tags, callback) => {
-          set((state) => {
-            const newTags = tags.reduce<TagsStoreState["pool"]>(
-              (acc, tag) => ({
-                ...acc,
-                [createUniqueId({
-                  ...acc,
-                  ...state.pool,
-                })]: { ...tag, addedAt: new Date().toISOString() },
-              }),
-              {},
-            );
-
-            callback?.(
-              Object.entries(newTags).map(([id, tag]) => ({
-                ...tag,
-                id,
-              })),
-            );
-
-            return {
-              pool: { ...state.pool, ...newTags },
-            };
-          });
-        },
-        updateTag: (tagId, updates, callback) => {
-          set((state) => {
-            const existingTag = state.pool[tagId];
-            if (!existingTag) return state;
-
-            const updatedTag = { ...existingTag, ...updates };
-
-            callback?.({ ...updatedTag, id: tagId });
-
-            return {
-              pool: {
-                ...state.pool,
-                [tagId]: updatedTag,
-              },
-            };
-          });
-        },
-        removeTag: (tagId) => {
-          set((state) => {
-            const { [tagId]: _removedTag, ...remainingTags } = state.pool;
-
-            return {
-              pool: remainingTags,
-            };
-          });
-        },
+        return {
+          pool: {
+            ...state.pool,
+            [id]: tag,
+          },
+        };
       }),
-      {
-        name: "tags",
-        storage: {
-          getItem: async (name) => {
-            const value = await localDB.getItem(name);
-            if (!value) return { state: { pool: {}, ready: true } };
+    addTags: (tags, callback) => {
+      set((state) => {
+        const newTags = tags.reduce<TagsStoreState["pool"]>(
+          (acc, tag) => ({
+            ...acc,
+            [createUniqueId({
+              ...acc,
+              ...state.pool,
+            })]: { ...tag, addedAt: new Date().toISOString() },
+          }),
+          {},
+        );
 
-            const pool = JSON.parse(value as string) as TagsStoreState["pool"];
-            return {
-              state: {
-                pool,
-                ready: true,
-              },
-            };
+        callback?.(
+          Object.entries(newTags).map(([id, tag]) => ({
+            ...tag,
+            id,
+          })),
+        );
+
+        return {
+          pool: { ...state.pool, ...newTags },
+        };
+      });
+    },
+    updateTag: (tagId, updates, callback) => {
+      set((state) => {
+        const existingTag = state.pool[tagId];
+        if (!existingTag) return state;
+
+        const updatedTag = { ...existingTag, ...updates };
+
+        callback?.({ ...updatedTag, id: tagId });
+
+        return {
+          pool: {
+            ...state.pool,
+            [tagId]: updatedTag,
           },
-          setItem: (name, { state }) => {
-            void localDB.setItem(name, JSON.stringify(state.pool));
-          },
-          removeItem: (name) => {
-            void localDB.removeItem(name);
-          },
-        },
-      },
-    ),
-  ),
+        };
+      });
+    },
+    removeTag: (tagId) => {
+      set((state) => {
+        const { [tagId]: _removedTag, ...remainingTags } = state.pool;
+
+        return {
+          pool: remainingTags,
+        };
+      });
+    },
+  })),
 );

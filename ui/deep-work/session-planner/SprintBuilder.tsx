@@ -1,4 +1,3 @@
-import type { BoxProps } from "@mantine/core";
 import { useRef } from "react";
 import {
   Box,

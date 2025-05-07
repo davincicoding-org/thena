@@ -5,10 +5,10 @@ import {
   formOptions,
 } from "@tanstack/react-form";
 
-import type { TaskInsert } from "@/core/task-management";
+import type { TaskInput } from "@/core/task-management";
 import {
   taskComplexityEnum,
-  taskInsertSchema,
+  taskInputSchema,
   taskPriorityEnum,
 } from "@/core/task-management";
 
@@ -19,7 +19,7 @@ export const { useAppForm: useTaskForm, withForm: withTaskForm } =
   createFormHook({
     fieldComponents: {
       PriorityPicker: () => {
-        const field = useFieldContext<TaskInsert["priority"]>();
+        const field = useFieldContext<TaskInput["priority"]>();
         return (
           <Menu position="bottom-end">
             <Menu.Target>
@@ -48,7 +48,7 @@ export const { useAppForm: useTaskForm, withForm: withTaskForm } =
         );
       },
       ComplexityPicker: () => {
-        const field = useFieldContext<TaskInsert["complexity"]>();
+        const field = useFieldContext<TaskInput["complexity"]>();
         return (
           <Menu position="bottom-end">
             <Menu.Target>
@@ -85,8 +85,8 @@ export const { useAppForm: useTaskForm, withForm: withTaskForm } =
 export const taskFormOpts = formOptions({
   defaultValues: {
     title: "",
-  } as TaskInsert,
+  } as TaskInput,
   validators: {
-    onChange: taskInsertSchema,
+    onChange: taskInputSchema,
   },
 });

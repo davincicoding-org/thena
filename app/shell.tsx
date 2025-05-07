@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { SignedIn, UserButton } from "@clerk/nextjs";
 import { ActionIcon, AppShell, Flex, Popover, Text } from "@mantine/core";
 import { IconAdjustmentsHorizontal } from "@tabler/icons-react";
 
@@ -19,6 +20,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             size="xl"
             component={Link}
             href="/"
+            mr="auto"
             className={cn(
               "font-(family-name:--font-logo)",
               "transition-colors select-none hover:text-[var(--mantine-primary-color-filled)]!",
@@ -30,22 +32,24 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             THENA
           </Text>
 
-          <Popover withArrow arrowPosition="center" radius="md" offset={0}>
-            <Popover.Target>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                size="xl"
-                ml="auto"
-                aria-label="Configuration"
-              >
-                <IconAdjustmentsHorizontal size={24} />
-              </ActionIcon>
-            </Popover.Target>
-            <Popover.Dropdown>
-              <Configuration className="w-78" />
-            </Popover.Dropdown>
-          </Popover>
+          <SignedIn>
+            <UserButton />
+            <Popover withArrow arrowPosition="center" radius="md" offset={0}>
+              <Popover.Target>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="xl"
+                  aria-label="Configuration"
+                >
+                  <IconAdjustmentsHorizontal size={24} />
+                </ActionIcon>
+              </Popover.Target>
+              <Popover.Dropdown>
+                <Configuration className="w-78" />
+              </Popover.Dropdown>
+            </Popover>
+          </SignedIn>
         </Flex>
       </AppShell.Header>
 

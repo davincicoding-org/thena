@@ -1,3 +1,4 @@
+import { useUser } from "@clerk/nextjs";
 import {
   keepPreviousData,
   useMutation,
@@ -17,7 +18,7 @@ import type {
   FlatTask,
   StandaloneTask,
   TaskId,
-  TaskInsert,
+  TaskInput,
   TaskSelect,
   TaskTree,
   TaskUpdate,
@@ -91,6 +92,8 @@ export const useFlatTasksQuery = (options: {
         });
       },
       placeholderData: keepPreviousData,
+      staleTime: Infinity,
+      refetchOnWindowFocus: false,
     },
     queryClient,
   );
@@ -99,11 +102,22 @@ export const useFlatTasksQuery = (options: {
 // TODO add query invalidations
 
 export const useCreateTask = () => {
-  return useMutation<TaskSelect | undefined, Error, TaskInsert>({
+  const { user } = useUser();
+
+  return useMutation<TaskSelect | undefined, Error, TaskInput>({
     mutationKey: ["create-task"],
     mutationFn: async (input) => {
+      console.log(user);
+      if (!user) throw new Error("User not found");
       const db = await getClientDB();
-      const result = await db.insert(tasks).values(input).returning();
+      const result = await db
+        .insert(tasks)
+        .values({
+          ...input,
+          userId: user.id,
+        })
+        .returning();
+      console.log(result);
       return result[0];
     },
   });
