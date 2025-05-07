@@ -1,8 +1,9 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { AppShell, Center, Container } from "@mantine/core";
+import { Center, Container } from "@mantine/core";
 
+import { Main } from "@/app/shell";
 import { useModelsConfigStore } from "@/core/config/models";
 import { Chat } from "@/ui/misc/Chat";
 
@@ -24,7 +25,7 @@ export default function ChatPage() {
   });
 
   return (
-    <AppShell.Main className="grid">
+    <Main className="grid">
       <Center>
         <Container size="md">
           <Chat
@@ -41,6 +42,6 @@ export default function ChatPage() {
           />
         </Container>
       </Center>
-    </AppShell.Main>
+    </Main>
   );
 }

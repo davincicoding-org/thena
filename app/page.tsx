@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import {
-  AppShell,
   Button,
   Card,
   Center,
@@ -15,6 +14,7 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 
+import { Main } from "@/app/shell";
 import { countTasks } from "@/core/task-management";
 import { SidePanel } from "@/ui/components/SidePanel";
 import { IntelligenceTile } from "@/ui/intelligence";
@@ -57,7 +57,7 @@ export default function HomePage() {
 
   const [isBacklogPanelOpen, backlogPanel] = useDisclosure();
   return (
-    <AppShell.Main display="grid">
+    <Main display="grid">
       <Center>
         <Stack gap="lg" className="w-fit" maw={500} p="lg">
           <IntelligenceTile />
@@ -137,7 +137,7 @@ export default function HomePage() {
       </Modal>
 
       <BacklogPanel isOpen={isBacklogPanelOpen} onClose={backlogPanel.close} />
-    </AppShell.Main>
+    </Main>
   );
 }
 

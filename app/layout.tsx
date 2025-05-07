@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Lexend_Giga } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { dark } from "@clerk/themes";
 import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -35,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider appearance={{ baseTheme: dark }}>
       <html lang="en" {...mantineHtmlProps}>
         <head>
           <ColorSchemeScript forceColorScheme="dark" />

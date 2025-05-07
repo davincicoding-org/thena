@@ -3,7 +3,6 @@
 
 import { useRouter } from "next/navigation";
 import {
-  AppShell,
   Button,
   Container,
   Flex,
@@ -20,6 +19,7 @@ import { notifications } from "@mantine/notifications";
 import type { SprintPlan } from "@/core/deep-work";
 import type { TaskId, TaskInput } from "@/core/task-management";
 import type { FocusSessionPlannerProps } from "@/ui/deep-work";
+import { Main } from "@/app/shell";
 import {
   FocusSession,
   FocusSessionPlanner,
@@ -324,7 +324,7 @@ export default function SessionPage() {
           />
         )}
       </Transition>
-      <AppShell.Main display="flex" className="h-dvh flex-col">
+      <Main display="flex" className="h-dvh flex-col">
         <Container className="min-h-0 py-16" fluid>
           <FocusSessionPlanner
             className={cn("h-full min-h-0 transition-opacity duration-500", {
@@ -375,7 +375,7 @@ export default function SessionPage() {
             Start Session
           </Button>
         </Flex>
-      </AppShell.Main>
+      </Main>
 
       <Modal.Root
         opened={isSessionModalOpen}

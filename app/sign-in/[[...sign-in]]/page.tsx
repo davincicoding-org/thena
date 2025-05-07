@@ -1,12 +1,18 @@
-"use client";
-
+import type { Metadata } from "next";
 import { SignIn } from "@clerk/nextjs";
-import { AppShell } from "@mantine/core";
+
+import { Main } from "@/app/shell";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+  },
+};
 
 export default function Page() {
   return (
-    <AppShell.Main display="grid" className="h-dvh items-center justify-center">
+    <Main display="grid" className="h-dvh items-center justify-center">
       <SignIn />
-    </AppShell.Main>
+    </Main>
   );
 }

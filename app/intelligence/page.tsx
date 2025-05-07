@@ -1,13 +1,13 @@
-"use client";
+import { Center, Title } from "@mantine/core";
 
-import { AppShell, Center, Title } from "@mantine/core";
+import { Main } from "@/app/shell";
 
 export default function IntelligencePage() {
   return (
-    <AppShell.Main display="grid">
+    <Main display="grid">
       <Center>
         <Title>Coming Soon</Title>
       </Center>
-    </AppShell.Main>
+    </Main>
   );
 }

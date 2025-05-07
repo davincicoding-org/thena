@@ -1,11 +1,11 @@
-"use client";
-
 import Link from "next/link";
-import { AppShell, Button, Flex } from "@mantine/core";
+import { Button, Flex } from "@mantine/core";
+
+import { Main } from "@/app/shell";
 
 export default function DemosPage() {
   return (
-    <AppShell.Main display="grid">
+    <Main display="grid">
       <Flex gap="lg" className="my-auto justify-center px-4 max-sm:flex-col">
         {/* <Button
           component={Link}
@@ -27,6 +27,6 @@ export default function DemosPage() {
           Speech
         </Button>
       </Flex>
-    </AppShell.Main>
+    </Main>
   );
 }

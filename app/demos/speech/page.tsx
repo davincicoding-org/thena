@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import {
-  AppShell,
   Button,
   Card,
   Center,
@@ -13,6 +12,7 @@ import {
 } from "@mantine/core";
 import { useInputState } from "@mantine/hooks";
 
+import { Main } from "@/app/shell";
 import {
   useSpeechConfigStore,
   useSpeechRecognition,
@@ -58,7 +58,7 @@ To get started with a template, open it on GitHub and click "Use this template" 
   }, [isListening, abortSpeech]);
 
   return (
-    <AppShell.Main className="grid">
+    <Main className="grid">
       <Center className="items-center">
         <SimpleGrid
           cols={{ base: 1, sm: 2 }}
@@ -109,6 +109,6 @@ To get started with a template, open it on GitHub and click "Use this template" 
           </Fieldset>
         </SimpleGrid>
       </Center>
-    </AppShell.Main>
+    </Main>
   );
 }

@@ -57,3 +57,5 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     </AppShell>
   );
 }
+
+export const Main = AppShell.Main;

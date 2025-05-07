@@ -1,13 +1,6 @@
 import type { PaperProps } from "@mantine/core";
 import { useRef } from "react";
-import {
-  ActionIcon,
-  Flex,
-  Menu,
-  NumberInput,
-  ScrollArea,
-  Text,
-} from "@mantine/core";
+import { ActionIcon, Flex, Menu, NumberInput, ScrollArea } from "@mantine/core";
 import {
   IconArrowBarToLeft,
   IconArrowBarToRight,

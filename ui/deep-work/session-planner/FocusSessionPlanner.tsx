@@ -1,5 +1,4 @@
 /* eslint-disable max-lines */
-import type { OS } from "@mantine/hooks";
 import type { UseMutateFunction } from "@tanstack/react-query";
 import type { Ref } from "react";
 import { useMemo, useState } from "react";
