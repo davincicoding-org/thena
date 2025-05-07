@@ -12,7 +12,6 @@ export * from "./project/ProjectAvatar";
 export * from "./project/ProjectsTile";
 
 export * from "./tags/TagCreator";
-export * from "./tags/useTags";
 export * from "./tags/TagBadge";
 
 export * from "./metadata/PriorityBadge";

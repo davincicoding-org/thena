@@ -131,7 +131,6 @@ export default function SessionPage() {
       },
     });
 
-  // TODO On update subtask, query might need to be refetched
   const handleUpdateTask: FocusSessionPlannerProps["onUpdateTask"] =
     timeTravel.createAction({
       name: "update-task",

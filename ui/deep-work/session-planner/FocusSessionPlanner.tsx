@@ -171,6 +171,7 @@ export function FocusSessionPlanner({
     onSubmit: ({ value }) => {
       onCreateTask?.(value);
       setIsCreatingTask(false);
+      taskForm.reset();
     },
   });
 
