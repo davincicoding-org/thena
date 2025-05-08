@@ -1,0 +1,50 @@
+{
+  "SessionPlanner": {
+    "startSession": "",
+    "resetSession": "",
+    "ResetModal": {
+      "message": "",
+      "deleteTasks": "",
+      "keepTasks": ""
+    },
+    "TaskPool": {
+      "title": {
+        "all": "",
+        "unassigned": ""
+      },
+      "createSprint": "",
+      "modeSwitchTip": "",
+      "emptyMessage": "",
+      "TaskActions": {
+        "refine": "",
+        "postpone": "",
+        "delete": ""
+      },
+      "TaskCreator": {
+        "cta": "",
+        "hotKeyHint": "",
+        "placeholder": ""
+      },
+      "TaskImporter": {
+        "cta": ""
+      },
+      "UnassignedTasksContainer": {
+        "empty": "",
+        "droppable": ""
+      }
+    },
+    "SprintBuilder": {
+      "title": "",
+      "emptyMessage": "",
+      "droppableMessage": "",
+      "ReorderOptions": {
+        "start": "",
+        "left": "",
+        "right": "",
+        "end": ""
+      },
+      "dropSprint": "",
+      "unassignTask": ""
+    }
+  }
+}

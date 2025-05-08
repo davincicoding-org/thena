@@ -18,7 +18,7 @@ export type TaskUpdate = z.infer<typeof taskUpdateSchema>;
 export const taskSelectSchema = createSelectSchema(tasks);
 export type TaskSelect = z.infer<typeof taskSelectSchema>;
 
-export const taskIdSchema = taskSelectSchema.shape.uid;
+export const taskIdSchema = taskSelectSchema.shape.id;
 export type TaskId = z.infer<typeof taskIdSchema>;
 
 export const taskPriorityEnum = createSelectSchema(taskPriority);

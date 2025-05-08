@@ -146,7 +146,7 @@ export const TaskForm = withTaskForm({
           <form.Field
             name="projectId"
             children={({ state: { value } }) => {
-              const project = projects.find((project) => project.uid === value);
+              const project = projects.find((project) => project.id === value);
               if (!project) return null;
 
               return (

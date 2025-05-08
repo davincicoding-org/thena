@@ -5,13 +5,23 @@
 import * as Sentry from "@sentry/nextjs";
 
 Sentry.init({
-  enabled: process.env.NODE_ENV === "production",
   dsn: "https://df99d17f53b209e2fa28e8de4a6ecc9e@o4508201138388992.ingest.de.sentry.io/4509265036640336",
 
   // Add optional integrations for additional features
   integrations: [
     Sentry.replayIntegration({
       maskAllText: false,
+    }),
+    Sentry.feedbackIntegration({
+      colorScheme: "dark",
+      autoInject: false,
+      showBranding: false,
+      formTitle: "Report a bug or request a feature",
+      submitButtonLabel: "Submit",
+      useSentryUser: {
+        email: "email",
+        name: "fullName",
+      },
     }),
   ],
 

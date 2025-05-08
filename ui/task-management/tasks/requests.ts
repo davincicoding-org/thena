@@ -5,14 +5,8 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import {
-  aliasedTable,
-  and,
-  eq,
-  inArray,
-  isNull,
-  notInArray,
-} from "drizzle-orm";
+import { and, eq, inArray, isNull, notInArray } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import type {
   FlatTask,
@@ -40,10 +34,7 @@ export const useTasksWithSubtasksQuery = (options: {
         const filterFn = options.where === "include" ? inArray : notInArray;
 
         const result = await db.query.tasks.findMany({
-          where: and(
-            filterFn(tasks.uid, options.ids),
-            isNull(tasks.parentTaskId),
-          ),
+          where: and(filterFn(tasks.id, options.ids), isNull(tasks.parentId)),
           with: {
             subtasks: true,
           },
@@ -61,25 +52,26 @@ export const useFlatTasksQuery = (options: {
   ids: TaskId[];
   where: "include" | "exclude";
 }) => {
+  const { user } = useUser();
   const queryClient = useQueryClient();
 
   return useQuery<FlatTask[]>(
     {
       queryKey: ["tasks-with-subtasks", options.ids, options.where],
       queryFn: async () => {
+        if (!user) throw new Error("User not found");
         const db = await getClientDB();
 
         const filterFn = options.where === "include" ? inArray : notInArray;
-        const parent = aliasedTable(tasks, "parent");
-        const result = (await db
+        const parent = alias(tasks, "parent");
+
+        const result = await db
           .select()
           .from(tasks)
-          .where(filterFn(tasks.uid, options.ids))
-          .leftJoin(parent, eq(tasks.parentTaskId, parent.uid))) as unknown as {
-          tasks: TaskSelect;
-          parent: TaskSelect | null;
-        }[];
-        // FIX poorly typed query result
+          .where(
+            and(eq(tasks.userId, user.id), filterFn(tasks.id, options.ids)),
+          )
+          .leftJoin(parent, eq(tasks.parentId, parent.id));
 
         return result.map<FlatTask>(({ tasks, parent }) => {
           if (parent) {
@@ -127,15 +119,15 @@ export const useUpdateTask = () => {
   return useMutation<
     TaskSelect | undefined,
     Error,
-    TaskUpdate & Pick<TaskSelect, "uid">
+    TaskUpdate & Pick<TaskSelect, "id">
   >({
     mutationKey: ["update-task"],
-    mutationFn: async ({ uid, ...updates }) => {
+    mutationFn: async ({ id, ...updates }) => {
       const db = await getClientDB();
       const result = await db
         .update(tasks)
         .set(updates)
-        .where(eq(tasks.uid, uid))
+        .where(eq(tasks.id, id))
         .returning();
       return result[0];
     },
@@ -145,12 +137,9 @@ export const useUpdateTask = () => {
 export const useDeleteTask = () => {
   return useMutation<TaskSelect | undefined, Error, TaskId>({
     mutationKey: ["delete-task"],
-    mutationFn: async (uid) => {
+    mutationFn: async (id) => {
       const db = await getClientDB();
-      const result = await db
-        .delete(tasks)
-        .where(eq(tasks.uid, uid))
-        .returning();
+      const result = await db.delete(tasks).where(eq(tasks.id, id)).returning();
       return result[0];
     },
   });

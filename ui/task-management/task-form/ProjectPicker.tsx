@@ -49,7 +49,7 @@ export function ProjectPicker({
       onCreate?.(value, (project) => {
         if (!project) return;
         form.reset();
-        onChange(project.uid);
+        onChange(project.id);
       });
     },
   });
@@ -109,11 +109,11 @@ export function ProjectPicker({
 
           {filteredOptions.map((project) => (
             <NavLink
-              key={project.uid}
+              key={project.id}
               component="button"
               className="py-1!"
               color="gray"
-              onClick={() => onChange(project.uid)}
+              onClick={() => onChange(project.id)}
               label={project.title}
               leftSection={
                 <ProjectAvatar

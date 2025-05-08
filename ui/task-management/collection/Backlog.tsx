@@ -49,7 +49,7 @@ export interface BacklogProps {
   onSortUpdate: TasksQueryOptionsHookReturn["updateSort"];
   projects: ProjectSelect[];
   onAddTask?: (task: TaskInput) => void;
-  onUpdateTask?: (task: TaskUpdate & Pick<TaskSelect, "uid">) => void;
+  onUpdateTask?: (task: TaskUpdate & Pick<TaskSelect, "id">) => void;
   onDeleteTask?: (taskId: TaskId) => void;
   onCreateProject?: UseMutateFunction<
     ProjectSelect | undefined,
@@ -96,7 +96,7 @@ export function Backlog({
           <Stack px="md" py="lg">
             {tasks.map((task) => (
               <TaskWrapper
-                key={task.uid}
+                key={task.id}
                 className={
                   mode === "select"
                     ? cn(
@@ -104,9 +104,9 @@ export function Backlog({
                         (() => {
                           if (!selectedTasks?.length) return false;
                           if (!isTaskTree(task))
-                            return selectedTasks.includes(task.uid);
+                            return selectedTasks.includes(task.id);
                           return task.subtasks.every((subtask) =>
-                            selectedTasks.includes(subtask.uid),
+                            selectedTasks.includes(subtask.id),
                           );
                         })()
                           ? "outline-[var(--mantine-primary-color-filled)]!"
@@ -119,8 +119,8 @@ export function Backlog({
                     ? () =>
                         onToggleTaskSelection?.(
                           isTaskTree(task)
-                            ? [...task.subtasks.map((subtask) => subtask.uid)]
-                            : [task.uid],
+                            ? [...task.subtasks.map((subtask) => subtask.id)]
+                            : [task.id],
                         )
                     : undefined
                 }
@@ -129,7 +129,7 @@ export function Backlog({
                     mode={mode}
                     task={task}
                     onUpdate={(updates) =>
-                      onUpdateTask?.({ uid: task.uid, ...updates })
+                      onUpdateTask?.({ id: task.id, ...updates })
                     }
                     projects={projects}
                     onCreateProject={onCreateProject}
@@ -158,7 +158,7 @@ export function Backlog({
                           variant="subtle"
                           justify="flex-start"
                           leftSection={<IconTrash size={16} />}
-                          onClick={() => onDeleteTask?.(task.uid)}
+                          onClick={() => onDeleteTask?.(task.id)}
                         >
                           Delete
                         </Button>
@@ -170,14 +170,14 @@ export function Backlog({
                   isTaskTree(task)
                     ? task.subtasks.map((subtask) => (
                         <TaskItem
-                          key={subtask.uid}
+                          key={subtask.id}
                           task={subtask}
                           mode={mode}
                           isSubtask
                           onUpdate={(updates) =>
-                            onUpdateTask?.({ uid: subtask.uid, ...updates })
+                            onUpdateTask?.({ id: subtask.id, ...updates })
                           }
-                          onDelete={() => onDeleteTask?.(subtask.uid)}
+                          onDelete={() => onDeleteTask?.(subtask.id)}
                           projects={projects}
                           onCreateProject={onCreateProject}
                         />
@@ -186,7 +186,7 @@ export function Backlog({
                 }
                 onAddSubtask={(subtask) =>
                   onAddTask?.({
-                    parentTaskId: task.uid,
+                    parentId: task.id,
                     ...subtask,
                   })
                 }

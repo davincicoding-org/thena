@@ -2,12 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SignedIn, UserButton } from "@clerk/nextjs";
-import { ActionIcon, AppShell, Flex, Popover, Text } from "@mantine/core";
-import { IconAdjustmentsHorizontal } from "@tabler/icons-react";
+import { AppShell, Flex, Text } from "@mantine/core";
 
 import { BugReporter } from "@/ui/components/BugReporter";
-import { Configuration } from "@/ui/config";
 import { cn } from "@/ui/utils";
 
 export default function Shell({ children }: { children: React.ReactNode }) {
@@ -33,9 +30,9 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             THENA
           </Text>
 
-          <SignedIn>
-            <UserButton />
-            {/* <Popover withArrow arrowPosition="center" radius="md" offset={0}>
+          {/* <SignedIn>
+            <UserButton /> */}
+          {/* <Popover withArrow arrowPosition="center" radius="md" offset={0}>
               <Popover.Target>
                 <ActionIcon
                   variant="subtle"
@@ -50,11 +47,15 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                 <Configuration className="w-78" />
               </Popover.Dropdown>
             </Popover> */}
-          </SignedIn>
-          <BugReporter variant="subtle" color="gray" size="xl" />
+          {/* </SignedIn> */}
         </Flex>
       </AppShell.Header>
-
+      <BugReporter
+        className="fixed! top-2 right-2 z-[500]"
+        variant="subtle"
+        color="orange"
+        size="xl"
+      />
       {children}
     </AppShell>
   );

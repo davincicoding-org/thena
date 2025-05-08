@@ -19,13 +19,13 @@ export type ProjectInput = z.infer<typeof projectInputSchema>;
 
 export const taskTreeSchema = taskSelectSchema
   .omit({
-    parentTaskId: true,
+    parentId: true,
   })
   .extend({
     subtasks: z
       .array(
         taskSelectSchema.omit({
-          parentTaskId: true,
+          parentId: true,
         }),
       )
       .min(1),
@@ -33,13 +33,13 @@ export const taskTreeSchema = taskSelectSchema
 export type TaskTree = z.infer<typeof taskTreeSchema>;
 
 export const standaloneTaskSchema = taskSelectSchema.omit({
-  parentTaskId: true,
+  parentId: true,
 });
 export type StandaloneTask = z.infer<typeof standaloneTaskSchema>;
 
 export const subtaskSchema = taskSelectSchema
   .omit({
-    parentTaskId: true,
+    parentId: true,
   })
   .extend({
     parent: standaloneTaskSchema,
@@ -74,7 +74,7 @@ export const TASKS_SORT_OPTIONS = {
 };
 
 export interface TaskFilters {
-  projectIds?: ProjectSelect["uid"][];
+  projectIds?: ProjectSelect["id"][];
   // tags?: string[];
   search?: string;
 }

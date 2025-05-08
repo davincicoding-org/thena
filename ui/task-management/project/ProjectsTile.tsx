@@ -43,7 +43,7 @@ export function ProjectsTile({
               PROJECT_SKELETONS
             ) : items.length ? (
               items.map((project) => (
-                <Tooltip key={project.uid} label={project.title}>
+                <Tooltip key={project.id} label={project.title}>
                   <Avatar
                     // component={Link}
                     // href={`/projects/${project.id}`}

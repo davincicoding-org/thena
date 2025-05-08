@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import type { TaskRunSelect } from "@/core/deep-work/db";
 import type { FlatTask } from "@/core/task-management";
 import { taskIdSchema } from "@/core/task-management";
 
@@ -30,8 +31,13 @@ export type WithRunMetrics<T> = T & {
   promoted?: boolean;
 };
 
+export type RunnableTask = FlatTask & {
+  runId: TaskRunSelect["id"];
+  status: TaskRunSelect["status"];
+};
+
 export interface RunnableSprint extends Omit<SprintPlan, "tasks"> {
-  tasks: WithRunMetrics<FlatTask>[];
+  tasks: RunnableTask[];
 }
 
 export interface SprintRunSlot {

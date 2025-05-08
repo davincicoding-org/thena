@@ -1,0 +1,55 @@
+{
+  "SessionPlanner": {
+    "startSession": "Start Session",
+    "resetSession": "Reset Session",
+    "ResetModal": {
+      "message": "Do you want to keep your tasks or delete them permanently?",
+      "deleteTasks": "Delete",
+      "keepTasks": "Keep"
+    },
+    "TaskPool": {
+      "title": {
+        "all": "Tasks",
+        "unassigned": "Unassigned Tasks"
+      },
+      "createSprint": "Create Sprint",
+      "ModeSwitcher": {
+        "edit": "Edit",
+        "assign": "Assign",
+        "hotKeyTip": "Press <kbd></kbd> to quickly toggle between editing and assigning tasks."
+      },
+
+      "emptyMessage": "Add all the tasks you want to work on today.",
+      "TaskActions": {
+        "refine": "Refine",
+        "postpone": "Postpone for later",
+        "delete": "Delete"
+      },
+      "TaskCreator": {
+        "cta": "Create Task",
+        "hotKeyHint": "Press <kbd>space</kbd> to create a new task",
+        "placeholder": "New Task"
+      },
+      "TaskImporter": {
+        "cta": "Import Tasks"
+      },
+      "UnassignedTasksContainer": {
+        "empty": "All tasks are assigned",
+        "droppable": "Drop task here to unassign it."
+      }
+    },
+    "SprintBuilder": {
+      "title": "SPRINTS",
+      "emptyMessage": "No tasks assigned",
+      "droppableMessage": "Drop task here to assign it.",
+      "ReorderOptions": {
+        "start": "Move to Start",
+        "left": "Move to Left",
+        "right": "Move to Right",
+        "end": "Move to End"
+      },
+      "dropSprint": "Drop Sprint",
+      "unassignTask": "Unassign"
+    }
+  }
+}

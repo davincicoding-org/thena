@@ -6,7 +6,6 @@ import {
   integer,
   pgEnum,
   pgTable,
-  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -33,160 +32,174 @@ export const taskComplexity = pgEnum("task_complexity", [
 export const tasks = pgTable(
   "tasks",
   {
-    uid: uuid().defaultRandom().primaryKey(),
+    id: uuid().defaultRandom().notNull().primaryKey(),
     createdAt: timestamp().defaultNow().notNull(),
     updatedAt: timestamp().defaultNow().notNull(),
     userId: text().notNull(),
 
-    projectId: uuid().references(() => projects.uid, {
-      onDelete: "set null",
-    }),
-
-    parentTaskId: uuid().references((): AnyPgColumn => tasks.uid, {
+    parentId: uuid().references((): AnyPgColumn => tasks.id, {
       onDelete: "cascade",
+    }),
+    projectId: uuid().references(() => projects.id, {
+      onDelete: "set null",
     }),
 
     title: text().notNull(),
     description: text(),
-
     priority: taskPriority(),
     complexity: taskComplexity(),
   },
   (t) => [
-    check(
-      "no_task_as_own_parent",
-      sql`${t.uid} IS DISTINCT FROM ${t.parentTaskId}`,
-    ),
+    check("no_task_as_own_parent", sql`${t.id} IS DISTINCT FROM ${t.parentId}`),
     /* made DEFERRABLE via extraSql */
-    uniqueIndex("leaf_or_root_only").on(t.uid),
-    index("idx_tasks_parent").on(t.parentTaskId),
+    uniqueIndex("leaf_or_root_only").on(t.id),
+    index("idx_tasks_parent").on(t.parentId),
   ],
 );
 
 export const tasksRelations = relations(tasks, ({ one, many }) => ({
-  // owner: one(users, {
-  //   fields: [tasks.userId],
-  //   references: [users.userId],
-  // }),
-
-  project: one(projects, {
-    fields: [tasks.projectId],
-    references: [projects.uid],
-  }),
-
   parent: one(tasks, {
-    fields: [tasks.parentTaskId],
-    references: [tasks.uid],
-    relationName: "parent", // self‑join alias for clarity
+    fields: [tasks.parentId, tasks.userId],
+    references: [tasks.id, tasks.userId],
+    relationName: "parent",
   }),
 
   subtasks: many(tasks, {
-    relationName: "parent", // mirror side of the self‑join
+    relationName: "subtasks",
   }),
 
-  sprintLinks: many(sprintTasks),
-  events: many(sprintTaskEvents),
+  project: one(projects, {
+    fields: [tasks.projectId, tasks.userId],
+    references: [projects.id, projects.userId],
+  }),
+
+  runs: many(taskRuns),
+  // events: many(taskRunEvents),
 }));
 
 /* ═════════ PROJECTS ═════════ */
 export const projects = pgTable("projects", {
-  uid: uuid().defaultRandom().primaryKey(),
+  id: uuid().defaultRandom().notNull().primaryKey(),
   userId: text().notNull(),
   title: text().notNull(),
   description: text(),
   image: text(),
 });
 
+export const projectsRelations = relations(projects, ({ many }) => ({
+  tasks: many(tasks),
+}));
+
 /* ═════════ FOCUS SESSIONS ═════════ */
 export const focusSessions = pgTable("focus_sessions", {
-  uid: uuid().defaultRandom().primaryKey(),
+  id: uuid().defaultRandom().notNull().primaryKey(),
   userId: text().notNull(),
   createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 });
+
+export const focusSessionsRelations = relations(focusSessions, ({ many }) => ({
+  sprints: many(sprints),
+}));
 
 /* ═════════ SPRINTS ═════════ */
 export const sprints = pgTable(
   "sprints",
   {
-    uid: uuid().defaultRandom().primaryKey(),
+    id: uuid().defaultRandom().notNull().primaryKey(),
     userId: text().notNull(),
-
-    sessionId: uuid().references(() => focusSessions.uid, {
+    sessionId: uuid().references(() => focusSessions.id, {
       onDelete: "cascade",
     }),
 
-    durationMinutes: integer().notNull(),
-    recoveryTimeMinutes: integer(),
+    /** Duration in minutes */
+    duration: integer().notNull(),
+    /** Break after sprint in minutes */
+    recoveryTime: integer(),
     scheduledStart: timestamp({ withTimezone: true }),
     ordinal: integer().notNull(),
 
-    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp({ withTimezone: true }).defaultNow(),
     startedAt: timestamp({ withTimezone: true }),
     endedAt: timestamp({ withTimezone: true }),
   },
-  (t) => [check("positive_duration", sql`${t.durationMinutes} > 0`)],
+  (t) => [check("positive_duration", sql`${t.duration} > 0`)],
 );
 
-/* ═════════ SPRINT TASKS ═════════ */
-export const sprintTaskStatusEnum = pgEnum("sprint_task_status", [
-  "assigned", // planned but not yet done
+export const sprintsRelations = relations(sprints, ({ one }) => ({
+  focusSession: one(focusSessions, {
+    fields: [sprints.sessionId, sprints.userId],
+    references: [focusSessions.id, focusSessions.userId],
+  }),
+}));
+
+/* ═════════ TASK RUNS ═════════ */
+export const taskRunStatusEnum = pgEnum("task_run_status", [
+  "planned", // planned but not yet done
+  "skipped", // unfinished, skipped
   "completed", // finished in this sprint
   "deferred", // unfinished, will be carried forward
   "abandoned", // unfinished, permanently dropped
 ]);
 
-export const sprintTasks = pgTable(
-  "sprint_tasks",
+export const taskRuns = pgTable(
+  "task_runs",
   {
-    sprintId: uuid()
-      .references(() => sprints.uid, {
-        onDelete: "cascade",
-      })
-      .notNull(),
+    id: uuid().defaultRandom().notNull().primaryKey(),
+    sprintId: uuid().notNull(),
     userId: text().notNull(),
     taskId: uuid()
-      .references(() => tasks.uid, {
-        // Fixed reference to tasks.uid instead of sprints.uid
+      .notNull()
+      .references(() => tasks.id, {
         onDelete: "cascade",
-      })
-      .notNull(),
-    status: sprintTaskStatusEnum().default("assigned").notNull(),
+      }),
+
+    status: taskRunStatusEnum().default("planned").notNull(),
     // addedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
     ordinal: integer().notNull(),
   },
-  (t) => [
-    uniqueIndex("ux_sprint_task_order").on(t.sprintId, t.ordinal),
-    // Proper composite primary key definition
-    primaryKey({ columns: [t.sprintId, t.taskId] }),
-  ],
+  (t) => [uniqueIndex("ux_task_run_order").on(t.sprintId, t.ordinal)],
 );
 
-/* ═════════ SPRINT‑TASK EVENTS (remote-only) ═════════ */
-export const sprintTaskEventEnum = pgEnum("sprint_task_event", [
-  "complete", // user marked task as done
-  "uncomplete", // user unmarked task as done
-  "skip", // user marked task as skipped
-  "unskip", // user unmarked task as skipped
-  "promote", // user move task up in the sprint queue
-  "pull", // user pulled task from another sprint
-]);
+export const taskRunsRelations = relations(taskRuns, ({ one }) => ({
+  sprint: one(sprints, {
+    fields: [taskRuns.sprintId, taskRuns.userId],
+    references: [sprints.id, sprints.userId],
+  }),
+  task: one(tasks, {
+    fields: [taskRuns.taskId, taskRuns.userId],
+    references: [tasks.id, tasks.userId],
+  }),
+}));
+// /* ═════════ SPRINT‑TASK EVENTS (remote-only) ═════════ */
+// export const taskRunEventEnum = pgEnum("task_run_event", [
+//   "completed", // user marked task as done
+//   "uncompleted", // user unmarked task as done
+//   "skipped", // user marked task as skipped
+//   "unskipped", // user unmarked task as skipped
+//   "promoted", // user move task up in the sprint queue
+//   "pulled", // user pulled task from another sprint
+// ]);
 
-export const sprintTaskEvents = pgTable(
-  "sprint_task_events",
-  {
-    uid: uuid().defaultRandom().primaryKey(),
-    userId: text().notNull(),
-    sprintId: uuid()
-      .references(() => sprints.uid, { onDelete: "cascade" })
-      .notNull(),
-    taskId: uuid()
-      .references(() => tasks.uid, { onDelete: "cascade" })
-      .notNull(),
-    timestamp: timestamp({ withTimezone: true }).defaultNow().notNull(),
-    event: sprintTaskEventEnum().notNull(),
-  },
-  (t) => [index("idx_sprint_task_events").on(t.sprintId, t.timestamp)],
-);
+// export const taskRunEvents = pgTable(
+//   "task_run_events",
+//   {
+//     id: uuid().defaultRandom().notNull(),
+//     userId: text().notNull(),
+//     sprintId: uuid()
+//       .references(() => sprints.id, { onDelete: "cascade" })
+//       .notNull(),
+//     taskId: uuid()
+//       .references(() => tasks.id, { onDelete: "cascade" })
+//       .notNull(),
+
+//     timestamp: timestamp({ withTimezone: true }).defaultNow().notNull(),
+//     event: taskRunEventEnum().notNull(),
+//   },
+//   (t) => [
+//     primaryKey({ columns: [t.id, t.userId] }),
+//     index("idx_task_run_events").on(t.sprintId, t.timestamp),
+//   ],
+// );
 
 /* ═════════ CLIENT MIGRATIONS (client-only) ═════════ */
 

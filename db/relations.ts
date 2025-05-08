@@ -2,13 +2,7 @@
 
 import { relations } from "drizzle-orm";
 
-import {
-  projects,
-  sprints,
-  sprintTaskEvents,
-  sprintTasks,
-  tasks,
-} from "./schema";
+import { projects, sprints, taskRuns, tasks } from "./schema";
 
 /* ═════════ USERS ═════════ */
 // export const usersRelations = relations(users, ({ many }) => ({
@@ -32,35 +26,20 @@ export const sprintsRelations = relations(sprints, ({ one, many }) => ({
   //   fields: [sprints.userId],
   //   references: [users.userId],
   // }),
-  sprintTasks: many(sprintTasks),
-  events: many(sprintTaskEvents),
+  taskRuns: many(taskRuns),
+  // events: many(sprintTaskEvents),
 }));
 
 /* ═════════ TASKS ═════════ */
 
 /* ═════════ SPRINT‑TASK LINKS ═════════ */
-export const sprintTasksRelations = relations(sprintTasks, ({ one }) => ({
+export const taskRunsRelations = relations(taskRuns, ({ one }) => ({
   sprint: one(sprints, {
-    fields: [sprintTasks.sprintId],
-    references: [sprints.uid],
+    fields: [taskRuns.sprintId],
+    references: [sprints.id],
   }),
   task: one(tasks, {
-    fields: [sprintTasks.taskId],
-    references: [tasks.uid],
+    fields: [taskRuns.taskId],
+    references: [tasks.id],
   }),
 }));
-
-/* ═════════ SPRINT‑TASK EVENTS ═════════ */
-export const sprintTaskEventsRelations = relations(
-  sprintTaskEvents,
-  ({ one }) => ({
-    sprint: one(sprints, {
-      fields: [sprintTaskEvents.sprintId],
-      references: [sprints.uid],
-    }),
-    task: one(tasks, {
-      fields: [sprintTaskEvents.taskId],
-      references: [tasks.uid],
-    }),
-  }),
-);

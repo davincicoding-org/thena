@@ -15,6 +15,7 @@ import {
 } from "@mantine/core";
 import { useDebouncedCallback, useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
+import { useTranslations } from "next-intl";
 
 import type { SprintPlan } from "@/core/deep-work";
 import type { TaskId, TaskInput } from "@/core/task-management";
@@ -25,6 +26,10 @@ import {
   FocusSessionPlanner,
   useSessionPlanningState,
 } from "@/ui/deep-work";
+import {
+  useCreateSession,
+  useFocusSession,
+} from "@/ui/deep-work/session-planner/requests";
 import { useTimeTravel } from "@/ui/hooks/useTimeTravel";
 import {
   useCreateProject,
@@ -38,6 +43,7 @@ import { cn } from "@/ui/utils";
 
 export default function SessionPage() {
   const router = useRouter();
+  const t = useTranslations("SessionPlanner");
 
   const planning = useSessionPlanningState();
 
@@ -85,14 +91,14 @@ export default function SessionPage() {
         createTask(input, {
           onSuccess: (task) => {
             if (!task) return;
-            planning.addTasks([task.uid]);
-            if (task.parentTaskId) planning.removeTasks([task.parentTaskId]);
+            planning.addTasks([task.id]);
+            if (task.parentId) planning.removeTasks([task.parentId]);
           },
         }),
       revert: (task) => {
         if (!task) return;
-        planning.removeTasks([task.uid]);
-        void deleteTask(task.uid);
+        planning.removeTasks([task.id]);
+        void deleteTask(task.id);
       },
     });
 
@@ -134,9 +140,9 @@ export default function SessionPage() {
   const handleUpdateTask: FocusSessionPlannerProps["onUpdateTask"] =
     timeTravel.createAction({
       name: "update-task",
-      apply: (uid, updates) =>
+      apply: (id, updates) =>
         updateTask({
-          uid,
+          id,
           ...updates,
         }),
       revert: () => {
@@ -145,7 +151,7 @@ export default function SessionPage() {
         // await createTask(prevState);
         // TODO This should only revert the actual change, not the whole task
         // as some fields might have been chnaged externally
-        // taskCollectorFormRef.current?.resetTask(prevState.uid, prevState);
+        // taskCollectorFormRef.current?.resetTask(prevState.id, prevState);
       },
     });
 
@@ -280,18 +286,30 @@ export default function SessionPage() {
         planning.reorderSprintTasks({ sprintId, from: to, to: from }),
     });
 
-  // MARK: State
+  // MARK: Session
 
-  const [isSessionModalOpen, sessionModal] = useDisclosure(false);
+  const {
+    data: sessionId,
+    mutateAsync: createSession,
+    isPending: isCreatingSession,
+  } = useCreateSession();
+
+  const {
+    runnableSprints,
+    updateTaskRunStatus,
+    markSprintAsStarted,
+    markSprintAsEnded,
+  } = useFocusSession(sessionId);
 
   // MARK: User Actions
 
-  const handleStartSession = () => {
+  const handleStartSession = async () => {
     const validSprints = planning.sprints.filter(
       (sprint) => sprint.tasks.length > 0,
     );
     if (validSprints.length === 0) return;
-    sessionModal.open();
+    await createSession(validSprints);
+    planning.reset();
   };
 
   const [
@@ -301,8 +319,6 @@ export default function SessionPage() {
 
   const handleReset = () => {
     if (planning.tasks.length) return openDeleteModal();
-    // localStorageSync.clear();
-    // taskList.history.reset();
     router.push("/");
   };
 
@@ -364,29 +380,37 @@ export default function SessionPage() {
             variant="subtle"
             onClick={() => handleReset()}
           >
-            Reset Session
+            {t("resetSession")}
           </Button>
           <Button
             size="lg"
             radius="md"
+            loading={isCreatingSession || runnableSprints.isLoading}
             disabled={planning.sprints.every(({ tasks }) => tasks.length === 0)}
             onClick={handleStartSession}
           >
-            Start Session
+            {t("startSession")}
           </Button>
         </Flex>
       </Main>
 
       <Modal.Root
-        opened={isSessionModalOpen}
+        opened={!!runnableSprints.data}
         fullScreen
         transitionProps={{ transition: "fade", duration: 1000 }}
-        onClose={sessionModal.close}
+        onClose={() => void 0}
       >
         <Modal.Content>
           <FocusSession
-            sprints={planning.sprints}
-            tasks={taskPool.data ?? []}
+            onStartSprint={markSprintAsStarted}
+            onEndSprint={markSprintAsEnded}
+            sprints={runnableSprints.data ?? []}
+            onUpdateTaskRun={(runId, status) =>
+              updateTaskRunStatus({ runId, status })
+            }
+            onLeave={() => {
+              router.replace("/");
+            }}
           />
         </Modal.Content>
       </Modal.Root>
@@ -401,7 +425,7 @@ export default function SessionPage() {
         onClose={closeDeleteModal}
       >
         <Text className="text-center text-balance">
-          Do you want to keep your tasks or delete them permanently?
+          {t("ResetModal.message")}
         </Text>
         <Space h="lg" />
         <SimpleGrid cols={2}>
@@ -413,15 +437,9 @@ export default function SessionPage() {
               handleCleanUp();
             }}
           >
-            Delete
+            {t("ResetModal.deleteTasks")}
           </Button>
-          <Button
-            onClick={() => {
-              handleCleanUp();
-            }}
-          >
-            Keep
-          </Button>
+          <Button onClick={handleCleanUp}>{t("ResetModal.keepTasks")}</Button>
         </SimpleGrid>
       </Modal>
     </>

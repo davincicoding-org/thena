@@ -1,64 +1,59 @@
 import type { NavLinkProps } from "@mantine/core";
-import type { ReactElement } from "react";
 import { ActionIcon, Button, Flex, NavLink, Tooltip } from "@mantine/core";
 import { IconArrowDownDashed, IconCheck } from "@tabler/icons-react";
 
+import type { RunnableTask } from "@/core/deep-work";
 import { BoundOverlay } from "@/ui/components/BoundOverlay";
 import { cn } from "@/ui/utils";
-
-type TaskStatus = "completed" | "skipped" | "active" | "upcoming";
 
 export interface QueueTaskProps {
   label: string;
   group?: string;
-  status: TaskStatus;
+  active: boolean;
+  status: RunnableTask["status"];
   readOnly?: boolean;
   onComplete: () => void;
   onSkip: () => void;
-  onRunManually: () => void;
+  onUnskip: () => void;
+  // onRunManually: () => void;
 }
 
 export function QueueTask({
   label,
   group,
   status,
+  active,
   readOnly,
   onComplete,
   onSkip,
-  onRunManually,
+  onUnskip,
+  // onRunManually,
 }: QueueTaskProps) {
   const color = ((): NavLinkProps["color"] => {
+    if (active) return undefined;
     switch (status) {
       case "completed":
         return "green";
       case "skipped":
         return "yellow";
-      case "active":
-        return undefined;
       default:
         return "gray";
     }
   })();
 
-  const actions = ((): ReactElement[] => {
-    switch (status) {
-      case "skipped":
-        return [
+  return (
+    <BoundOverlay
+      isTrigger
+      disabled={!active || readOnly}
+      content={
+        <Flex
+          className="h-full"
+          justify="flex-end"
+          align="center"
+          px="xs"
+          gap={4}
+        >
           <Button
-            key="resume"
-            size="compact-xs"
-            variant="outline"
-            color="gray"
-            fullWidth
-            onClick={onRunManually}
-          >
-            Resume Task
-          </Button>,
-        ];
-      case "active":
-        return [
-          <Button
-            key="complete"
             color="green"
             size="compact-sm"
             variant="outline"
@@ -67,7 +62,7 @@ export function QueueTask({
             onClick={onComplete}
           >
             Complete
-          </Button>,
+          </Button>
           <Tooltip label="Skip Task" key="skip">
             <ActionIcon
               aria-label="Skip Task"
@@ -78,39 +73,7 @@ export function QueueTask({
             >
               <IconArrowDownDashed size={16} />
             </ActionIcon>
-          </Tooltip>,
-        ];
-      case "upcoming":
-        return [
-          <Button
-            key="jump-to"
-            size="compact-xs"
-            variant="outline"
-            color="gray"
-            fullWidth
-            onClick={onRunManually}
-          >
-            Jump to Task
-          </Button>,
-        ];
-      default:
-        return [];
-    }
-  })();
-
-  return (
-    <BoundOverlay
-      isTrigger
-      disabled={actions.length === 0 || readOnly}
-      content={
-        <Flex
-          className="h-full"
-          justify="flex-end"
-          align="center"
-          px="xs"
-          gap={4}
-        >
-          {actions}
+          </Tooltip>
         </Flex>
       }
       overlayProps={{ blur: 2 }}
@@ -119,18 +82,25 @@ export function QueueTask({
         label={label}
         description={group}
         component="div"
-        py={status === "active" ? undefined : 4}
-        disabled={actions.length === 0 || status === "upcoming" || readOnly}
-        active={status !== "active"}
+        py={active ? undefined : 4}
+        disabled={(status === "planned" && !active) || readOnly}
+        active={!active}
         color={color}
         classNames={{
-          root: "min-w-48 transition-all opacity-100!",
+          root: cn("min-w-48 opacity-100! transition-all", {
+            "pointer-events-none": status !== "skipped",
+          }),
           body: cn("flex flex-col-reverse", {
             "line-through": status === "completed",
-            "opacity-30": status === "skipped",
+            "opacity-30":
+              status === "skipped" || (status === "planned" && !active),
           }),
         }}
         rightSection={null}
+        onClick={() => {
+          if (status !== "skipped") return;
+          onUnskip();
+        }}
       />
     </BoundOverlay>
   );

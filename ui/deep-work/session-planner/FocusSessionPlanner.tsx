@@ -35,6 +35,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { AnimatePresence, motion } from "motion/react";
+import { useTranslations } from "next-intl";
 
 import type { SprintPlan } from "@/core/deep-work";
 import type {
@@ -54,19 +55,19 @@ import {
 } from "@/core/task-management";
 import { HotKeyHint, useHotKeyHint } from "@/ui/components/HotKeyHint";
 import { SidePanel } from "@/ui/components/SidePanel";
-import { FlatTaskBase } from "@/ui/deep-work/session-planner/components";
 import {
   Backlog,
+  SubtaskForm,
   TaskForm,
   taskFormOpts,
+  TaskWrapper,
   useTaskForm,
   useTaskSelection,
   useTasksQueryOptions,
 } from "@/ui/task-management";
-import { SubtaskForm } from "@/ui/task-management/task-form/SubtaskForm";
-import { TaskWrapper } from "@/ui/task-management/task-form/TaskWrapper";
 import { cn } from "@/ui/utils";
 
+import { FlatTaskBase } from "./components";
 import { DndWrapper, useDraggableTask, useDroppableTaskPool } from "./dnd";
 import { SprintBuilder } from "./SprintBuilder";
 
@@ -136,10 +137,18 @@ export function FocusSessionPlanner({
   onCreateProject,
   className,
 }: FocusSessionPlannerProps) {
+  const t = useTranslations("SessionPlanner");
   const [mode, toggleMode] = useToggle<"edit" | "dnd">(["edit", "dnd"]);
   const os = useOs();
 
   useWindowEvent("keydown", (e) => {
+    if (
+      e.target instanceof HTMLElement &&
+      ["INPUT", "TEXTAREA"].includes(e.target.tagName) &&
+      // @ts-expect-error - poorly typed
+      Boolean(e.target?.value)
+    )
+      return;
     if (e.key === "Alt") {
       toggleMode();
       modeSwitchTip.markAsExecuted();
@@ -227,8 +236,8 @@ export function FocusSessionPlanner({
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.2, ease: "easeInOut" }}
                     >
-                      {mode === "edit" && "TASKS"}
-                      {mode === "dnd" && "UNASSIGNED TASKS"}
+                      {mode === "edit" && t("TaskPool.title.all")}
+                      {mode === "dnd" && t("TaskPool.title.unassigned")}
                     </Text>
                   </AnimatePresence>
 
@@ -241,21 +250,18 @@ export function FocusSessionPlanner({
                           mr={4}
                           onClick={() => onAddSprint([])}
                         >
-                          Create Sprint
+                          {t("TaskPool.createSprint")}
                         </Button>
                       )}
                       {sprints.length > 0 && (
                         <HotKeyHint
                           opened={modeSwitchTip.opened}
                           onClose={modeSwitchTip.close}
-                          message={
-                            <>
-                              Press{" "}
-                              <Kbd>{os === "macos" ? "⌥ option" : "Alt"}</Kbd>{" "}
-                              to quickly toggle between editing and assigning
-                              tasks.
-                            </>
-                          }
+                          message={t.rich("TaskPool.ModeSwitcher.hotKeyTip", {
+                            kbd: () => (
+                              <Kbd>{os === "macos" ? "⌥ option" : "Alt"}</Kbd>
+                            ),
+                          })}
                         >
                           <SegmentedControl
                             bg="transparent"
@@ -263,9 +269,12 @@ export function FocusSessionPlanner({
                               root: "rounded-none!",
                             }}
                             data={[
-                              { label: "Edit", value: "edit" },
                               {
-                                label: "Assign",
+                                label: t("TaskPool.ModeSwitcher.edit"),
+                                value: "edit",
+                              },
+                              {
+                                label: t("TaskPool.ModeSwitcher.assign"),
                                 value: "dnd",
                               },
                             ]}
@@ -299,7 +308,7 @@ export function FocusSessionPlanner({
                           variant="transparent"
                           opacity={0.5}
                         >
-                          Add all the tasks you want to work on today.
+                          {t("TaskPool.emptyMessage")}
                         </Alert>
                       )}
                       {taskTrees.map((task) => (
@@ -309,14 +318,14 @@ export function FocusSessionPlanner({
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: 25 }}
-                          layoutId={task.uid.toString()}
+                          layoutId={task.id}
                           transition={{ duration: 0.3 }}
-                          key={task.uid}
+                          key={task.id}
                           task={
                             <EditableTask
                               item={task}
                               onUpdate={(updates) =>
-                                onUpdateTask?.(task.uid, updates)
+                                onUpdateTask?.(task.id, updates)
                               }
                               projects={projects}
                               onCreateProject={onCreateProject}
@@ -331,7 +340,7 @@ export function FocusSessionPlanner({
                                         justify="flex-start"
                                         onClick={() => onRefineTask(task)}
                                       >
-                                        Refine
+                                        {t("TaskPool.TaskActions.refine")}
                                       </Button>
                                       <Divider />
                                     </>
@@ -348,14 +357,14 @@ export function FocusSessionPlanner({
                                       closeMenu();
                                       onRemoveTasks?.(
                                         [
-                                          task.uid,
-                                          ...task.subtasks.map((t) => t.uid),
+                                          task.id,
+                                          ...task.subtasks.map((t) => t.id),
                                         ],
                                         false,
                                       );
                                     }}
                                   >
-                                    Postpone for later
+                                    {t("TaskPool.TaskActions.postpone")}
                                   </Button>
                                   <Divider />
                                   <Button
@@ -369,14 +378,14 @@ export function FocusSessionPlanner({
                                       closeMenu();
                                       onRemoveTasks?.(
                                         [
-                                          task.uid,
-                                          ...task.subtasks.map((t) => t.uid),
+                                          task.id,
+                                          ...task.subtasks.map((t) => t.id),
                                         ],
                                         true,
                                       );
                                     }}
                                   >
-                                    Delete
+                                    {t("TaskPool.TaskActions.delete")}
                                   </Button>
                                 </>
                               )}
@@ -386,23 +395,23 @@ export function FocusSessionPlanner({
                             isTaskTree(task)
                               ? task.subtasks.map((subtask) => (
                                   <EditableTask
-                                    key={subtask.uid}
+                                    key={subtask.id}
                                     item={subtask}
                                     isSubtask
                                     component={motion.div}
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     transition={{ duration: 0.3 }}
-                                    layoutId={subtask.uid.toString()}
+                                    layoutId={subtask.id}
                                     onUpdate={(updates) =>
-                                      onUpdateTask?.(subtask.uid, updates)
+                                      onUpdateTask?.(subtask.id, updates)
                                     }
                                     projects={projects}
                                     onCreateProject={onCreateProject}
                                     onDelete={() => {
-                                      onRemoveTasks?.([subtask.uid], true);
+                                      onRemoveTasks?.([subtask.id], true);
                                       if (task.subtasks.length === 1) {
-                                        onAddTasks?.([task.uid]);
+                                        onAddTasks?.([task.id]);
                                       }
                                     }}
                                   />
@@ -411,7 +420,7 @@ export function FocusSessionPlanner({
                           }
                           onAddSubtask={(subtask) =>
                             onCreateTask?.({
-                              parentTaskId: task.uid,
+                              parentId: task.id,
                               ...subtask,
                             })
                           }
@@ -436,7 +445,9 @@ export function FocusSessionPlanner({
                             children={(field) => (
                               <FocusTrap>
                                 <TextInput
-                                  placeholder="New Task"
+                                  placeholder={t(
+                                    "TaskPool.TaskCreator.placeholder",
+                                  )}
                                   value={field.state.value}
                                   onFocus={(e) => {
                                     e.currentTarget.scrollIntoView({
@@ -466,13 +477,9 @@ export function FocusSessionPlanner({
                             withinPortal={false}
                             onClose={createTaskTip.close}
                             isExecuted={createTaskTip.isExecuted}
-                            message={
-                              <>
-                                Press{" "}
-                                <Kbd className="align-text-bottom">space</Kbd>{" "}
-                                to create a new task
-                              </>
-                            }
+                            message={t.rich("TaskPool.TaskCreator.hotKeyHint", {
+                              kbd: (chunks) => <Kbd>{chunks}</Kbd>,
+                            })}
                           >
                             <Button
                               flex={1}
@@ -484,7 +491,7 @@ export function FocusSessionPlanner({
                                 setIsCreatingTask(true);
                               }}
                             >
-                              Create Task
+                              {t("TaskPool.TaskCreator.cta")}
                             </Button>
                           </HotKeyHint>
                           {importableTasks.length > 0 && (
@@ -495,7 +502,7 @@ export function FocusSessionPlanner({
                               leftSection={<IconDownload size={16} />}
                               onClick={importPanel.open}
                             >
-                              Import Tasks
+                              {t("TaskPool.TaskImporter.cta")}
                             </Button>
                           )}
                         </motion.div>
@@ -615,6 +622,7 @@ const EditableTask = createPolymorphicComponent<"div", EditableTaskProps>(
 );
 
 function UnassignedTasksContainer({ tasks }: { tasks: FlatTask[] }) {
+  const t = useTranslations("SessionPlanner");
   const { setNodeRef, containerId } = useDroppableTaskPool(true);
   const { active, over } = useDndContext();
 
@@ -627,11 +635,11 @@ function UnassignedTasksContainer({ tasks }: { tasks: FlatTask[] }) {
           color="green"
           p="xs"
           className="w-xs"
-          title="All tasks are assigned"
+          title={t("TaskPool.UnassignedTasksContainer.empty")}
         />
       )}
       {tasks.map((task) => (
-        <DraggableTask key={task.uid} item={task} />
+        <DraggableTask key={task.id} item={task} />
       ))}
       {active && over?.id !== containerId && (
         <Alert
@@ -642,7 +650,7 @@ function UnassignedTasksContainer({ tasks }: { tasks: FlatTask[] }) {
           classNames={{
             title: "mx-auto",
           }}
-          title="Drop task here to unassign it."
+          title={t("TaskPool.UnassignedTasksContainer.droppable")}
         />
       )}
     </Stack>

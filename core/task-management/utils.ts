@@ -28,30 +28,30 @@ export const flattenTasks = (tasks: AnyTask[]): FlatTask[] => {
   return tasks.flatMap<FlatTask>(flattenTask);
 };
 
-export const isTaskIncluded = <T extends Pick<TaskSelect, "uid">>(
+export const isTaskIncluded = <T extends Pick<TaskSelect, "id">>(
   tasks: T[],
-  taskIdToCheck: T["uid"],
-): boolean => tasks.some((task) => task.uid === taskIdToCheck);
+  taskIdToCheck: T["id"],
+): boolean => tasks.some((task) => task.id === taskIdToCheck);
 
-export const areTasksIncluded = <T extends Pick<TaskSelect, "uid">>(
+export const areTasksIncluded = <T extends Pick<TaskSelect, "id">>(
   tasks: T[],
-  taskIdsToFind: T["uid"][],
+  taskIdsToFind: T["id"][],
 ): boolean => taskIdsToFind.every((taskId) => isTaskIncluded(tasks, taskId));
 
-export const excludeTasks = <T extends Pick<TaskSelect, "uid">>(
+export const excludeTasks = <T extends Pick<TaskSelect, "id">>(
   tasks: T[],
   tasksToExclude: TaskId[],
-): T[] => tasks.filter((task) => !tasksToExclude.includes(task.uid));
+): T[] => tasks.filter((task) => !tasksToExclude.includes(task.id));
 
 export const excludeTasksAndCompact = (
   tasks: AnyTask[],
   toExclude: TaskId[],
 ): AnyTask[] =>
   tasks.flatMap((task) => {
-    if (toExclude.includes(task.uid)) return [];
+    if (toExclude.includes(task.id)) return [];
     if (!isTaskTree(task)) return [task];
     const remainingSubtasks = task.subtasks.filter(
-      (subtask) => !toExclude.includes(subtask.uid),
+      (subtask) => !toExclude.includes(subtask.id),
     );
     if (remainingSubtasks.length === 0) return [];
     if (remainingSubtasks.length === 1)
@@ -63,20 +63,20 @@ export const excludeTasksAndCompact = (
     return [{ ...task, subtasks: remainingSubtasks }];
   });
 
-export const pickTasks = <T extends Pick<TaskSelect, "uid">>(
+export const pickTasks = <T extends Pick<TaskSelect, "id">>(
   tasks: T[],
   tasksToPick: TaskId[],
-): T[] => tasks.filter((task) => tasksToPick.includes(task.uid));
+): T[] => tasks.filter((task) => tasksToPick.includes(task.id));
 
 export const includeTasksAndCompact = (
   tasks: AnyTask[],
   toInclude: TaskId[],
 ): AnyTask[] =>
   tasks.flatMap((task) => {
-    if (!isTaskTree(task)) return toInclude.includes(task.uid) ? [task] : [];
+    if (!isTaskTree(task)) return toInclude.includes(task.id) ? [task] : [];
 
     const includedSubtasks = task.subtasks.filter((subtask) =>
-      toInclude.includes(subtask.uid),
+      toInclude.includes(subtask.id),
     );
 
     if (includedSubtasks.length === 0) return [];
@@ -92,13 +92,13 @@ export const includeTasksAndCompact = (
 export const unflattenTasks = (tasks: FlatTask[]): TaskTree[] =>
   tasks.reduce<TaskTree[]>((acc, task) => {
     // Check if standalone task is already included
-    if (acc.some((t) => t.uid === task.uid)) return acc;
+    if (acc.some((t) => t.id === task.id)) return acc;
 
     // Check if is standalone task
     if (!("parent" in task)) return [...acc, { ...task, subtasks: [] }];
 
     // Check if parent task tree is already included
-    const parentIndex = acc.findIndex((t) => t.uid === task.parent.uid);
+    const parentIndex = acc.findIndex((t) => t.id === task.parent.id);
     if (parentIndex !== -1) {
       const parent = acc[parentIndex]!;
       const populatedParent: TaskTree = {

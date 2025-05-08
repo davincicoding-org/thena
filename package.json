@@ -58,6 +58,7 @@
     "motion": "^12.9.2",
     "nanoid": "^5.1.5",
     "next": "15.3.0",
+    "next-intl": "^4.1.0",
     "ollama-ai-provider": "^1.2.0",
     "openai": "^4.95.1",
     "react": "^19.1.0",

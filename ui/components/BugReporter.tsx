@@ -1,7 +1,7 @@
 import type { ActionIconProps } from "@mantine/core";
 import { useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
-import { ActionIcon } from "@mantine/core";
+import { ActionIcon, Tooltip } from "@mantine/core";
 import * as Sentry from "@sentry/nextjs";
 import { IconBug } from "@tabler/icons-react";
 
@@ -20,6 +20,7 @@ export function BugReporter(props: ActionIconProps) {
 
   const handleClick = async () => {
     const feedback = Sentry.getFeedback();
+    console.log("feedback", feedback);
 
     if (feedback) {
       const form = await feedback.createForm();
@@ -34,8 +35,10 @@ export function BugReporter(props: ActionIconProps) {
   };
 
   return (
-    <ActionIcon {...props} onClick={handleClick}>
-      <IconBug />
-    </ActionIcon>
+    <Tooltip label="Report a bug or request a feature" position="left">
+      <ActionIcon {...props} onClick={handleClick}>
+        <IconBug />
+      </ActionIcon>
+    </Tooltip>
   );
 }

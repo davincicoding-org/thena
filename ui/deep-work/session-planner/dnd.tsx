@@ -86,7 +86,7 @@ export function DndWrapper({
           if (targetContainerId === TASK_POOL_ID) {
             onUnassignTasksFromSprint({
               sprintId: active.sortable.containerId.toString(),
-              tasks: [active.item.uid],
+              tasks: [active.item.id],
             });
             return;
           }
@@ -94,7 +94,7 @@ export function DndWrapper({
           onMoveTasks({
             sourceSprint: active.sortable.containerId.toString(),
             targetSprint: targetContainerId.toString(),
-            tasks: [active.item.uid],
+            tasks: [active.item.id],
             targetIndex: (event.over.data.current as SortableData | undefined)
               ?.sortable.index,
           });
@@ -103,7 +103,7 @@ export function DndWrapper({
         if (targetContainerId !== TASK_POOL_ID) {
           onAssignTasksToSprint({
             sprintId: targetContainerId.toString(),
-            tasks: [active.item.uid],
+            tasks: [active.item.id],
           });
         }
       }}
@@ -146,11 +146,15 @@ export function SortableTasksContainer({
   stackProps,
   children,
   enabled,
+  emptyMessage,
+  droppableMessage,
 }: PropsWithChildren<{
   id: string;
   items: TaskId[];
   enabled?: boolean;
   stackProps?: StackProps;
+  emptyMessage: string;
+  droppableMessage: string;
 }>) {
   const { setNodeRef, over, active } = useDroppable({
     id,
@@ -172,7 +176,7 @@ export function SortableTasksContainer({
 
         {!active && items.length === 0 && (
           <Alert
-            title="No Tasks Assigned"
+            title={emptyMessage}
             color="gray"
             className="w-xs"
             variant="transparent"
@@ -185,7 +189,7 @@ export function SortableTasksContainer({
         )}
         {active && overContainerId !== id && (
           <Alert
-            title="Drop task here to assign it"
+            title={droppableMessage}
             color="gray"
             p="xs"
             className="w-xs"
@@ -204,7 +208,7 @@ export function SortableTasksContainer({
 
 export const useSortableTask = (item: FlatTask, dndEnabled: boolean) => {
   const sortable = useSortable({
-    id: item.uid,
+    id: item.id,
     disabled: !dndEnabled,
     data: { item } satisfies DraggingTaskData,
   });
@@ -223,7 +227,7 @@ export const useSortableTask = (item: FlatTask, dndEnabled: boolean) => {
 
 export const useDraggableTask = (item: FlatTask, dndEnabled: boolean) => {
   const draggable = useDraggable({
-    id: item.uid,
+    id: item.id,
     disabled: !dndEnabled,
     data: { item } satisfies DraggingTaskData,
   });

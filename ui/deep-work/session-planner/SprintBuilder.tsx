@@ -9,6 +9,7 @@ import {
   Space,
   Text,
 } from "@mantine/core";
+import { useTranslations } from "next-intl";
 
 import type { SprintPlan } from "@/core/deep-work";
 import type { FlatTask, TaskId } from "@/core/task-management";
@@ -60,6 +61,7 @@ export function SprintBuilder({
   onUnassignTasksFromSprint,
   className,
 }: SprintBuilderProps) {
+  const t = useTranslations("SessionPlanner.SprintBuilder");
   const viewport = useRef<HTMLDivElement>(null);
 
   const handleAddSprint = () => {
@@ -103,7 +105,7 @@ export function SprintBuilder({
       <Box className="sticky top-0 z-10 h-12 bg-black/20 backdrop-blur-xs">
         <Flex justify="space-between" align="center" className="h-12 pr-2">
           <Text size="lg" px="sm" fw={500}>
-            SPRINTS
+            {t("title")}
           </Text>
           <Button
             variant="outline"

@@ -1,3 +1,4 @@
+import type { PaperBaseProps } from "@mantine/core";
 import type { HTMLAttributes, ReactNode, Ref } from "react";
 import { NavLink, Paper } from "@mantine/core";
 
@@ -8,15 +9,18 @@ export function FlatTaskBase({
   group,
   rightSection,
   className,
+  asButton = true,
   active,
   ...props
 }: {
   label: string;
   group?: string;
   ref?: Ref<HTMLDivElement>;
+  asButton?: boolean;
   rightSection?: ReactNode;
   active?: boolean;
-} & HTMLAttributes<HTMLDivElement>) {
+} & HTMLAttributes<HTMLDivElement> &
+  PaperBaseProps) {
   return (
     <Paper
       withBorder
@@ -24,7 +28,7 @@ export function FlatTaskBase({
       {...props}
     >
       <NavLink
-        component="button"
+        component={asButton ? "button" : "div"}
         description={group}
         label={label}
         classNames={{

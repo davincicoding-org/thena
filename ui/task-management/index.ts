@@ -1,13 +1,15 @@
 export * from "./task-form/TaskForm";
+export * from "./task-form/SubtaskForm";
+export * from "./task-form/TaskWrapper";
 export * from "./task-form/useTaskForm";
 
 export * from "./collection/Backlog";
 
 export * from "./tasks/useTaskSelection";
-export * from "./tasks/useTasks";
+export * from "./tasks/requests";
 export * from "./tasks/useTasksQueryOptions";
 
-export * from "./project/useProjects";
+export * from "./project/requests";
 export * from "./project/ProjectAvatar";
 export * from "./project/ProjectsTile";
 

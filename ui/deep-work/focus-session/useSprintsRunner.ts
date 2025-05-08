@@ -2,17 +2,19 @@ import { useMemo, useState } from "react";
 
 import type {
   RunnableSprint,
+  RunnableTask,
   SessionBreakSlot,
-  SprintPlan,
   SprintRunSlot,
-  WithRunMetrics,
 } from "@/core/deep-work";
-import type { FlatTask, TaskId } from "@/core/task-management";
+import type { TaskId } from "@/core/task-management";
 
 export interface SprintsRunnerHookOptions {
-  plans: SprintPlan[];
-  tasks: FlatTask[];
+  sprints: RunnableSprint[];
   onFinish?: () => void;
+  onUpdateTaskRun: (
+    taskId: RunnableTask["runId"],
+    status: RunnableTask["status"],
+  ) => void;
 }
 
 export interface SprintsRunnerHookReturn {
@@ -23,121 +25,92 @@ export interface SprintsRunnerHookReturn {
   startSprint: () => void;
   completeTask: (task: TaskId) => void;
   skipTask: (task: TaskId) => void;
-  jumpToTask: (task: TaskId, skippedTasks?: TaskId[]) => void;
+  unskipTask: (task: TaskId) => void;
   finishSprint: () => void;
   finishBreak: () => void;
 }
 
 export function useSprintsRunner({
-  plans,
-  tasks,
+  sprints,
   onFinish,
+  onUpdateTaskRun,
 }: SprintsRunnerHookOptions): SprintsRunnerHookReturn {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [status, setStatus] =
     useState<SprintsRunnerHookReturn["status"]>("idle");
 
   const [taskRuns, setTaskRuns] = useState<
-    Record<TaskId, WithRunMetrics<Record<never, never>>>
+    Record<RunnableTask["runId"], RunnableTask["status"]>
   >({});
 
-  const sprints = useMemo(
+  const populatedSprints = useMemo(
     () =>
-      plans.map((plan) => ({
-        ...plan,
-        tasks: plan.tasks.reduce<RunnableSprint["tasks"]>((acc, task) => {
-          const flatTask = tasks.find((t) => t.uid === task);
-          if (!flatTask) return acc;
-
-          return [
-            ...acc,
-            {
-              ...flatTask,
-              ...taskRuns[task],
-            },
-          ];
-        }, []),
+      sprints.map((sprint) => ({
+        ...sprint,
+        tasks: sprint.tasks.map((task) => ({
+          ...task,
+          status: taskRuns[task.runId] ?? task.status,
+        })),
       })),
-    [plans, taskRuns, tasks],
+    [sprints, taskRuns],
   );
 
   const slots = useMemo(() => {
-    return sprints.reduce<SprintsRunnerHookReturn["slots"]>((acc, sprint) => {
-      const sprintRunSlot: SprintRunSlot = {
-        type: "sprint-run",
-        sprint,
-      };
+    return populatedSprints.reduce<SprintsRunnerHookReturn["slots"]>(
+      (acc, sprint) => {
+        const sprintRunSlot: SprintRunSlot = {
+          type: "sprint-run",
+          sprint,
+        };
 
-      if (acc.length === 0) return [sprintRunSlot];
+        if (acc.length === 0) return [sprintRunSlot];
 
-      const breakSlot: SessionBreakSlot = {
-        type: "break",
-        duration: { minutes: 1 },
-        nextSprint: sprintRunSlot.sprint.id,
-      };
+        const breakSlot: SessionBreakSlot = {
+          type: "break",
+          duration: { minutes: 1 },
+          nextSprint: sprintRunSlot.sprint.id,
+        };
 
-      return [...acc, breakSlot, sprintRunSlot];
-    }, []);
-  }, [sprints]);
+        return [...acc, breakSlot, sprintRunSlot];
+      },
+      [],
+    );
+  }, [populatedSprints]);
 
   const completeTask: SprintsRunnerHookReturn["completeTask"] = (task) => {
     setTaskRuns((prev) => ({
       ...prev,
-      [task]: {
-        ...prev[task],
-        completedAt: Date.now(),
-      },
+      [task]: "completed",
     }));
+    onUpdateTaskRun(task, "completed");
   };
 
   const skipTask: SprintsRunnerHookReturn["skipTask"] = (task) => {
     setTaskRuns((prev) => ({
       ...prev,
-      [task]: {
-        ...prev[task],
-        skipped: true,
-      },
+      [task]: "skipped",
     }));
+    onUpdateTaskRun(task, "skipped");
   };
 
-  const jumpToTask: SprintsRunnerHookReturn["jumpToTask"] = (
-    task,
-    skippedTasks = [],
-  ) => {
-    setTaskRuns((prev) => {
-      const skipped = skippedTasks.reduce<typeof prev>(
-        (acc, taskToSkip) => ({
-          ...acc,
-          [taskToSkip]: {
-            ...prev[taskToSkip],
-            skipped: true,
-          },
-        }),
-        {
-          [task]: {
-            ...prev[task],
-            skipped: false,
-          },
-        },
-      );
-
-      return {
-        ...prev,
-        ...skipped,
-      };
-    });
+  const unskipTask: SprintsRunnerHookReturn["unskipTask"] = (task) => {
+    setTaskRuns((prev) => ({
+      ...prev,
+      [task]: "planned",
+    }));
+    onUpdateTaskRun(task, "planned");
   };
 
   return {
     slots,
     status,
-    activeSprint: sprints[currentIndex],
-    upcomingSprints: sprints.slice(currentIndex + 1),
+    activeSprint: populatedSprints[currentIndex],
+    upcomingSprints: populatedSprints.slice(currentIndex + 1),
     startSprint: () => {
       setStatus("sprint-run");
     },
     finishSprint: () => {
-      if (currentIndex === sprints.length - 1) {
+      if (currentIndex === populatedSprints.length - 1) {
         setStatus("finished");
         setCurrentIndex(currentIndex + 1);
         onFinish?.();
@@ -151,6 +124,6 @@ export function useSprintsRunner({
     },
     completeTask,
     skipTask,
-    jumpToTask,
+    unskipTask,
   };
 }

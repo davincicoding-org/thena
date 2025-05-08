@@ -11,6 +11,7 @@ import {
   IconGripVertical,
   IconX,
 } from "@tabler/icons-react";
+import { useTranslations } from "next-intl";
 
 import type { Duration, SprintPlan } from "@/core/deep-work";
 import type { FlatTask, TaskId } from "@/core/task-management";
@@ -51,6 +52,7 @@ export function SprintPanel({
   className,
   ...props
 }: SprintPanelProps & PaperProps) {
+  const t = useTranslations("SessionPlanner.SprintBuilder");
   const panelRef = useRef<HTMLDivElement>(null);
 
   const durationMinutes = resolveDuration(duration).asMinutes();
@@ -112,7 +114,7 @@ export function SprintPanel({
                 leftSection={<IconArrowBarToLeft size={16} />}
                 onClick={() => onMove("start")}
               >
-                Move to Start
+                {t("ReorderOptions.start")}
               </Menu.Item>
             )}
             {moveOptions.left && (
@@ -120,7 +122,7 @@ export function SprintPanel({
                 leftSection={<IconArrowLeft size={16} />}
                 onClick={() => onMove("left")}
               >
-                Move to Left
+                {t("ReorderOptions.left")}
               </Menu.Item>
             )}
             {moveOptions.right && (
@@ -128,7 +130,7 @@ export function SprintPanel({
                 leftSection={<IconArrowRight size={16} />}
                 onClick={() => onMove("right")}
               >
-                Move to Right
+                {t("ReorderOptions.right")}
               </Menu.Item>
             )}
             {moveOptions.end && (
@@ -136,7 +138,7 @@ export function SprintPanel({
                 leftSection={<IconArrowBarToRight size={16} />}
                 onClick={() => onMove("end")}
               >
-                Move to End
+                {t("ReorderOptions.end")}
               </Menu.Item>
             )}
             <Menu.Divider className="nth-[2]:hidden" />
@@ -145,7 +147,7 @@ export function SprintPanel({
               leftSection={<IconX size={16} />}
               onClick={onDrop}
             >
-              Drop Sprint
+              {t("dropSprint")}
             </Menu.Item>
           </Menu.Dropdown>
         </Menu>
@@ -160,12 +162,14 @@ export function SprintPanel({
       <ScrollArea scrollbars="y" scrollHideDelay={300} type="never">
         <SortableTasksContainer
           id={sprintId}
-          items={tasks.map((task) => task.uid)}
-          enabled
+          items={tasks.map((task) => task.id)}
+          enabled={dndEnabled}
+          emptyMessage={t("emptyMessage")}
+          droppableMessage={t("droppableMessage")}
         >
           {tasks.map((task) => (
             <FlatTaskItem
-              key={task.uid}
+              key={task.id}
               item={task}
               dndEnabled={dndEnabled}
               onUnassignTasks={onUnassignTasks}
@@ -189,6 +193,7 @@ function FlatTaskItem({
   dndEnabled,
   onUnassignTasks,
 }: FlatTaskItemProps) {
+  const t = useTranslations("SessionPlanner.SprintBuilder");
   const { attributes, listeners, setNodeRef, style, isDragging, active } =
     useSortableTask(item, dndEnabled);
 
@@ -225,9 +230,9 @@ function FlatTaskItem({
         <Menu.Item
           color="red"
           leftSection={<IconX size={16} />}
-          onClick={() => onUnassignTasks([item.uid])}
+          onClick={() => onUnassignTasks([item.id])}
         >
-          Unassign
+          {t("unassignTask")}
         </Menu.Item>
       </Menu.Dropdown>
     </Menu>

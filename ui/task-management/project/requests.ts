@@ -45,13 +45,13 @@ export const useCreateProject = () => {
 
       const url = await uploadImage(
         "projects",
-        result.uid.toString(),
+        result.id.toString(),
         imageFile,
       );
       const [updated] = await db
         .update(projects)
         .set({ image: url })
-        .where(eq(projects.uid, result.uid))
+        .where(eq(projects.id, result.id))
         .returning();
       return updated;
     },
@@ -69,22 +69,22 @@ export const useUpdateProject = () => {
   return useMutation<
     ProjectSelect | undefined,
     Error,
-    Pick<ProjectSelect, "uid"> & ProjectUpdate
+    Pick<ProjectSelect, "id"> & ProjectUpdate
   >({
     mutationKey: ["update-project"],
-    mutationFn: async ({ uid, ...updates }) => {
+    mutationFn: async ({ id, ...updates }) => {
       const db = await getClientDB();
       const [result] = await db
         .update(projects)
         .set(updates)
-        .where(eq(projects.uid, uid))
+        .where(eq(projects.id, id))
         .returning();
       return result;
     },
     onSuccess: (updatedProject) => {
       queryClient.setQueryData(["projects"], (old: ProjectSelect[]) =>
         old.map((project) =>
-          project.uid === updatedProject?.uid ? updatedProject : project,
+          project.id === updatedProject?.id ? updatedProject : project,
         ),
       );
     },
@@ -93,19 +93,19 @@ export const useUpdateProject = () => {
 
 export const useDeleteProject = () => {
   const queryClient = useQueryClient();
-  return useMutation<ProjectSelect | undefined, Error, ProjectSelect["uid"]>({
+  return useMutation<ProjectSelect | undefined, Error, ProjectSelect["id"]>({
     mutationKey: ["delete-project"],
     mutationFn: async (projectId) => {
       const db = await getClientDB();
       const [result] = await db
         .delete(projects)
-        .where(eq(projects.uid, projectId))
+        .where(eq(projects.id, projectId))
         .returning();
       return result;
     },
     onSuccess: (deletedProject) => {
       queryClient.setQueryData(["projects"], (old: ProjectSelect[]) =>
-        old.filter((project) => project.uid !== deletedProject?.uid),
+        old.filter((project) => project.id !== deletedProject?.id),
       );
     },
   });

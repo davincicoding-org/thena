@@ -11,7 +11,6 @@ export const getClientDB = async (): Promise<PgliteDatabase<typeof schema>> => {
   if (dbPromise) return dbPromise;
 
   dbPromise = (async () => {
-    console.time("INIT_DB");
     const { drizzle } = await import("drizzle-orm/pglite");
     const db = drizzle({
       connection: { dataDir: "idb://thena" },
@@ -46,8 +45,6 @@ export const getClientDB = async (): Promise<PgliteDatabase<typeof schema>> => {
 
       await db.insert(schema.clientMigrations).values({ tag: migration });
     }
-
-    console.timeEnd("INIT_DB");
 
     return db;
   })();

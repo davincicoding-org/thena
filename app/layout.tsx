@@ -4,6 +4,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
 import { Analytics } from "@vercel/analytics/next";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale } from "next-intl/server";
 
 import { ReactQueryClientProvider } from "@/app/query-client";
 import { ThemeProvider } from "@/ui/Theme";
@@ -30,14 +32,16 @@ export const metadata: Metadata = {
   description: "Where Deep Work Happens",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+
   return (
     <ClerkProvider appearance={{ baseTheme: dark }}>
-      <html lang="en" {...mantineHtmlProps}>
+      <html lang={locale} {...mantineHtmlProps}>
         <head>
           <ColorSchemeScript forceColorScheme="dark" />
         </head>
@@ -45,9 +49,11 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} ${logoFont.variable}`}
         >
           <ThemeProvider>
-            <Shell>
-              <ReactQueryClientProvider>{children}</ReactQueryClientProvider>
-            </Shell>
+            <ReactQueryClientProvider>
+              <NextIntlClientProvider>
+                <Shell>{children}</Shell>
+              </NextIntlClientProvider>
+            </ReactQueryClientProvider>
           </ThemeProvider>
           <Analytics />
         </body>

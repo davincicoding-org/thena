@@ -69,9 +69,9 @@ export function TasksQueryPanel({
   });
 
   const resolveProject = (
-    projectId: ProjectSelect["uid"],
+    projectId: ProjectSelect["id"],
   ): ProjectSelect | undefined =>
-    projects.find((project) => project.uid === projectId);
+    projects.find((project) => project.id === projectId);
 
   return (
     <>
@@ -133,7 +133,7 @@ export function TasksQueryPanel({
                     <ScrollArea scrollbars="y" h={180}>
                       {projects.map((project) => (
                         <NavLink
-                          key={project.uid}
+                          key={project.id}
                           label={project.title}
                           leftSection={
                             <Avatar
@@ -146,16 +146,16 @@ export function TasksQueryPanel({
                             />
                           }
                           component="button"
-                          active={filters.projectIds?.includes(project.uid)}
+                          active={filters.projectIds?.includes(project.id)}
                           onClick={() => {
                             onFiltersUpdate({
                               projectIds: filters.projectIds?.includes(
-                                project.uid,
+                                project.id,
                               )
                                 ? filters.projectIds?.filter(
-                                    (id) => id !== project.uid,
+                                    (id) => id !== project.id,
                                   )
-                                : [...(filters.projectIds ?? []), project.uid],
+                                : [...(filters.projectIds ?? []), project.id],
                             });
                           }}
                         />
