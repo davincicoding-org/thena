@@ -2,8 +2,8 @@
   "SessionPlanner": {
     "cta": {
       "resetSession": "Reset Session",
-      "finishPlanning": "Finish Planning",
-      "startSession": "Start Session"
+      "finishPlanning": "FINISH PLANNING",
+      "startSession": "START SESSION"
     },
     "ResetModal": {
       "message": "Do you want to keep your tasks or delete them permanently?",

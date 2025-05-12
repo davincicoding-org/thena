@@ -16,6 +16,8 @@ export const createQueryClient = () =>
         // above 0 to avoid refetching immediately on the client
         staleTime: 30 * 1000,
         placeholderData: keepPreviousData,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
         persister: experimental_createPersister({
           storage: {
             getItem: get,

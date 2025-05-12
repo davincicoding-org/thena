@@ -29,9 +29,7 @@ import {
 } from "@/ui/task-management";
 
 export default function HomePage() {
-  const intelligenceSummary = api.intelligence.summary.useQuery(undefined, {
-    refetchOnWindowFocus: false,
-  });
+  const intelligenceSummary = api.intelligence.summary.useQuery();
 
   const utils = api.useUtils();
   // Tasks
@@ -81,7 +79,7 @@ export default function HomePage() {
   return (
     <Main display="grid">
       <Center>
-        <Stack gap="lg" className="w-fit" maw={500} p="lg">
+        <Stack gap="lg" className="w-md" p="lg">
           <IntelligenceTile
             loading={intelligenceSummary.isLoading}
             summary={intelligenceSummary.data}

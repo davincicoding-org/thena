@@ -54,9 +54,7 @@ export default function SessionPage() {
 
   // MARK: Task Collector
 
-  const taskPool = api.tasks.getSelection.useQuery(planning.tasks, {
-    refetchOnWindowFocus: false,
-  });
+  const taskPool = api.tasks.getSelection.useQuery(planning.tasks);
 
   const isLoading = taskPool.isLoading || !planning.ready;
 
@@ -64,18 +62,11 @@ export default function SessionPage() {
   const { mutateAsync: updateTask } = api.tasks.update.useMutation();
   const { mutateAsync: deleteTask } = api.tasks.delete.useMutation();
 
-  const { data: importableTasks = [] } = api.tasks.list.useQuery(
-    {
-      status: "todo",
-    },
-    {
-      refetchOnWindowFocus: false,
-    },
-  );
-
-  const projects = api.projects.list.useQuery(undefined, {
-    refetchOnWindowFocus: false,
+  const { data: importableTasks = [] } = api.tasks.list.useQuery({
+    status: "todo",
   });
+
+  const projects = api.projects.list.useQuery();
 
   const createProject = api.projects.create.useMutation({
     onSuccess(newProject) {

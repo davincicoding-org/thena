@@ -204,6 +204,7 @@ export const useActiveFocusSession = () => {
     if (!nextTaskRun) return; // MAYBE: auto finish sprint if last task run
     appendTaskRunTimestamp({ id: nextTaskRun.runId });
   };
+
   const skipTask = (args: {
     sprintId: RunnableSprint["id"];
     runId: TaskRun["runId"];
@@ -228,6 +229,7 @@ export const useActiveFocusSession = () => {
     if (!nextTaskRun) return; // MAYBE: auto finish sprint if last task run
     appendTaskRunTimestamp({ id: nextTaskRun.runId });
   };
+
   const unskipTask = (args: {
     sprintId: RunnableSprint["id"];
     runId: TaskRun["runId"];
@@ -354,6 +356,7 @@ export const useActiveFocusSession = () => {
         status,
       });
     });
+    void utils.intelligence.summary.invalidate();
     clearSession();
   };
 

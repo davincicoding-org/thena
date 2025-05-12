@@ -1,4 +1,12 @@
-import { Card, Flex, RingProgress, Skeleton, Stack, Text } from "@mantine/core";
+import {
+  Card,
+  Flex,
+  RingProgress,
+  Skeleton,
+  Stack,
+  Text,
+  Tooltip,
+} from "@mantine/core";
 
 export interface IntelligenceTileProps {
   loading?: boolean;
@@ -57,18 +65,24 @@ export function IntelligenceTile({ loading, summary }: IntelligenceTileProps) {
         align="center"
         className="h-full"
       >
-        <RingProgress
-          size={90}
-          rootColor="yellow"
-          roundCaps
-          thickness={10}
-          label={
-            <Text size="sm" ta="center">
-              {completionPercentage.toFixed(0)}%
-            </Text>
-          }
-          sections={[{ value: completionPercentage, color: "green" }]}
-        />
+        <Tooltip
+          label="Completion Rate"
+          position="bottom"
+          transitionProps={{ transition: "slide-down" }}
+        >
+          <RingProgress
+            size={90}
+            rootColor="yellow"
+            roundCaps
+            thickness={10}
+            label={
+              <Text size="sm" ta="center" className="font-semibold!">
+                {completionPercentage.toFixed(0)}%
+              </Text>
+            }
+            sections={[{ value: completionPercentage, color: "green" }]}
+          />
+        </Tooltip>
         <Stack gap={0} ta="center">
           <Text className="text-3xl!">{tasksCompleted}</Text>
           <Text size="sm">Tasks completed</Text>
