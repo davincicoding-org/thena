@@ -15,18 +15,32 @@ export const projectsRouter = createTRPCRouter({
   create: protectedProcedure
     .input(projectInputSchema)
     .mutation(async ({ ctx: { db, auth }, input }) => {
-      const { imageFile, ...project } = input;
+      const { image: possiblyRawImage, ...project } = input;
 
       const image = await (async () => {
-        if (!imageFile) return null;
+        if (!possiblyRawImage) return null;
+        if (typeof possiblyRawImage === "string") return possiblyRawImage;
 
-        const fileName = `${Date.now()}.${imageFile.name.split(".").pop()}`;
+        const { contentType, base64 } = possiblyRawImage;
+
+        const byteCharacters = atob(base64);
+        const byteArrays = [];
+
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteArrays.push(byteCharacters.charCodeAt(i));
+        }
+
+        const byteArray = new Uint8Array(byteArrays);
+        const imageBlob = new Blob([byteArray], { type: contentType });
+
+        const fileName = `${Date.now()}.${contentType.split("/")[1]}`;
         const storagePath = path.join(auth.userId, "projects", fileName);
 
-        const result = await put(storagePath, imageFile, {
+        const result = await put(storagePath, imageBlob, {
           access: "public",
         });
-        return result.downloadUrl;
+
+        return result.url;
       })();
 
       const [result] = await db

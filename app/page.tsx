@@ -53,16 +53,23 @@ export default function HomePage() {
   const filteredTasks = filterTasks(tasks).sort(sortFn);
 
   // Projects
-  const { data: projects = [], isLoading: loadingProjects } =
-    api.projects.list.useQuery();
-  const { mutate: createProject } = api.projects.create.useMutation();
-  const [isCreatingProject, projectCreatorModal] = useDisclosure();
+  const projects = api.projects.list.useQuery();
+  const createProject = api.projects.create.useMutation({
+    onSuccess(newProject) {
+      if (!newProject) return;
+      utils.projects.list.setData(
+        undefined,
+        (prev) => prev && [newProject, ...prev],
+      );
+    },
+  });
+  const [isAddingProject, projectFormModal] = useDisclosure();
 
   const projectForm = useProjectForm({
     ...projectFormOpts,
     onSubmit: ({ value }) => {
-      createProject(value);
-      projectCreatorModal.close();
+      createProject.mutate(value);
+      projectFormModal.close();
       projectForm.reset();
     },
   });
@@ -104,15 +111,15 @@ export default function HomePage() {
             </Card>
             <ProjectsTile
               flex={1}
-              loading={loadingProjects}
-              items={projects}
-              onCreate={projectCreatorModal.open}
+              loading={projects.isLoading}
+              items={projects.data ?? []}
+              onCreate={projectFormModal.open}
             />
           </Flex>
         </Stack>
       </Center>
       <Modal
-        opened={isCreatingProject}
+        opened={isAddingProject}
         centered
         radius="md"
         classNames={{
@@ -123,7 +130,7 @@ export default function HomePage() {
           className: "backdrop-blur-xs",
         }}
         withCloseButton={false}
-        onClose={projectCreatorModal.close}
+        onClose={projectFormModal.close}
       >
         <form
           onSubmit={(e) => {
@@ -169,12 +176,12 @@ export default function HomePage() {
             onFiltersUpdate={updateFilters}
             sort={sort}
             onSortUpdate={updateSort}
-            projects={projects}
+            projects={projects.data ?? []}
             onUpdateTask={(taskId, updates) =>
               updateTask({ id: taskId, updates })
             }
             onDeleteTask={(taskId) => deleteTask({ id: taskId })}
-            onCreateProject={(input) => createProject(input)}
+            onCreateProject={(input) => createProject.mutate(input)}
           />
         </Flex>
       </SidePanel>

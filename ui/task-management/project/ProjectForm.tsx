@@ -4,11 +4,9 @@ import type {
   TextareaProps,
   TextInputProps,
 } from "@mantine/core";
-import { useState } from "react";
 import {
   Avatar,
   Button,
-  Divider,
   FileButton,
   Flex,
   Popover,
@@ -45,8 +43,6 @@ export const ProjectForm = withProjectForm({
     const [isAvatarPanelOpen, avatarPanel] = useDisclosure(false);
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const avatarPanelRef = useClickOutside(() => avatarPanel.close());
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const [imagePreview, setImagePreview] = useState<string>();
 
     return (
       <Flex gap={gap} p="lg" {...flexProps}>
@@ -58,12 +54,18 @@ export const ProjectForm = withProjectForm({
           >
             <form.Subscribe
               selector={(state) => state.values}
-              children={({ title }) => (
+              children={({ title, image }) => (
                 <Popover.Target>
                   <Avatar
                     className="cursor-pointer"
                     size={130}
-                    src={imagePreview}
+                    src={(() => {
+                      if (image === null) return null;
+                      if (typeof image === "object") {
+                        return `data:${image.contentType};base64,${image.base64}`;
+                      }
+                      return image;
+                    })()}
                     radius="md"
                     // color={color}
                     name={title || "P"}
@@ -76,24 +78,30 @@ export const ProjectForm = withProjectForm({
 
             <Popover.Dropdown ref={avatarPanelRef} p={0}>
               <form.Field
-                name="imageFile"
+                name="image"
                 children={(field) => {
                   const handleImageUpload = (file: File | null) => {
                     if (!file) return;
-                    field.handleChange(file);
+
+                    // field.handleChange(file);
                     avatarPanel.close();
                     const reader = new FileReader();
-                    reader.onload = () =>
-                      setImagePreview(reader.result as string);
+                    reader.onload = () => {
+                      const result = reader.result as string;
+                      const [meta, data] = result.split(";");
+                      if (meta && data) {
+                        field.handleChange({
+                          contentType: meta.replace(/^data:/, ""),
+                          base64: data.replace(/^base64,/, ""),
+                        });
+                      }
+                    };
                     reader.readAsDataURL(file);
                   };
 
                   return (
                     <>
-                      <FileButton
-                        onChange={handleImageUpload}
-                        accept="image/png,image/jpeg"
-                      >
+                      <FileButton onChange={handleImageUpload} accept="image/*">
                         {(props) => (
                           <Button
                             {...props}
@@ -109,29 +117,26 @@ export const ProjectForm = withProjectForm({
                           </Button>
                         )}
                       </FileButton>
+                      {field.state.value && (
+                        <Button
+                          fullWidth
+                          size="md"
+                          variant="subtle"
+                          color="red"
+                          onClick={() => {
+                            field.handleChange(undefined);
+                            avatarPanel.close();
+                          }}
+                        >
+                          Remove image
+                        </Button>
+                      )}
                     </>
                   );
                 }}
               />
-              <form.Field
-                name="imageFile"
-                children={(field) => (
-                  <Button
-                    fullWidth
-                    size="md"
-                    variant="subtle"
-                    color="red"
-                    onClick={() => {
-                      field.handleChange(undefined);
-                      avatarPanel.close();
-                    }}
-                  >
-                    Remove image
-                  </Button>
-                )}
-              />
 
-              <Divider />
+              {/* <Divider /> */}
               {/* <form.Field
                 name="color"
                 children={(field) => (

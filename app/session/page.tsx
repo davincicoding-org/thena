@@ -72,8 +72,16 @@ export default function SessionPage() {
     status: "todo",
   });
 
-  const { data: projects = [] } = api.projects.list.useQuery();
-  const { mutate: createProject } = api.projects.create.useMutation();
+  const projects = api.projects.list.useQuery();
+  const createProject = api.projects.create.useMutation({
+    onSuccess(newProject) {
+      if (!newProject) return;
+      utils.projects.list.setData(
+        undefined,
+        (prev) => prev && [newProject, ...prev],
+      );
+    },
+  });
 
   const handleCreateTask: FocusSessionPlannerProps["onCreateTask"] =
     timeTravel.createAction({
@@ -416,8 +424,8 @@ export default function SessionPage() {
             onUnassignTasksFromSprint={handleUnassignTasksFromSprint}
             onMoveTask={handleMoveTasks}
             onReorderSprintTasks={handleReorderSprintTasks}
-            projects={projects}
-            onCreateProject={(input) => createProject(input)}
+            projects={projects.data ?? []}
+            onCreateProject={(input) => createProject.mutate(input)}
           />
         </Container>
         <Flex

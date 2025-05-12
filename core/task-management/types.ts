@@ -16,10 +16,17 @@ export type TaskSelection = z.infer<typeof taskSelectionSchema>;
 export const projectInputSchema = projectInsertSchema
   .omit({
     userId: true,
-    image: true,
   })
   .extend({
-    imageFile: z.instanceof(File).nullable().optional(),
+    image: z
+      .union([
+        projectInsertSchema.shape.image,
+        z.object({
+          contentType: z.string(),
+          base64: z.string(),
+        }),
+      ])
+      .optional(),
   });
 export type ProjectInput = z.infer<typeof projectInputSchema>;
 
