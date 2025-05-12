@@ -271,7 +271,10 @@ export const useActiveFocusSession = () => {
       if (timestamps.length % 2 !== 0)
         throw new Error(`Task run has an odd number of timestamps: ${runId}`);
 
-      const pairs = chunk(timestamps, 2);
+      const pairs = chunk(
+        timestamps.sort((a, b) => a.getTime() - b.getTime()),
+        2,
+      );
 
       const duration = pairs.reduce((acc, [start, end]) => {
         if (!start || !end)
