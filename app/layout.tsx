@@ -7,7 +7,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 
-import { ReactQueryClientProvider } from "@/app/query-client";
+import { TRPCReactProvider } from "@/trpc/react";
 import { ThemeProvider } from "@/ui/Theme";
 
 import Shell from "./shell";
@@ -41,23 +41,23 @@ export default async function RootLayout({
 
   return (
     <ClerkProvider appearance={{ baseTheme: dark }}>
-      <html lang={locale} {...mantineHtmlProps}>
-        <head>
-          <ColorSchemeScript forceColorScheme="dark" />
-        </head>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} ${logoFont.variable}`}
-        >
-          <ThemeProvider>
-            <ReactQueryClientProvider>
+      <TRPCReactProvider>
+        <html lang={locale} {...mantineHtmlProps}>
+          <head>
+            <ColorSchemeScript forceColorScheme="dark" />
+          </head>
+          <body
+            className={`${geistSans.variable} ${geistMono.variable} ${logoFont.variable}`}
+          >
+            <ThemeProvider>
               <NextIntlClientProvider>
                 <Shell>{children}</Shell>
               </NextIntlClientProvider>
-            </ReactQueryClientProvider>
-          </ThemeProvider>
-          <Analytics />
-        </body>
-      </html>
+            </ThemeProvider>
+            <Analytics />
+          </body>
+        </html>
+      </TRPCReactProvider>
     </ClerkProvider>
   );
 }

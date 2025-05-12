@@ -15,9 +15,7 @@ export interface TasksHookOptions {
 
 export interface TasksQueryOptionsHookReturn {
   filters: TaskFilters;
-  filterTasks: (
-    tasks: (TaskTree | StandaloneTask)[],
-  ) => (TaskTree | StandaloneTask)[];
+  filterTasks: (tasks: TaskTree[]) => TaskTree[];
   updateFilters: (updates: Partial<TaskFilters>) => void;
   sort: TasksSortOptions;
   sortFn: (
@@ -50,7 +48,7 @@ export function useTasksQueryOptions({
   const filterTasks: TasksQueryOptionsHookReturn["filterTasks"] = (items) => {
     if (!hasFiltersApplied(filters)) return items;
 
-    return items.reduce<(TaskTree | StandaloneTask)[]>((acc, task) => {
+    return items.reduce<TaskTree[]>((acc, task) => {
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
         const titleHasSearch = task.title.toLowerCase().includes(searchLower);
@@ -96,7 +94,8 @@ export function useTasksQueryOptions({
       case "updatedAt":
         return (
           direction *
-          (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime())
+          ((a.updatedAt ? new Date(a.updatedAt).getTime() : 0) -
+            (b.updatedAt ? new Date(b.updatedAt).getTime() : 0))
         );
       case "title":
         return direction * a.title.localeCompare(b.title);

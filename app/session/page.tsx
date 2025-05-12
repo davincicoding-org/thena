@@ -13,32 +13,25 @@ import {
   Text,
   Transition,
 } from "@mantine/core";
-import { useDebouncedCallback, useDisclosure } from "@mantine/hooks";
+import {
+  useDebouncedCallback,
+  useDisclosure,
+  useLocalStorage,
+} from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useTranslations } from "next-intl";
 
-import type { SprintPlan } from "@/core/deep-work";
+import type { ActiveFocusSession, SprintPlan } from "@/core/deep-work";
 import type { TaskId, TaskInput } from "@/core/task-management";
 import type { FocusSessionPlannerProps } from "@/ui/deep-work";
 import { Main } from "@/app/shell";
+import { api } from "@/trpc/react";
 import {
   FocusSession,
   FocusSessionPlanner,
   useSessionPlanningState,
 } from "@/ui/deep-work";
-import {
-  useCreateSession,
-  useFocusSession,
-} from "@/ui/deep-work/session-planner/requests";
 import { useTimeTravel } from "@/ui/hooks/useTimeTravel";
-import {
-  useCreateProject,
-  useCreateTask,
-  useDeleteTask,
-  useFlatTasksQuery,
-  useProjectsQuery,
-  useUpdateTask,
-} from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
 export default function SessionPage() {
@@ -58,6 +51,8 @@ export default function SessionPage() {
     },
   });
 
+  const utils = api.useUtils();
+
   // useHotkeys([
   //   ["mod+z", timeTravel.undo],
   //   ["mod+shift+z", timeTravel.redo],
@@ -65,52 +60,69 @@ export default function SessionPage() {
 
   // MARK: Task Collector
 
-  const taskPool = useFlatTasksQuery({
-    ids: planning.tasks,
-    where: "include",
-  });
+  const taskPool = api.tasks.getSelection.useQuery(planning.tasks);
 
   const isLoading = taskPool.isLoading || !planning.ready;
 
-  const { mutateAsync: createTask } = useCreateTask();
-  const { mutateAsync: updateTask } = useUpdateTask();
-  const { mutateAsync: deleteTask } = useDeleteTask();
+  const { mutateAsync: createTask } = api.tasks.create.useMutation();
+  const { mutateAsync: updateTask } = api.tasks.update.useMutation();
+  const { mutateAsync: deleteTask } = api.tasks.delete.useMutation();
 
-  const { data: importableTasks = [] } = useFlatTasksQuery({
-    ids: planning.tasks,
-    where: "exclude",
+  const { data: importableTasks = [] } = api.tasks.list.useQuery({
+    status: "todo",
   });
 
-  const { data: projects = [] } = useProjectsQuery();
-  const { mutate: createProject } = useCreateProject();
+  const { data: projects = [] } = api.projects.list.useQuery();
+  const { mutate: createProject } = api.projects.create.useMutation();
 
   const handleCreateTask: FocusSessionPlannerProps["onCreateTask"] =
     timeTravel.createAction({
       name: "create-task",
       apply: (input: TaskInput) =>
-        createTask(input, {
-          onSuccess: (task) => {
-            if (!task) return;
-            planning.addTasks([task.id]);
-            if (task.parentId) planning.removeTasks([task.parentId]);
+        createTask(
+          { ...input, status: "pending" },
+          {
+            onSuccess: (task) => {
+              if (!task) return;
+              planning.addTasks([{ id: task.id, parentId: task.parentId }]);
+            },
           },
-        }),
+        ),
       revert: (task) => {
-        if (!task) return;
-        planning.removeTasks([task.id]);
-        void deleteTask(task.id);
+        // if (!task) return;
+        // planning.removeTasks([task.id]);
+        // void deleteTask({ id: task.id });
       },
     });
 
   const handleAddTasks: FocusSessionPlannerProps["onAddTasks"] =
     timeTravel.createAction({
       name: "add-tasks",
-      apply: (taskIds) => {
+      apply: async (taskIds) => {
+        await Promise.all(
+          taskIds.map((task) =>
+            updateTask(
+              { id: task.id, updates: { status: "pending" } },
+              {
+                onSuccess() {
+                  void utils.tasks.list.invalidate({ status: "todo" });
+                },
+              },
+            ),
+          ),
+        );
+
         planning.addTasks(taskIds);
 
         return taskIds;
       },
       revert: (taskIds) => {
+        void Promise.all(
+          taskIds.map((task) =>
+            updateTask({ id: task.id, updates: { status: "todo" } }),
+          ),
+        );
+
         planning.removeTasks(taskIds);
       },
     });
@@ -118,19 +130,33 @@ export default function SessionPage() {
   const handleRemoveTasks: FocusSessionPlannerProps["onRemoveTasks"] =
     timeTravel.createAction({
       name: "remove-tasks",
-      apply: async (taskIds, shouldDelete = false) => {
-        planning.removeTasks(taskIds);
-
-        if (!shouldDelete) return { ids: taskIds };
-
-        const tasksToRestore = await Promise.all(
-          taskIds.map((taskId) => deleteTask(taskId)),
+      apply: async (tasks) => {
+        planning.removeTasks(tasks);
+        await Promise.all(
+          tasks
+            .filter(({ shouldDelete }) => !shouldDelete)
+            .map((task) =>
+              updateTask(
+                { id: task.id, updates: { status: "todo" } },
+                {
+                  onSuccess() {
+                    void utils.tasks.list.invalidate({ status: "todo" });
+                  },
+                },
+              ),
+            ),
         );
 
-        return { ids: taskIds, tasksToRestore };
+        const tasksToRestore = await Promise.all(
+          tasks
+            .filter(({ shouldDelete }) => shouldDelete)
+            .map((task) => deleteTask({ id: task.id })),
+        );
+
+        return { tasks, tasksToRestore };
       },
-      revert: ({ ids, tasksToRestore }) => {
-        planning.addTasks(ids);
+      revert: ({ tasks, tasksToRestore }) => {
+        planning.addTasks(tasks);
 
         if (tasksToRestore)
           tasksToRestore.forEach((task) => task && void createTask(task));
@@ -140,11 +166,12 @@ export default function SessionPage() {
   const handleUpdateTask: FocusSessionPlannerProps["onUpdateTask"] =
     timeTravel.createAction({
       name: "update-task",
-      apply: (id, updates) =>
-        updateTask({
+      apply: (id, updates) => {
+        return updateTask({
           id,
-          ...updates,
-        }),
+          updates,
+        });
+      },
       revert: () => {
         // TODO Revert to previous state
         // if (!prevState) return;
@@ -288,18 +315,38 @@ export default function SessionPage() {
 
   // MARK: Session
 
-  const {
-    data: sessionId,
-    mutateAsync: createSession,
-    isPending: isCreatingSession,
-  } = useCreateSession();
+  const [activeSession, setActiveSession, clearActiveSession] =
+    useLocalStorage<ActiveFocusSession | null>({
+      key: "active-focus-session",
+      defaultValue: null,
+    });
 
-  const {
-    runnableSprints,
-    updateTaskRunStatus,
-    markSprintAsStarted,
-    markSprintAsEnded,
-  } = useFocusSession(sessionId);
+  const { mutateAsync: createSession, isPending: isCreatingSession } =
+    api.focusSessions.create.useMutation();
+
+  const runnableSprints = api.focusSessions.get.useQuery(activeSession?.id);
+
+  const { mutate: trackTime } =
+    api.focusSessions.sprint.trackTime.useMutation();
+
+  const { mutate: updateTaskRunStatus } =
+    api.focusSessions.taskRun.updateStatus.useMutation({
+      onSuccess: (_, { id, status }) => {
+        void utils.focusSessions.get.setData(activeSession?.id, (data) => {
+          if (!data) return;
+          return data.map((sprint) => ({
+            ...sprint,
+            tasks: sprint.tasks.map((task) => {
+              if (task.runId !== id) return task;
+              return { ...task, status };
+            }),
+          }));
+        });
+      },
+    });
+
+  const { mutate: updateTaskStatus } =
+    api.focusSessions.task.updateStatus.useMutation();
 
   // MARK: User Actions
 
@@ -308,7 +355,12 @@ export default function SessionPage() {
       (sprint) => sprint.tasks.length > 0,
     );
     if (validSprints.length === 0) return;
-    await createSession(validSprints);
+    const sessionId = await createSession(validSprints);
+    setActiveSession({
+      id: sessionId,
+      status: "idle",
+      currentSprintId: validSprints[0]!.id,
+    });
     planning.reset();
   };
 
@@ -343,9 +395,12 @@ export default function SessionPage() {
       <Main display="flex" className="h-dvh flex-col">
         <Container className="min-h-0 py-16" fluid>
           <FocusSessionPlanner
-            className={cn("h-full min-h-0 transition-opacity duration-500", {
-              "opacity-0": isLoading,
-            })}
+            className={cn(
+              "h-full min-h-0 transition-opacity delay-300 duration-500",
+              {
+                "opacity-0": isLoading,
+              },
+            )}
             tasks={taskPool.data ?? []}
             importableTasks={importableTasks}
             onUpdateTask={handleUpdateTaskDebounced}
@@ -362,7 +417,7 @@ export default function SessionPage() {
             onMoveTask={handleMoveTasks}
             onReorderSprintTasks={handleReorderSprintTasks}
             projects={projects}
-            onCreateProject={createProject}
+            onCreateProject={(input) => createProject(input)}
           />
         </Container>
         <Flex
@@ -402,14 +457,44 @@ export default function SessionPage() {
       >
         <Modal.Content>
           <FocusSession
-            onStartSprint={markSprintAsStarted}
-            onEndSprint={markSprintAsEnded}
+            session={activeSession}
             sprints={runnableSprints.data ?? []}
-            onUpdateTaskRun={(runId, status) =>
-              updateTaskRunStatus({ runId, status })
+            onStartSprint={(sprintId) =>
+              trackTime({ id: sprintId, type: "start" })
             }
+            onEndSprint={(sprintId) => trackTime({ id: sprintId, type: "end" })}
+            onUpdateTaskRun={({ runId, status }) =>
+              updateTaskRunStatus({ id: runId, status })
+            }
+            onUpdateTaskStatus={(updates) => {
+              Object.entries(updates).forEach(([id, status]) => {
+                updateTaskStatus({ id, status });
+              });
+            }}
+            onInterruption={(interruption) => {
+              setActiveSession((prev) => {
+                if (!prev) return null;
+                return { ...prev, interruption };
+              });
+            }}
+            onStatusChange={(status) =>
+              setActiveSession((prev) => {
+                if (!prev) return null;
+                return {
+                  ...prev,
+                  status,
+                };
+              })
+            }
+            onSprintChange={(sprintId) => {
+              setActiveSession((prev) => {
+                if (!prev) return null;
+                return { ...prev, currentSprintId: sprintId };
+              });
+            }}
             onLeave={() => {
               router.replace("/");
+              clearActiveSession();
             }}
           />
         </Modal.Content>
@@ -433,7 +518,9 @@ export default function SessionPage() {
             color="red"
             variant="light"
             onClick={() => {
-              void Promise.all(planning.tasks.map((task) => deleteTask(task)));
+              void Promise.all(
+                planning.tasks.map((task) => deleteTask({ id: task.id })),
+              );
               handleCleanUp();
             }}
           >

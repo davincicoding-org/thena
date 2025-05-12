@@ -29,12 +29,19 @@ export const taskComplexity = pgEnum("task_complexity", [
   "complex",
 ]);
 
+export const taskStatusEnum = pgEnum("task_status", [
+  "todo",
+  "pending",
+  "completed",
+  "deleted",
+]);
+
 export const tasks = pgTable(
   "tasks",
   {
     id: uuid().defaultRandom().notNull().primaryKey(),
-    createdAt: timestamp().defaultNow().notNull(),
-    updatedAt: timestamp().defaultNow().notNull(),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
     userId: text().notNull(),
 
     parentId: uuid().references((): AnyPgColumn => tasks.id, {
@@ -44,8 +51,8 @@ export const tasks = pgTable(
       onDelete: "set null",
     }),
 
+    status: taskStatusEnum().default("todo").notNull(),
     title: text().notNull(),
-    description: text(),
     priority: taskPriority(),
     complexity: taskComplexity(),
   },
@@ -54,23 +61,23 @@ export const tasks = pgTable(
     /* made DEFERRABLE via extraSql */
     uniqueIndex("leaf_or_root_only").on(t.id),
     index("idx_tasks_parent").on(t.parentId),
+    index("idx_tasks_status").on(t.status),
   ],
 );
 
 export const tasksRelations = relations(tasks, ({ one, many }) => ({
   parent: one(tasks, {
-    fields: [tasks.parentId, tasks.userId],
-    references: [tasks.id, tasks.userId],
-    relationName: "parent",
-  }),
-
-  subtasks: many(tasks, {
+    fields: [tasks.parentId],
+    references: [tasks.id],
     relationName: "subtasks",
   }),
 
+  subtasks: many(tasks, { relationName: "subtasks" }),
+
   project: one(projects, {
-    fields: [tasks.projectId, tasks.userId],
-    references: [projects.id, projects.userId],
+    fields: [tasks.projectId],
+    references: [projects.id],
+    relationName: "project_tasks",
   }),
 
   runs: many(taskRuns),
@@ -87,7 +94,7 @@ export const projects = pgTable("projects", {
 });
 
 export const projectsRelations = relations(projects, ({ many }) => ({
-  tasks: many(tasks),
+  tasks: many(tasks, { relationName: "project_tasks" }),
 }));
 
 /* ═════════ FOCUS SESSIONS ═════════ */
@@ -125,20 +132,19 @@ export const sprints = pgTable(
   (t) => [check("positive_duration", sql`${t.duration} > 0`)],
 );
 
-export const sprintsRelations = relations(sprints, ({ one }) => ({
+export const sprintsRelations = relations(sprints, ({ one, many }) => ({
   focusSession: one(focusSessions, {
     fields: [sprints.sessionId, sprints.userId],
     references: [focusSessions.id, focusSessions.userId],
   }),
+  taskRuns: many(taskRuns),
 }));
 
 /* ═════════ TASK RUNS ═════════ */
 export const taskRunStatusEnum = pgEnum("task_run_status", [
-  "planned", // planned but not yet done
+  "pending", // planned but not yet done
   "skipped", // unfinished, skipped
   "completed", // finished in this sprint
-  "deferred", // unfinished, will be carried forward
-  "abandoned", // unfinished, permanently dropped
 ]);
 
 export const taskRuns = pgTable(
@@ -153,11 +159,15 @@ export const taskRuns = pgTable(
         onDelete: "cascade",
       }),
 
-    status: taskRunStatusEnum().default("planned").notNull(),
+    status: taskRunStatusEnum().default("pending").notNull(),
     // addedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
     ordinal: integer().notNull(),
   },
-  (t) => [uniqueIndex("ux_task_run_order").on(t.sprintId, t.ordinal)],
+  (t) => [
+    index("idx_task_run_sprint_id").on(t.sprintId),
+    index("idx_task_run_owner").on(t.userId),
+    uniqueIndex("ux_task_run_order").on(t.sprintId, t.ordinal),
+  ],
 );
 
 export const taskRunsRelations = relations(taskRuns, ({ one }) => ({
@@ -170,6 +180,7 @@ export const taskRunsRelations = relations(taskRuns, ({ one }) => ({
     references: [tasks.id, tasks.userId],
   }),
 }));
+
 // /* ═════════ SPRINT‑TASK EVENTS (remote-only) ═════════ */
 // export const taskRunEventEnum = pgEnum("task_run_event", [
 //   "completed", // user marked task as done
@@ -203,14 +214,14 @@ export const taskRunsRelations = relations(taskRuns, ({ one }) => ({
 
 /* ═════════ CLIENT MIGRATIONS (client-only) ═════════ */
 
-export const clientMigrations = pgTable(
-  "client_migrations",
-  {
-    tag: text().primaryKey(),
-    appliedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-  },
-  (t) => [index("idx_client_migrations_applied_at").on(t.appliedAt)],
-);
+// export const clientMigrations = pgTable(
+//   "client_migrations",
+//   {
+//     tag: text().primaryKey(),
+//     appliedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+//   },
+//   (t) => [index("idx_client_migrations_applied_at").on(t.appliedAt)],
+// );
 
 // TODO this is not applied yet. Apply it or remove
 

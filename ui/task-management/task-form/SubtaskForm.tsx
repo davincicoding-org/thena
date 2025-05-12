@@ -16,7 +16,7 @@ import { PriorityBadge } from "../metadata/PriorityBadge";
 import { taskFormOpts, withTaskForm } from "./useTaskForm";
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-type SubtaskFormProps = {
+export type SubtaskFormProps = {
   readOnly?: boolean;
   onRemove?: () => void;
 };

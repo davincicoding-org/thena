@@ -1,11 +1,16 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Flex, FocusTrap, Modal, ScrollArea } from "@mantine/core";
-import { useLocalStorage, useWindowEvent } from "@mantine/hooks";
+import { useWindowEvent } from "@mantine/hooks";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import { AnimatePresence, motion } from "motion/react";
 
-import type { RunnableSprint, RunnableTask } from "@/core/deep-work";
+import type {
+  ActiveFocusSession,
+  RunnableSprint,
+  TaskRun,
+} from "@/core/deep-work";
+import type { TaskSelect } from "@/core/task-management";
 import { WavyBackground } from "@/ui/components/WavyBackground";
 import { SessionReview } from "@/ui/deep-work/focus-session/SessionReview";
 import { cn } from "@/ui/utils";
@@ -16,43 +21,39 @@ import { SprintWidget } from "./SprintWidget";
 dayjs.extend(duration);
 
 export interface FocusSessionProps {
+  session: ActiveFocusSession | null;
   sprints: RunnableSprint[];
   onStartSprint: (sprintId: RunnableSprint["id"]) => void;
   onEndSprint: (sprintId: RunnableSprint["id"]) => void;
-  onUpdateTaskRun: (
-    taskId: RunnableTask["runId"],
-    status: RunnableTask["status"],
+  onUpdateTaskStatus: (
+    updates: Record<TaskSelect["id"], TaskSelect["status"]>,
   ) => void;
+  onUpdateTaskRun: (taskRun: Pick<TaskRun, "runId" | "status">) => void;
   className?: string;
   onLeave: () => void;
+  onStatusChange: (status: ActiveFocusSession["status"]) => void;
+  onSprintChange: (sprintId: RunnableSprint["id"] | undefined) => void;
+  onInterruption: (interruption: ActiveFocusSession["interruption"]) => void;
 }
 
 export function FocusSession({
+  session,
   sprints,
   onUpdateTaskRun,
+  onUpdateTaskStatus,
   onStartSprint,
   onEndSprint,
   onLeave,
+  onInterruption,
+  onStatusChange,
+  onSprintChange,
   className,
 }: FocusSessionProps) {
-  const [session, setSession, clearSession] = useLocalStorage<{
-    currentSprintId?: RunnableSprint["id"];
-    status: "unstarted" | "idle" | "running" | "paused" | "break" | "finished";
-    interruption?: {
-      timeElapsed: number;
-    };
-  }>({
-    key: "active-focus-session",
-    defaultValue: {
-      status: "unstarted",
-    },
-  });
-
   const stopWatch = useStopWatch();
 
   // Resume from interruption
   useEffect(() => {
-    if (!session.interruption) return;
+    if (!session?.interruption) return;
     switch (session.status) {
       case "running":
         void videoRef.current?.play();
@@ -73,87 +74,88 @@ export function FocusSession({
           inline: "center",
         });
     }, 300);
-  }, [session.interruption]);
-
-  const handleExit = () =>
-    setSession((prev) => {
-      if (prev.status === "unstarted") return prev;
-      if (prev.status === "finished") return prev;
-
-      return { ...prev, interruption: { timeElapsed: stopWatch.timeElapsed } };
-    });
-
-  // Store timer on exit
-  useWindowEvent("beforeunload", handleExit);
-  useEffect(() => handleExit, []);
+  }, [session?.interruption]);
 
   useEffect(() => {
-    if (sprints.length === 0) return;
+    if (!session?.currentSprintId) return;
+    setTimeout(() => {
+      if (breakRef.current)
+        return breakRef.current.scrollIntoView({
+          behavior: "smooth",
+          inline: "center",
+        });
 
-    setSession((prev) => {
-      if (prev.currentSprintId) return prev;
-      if (prev.status === "finished") return prev;
+      if (activeSprintRef.current)
+        return activeSprintRef.current.scrollIntoView({
+          behavior: "smooth",
+          inline: "center",
+        });
+    }, 300);
+  }, [session?.currentSprintId]);
 
-      return {
-        ...prev,
-        currentSprintId: sprints[0]?.id,
-        status: "idle",
-      };
+  const handleInterruption = () => {
+    if (!session) return;
+    if (session.status === "unstarted") return;
+    if (session.status === "idle") return;
+    if (session.status === "finished") return;
+    onInterruption({
+      timeElapsed:
+        // FIXME: This is a hack to get the time elapsed from the interruption
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+        stopWatch.timeElapsed || session.interruption?.timeElapsed || 0,
     });
-  }, [sprints, setSession]);
+  };
+
+  // Store timer on exit
+  useWindowEvent("beforeunload", () => {
+    handleInterruption();
+  });
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    return () => {
+      handleInterruption();
+    };
+  }, []);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const breakRef = useRef<HTMLDivElement>(null);
   const activeSprintRef = useRef<HTMLDivElement>(null);
 
   const handleStartSprint = () => {
-    if (!session.currentSprintId) return;
+    if (!session?.currentSprintId) return;
     onStartSprint(session.currentSprintId);
     void videoRef.current?.play();
     stopWatch.start();
-    setSession((prev) => ({
-      ...prev,
-      status: "running",
-    }));
+    onStatusChange("running");
   };
 
   const handlePauseSprint = () => {
     void videoRef.current?.pause();
     stopWatch.pause();
-    setSession((prev) => ({
-      ...prev,
-      status: "paused",
-    }));
+    onStatusChange("paused");
   };
 
   const handleResumeSprint = () => {
     void videoRef.current?.play();
     stopWatch.start();
-    setSession((prev) => ({
-      ...prev,
-      status: "running",
-    }));
+    onStatusChange("running");
   };
 
   const handleFinishSprint = (
     nextSprintId: RunnableSprint["id"] | undefined,
   ) => {
-    if (!session.currentSprintId) return;
+    if (!session?.currentSprintId) return;
     onEndSprint(session.currentSprintId);
     void videoRef.current?.pause();
     stopWatch.start(0);
-    if (!nextSprintId)
-      return setSession((prev) => ({
-        ...prev,
-        currentSprintId: undefined,
-        status: "finished",
-      }));
+    if (!nextSprintId) {
+      onStatusChange("finished");
+      onSprintChange(undefined);
+      return;
+    }
 
-    setSession((prev) => ({
-      ...prev,
-      currentSprintId: nextSprintId,
-      status: "break",
-    }));
+    onStatusChange("break");
+    onSprintChange(nextSprintId);
 
     setTimeout(() => {
       breakRef.current?.scrollIntoView({
@@ -165,10 +167,7 @@ export function FocusSession({
 
   const handleFinishBreak = () => {
     stopWatch.reset();
-    setSession((prev) => ({
-      ...prev,
-      status: "idle",
-    }));
+    onStatusChange("idle");
     activeSprintRef.current?.scrollIntoView({
       behavior: "smooth",
       inline: "center",
@@ -176,20 +175,18 @@ export function FocusSession({
   };
 
   const handleLeaveSession = (
-    statusUpdates: Record<RunnableTask["runId"], RunnableTask["status"]>,
+    statusUpdates: Record<TaskSelect["id"], TaskSelect["status"]>,
   ) => {
-    Object.entries(statusUpdates).forEach(([runId, status]) => {
-      onUpdateTaskRun(runId, status);
-    });
+    // TODO fix this
+    onUpdateTaskStatus(statusUpdates);
     onLeave();
-    clearSession();
   };
 
   return (
     <WavyBackground
       speed="slow"
       className="h-full"
-      disabled={session.status === "running"}
+      disabled={session?.status === "running"}
     >
       <FocusTrap.InitialFocus />
       <Flex className={cn("h-full", className)}>
@@ -201,7 +198,7 @@ export function FocusSession({
           className={cn(
             "absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-1000",
             {
-              "opacity-100": session.status === "running",
+              "opacity-100": session?.status === "running",
             },
           )}
         >
@@ -228,7 +225,7 @@ export function FocusSession({
             <AnimatePresence>
               {sprints.map((sprint, index) => {
                 const nextSprintId = sprints[index + 1]?.id;
-                const isCurrentSprint = session.currentSprintId === sprint.id;
+                const isCurrentSprint = session?.currentSprintId === sprint.id;
 
                 return (
                   <Fragment key={sprint.id}>
@@ -255,12 +252,12 @@ export function FocusSession({
                       )}
 
                     <SprintWidget
-                      allowToPause
                       className={cn(
                         "w-xs shrink-0 snap-center snap-always transition-opacity",
                         {
                           "opacity-0":
                             !isCurrentSprint &&
+                            session &&
                             !["idle", "break", "finished"].includes(
                               session.status,
                             ),
@@ -274,21 +271,22 @@ export function FocusSession({
                       duration={sprint.duration}
                       timeElapsed={stopWatch.timeElapsed}
                       tasks={sprint.tasks}
-                      paused={session.status === "paused"}
+                      paused={session?.status === "paused"}
                       onStart={handleStartSprint}
                       onPause={handlePauseSprint}
                       onResume={handleResumeSprint}
                       onFinish={() => handleFinishSprint(nextSprintId)}
-                      onCompleteTask={(taskId) => {
-                        onUpdateTaskRun(taskId, "completed");
+                      onCompleteTask={(runId) => {
+                        onUpdateTaskRun({ runId, status: "completed" });
                         // TODO Log to PostHog
                       }}
-                      onSkipTask={(taskId) => {
-                        onUpdateTaskRun(taskId, "skipped");
+                      onSkipTask={(runId) => {
+                        onUpdateTaskRun({ runId, status: "skipped" });
                         // TODO Log to PostHog
                       }}
-                      onUnskipTask={(taskId) => {
-                        onUpdateTaskRun(taskId, "planned");
+                      onUnskipTask={(runId) => {
+                        onUpdateTaskRun({ runId, status: "pending" });
+
                         // TODO Log to PostHog
                       }}
                     />
@@ -302,7 +300,7 @@ export function FocusSession({
       </Flex>
       <Modal
         centered
-        opened={session.status === "finished"}
+        opened={session?.status === "finished"}
         withCloseButton={false}
         closeOnEscape={false}
         closeOnClickOutside={false}

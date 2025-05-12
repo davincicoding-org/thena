@@ -4,7 +4,7 @@ import { Avatar, Tooltip } from "@mantine/core";
 import type { ProjectSelect } from "@/core/task-management";
 
 export interface ProjectAvatarProps {
-  project: ProjectSelect;
+  project: Pick<ProjectSelect, "id" | "title" | "image">;
   tooltipProps?: Omit<TooltipProps, "label" | "children">;
 }
 

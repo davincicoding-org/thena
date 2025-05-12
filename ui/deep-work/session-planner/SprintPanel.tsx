@@ -207,7 +207,7 @@ function FlatTaskItem({
     >
       <Menu.Target>
         <FlatTaskBase
-          group={"parent" in item ? item.parent.title : undefined}
+          group={item.parent?.title}
           label={item.title}
           className={cn("w-xs transition-opacity", {
             "*:cursor-grab!": dndEnabled,

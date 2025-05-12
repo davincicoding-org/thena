@@ -24,7 +24,7 @@ import { ProjectForm } from "../project/ProjectForm";
 import { projectFormOpts, useProjectForm } from "../project/useProjectForm";
 
 export interface ProjectPickerProps {
-  projects: ProjectSelect[];
+  projects: Pick<ProjectSelect, "id" | "title" | "image">[];
   onChange: (value: NonNullable<TaskInput["projectId"]>) => void;
   onCreate?: (
     input: ProjectInput,

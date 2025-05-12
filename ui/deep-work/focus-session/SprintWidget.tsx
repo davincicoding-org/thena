@@ -13,7 +13,7 @@ import {
 } from "@mantine/core";
 import { IconPlayerPause } from "@tabler/icons-react";
 
-import type { Duration, RunnableTask } from "@/core/deep-work";
+import type { Duration, TaskRun } from "@/core/deep-work";
 import type { TaskId } from "@/core/task-management";
 import { resolveDuration } from "@/core/deep-work";
 import { cn } from "@/ui/utils";
@@ -28,7 +28,7 @@ export interface SprintWidgetProps {
   duration: Duration;
   timeElapsed: number;
   warnBeforeTimeRunsOut?: number;
-  tasks: RunnableTask[];
+  tasks: TaskRun[];
   paused?: boolean;
   allowToPause?: boolean;
   ref?: Ref<HTMLDivElement>;
@@ -65,11 +65,11 @@ export function SprintWidget({
 
   const currentTask = useMemo(() => {
     if (timeElapsed === 0 || disabled) return undefined;
-    return tasks.find(({ status }) => status === "planned");
+    return tasks.find(({ status }) => status === "pending");
   }, [timeElapsed, tasks, disabled]);
 
   const outOfTasks =
-    tasks.filter(({ status }) => status === "planned").length === 0;
+    tasks.filter(({ status }) => status === "pending").length === 0;
 
   const isTimeUp = timeElapsed >= durationMs;
   const warningThreshold =
@@ -123,17 +123,17 @@ export function SprintWidget({
       </Collapse>
       <Box p="sm">
         <Paper className="overflow-clip" withBorder>
-          {tasks.map((item) => (
-            <Fragment key={item.id}>
+          {tasks.map(({ runId, task, status }) => (
+            <Fragment key={runId}>
               <QueueTask
-                group={"parent" in item ? item.parent.title : undefined}
-                label={item.title}
+                group={task.parent?.title}
+                label={task.title}
                 readOnly={paused ?? disabled ?? !timeElapsed}
-                active={currentTask?.id === item.id}
-                status={item.status}
-                onComplete={() => onCompleteTask?.(item.runId)}
-                onSkip={() => onSkipTask?.(item.runId)}
-                onUnskip={() => onUnskipTask?.(item.runId)}
+                active={currentTask?.runId === runId}
+                status={status}
+                onComplete={() => onCompleteTask?.(runId)}
+                onSkip={() => onSkipTask?.(runId)}
+                onUnskip={() => onUnskipTask?.(runId)}
                 // onRunManually={() => handleJumpToTask(item.id)}
               />
               <Divider className="last:hidden" />

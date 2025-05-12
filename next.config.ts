@@ -1,4 +1,3 @@
-/* eslint-disable */
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 import createNextIntlPlugin from "next-intl/plugin";
@@ -7,20 +6,11 @@ const nextConfig: NextConfig = {
   // output: "export",
   reactStrictMode: true,
   eslint: {
-    dirs: ["app", "core", "ui"],
+    dirs: ["app", "core", "ui", "server", "db", "trpc"],
   },
-  transpilePackages: ["@electric-sql/pglite"],
   experimental: {
     reactCompiler: true,
     optimizePackageImports: ["@mantine/core", "@mantine/hooks"],
-  },
-  webpack: (config) => {
-    config.module.rules.push({
-      test: /\.sql$/,
-      use: "raw-loader",
-    });
-
-    return config;
   },
 };
 

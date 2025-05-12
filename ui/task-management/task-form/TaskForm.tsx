@@ -19,13 +19,11 @@ import {
 } from "@tabler/icons-react";
 
 import type { ProjectInput, ProjectSelect } from "@/core/task-management";
-import {
-  ComplexityBadge,
-  PriorityBadge,
-  ProjectAvatar,
-} from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
+import { ComplexityBadge } from "../metadata/ComplexityBadge";
+import { PriorityBadge } from "../metadata/PriorityBadge";
+import { ProjectAvatar } from "../project/ProjectAvatar";
 import { ProjectPicker } from "./ProjectPicker";
 import { taskFormOpts, withTaskForm } from "./useTaskForm";
 

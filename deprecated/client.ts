@@ -2,8 +2,8 @@ import "client-only";
 
 import type { PgliteDatabase } from "drizzle-orm/pglite";
 
+import * as schema from "../db/schema";
 import MIGRATION_META from "./migrations/meta/_journal.json";
-import * as schema from "./schema";
 
 let dbPromise: Promise<PgliteDatabase<typeof schema>> | undefined;
 
@@ -13,6 +13,7 @@ export const getClientDB = async (): Promise<PgliteDatabase<typeof schema>> => {
   dbPromise = (async () => {
     const { drizzle } = await import("drizzle-orm/pglite");
     const db = drizzle({
+      logger: true,
       connection: { dataDir: "idb://thena" },
       schema,
       casing: "snake_case",

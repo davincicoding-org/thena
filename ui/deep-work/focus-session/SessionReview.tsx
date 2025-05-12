@@ -10,36 +10,37 @@ import {
   Text,
 } from "@mantine/core";
 
-import type { RunnableSprint, RunnableTask } from "@/core/deep-work";
+import type { RunnableSprint } from "@/core/deep-work";
+import type { TaskSelect } from "@/core/task-management";
 import { FlatTaskBase } from "@/ui/deep-work/session-planner/components";
 
 export interface SessionReviewProps {
   sprints: RunnableSprint[];
   onLeave: (
-    statusUpdates: Record<RunnableTask["runId"], RunnableTask["status"]>,
+    statusUpdates: Record<TaskSelect["id"], TaskSelect["status"]>,
   ) => void;
 }
 
 export function SessionReview({ sprints, onLeave }: SessionReviewProps) {
   const allTasks = sprints.flatMap((sprint) => sprint.tasks);
-  const inCompletedTasks = allTasks.filter(
+  const incompleteTasks = allTasks.filter(
     (task) => task.status !== "completed",
   );
 
   const { title, description } = rateCompletion({
     totalTasks: allTasks.length,
-    completedTasks: allTasks.length - inCompletedTasks.length,
+    completedTasks: allTasks.length - incompleteTasks.length,
   });
 
   const [statusUpdates, setStatusUpdates] = useState<
-    Record<RunnableTask["runId"], RunnableTask["status"]>
+    Record<TaskSelect["id"], TaskSelect["status"]>
   >({});
 
   const handleStatusUpdate = (
-    taskId: RunnableTask["id"],
-    status: RunnableTask["status"],
+    taskId: TaskSelect["id"],
+    taskStatus: TaskSelect["status"],
   ) => {
-    setStatusUpdates((prev) => ({ ...prev, [taskId]: status }));
+    setStatusUpdates((prev) => ({ ...prev, [taskId]: taskStatus }));
   };
 
   return (
@@ -51,7 +52,7 @@ export function SessionReview({ sprints, onLeave }: SessionReviewProps) {
       <Text ta="center" size="xl" className="text-balance">
         {description}
       </Text>
-      {inCompletedTasks.length && (
+      {incompleteTasks.length && (
         <>
           <Divider my="sm" />
           <Text>What should happen with your incompleted tasks?</Text>
@@ -61,42 +62,38 @@ export function SessionReview({ sprints, onLeave }: SessionReviewProps) {
             className="grid! max-h-48 grid-rows-1 overflow-clip"
           >
             <ScrollArea type="never" className="min-h-0">
-              {inCompletedTasks.map((task, index) => (
-                <Fragment key={task.id}>
+              {incompleteTasks.map(({ runId, task }, index) => (
+                <Fragment key={runId}>
                   {index > 0 && <Divider />}
                   <FlatTaskBase
                     asButton={false}
                     label={task.title}
                     withBorder={false}
                     className="*:cursor-auto!"
-                    group={"parent" in task ? task.parent.title : undefined}
+                    group={task.parent?.title}
                     rightSection={
                       <Group gap="xs">
                         <Button
                           variant={
-                            statusUpdates[task.runId] === "abandoned"
+                            statusUpdates[task.id] === "deleted"
                               ? "filled"
                               : "subtle"
                           }
                           size="compact-sm"
                           color="red"
-                          onClick={() =>
-                            handleStatusUpdate(task.runId, "abandoned")
-                          }
+                          onClick={() => handleStatusUpdate(task.id, "deleted")}
                         >
                           Drop
                         </Button>
 
                         <Button
                           variant={
-                            statusUpdates[task.runId] === "deferred"
+                            statusUpdates[task.id] === "todo"
                               ? "filled"
                               : "subtle"
                           }
                           size="compact-sm"
-                          onClick={() =>
-                            handleStatusUpdate(task.runId, "deferred")
-                          }
+                          onClick={() => handleStatusUpdate(task.id, "todo")}
                         >
                           Do Later
                         </Button>
@@ -113,8 +110,8 @@ export function SessionReview({ sprints, onLeave }: SessionReviewProps) {
       <Button
         fullWidth
         size="md"
-        disabled={inCompletedTasks.some(
-          ({ runId }) => statusUpdates[runId] === undefined,
+        disabled={incompleteTasks.some(
+          ({ task }) => statusUpdates[task.id] === undefined,
         )}
         onClick={() => onLeave(statusUpdates)}
       >

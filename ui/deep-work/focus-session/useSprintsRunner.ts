@@ -2,9 +2,9 @@ import { useMemo, useState } from "react";
 
 import type {
   RunnableSprint,
-  RunnableTask,
   SessionBreakSlot,
   SprintRunSlot,
+  TaskRun,
 } from "@/core/deep-work";
 import type { TaskId } from "@/core/task-management";
 
@@ -12,8 +12,8 @@ export interface SprintsRunnerHookOptions {
   sprints: RunnableSprint[];
   onFinish?: () => void;
   onUpdateTaskRun: (
-    taskId: RunnableTask["runId"],
-    status: RunnableTask["status"],
+    taskId: TaskRun["runId"],
+    status: TaskRun["status"],
   ) => void;
 }
 
@@ -39,78 +39,75 @@ export function useSprintsRunner({
   const [status, setStatus] =
     useState<SprintsRunnerHookReturn["status"]>("idle");
 
-  const [taskRuns, setTaskRuns] = useState<
-    Record<RunnableTask["runId"], RunnableTask["status"]>
-  >({});
+  // const [taskRuns, setTaskRuns] = useState<
+  //   Record<TaskRun["runId"], TaskRun["status"]>
+  // >({});
 
-  const populatedSprints = useMemo(
-    () =>
-      sprints.map((sprint) => ({
-        ...sprint,
-        tasks: sprint.tasks.map((task) => ({
-          ...task,
-          status: taskRuns[task.runId] ?? task.status,
-        })),
-      })),
-    [sprints, taskRuns],
-  );
+  // const populatedSprints = useMemo(
+  //   () =>
+  //     sprints.map((sprint) => ({
+  //       ...sprint,
+  //       tasks: sprint.tasks.map((task) => ({
+  //         ...task,
+  //         status: taskRuns[task.runId] ?? task.status,
+  //       })),
+  //     })),
+  //   [sprints, taskRuns],
+  // );
 
   const slots = useMemo(() => {
-    return populatedSprints.reduce<SprintsRunnerHookReturn["slots"]>(
-      (acc, sprint) => {
-        const sprintRunSlot: SprintRunSlot = {
-          type: "sprint-run",
-          sprint,
-        };
+    return sprints.reduce<SprintsRunnerHookReturn["slots"]>((acc, sprint) => {
+      const sprintRunSlot: SprintRunSlot = {
+        type: "sprint-run",
+        sprint,
+      };
 
-        if (acc.length === 0) return [sprintRunSlot];
+      if (acc.length === 0) return [sprintRunSlot];
 
-        const breakSlot: SessionBreakSlot = {
-          type: "break",
-          duration: { minutes: 1 },
-          nextSprint: sprintRunSlot.sprint.id,
-        };
+      const breakSlot: SessionBreakSlot = {
+        type: "break",
+        duration: { minutes: 1 },
+        nextSprint: sprintRunSlot.sprint.id,
+      };
 
-        return [...acc, breakSlot, sprintRunSlot];
-      },
-      [],
-    );
-  }, [populatedSprints]);
+      return [...acc, breakSlot, sprintRunSlot];
+    }, []);
+  }, [sprints]);
 
   const completeTask: SprintsRunnerHookReturn["completeTask"] = (task) => {
-    setTaskRuns((prev) => ({
-      ...prev,
-      [task]: "completed",
-    }));
+    // setTaskRuns((prev) => ({
+    //   ...prev,
+    //   [task]: "completed",
+    // }));
     onUpdateTaskRun(task, "completed");
   };
 
   const skipTask: SprintsRunnerHookReturn["skipTask"] = (task) => {
-    setTaskRuns((prev) => ({
-      ...prev,
-      [task]: "skipped",
-    }));
+    // setTaskRuns((prev) => ({
+    //   ...prev,
+    //   [task]: "skipped",
+    // }));
     onUpdateTaskRun(task, "skipped");
   };
 
   const unskipTask: SprintsRunnerHookReturn["unskipTask"] = (task) => {
-    setTaskRuns((prev) => ({
-      ...prev,
-      [task]: "planned",
-    }));
-    onUpdateTaskRun(task, "planned");
+    // setTaskRuns((prev) => ({
+    //   ...prev,
+    //   [task]: "pending",
+    // }));
+    onUpdateTaskRun(task, "pending");
   };
 
   return {
     slots,
     status,
-    activeSprint: populatedSprints[currentIndex],
-    upcomingSprints: populatedSprints.slice(currentIndex + 1),
+    activeSprint: sprints[currentIndex],
+    upcomingSprints: sprints.slice(currentIndex + 1),
     startSprint: () => {
       setStatus("sprint-run");
     },
     finishSprint: () => {
-      if (currentIndex === populatedSprints.length - 1) {
+      if (currentIndex === sprints.length - 1) {
         setStatus("finished");
         setCurrentIndex(currentIndex + 1);
         onFinish?.();

@@ -13,22 +13,18 @@ import {
 import { IconTrash } from "@tabler/icons-react";
 
 import type {
-  FlatTask,
   ProjectInput,
   ProjectSelect,
   TaskFilters,
   TaskId,
   TaskInput,
-  TaskSelect,
+  TaskSelection,
   TasksSortOptions,
+  TaskTree,
   TaskUpdate,
 } from "@/core/task-management";
 import type { TaskFormProps } from "@/ui/task-management";
-import {
-  hasFiltersApplied,
-  isTaskTree,
-  unflattenTasks,
-} from "@/core/task-management";
+import { hasFiltersApplied, isTaskTree } from "@/core/task-management";
 import { Panel } from "@/ui/components/Panel";
 import { TaskForm, taskFormOpts, useTaskForm } from "@/ui/task-management";
 import { TasksQueryPanel } from "@/ui/task-management/tasks/TasksQueryPanel";
@@ -42,22 +38,22 @@ import { TaskWrapper } from "../task-form/TaskWrapper";
 
 export interface BacklogProps {
   mode: "select" | "edit";
-  tasks: FlatTask[];
+  tasks: TaskTree[];
   filters: TaskFilters;
   sort: TasksSortOptions;
   onFiltersUpdate: TasksQueryOptionsHookReturn["updateFilters"];
   onSortUpdate: TasksQueryOptionsHookReturn["updateSort"];
   projects: ProjectSelect[];
   onAddTask?: (task: TaskInput) => void;
-  onUpdateTask?: (task: TaskUpdate & Pick<TaskSelect, "id">) => void;
+  onUpdateTask?: (taskId: TaskId, updates: TaskUpdate) => void;
   onDeleteTask?: (taskId: TaskId) => void;
   onCreateProject?: UseMutateFunction<
     ProjectSelect | undefined,
     Error,
     ProjectInput
   >;
-  selectedTasks?: TaskId[];
-  onToggleTaskSelection?: (tasks: TaskId[]) => void;
+  selectedTasks?: TaskSelection[];
+  onToggleTaskSelection?: (task: TaskSelection) => void;
 }
 
 // TODO turn content into a task list and reuse it in taskcolelctor
@@ -77,7 +73,6 @@ export function Backlog({
   onToggleTaskSelection,
   ...paperProps
 }: BacklogProps & PaperProps) {
-  tasks = unflattenTasks(tasks);
   return (
     <Panel
       header={
@@ -101,14 +96,7 @@ export function Backlog({
                   mode === "select"
                     ? cn(
                         "cursor-pointer outline! transition-all [&_*]:cursor-pointer!",
-                        (() => {
-                          if (!selectedTasks?.length) return false;
-                          if (!isTaskTree(task))
-                            return selectedTasks.includes(task.id);
-                          return task.subtasks.every((subtask) =>
-                            selectedTasks.includes(subtask.id),
-                          );
-                        })()
+                        selectedTasks?.some((t) => t.id === task.id)
                           ? "outline-[var(--mantine-primary-color-filled)]!"
                           : "outline-transparent! hover:outline! hover:outline-current!",
                       )
@@ -117,20 +105,17 @@ export function Backlog({
                 onClick={
                   mode === "select"
                     ? () =>
-                        onToggleTaskSelection?.(
-                          isTaskTree(task)
-                            ? [...task.subtasks.map((subtask) => subtask.id)]
-                            : [task.id],
-                        )
+                        onToggleTaskSelection?.({
+                          id: task.id,
+                          subtasks: task.subtasks.map((subtask) => subtask.id),
+                        })
                     : undefined
                 }
                 task={
                   <TaskItem
                     mode={mode}
                     task={task}
-                    onUpdate={(updates) =>
-                      onUpdateTask?.({ id: task.id, ...updates })
-                    }
+                    onUpdate={(updates) => onUpdateTask?.(task.id, updates)}
                     projects={projects}
                     onCreateProject={onCreateProject}
                     TaskActions={({ defaultActions }) => (
@@ -175,7 +160,7 @@ export function Backlog({
                           mode={mode}
                           isSubtask
                           onUpdate={(updates) =>
-                            onUpdateTask?.({ id: subtask.id, ...updates })
+                            onUpdateTask?.(subtask.id, updates)
                           }
                           onDelete={() => onDeleteTask?.(subtask.id)}
                           projects={projects}

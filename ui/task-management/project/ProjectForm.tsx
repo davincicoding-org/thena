@@ -114,7 +114,7 @@ export const ProjectForm = withProjectForm({
                 }}
               />
               <form.Field
-                name="image"
+                name="imageFile"
                 children={(field) => (
                   <Button
                     fullWidth

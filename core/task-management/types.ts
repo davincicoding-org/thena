@@ -8,9 +8,15 @@ export const taskInputSchema = taskInsertSchema.omit({
 });
 export type TaskInput = z.infer<typeof taskInputSchema>;
 
+export const taskSelectionSchema = taskSelectSchema.pick({ id: true }).extend({
+  subtasks: taskSelectSchema.shape.id.array().optional(),
+});
+export type TaskSelection = z.infer<typeof taskSelectionSchema>;
+
 export const projectInputSchema = projectInsertSchema
   .omit({
     userId: true,
+    image: true,
   })
   .extend({
     imageFile: z.instanceof(File).nullable().optional(),
@@ -22,19 +28,21 @@ export const taskTreeSchema = taskSelectSchema
     parentId: true,
   })
   .extend({
-    subtasks: z
-      .array(
-        taskSelectSchema.omit({
-          parentId: true,
-        }),
-      )
-      .min(1),
+    subtasks: z.array(
+      taskSelectSchema.omit({
+        parentId: true,
+      }),
+    ),
   });
 export type TaskTree = z.infer<typeof taskTreeSchema>;
 
-export const standaloneTaskSchema = taskSelectSchema.omit({
-  parentId: true,
-});
+export const standaloneTaskSchema = taskSelectSchema
+  .omit({
+    parentId: true,
+  })
+  .extend({
+    parent: z.null().optional(),
+  });
 export type StandaloneTask = z.infer<typeof standaloneTaskSchema>;
 
 export const subtaskSchema = taskSelectSchema
@@ -49,11 +57,7 @@ export type Subtask = z.infer<typeof subtaskSchema>;
 export const flatTaskSchema = z.union([standaloneTaskSchema, subtaskSchema]);
 export type FlatTask = z.infer<typeof flatTaskSchema>;
 
-export const anyTaskSchema = z.union([
-  standaloneTaskSchema,
-  subtaskSchema,
-  taskTreeSchema,
-]);
+export const anyTaskSchema = z.union([flatTaskSchema, taskTreeSchema]);
 export type AnyTask = z.infer<typeof anyTaskSchema>;
 
 export const isTaskTree = (task: AnyTask): task is TaskTree => {

@@ -8,7 +8,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 import type { SprintPlan } from "@/core/deep-work";
-import type { TaskId } from "@/core/task-management";
+import type { TaskId, TaskSelection } from "@/core/task-management";
 
 // Generic synchronous action type with optional success callback
 // V = input variables, A = artifact returned on success
@@ -19,26 +19,41 @@ type SprintInsert = Omit<SprintPlan, "id">;
 
 interface SessionPlanningState {
   ready: boolean;
-  tasks: TaskId[];
+  tasks: TaskSelection[];
   sprints: SprintPlan[];
 
-  addTasks: Action<
-    (TaskId | { id: TaskId; index: number })[],
-    { addedTasks: { id: TaskId; index?: number }[] }
-  >;
-  removeTasks: Action<
-    TaskId[],
-    {
-      removedFromMaster: {
-        id: TaskId;
-        index: number;
-      }[];
-      removedFromSprints: {
-        sprintId: SprintId;
-        tasks: { id: TaskId; index: number }[];
-      }[];
-    }
-  >;
+  addTasks: (
+    tasks: {
+      id: TaskId;
+      subtasks?: TaskId[];
+      parentId: TaskId | null;
+    }[],
+  ) => void;
+  removeTasks: (
+    tasks: {
+      id: TaskId;
+      subtasks?: TaskId[];
+      parentId: TaskId | null;
+    }[],
+  ) => void;
+
+  // addTasks: Action<
+  //   (TaskId | { id: TaskId; index: number })[],
+  //   { addedTasks: { id: TaskId; index?: number }[] }
+  // >;
+  // removeTasks: Action<
+  //   TaskId[],
+  //   {
+  //     removedFromMaster: {
+  //       id: TaskId;
+  //       index: number;
+  //     }[];
+  //     removedFromSprints: {
+  //       sprintId: SprintId;
+  //       tasks: { id: TaskId; index: number }[];
+  //     }[];
+  //   }
+  // >;
 
   createSprint: Action<SprintInsert, { id: SprintId }>;
   insertSprint: Action<{ sprint: SprintPlan; index?: number }, void>;
@@ -86,76 +101,182 @@ export const useSessionPlanningState = create<SessionPlanningState>()(
       tasks: [],
       sprints: [],
 
-      addTasks: (tasks, onSuccess) => {
-        const addedTasks = new Array<{ id: TaskId; index: number }>();
+      addTasks: (tasks) => {
         set((state) => {
+          const partialTaskTrees = tasks.reduce<TaskSelection[]>(
+            (acc, task) => {
+              if (task.parentId === null)
+                return [...acc, { id: task.id, subtasks: task.subtasks }];
+
+              const parentTask = acc.find((t) => t.id === task.parentId);
+              if (!parentTask)
+                return [...acc, { id: task.parentId, subtasks: [task.id] }];
+
+              return acc.map((t) => {
+                if (t.id !== parentTask.id) return t;
+                const mergedSubtasks = [
+                  ...(t.subtasks ?? []),
+                  ...(task.subtasks ?? []),
+                ];
+                return {
+                  ...t,
+                  subtasks: Array.from(new Set(mergedSubtasks)),
+                };
+              });
+            },
+            [],
+          );
+
           return {
             ...state,
-            tasks: tasks.reduce((acc, task) => {
-              const { id, index } =
-                typeof task === "object"
-                  ? task
-                  : { id: task, index: undefined };
-              if (acc.includes(id)) return acc;
-              if (index !== undefined) {
-                acc.splice(index, 0, id);
-                addedTasks.push({ id, index });
-              } else {
-                acc.push(id);
-                addedTasks.push({ id, index: acc.length - 1 });
-              }
+            tasks: partialTaskTrees.reduce<TaskSelection[]>((acc, newTask) => {
+              if (acc.every(({ id }) => id !== newTask.id))
+                return [...acc, newTask];
 
-              return acc;
+              return acc.map((existingTask) => {
+                if (existingTask.id !== newTask.id) return existingTask;
+                const mergedSubtasks = [
+                  ...(existingTask.subtasks ?? []),
+                  ...(newTask.subtasks ?? []),
+                ];
+                return {
+                  ...existingTask,
+                  subtasks: Array.from(new Set(mergedSubtasks)),
+                };
+              });
             }, state.tasks),
           };
         });
-        onSuccess?.({ addedTasks });
       },
-
-      // Remove tasks from master list and all sprints
-      removeTasks: (ids, onSuccess) => {
-        const removedFromMaster = new Array<{
-          id: TaskId;
-          index: number;
-        }>();
-        const removedFromSprints = new Array<{
-          sprintId: SprintId;
-          tasks: { id: TaskId; index: number }[];
-        }>();
-
+      removeTasks: (tasks) => {
         set((state) => {
-          return {
-            tasks: state.tasks.filter((t, index) => {
-              if (!ids.includes(t)) return true;
-              removedFromMaster.push({ id: t, index });
-              return false;
-            }),
-            sprints: state.sprints.map((sprint) => {
-              const tasksToRemove = sprint.tasks.reduce(
-                (acc, t, index) => {
-                  if (!ids.includes(t)) return acc;
-                  acc.push({ id: t, index });
-                  return acc;
-                },
-                [] as { id: TaskId; index: number }[],
-              );
+          const partialTaskTrees = tasks.reduce<TaskSelection[]>(
+            (acc, task) => {
+              if (task.parentId === null)
+                return [...acc, { id: task.id, subtasks: task.subtasks }];
 
-              if (tasksToRemove.length === 0) return sprint;
+              const parentTask = acc.find((t) => t.id === task.parentId);
+              if (!parentTask)
+                return [...acc, { id: task.parentId, subtasks: [task.id] }];
 
-              removedFromSprints.push({
-                sprintId: sprint.id,
-                tasks: tasksToRemove,
+              return acc.map((t) => {
+                if (t.id !== parentTask.id) return t;
+                const mergedSubtasks = [
+                  ...(t.subtasks ?? []),
+                  ...(task.subtasks ?? []),
+                ];
+                return {
+                  ...t,
+                  subtasks: Array.from(new Set(mergedSubtasks)),
+                };
               });
+            },
+            [],
+          );
 
-              return {
-                ...sprint,
-                tasks: sprint.tasks.filter((t) => !ids.includes(t)),
-              };
-            }),
+          const flatTasksToRemove = partialTaskTrees.flatMap((t) => [
+            t.id,
+            ...(t.subtasks ?? []),
+          ]);
+
+          return {
+            ...state,
+            sprints: state.sprints.map((s) => ({
+              ...s,
+              tasks: s.tasks.filter((t) => !flatTasksToRemove.includes(t)),
+            })),
+            tasks: state.tasks.reduce<TaskSelection[]>((acc, existingTask) => {
+              const removalMatch = partialTaskTrees.find(
+                (t) => t.id === existingTask.id,
+              );
+              if (!removalMatch) return [...acc, existingTask];
+
+              if (removalMatch.subtasks?.length === 0) return acc;
+
+              return [
+                ...acc,
+                {
+                  ...existingTask,
+                  subtasks: existingTask.subtasks?.filter(
+                    (t) => !removalMatch.subtasks?.includes(t),
+                  ),
+                },
+              ];
+            }, []),
           };
         });
-        onSuccess?.({ removedFromMaster, removedFromSprints });
       },
+
+      // addTasks: (tasks, onSuccess) => {
+      //   const addedTasks = new Array<{ id: TaskId; index: number }>();
+      //   set((state) => {
+      //     return {
+      //       ...state,
+      //       tasks: tasks.reduce((acc, task) => {
+      //         const { id, index } =
+      //           typeof task === "object"
+      //             ? task
+      //             : { id: task, index: undefined };
+      //         if (acc.includes(id)) return acc;
+      //         if (index !== undefined) {
+      //           acc.splice(index, 0, id);
+      //           addedTasks.push({ id, index });
+      //         } else {
+      //           acc.push(id);
+      //           addedTasks.push({ id, index: acc.length - 1 });
+      //         }
+
+      //         return acc;
+      //       }, state.tasks),
+      //     };
+      //   });
+      //   onSuccess?.({ addedTasks });
+      // },
+
+      // // Remove tasks from master list and all sprints
+      // removeTasks: (ids, onSuccess) => {
+      //   const removedFromMaster = new Array<{
+      //     id: TaskId;
+      //     index: number;
+      //   }>();
+      //   const removedFromSprints = new Array<{
+      //     sprintId: SprintId;
+      //     tasks: { id: TaskId; index: number }[];
+      //   }>();
+
+      //   set((state) => {
+      //     return {
+      //       tasks: state.tasks.filter((t, index) => {
+      //         if (!ids.includes(t)) return true;
+      //         removedFromMaster.push({ id: t, index });
+      //         return false;
+      //       }),
+      //       sprints: state.sprints.map((sprint) => {
+      //         const tasksToRemove = sprint.tasks.reduce(
+      //           (acc, t, index) => {
+      //             if (!ids.includes(t)) return acc;
+      //             acc.push({ id: t, index });
+      //             return acc;
+      //           },
+      //           [] as { id: TaskId; index: number }[],
+      //         );
+
+      //         if (tasksToRemove.length === 0) return sprint;
+
+      //         removedFromSprints.push({
+      //           sprintId: sprint.id,
+      //           tasks: tasksToRemove,
+      //         });
+
+      //         return {
+      //           ...sprint,
+      //           tasks: sprint.tasks.filter((t) => !ids.includes(t)),
+      //         };
+      //       }),
+      //     };
+      //   });
+      //   onSuccess?.({ removedFromMaster, removedFromSprints });
+      // },
 
       // Create a new sprint
       createSprint: (sprintData, onSuccess) => {
@@ -303,12 +424,12 @@ export const useSessionPlanningState = create<SessionPlanningState>()(
       ) => {
         let sourceIndex: number | undefined = undefined;
         set((state) => {
-          tasks.forEach((task) => {
-            if (!state.tasks.includes(task))
-              throw new Error(
-                `moveTaskBetweenSprints failed: task not found (task=${task})`,
-              );
-          });
+          // tasks.forEach((task) => {
+          //   if (!state.tasks.includes(task))
+          //     throw new Error(
+          //       `moveTaskBetweenSprints failed: task not found (task=${task})`,
+          //     );
+          // });
 
           if (sourceSprint === targetSprint)
             throw new Error(
@@ -361,7 +482,7 @@ export const useSessionPlanningState = create<SessionPlanningState>()(
       },
     }),
     {
-      name: "session-planning",
+      name: "focus-session-planning",
       storage: {
         getItem: (name) => {
           const storedValue = localStorage.getItem(name);
@@ -370,7 +491,7 @@ export const useSessionPlanningState = create<SessionPlanningState>()(
               version: undefined,
               state: {
                 ready: true,
-                tasks: new Array<TaskId>(),
+                tasks: new Array<TaskSelection>(),
                 sprints: new Array<SprintPlan>(),
               },
             };

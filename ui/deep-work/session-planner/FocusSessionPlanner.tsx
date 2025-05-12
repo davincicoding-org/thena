@@ -34,6 +34,7 @@ import {
   IconPlus,
   IconTrash,
 } from "@tabler/icons-react";
+import { isEqual, pickBy } from "lodash-es";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslations } from "next-intl";
 
@@ -44,14 +45,15 @@ import type {
   ProjectSelect,
   TaskId,
   TaskInput,
+  TaskTree,
   TaskUpdate,
 } from "@/core/task-management";
 import type { TaskFormProps } from "@/ui/task-management";
 import {
-  excludeTasksAndCompact,
+  excludeAndFlattenTasks,
+  flattenTasks,
   isTaskTree,
   taskInputSchema,
-  unflattenTasks,
 } from "@/core/task-management";
 import { HotKeyHint, useHotKeyHint } from "@/ui/components/HotKeyHint";
 import { SidePanel } from "@/ui/components/SidePanel";
@@ -72,13 +74,26 @@ import { DndWrapper, useDraggableTask, useDroppableTaskPool } from "./dnd";
 import { SprintBuilder } from "./SprintBuilder";
 
 export interface FocusSessionPlannerProps {
-  tasks: FlatTask[];
-  importableTasks: FlatTask[];
+  tasks: TaskTree[];
+  importableTasks: TaskTree[];
   onUpdateTask?: (uid: TaskId, updates: TaskUpdate) => void;
-  onRemoveTasks?: (tasks: TaskId[], shouldDelete?: boolean) => void;
+  onRemoveTasks?: (
+    tasks: {
+      id: TaskId;
+      subtasks?: TaskId[];
+      parentId: TaskId | null;
+      shouldDelete?: boolean;
+    }[],
+  ) => void;
   onCreateTask?: (task: TaskInput) => void;
   // onReplaceTask?: (task: TaskId) => void;
-  onAddTasks?: (tasks: TaskId[]) => void;
+  onAddTasks?: (
+    tasks: {
+      id: TaskId;
+      subtasks?: TaskId[];
+      parentId: TaskId | null;
+    }[],
+  ) => void;
   onRefineTask?: (task: TaskInput) => void;
   sprints: SprintPlan[];
   onAddSprint: (
@@ -158,10 +173,10 @@ export function FocusSessionPlanner({
 
   const unassignedTasks = useMemo(() => {
     const assignedTasks = sprints.flatMap((sprint) => sprint.tasks);
-    return excludeTasksAndCompact(tasks, assignedTasks);
+    return excludeAndFlattenTasks(tasks, assignedTasks);
   }, [tasks, sprints]);
 
-  const taskTrees = unflattenTasks(tasks);
+  const flatTasks = flattenTasks(tasks);
 
   const [isCreatingTask, setIsCreatingTask] = useState(false);
 
@@ -297,7 +312,7 @@ export function FocusSessionPlanner({
                 <Tabs.Panel value="edit">
                   <Stack>
                     <AnimatePresence>
-                      {taskTrees.length === 0 && (
+                      {tasks.length === 0 && (
                         <Alert
                           radius="sm"
                           className="w-xs"
@@ -311,7 +326,7 @@ export function FocusSessionPlanner({
                           {t("TaskPool.emptyMessage")}
                         </Alert>
                       )}
-                      {taskTrees.map((task) => (
+                      {tasks.map((task) => (
                         <TaskWrapper
                           component={motion.div}
                           className="w-xs"
@@ -355,13 +370,15 @@ export function FocusSessionPlanner({
                                     justify="flex-start"
                                     onClick={() => {
                                       closeMenu();
-                                      onRemoveTasks?.(
-                                        [
-                                          task.id,
-                                          ...task.subtasks.map((t) => t.id),
-                                        ],
-                                        false,
-                                      );
+                                      onRemoveTasks?.([
+                                        {
+                                          parentId: null,
+                                          id: task.id,
+                                          subtasks: task.subtasks.map(
+                                            (t) => t.id,
+                                          ),
+                                        },
+                                      ]);
                                     }}
                                   >
                                     {t("TaskPool.TaskActions.postpone")}
@@ -376,13 +393,16 @@ export function FocusSessionPlanner({
                                     leftSection={<IconTrash size={16} />}
                                     onClick={() => {
                                       closeMenu();
-                                      onRemoveTasks?.(
-                                        [
-                                          task.id,
-                                          ...task.subtasks.map((t) => t.id),
-                                        ],
-                                        true,
-                                      );
+                                      onRemoveTasks?.([
+                                        {
+                                          parentId: null,
+                                          id: task.id,
+                                          subtasks: task.subtasks.map(
+                                            (t) => t.id,
+                                          ),
+                                          shouldDelete: true,
+                                        },
+                                      ]);
                                     }}
                                   >
                                     {t("TaskPool.TaskActions.delete")}
@@ -409,10 +429,13 @@ export function FocusSessionPlanner({
                                     projects={projects}
                                     onCreateProject={onCreateProject}
                                     onDelete={() => {
-                                      onRemoveTasks?.([subtask.id], true);
-                                      if (task.subtasks.length === 1) {
-                                        onAddTasks?.([task.id]);
-                                      }
+                                      onRemoveTasks?.([
+                                        {
+                                          parentId: task.id,
+                                          id: subtask.id,
+                                          shouldDelete: true,
+                                        },
+                                      ]);
                                     }}
                                   />
                                 ))
@@ -531,7 +554,7 @@ export function FocusSessionPlanner({
                   className="max-h-full min-h-0"
                   dndEnabled={mode === "dnd"}
                   sprints={sprints}
-                  taskPool={tasks}
+                  taskPool={flatTasks}
                   onAddSprint={onAddSprint}
                   onUpdateSprint={onUpdateSprint}
                   onDropSprint={onDropSprint}
@@ -564,15 +587,23 @@ export function FocusSessionPlanner({
             onFiltersUpdate={backlogQueryoptions.updateFilters}
             onSortUpdate={backlogQueryoptions.updateSort}
             selectedTasks={importTaskSelection.selection}
-            onToggleTaskSelection={importTaskSelection.toggleTasksSelection}
+            onToggleTaskSelection={(selection) =>
+              importTaskSelection.toggleTaskSelection({
+                parent: null,
+                ...selection,
+              })
+            }
           />
           <Button
             disabled={importTaskSelection.selection.length === 0}
             fullWidth
             onClick={() => {
-              const taskIds = importTaskSelection.selection;
-
-              onAddTasks?.(taskIds);
+              onAddTasks?.(
+                importTaskSelection.selection.map((selection) => ({
+                  parentId: null,
+                  ...selection,
+                })),
+              );
 
               importTaskSelection.clearSelection();
               importPanel.close();
@@ -607,8 +638,12 @@ const EditableTask = createPolymorphicComponent<"div", EditableTaskProps>(
       onSubmit: ({ value }) => onUpdate(value),
       listeners: {
         onChange: ({ formApi }) => {
-          if (formApi.state.isValid) return;
-          onUpdate(formApi.state.values);
+          if (!formApi.state.isValid) return;
+          const changes = pickBy(
+            formApi.state.values,
+            (value, key) => !isEqual(value, item[key as keyof TaskInput]),
+          );
+          onUpdate(changes as TaskInput);
         },
       },
     });
@@ -667,7 +702,7 @@ function DraggableTask({ item }: DraggableTaskProps) {
 
   return (
     <FlatTaskBase
-      group={"parent" in item ? item.parent.title : undefined}
+      group={item.parent?.title}
       label={item.title}
       className={cn("min-h-[42px] w-xs transition-opacity *:cursor-grab!", {
         "opacity-30": isDragging,

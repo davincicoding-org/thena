@@ -47,6 +47,9 @@ importers:
       '@mantine/notifications':
         specifier: ^8.0.0
         version: 8.0.0(@mantine/core@8.0.0(@mantine/hooks@8.0.0(react@19.1.0))(@types/react@19.1.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(@mantine/hooks@8.0.0(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@neondatabase/serverless':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@opentelemetry/api-logs':
         specifier: ^0.200.0
         version: 0.200.0
@@ -72,8 +75,20 @@ importers:
         specifier: ^1.7.0
         version: 1.9.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@tanstack/react-query':
-        specifier: ^5.69.0
-        version: 5.75.2(react@19.1.0)
+        specifier: ^5.75.7
+        version: 5.75.7(react@19.1.0)
+      '@tanstack/react-query-persist-client':
+        specifier: ^5.75.7
+        version: 5.75.7(@tanstack/react-query@5.75.7(react@19.1.0))(react@19.1.0)
+      '@trpc/client':
+        specifier: ^11.1.2
+        version: 11.1.2(@trpc/server@11.1.2(typescript@5.8.3))(typescript@5.8.3)
+      '@trpc/react-query':
+        specifier: ^11.1.2
+        version: 11.1.2(@tanstack/react-query@5.75.7(react@19.1.0))(@trpc/client@11.1.2(@trpc/server@11.1.2(typescript@5.8.3))(typescript@5.8.3))(@trpc/server@11.1.2(typescript@5.8.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)
+      '@trpc/server':
+        specifier: ^11.1.2
+        version: 11.1.2(typescript@5.8.3)
       '@vercel/analytics':
         specifier: ^1.5.0
         version: 1.5.0(next@15.3.0(@babel/core@7.27.1)(@opentelemetry/api@1.9.0)(babel-plugin-react-compiler@19.1.0-rc.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
@@ -94,10 +109,13 @@ importers:
         version: 1.11.13
       drizzle-orm:
         specifier: ^0.43.1
-        version: 0.43.1(@electric-sql/pglite@0.3.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.14)
+        version: 0.43.1(@electric-sql/pglite@0.3.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.14)(postgres@3.4.5)
       drizzle-zod:
         specifier: ^0.7.1
-        version: 0.7.1(drizzle-orm@0.43.1(@electric-sql/pglite@0.3.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.14))(zod@3.24.3)
+        version: 0.7.1(drizzle-orm@0.43.1(@electric-sql/pglite@0.3.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.14)(postgres@3.4.5))(zod@3.24.3)
+      idb-keyval:
+        specifier: ^6.2.2
+        version: 6.2.2
       immer:
         specifier: ^10.1.1
         version: 10.1.1
@@ -125,6 +143,9 @@ importers:
       openai:
         specifier: ^4.95.1
         version: 4.97.0(ws@8.18.2)(zod@3.24.3)
+      postgres:
+        specifier: ^3.4.5
+        version: 3.4.5
       react:
         specifier: ^19.1.0
         version: 19.1.0
@@ -2639,8 +2660,11 @@ packages:
   '@tanstack/form-core@1.9.0':
     resolution: {integrity: sha512-lEXXQdIMW7PcybwnzJ+6VaEC65tWV/ZCgYfR5nC+lApXSlLPN+bp1fJanIclsw5U4dnx3DOxeOy/uzXwJ02wDQ==}
 
-  '@tanstack/query-core@5.75.0':
-    resolution: {integrity: sha512-rk8KQuCdhoRkzjRVF3QxLgAfFUyS0k7+GCQjlGEpEGco+qazJ0eMH6aO1DjDjibH7/ik383nnztua3BG+lOnwg==}
+  '@tanstack/query-core@5.75.7':
+    resolution: {integrity: sha512-4BHu0qnxUHOSnTn3ow9fIoBKTelh0GY08yn1IO9cxjBTsGvnxz1ut42CHZqUE3Vl/8FAjcHsj8RNJMoXvjgHEA==}
+
+  '@tanstack/query-persist-client-core@5.75.7':
+    resolution: {integrity: sha512-VI6gYsw9TOGd62n9fKrC7gdp0rvxjF7rf5l/9U+QWm0GcjO0MdBt3VMCp4pyVHJKlz4H89N7jKp6svDPLRDXLg==}
 
   '@tanstack/react-form@1.9.0':
     resolution: {integrity: sha512-jbd3QsohonHF93750uuFLTcv1pZeMOmfKP5kZu/VIwc3aZ1Y6NRsesx/CBhdPZD79ApCPZ7WfUmsKMLIER29gw==}
@@ -2654,8 +2678,14 @@ packages:
       vinxi:
         optional: true
 
-  '@tanstack/react-query@5.75.2':
-    resolution: {integrity: sha512-8F8VOsWUfSkCFoi62O9HSZT9jDgg28Ln8Z2dYKfRo/O2A0sgvr0uxTuNoon3PPXoDuHofv5V3elBI1M2Gh1MPg==}
+  '@tanstack/react-query-persist-client@5.75.7':
+    resolution: {integrity: sha512-DJ52g5NVoTja5aSTuhWDDGl2GDODIPPqKI0awowNxzUlsNCPxvEF2p8mkyb6Dsuo/T5OjLSeDjZTgk003DVBWQ==}
+    peerDependencies:
+      '@tanstack/react-query': ^5.75.7
+      react: ^18 || ^19
+
+  '@tanstack/react-query@5.75.7':
+    resolution: {integrity: sha512-JYcH1g5pNjKXNQcvvnCU/PueaYg05uKBDHlWIyApspv7r5C0BM12n6ysa2QF2T+1tlPnNXOob8vr8o96Nx0GxQ==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -2696,6 +2726,27 @@ packages:
     engines: {node: '>=12', npm: '>=6'}
     peerDependencies:
       '@testing-library/dom': '>=7.21.4'
+
+  '@trpc/client@11.1.2':
+    resolution: {integrity: sha512-RpifJOAv+ql9gF3oafa3dLCF01AzWu2DzejvehAPG2IlwHxopKoYXaImJ8zPwRkZokuWiKz5v65HjElmi8TlrQ==}
+    peerDependencies:
+      '@trpc/server': 11.1.2
+      typescript: '>=5.7.2'
+
+  '@trpc/react-query@11.1.2':
+    resolution: {integrity: sha512-Ws3oIaj0qqbVIUyfYd9uFBwqk7eRqsxaLhLKN7grskoBo8wkh/CUADcN6ZD+GGogC3Dsg9S4WhgU1jVgfc/ahg==}
+    peerDependencies:
+      '@tanstack/react-query': ^5.67.1
+      '@trpc/client': 11.1.2
+      '@trpc/server': 11.1.2
+      react: '>=18.2.0'
+      react-dom: '>=18.2.0'
+      typescript: '>=5.7.2'
+
+  '@trpc/server@11.1.2':
+    resolution: {integrity: sha512-Oi9zWHG0ZDkbDo4sYkduoV7q4sIe6UwjrRLC91vNMYQK+PVgpbTCmK1laRwewAGu0zaayqcGDosANjceOIC3GA==}
+    peerDependencies:
+      typescript: '>=5.7.2'
 
   '@tybys/wasm-util@0.9.0':
     resolution: {integrity: sha512-6+7nlbMVX/PVDCwaIQ8nTOPveOcFLSt8GcXdx8hD0bt39uWxYT88uXzqTd4fTvqta7oeUJqudepapKNt2DYJFw==}
@@ -4649,6 +4700,9 @@ packages:
     peerDependencies:
       postcss: ^8.1.0
 
+  idb-keyval@6.2.2:
+    resolution: {integrity: sha512-yjD9nARJ/jb1g+CvD0tlhUHOrJ9Sy0P8T9MF3YaLlHnSRpwPfpTX0XIvpmw3gAJUmEu3FiICLBDPXVwyEvrleg==}
+
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
 
@@ -5918,6 +5972,10 @@ packages:
 
   postgres-range@1.1.4:
     resolution: {integrity: sha512-i/hbxIE9803Alj/6ytL7UHQxRvZkI9O4Sy+J3HGc4F4oo/2eQAjTSNJ0bfxyse3bH0nuVesCk+3IRLaMtG3H6w==}
+
+  postgres@3.4.5:
+    resolution: {integrity: sha512-cDWgoah1Gez9rN3H4165peY9qfpEo+SA61oQv65O3cRUE1pOEoJWwddwcqKE8XZYjbblOJlYDlLV4h67HrEVDg==}
+    engines: {node: '>=12'}
 
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
@@ -8816,7 +8874,6 @@ snapshots:
     dependencies:
       '@types/node': 22.15.3
       '@types/pg': 8.11.14
-    optional: true
 
   '@next/env@15.3.0': {}
 
@@ -9881,7 +9938,11 @@ snapshots:
     dependencies:
       '@tanstack/store': 0.7.0
 
-  '@tanstack/query-core@5.75.0': {}
+  '@tanstack/query-core@5.75.7': {}
+
+  '@tanstack/query-persist-client-core@5.75.7':
+    dependencies:
+      '@tanstack/query-core': 5.75.7
 
   '@tanstack/react-form@1.9.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
     dependencies:
@@ -9893,9 +9954,15 @@ snapshots:
     transitivePeerDependencies:
       - react-dom
 
-  '@tanstack/react-query@5.75.2(react@19.1.0)':
+  '@tanstack/react-query-persist-client@5.75.7(@tanstack/react-query@5.75.7(react@19.1.0))(react@19.1.0)':
     dependencies:
-      '@tanstack/query-core': 5.75.0
+      '@tanstack/query-persist-client-core': 5.75.7
+      '@tanstack/react-query': 5.75.7(react@19.1.0)
+      react: 19.1.0
+
+  '@tanstack/react-query@5.75.7(react@19.1.0)':
+    dependencies:
+      '@tanstack/query-core': 5.75.7
       react: 19.1.0
 
   '@tanstack/react-store@0.7.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
@@ -9941,6 +10008,24 @@ snapshots:
   '@testing-library/user-event@14.5.2(@testing-library/dom@10.4.0)':
     dependencies:
       '@testing-library/dom': 10.4.0
+
+  '@trpc/client@11.1.2(@trpc/server@11.1.2(typescript@5.8.3))(typescript@5.8.3)':
+    dependencies:
+      '@trpc/server': 11.1.2(typescript@5.8.3)
+      typescript: 5.8.3
+
+  '@trpc/react-query@11.1.2(@tanstack/react-query@5.75.7(react@19.1.0))(@trpc/client@11.1.2(@trpc/server@11.1.2(typescript@5.8.3))(typescript@5.8.3))(@trpc/server@11.1.2(typescript@5.8.3))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)':
+    dependencies:
+      '@tanstack/react-query': 5.75.7(react@19.1.0)
+      '@trpc/client': 11.1.2(@trpc/server@11.1.2(typescript@5.8.3))(typescript@5.8.3)
+      '@trpc/server': 11.1.2(typescript@5.8.3)
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
+      typescript: 5.8.3
+
+  '@trpc/server@11.1.2(typescript@5.8.3)':
+    dependencies:
+      typescript: 5.8.3
 
   '@tybys/wasm-util@0.9.0':
     dependencies:
@@ -10060,7 +10145,6 @@ snapshots:
   '@types/node@22.15.3':
     dependencies:
       undici-types: 6.21.0
-    optional: true
 
   '@types/parse-json@4.0.2': {}
 
@@ -10073,7 +10157,6 @@ snapshots:
       '@types/node': 20.17.32
       pg-protocol: 1.9.5
       pg-types: 4.0.2
-    optional: true
 
   '@types/pg@8.6.1':
     dependencies:
@@ -11271,16 +11354,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.43.1(@electric-sql/pglite@0.3.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.14):
+  drizzle-orm@0.43.1(@electric-sql/pglite@0.3.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.14)(postgres@3.4.5):
     optionalDependencies:
       '@electric-sql/pglite': 0.3.0
       '@neondatabase/serverless': 1.0.0
       '@opentelemetry/api': 1.9.0
       '@types/pg': 8.11.14
+      postgres: 3.4.5
 
-  drizzle-zod@0.7.1(drizzle-orm@0.43.1(@electric-sql/pglite@0.3.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.14))(zod@3.24.3):
+  drizzle-zod@0.7.1(drizzle-orm@0.43.1(@electric-sql/pglite@0.3.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.14)(postgres@3.4.5))(zod@3.24.3):
     dependencies:
-      drizzle-orm: 0.43.1(@electric-sql/pglite@0.3.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.14)
+      drizzle-orm: 0.43.1(@electric-sql/pglite@0.3.0)(@neondatabase/serverless@1.0.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.14)(postgres@3.4.5)
       zod: 3.24.3
 
   dunder-proto@1.0.1:
@@ -12210,6 +12294,8 @@ snapshots:
   icss-utils@5.1.0(postcss@8.5.3):
     dependencies:
       postcss: 8.5.3
+
+  idb-keyval@6.2.2: {}
 
   ieee754@1.2.1: {}
 
@@ -13214,8 +13300,7 @@ snapshots:
 
   objectorarray@1.0.5: {}
 
-  obuf@1.1.2:
-    optional: true
+  obuf@1.1.2: {}
 
   ollama-ai-provider@1.2.0(zod@3.24.3):
     dependencies:
@@ -13392,8 +13477,7 @@ snapshots:
 
   pg-int8@1.0.1: {}
 
-  pg-numeric@1.0.2:
-    optional: true
+  pg-numeric@1.0.2: {}
 
   pg-protocol@1.9.5: {}
 
@@ -13414,7 +13498,6 @@ snapshots:
       postgres-date: 2.1.0
       postgres-interval: 3.0.0
       postgres-range: 1.1.4
-    optional: true
 
   picocolors@1.1.1: {}
 
@@ -13538,30 +13621,27 @@ snapshots:
 
   postgres-array@2.0.0: {}
 
-  postgres-array@3.0.4:
-    optional: true
+  postgres-array@3.0.4: {}
 
   postgres-bytea@1.0.0: {}
 
   postgres-bytea@3.0.0:
     dependencies:
       obuf: 1.1.2
-    optional: true
 
   postgres-date@1.0.7: {}
 
-  postgres-date@2.1.0:
-    optional: true
+  postgres-date@2.1.0: {}
 
   postgres-interval@1.2.0:
     dependencies:
       xtend: 4.0.2
 
-  postgres-interval@3.0.0:
-    optional: true
+  postgres-interval@3.0.0: {}
 
-  postgres-range@1.1.4:
-    optional: true
+  postgres-range@1.1.4: {}
+
+  postgres@3.4.5: {}
 
   prelude-ls@1.2.1: {}
 
@@ -14612,8 +14692,7 @@ snapshots:
 
   undici-types@6.19.8: {}
 
-  undici-types@6.21.0:
-    optional: true
+  undici-types@6.21.0: {}
 
   undici@5.29.0:
     dependencies:

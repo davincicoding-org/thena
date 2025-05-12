@@ -2,7 +2,7 @@ import type { NavLinkProps } from "@mantine/core";
 import { ActionIcon, Button, Flex, NavLink, Tooltip } from "@mantine/core";
 import { IconArrowDownDashed, IconCheck } from "@tabler/icons-react";
 
-import type { RunnableTask } from "@/core/deep-work";
+import type { TaskRun } from "@/core/deep-work";
 import { BoundOverlay } from "@/ui/components/BoundOverlay";
 import { cn } from "@/ui/utils";
 
@@ -10,7 +10,7 @@ export interface QueueTaskProps {
   label: string;
   group?: string;
   active: boolean;
-  status: RunnableTask["status"];
+  status: TaskRun["status"];
   readOnly?: boolean;
   onComplete: () => void;
   onSkip: () => void;
@@ -83,7 +83,7 @@ export function QueueTask({
         description={group}
         component="div"
         py={active ? undefined : 4}
-        disabled={(status === "planned" && !active) || readOnly}
+        disabled={(status === "pending" && !active) || readOnly}
         active={!active}
         color={color}
         classNames={{
@@ -93,7 +93,7 @@ export function QueueTask({
           body: cn("flex flex-col-reverse", {
             "line-through": status === "completed",
             "opacity-30":
-              status === "skipped" || (status === "planned" && !active),
+              status === "skipped" || (status === "pending" && !active),
           }),
         }}
         rightSection={null}

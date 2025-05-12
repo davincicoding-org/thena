@@ -35,7 +35,7 @@ export const taskRunInsert = createInsertSchema(taskRuns);
 export type TaskRunInsert = z.infer<typeof taskRunInsert>;
 
 export const taskRunSelect = createSelectSchema(taskRuns);
-export type TaskRunSelect = z.infer<typeof taskRunSelect>;
+export type TaskRunSelect = typeof taskRuns.$inferSelect;
 
 export const taskRunUpdate = createUpdateSchema(taskRuns);
 export type TaskRunUpdate = z.infer<typeof taskRunUpdate>;

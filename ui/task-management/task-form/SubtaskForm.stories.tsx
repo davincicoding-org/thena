@@ -1,30 +1,30 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { useArgs } from "@storybook/preview-api";
 import { fn } from "@storybook/test";
 
-import { TaskInput } from "@/core/task-management";
+import { Subtask, TaskInput } from "@/core/task-management";
+import {
+  taskFormOpts,
+  useTaskForm,
+} from "@/ui/task-management/task-form/useTaskForm";
 
-import type { TaskFormProps } from "./TaskForm";
-import { TaskForm } from "./TaskForm";
-import { taskFormOpts, useTaskForm } from "./useTaskForm";
+import type { SubtaskFormProps } from "./SubtaskForm";
+import { SubtaskForm } from "./SubtaskForm";
 
 const Playground = ({
   values,
   ...props
-}: TaskFormProps & { values?: TaskInput }) => {
+}: SubtaskFormProps & { values?: TaskInput }) => {
   const form = useTaskForm({
     ...taskFormOpts,
     defaultValues: values,
   });
-  return <TaskForm form={form} {...props} />;
+  return <SubtaskForm form={form} {...props} />;
 };
 
 const meta = {
   component: Playground,
-  args: {
-    projects: [],
-    onAddSubtask: fn(),
-    onCreateProject: fn(),
-  },
+  args: {},
 } satisfies Meta<typeof Playground>;
 
 export default meta;

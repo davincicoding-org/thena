@@ -131,7 +131,7 @@ export function DndWrapper({
           <FlatTaskBase
             className="cursor-grabbing!"
             label={activeItem.title}
-            group={"parent" in activeItem ? activeItem.parent.title : undefined}
+            group={activeItem.parent?.title}
           />
         ) : null}
       </DragOverlay>

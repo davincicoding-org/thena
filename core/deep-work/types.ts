@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { TaskRunSelect } from "@/core/deep-work/db";
+import type { FocusSessionSelect, TaskRunSelect } from "@/core/deep-work/db";
 import type { FlatTask } from "@/core/task-management";
 import { taskIdSchema } from "@/core/task-management";
 
@@ -31,13 +31,23 @@ export type WithRunMetrics<T> = T & {
   promoted?: boolean;
 };
 
-export type RunnableTask = FlatTask & {
+export interface ActiveFocusSession {
+  id?: FocusSessionSelect["id"];
+  currentSprintId?: RunnableSprint["id"];
+  status: "unstarted" | "idle" | "running" | "paused" | "break" | "finished";
+  interruption?: {
+    timeElapsed: number;
+  };
+}
+
+export interface TaskRun {
   runId: TaskRunSelect["id"];
   status: TaskRunSelect["status"];
-};
+  task: FlatTask;
+}
 
 export interface RunnableSprint extends Omit<SprintPlan, "tasks"> {
-  tasks: RunnableTask[];
+  tasks: TaskRun[];
 }
 
 export interface SprintRunSlot {

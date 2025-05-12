@@ -20,7 +20,6 @@ export function BugReporter(props: ActionIconProps) {
 
   const handleClick = async () => {
     const feedback = Sentry.getFeedback();
-    console.log("feedback", feedback);
 
     if (feedback) {
       const form = await feedback.createForm();
