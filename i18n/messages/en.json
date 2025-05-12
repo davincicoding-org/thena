@@ -1,6 +1,6 @@
 {
   "SessionPlanner": {
-    "startSession": "Start Session",
+    "finishPlanning": "Finish Planning",
     "resetSession": "Reset Session",
     "ResetModal": {
       "message": "Do you want to keep your tasks or delete them permanently?",

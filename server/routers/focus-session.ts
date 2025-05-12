@@ -1,4 +1,5 @@
 import { and, eq, sql } from "drizzle-orm";
+import { z } from "zod";
 
 import type { RunnableSprint, TaskRun } from "@/core/deep-work";
 import { resolveDuration, sprintPlanSchema } from "@/core/deep-work";
@@ -144,16 +145,22 @@ export const focusSessionsRouter = createTRPCRouter({
         return result;
       }),
     appendTimestamp: protectedProcedure
-      .input(taskRunSelect.pick({ id: true }))
+      .input(
+        taskRunSelect.pick({ id: true }).extend({
+          timestamp: z.date().optional(),
+        }),
+      )
       .mutation(async ({ ctx: { db, auth }, input }) => {
+        const timestamp = input.timestamp ?? new Date();
         const [result] = await db
           .update(taskRuns)
-          .set({ timestamps: sql`array_append(${taskRuns.timestamps}, now())` })
+          .set({
+            timestamps: sql`array_append(${taskRuns.timestamps}, ${timestamp})`,
+          })
           .where(
             and(eq(taskRuns.id, input.id), eq(taskRuns.userId, auth.userId)),
           )
           .returning();
-
         return result;
       }),
   },

@@ -1,6 +1,7 @@
 /* eslint-disable max-lines */
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Button,
@@ -18,16 +19,12 @@ import { notifications } from "@mantine/notifications";
 import { useTranslations } from "next-intl";
 
 import type { SprintPlan } from "@/core/deep-work";
-import type { TaskId, TaskInput, TaskSelect } from "@/core/task-management";
+import type { TaskId, TaskInput } from "@/core/task-management";
 import type { FocusSessionPlannerProps } from "@/ui/deep-work";
 import { Main } from "@/app/shell";
 import { api } from "@/trpc/react";
-import {
-  FocusSession,
-  FocusSessionPlanner,
-  useActiveFocusSession,
-  useSessionPlanningState,
-} from "@/ui/deep-work";
+import { FocusSessionPlanner, useSessionPlanningState } from "@/ui/deep-work";
+import { useActiveFocusSessionStorage } from "@/ui/deep-work/focus-session/useActiveFocusSessionStorage";
 import { useTimeTravel } from "@/ui/hooks/useTimeTravel";
 import { cn } from "@/ui/utils";
 
@@ -57,7 +54,9 @@ export default function SessionPage() {
 
   // MARK: Task Collector
 
-  const taskPool = api.tasks.getSelection.useQuery(planning.tasks);
+  const taskPool = api.tasks.getSelection.useQuery(planning.tasks, {
+    refetchOnWindowFocus: false,
+  });
 
   const isLoading = taskPool.isLoading || !planning.ready;
 
@@ -65,11 +64,19 @@ export default function SessionPage() {
   const { mutateAsync: updateTask } = api.tasks.update.useMutation();
   const { mutateAsync: deleteTask } = api.tasks.delete.useMutation();
 
-  const { data: importableTasks = [] } = api.tasks.list.useQuery({
-    status: "todo",
+  const { data: importableTasks = [] } = api.tasks.list.useQuery(
+    {
+      status: "todo",
+    },
+    {
+      refetchOnWindowFocus: false,
+    },
+  );
+
+  const projects = api.projects.list.useQuery(undefined, {
+    refetchOnWindowFocus: false,
   });
 
-  const projects = api.projects.list.useQuery();
   const createProject = api.projects.create.useMutation({
     onSuccess(newProject) {
       if (!newProject) return;
@@ -319,25 +326,33 @@ export default function SessionPage() {
     });
 
   // MARK: Session
+  const {
+    data: createdSession,
+    mutateAsync: createSession,
+    isPending: isCreatingSession,
+  } = api.focusSessions.create.useMutation();
 
-  const activeFocusSession = useActiveFocusSession();
+  const { session, setSession } = useActiveFocusSessionStorage();
 
   // MARK: User Actions
 
-  const handleStartSession = async () => {
+  const handleFinishPlanning = async () => {
     const validSprints = planning.sprints.filter(
       (sprint) => sprint.tasks.length > 0,
     );
     if (validSprints.length === 0) return;
-    await activeFocusSession.initialize(validSprints);
+    const { sessionId, sprintIds } = await createSession(validSprints);
+    setSession({
+      id: sessionId,
+      status: "idle",
+      currentSprintId: sprintIds[0]!,
+    });
     planning.reset();
   };
 
-  const handleFinishSession = (
-    taskStatusUpdates: Record<TaskSelect["id"], TaskSelect["status"]>,
-  ) => {
-    activeFocusSession.finishSession(taskStatusUpdates);
-    router.replace("/");
+  const handleStartSession = () => {
+    router.push(`/`);
+    planning.reset();
   };
 
   const [
@@ -416,38 +431,38 @@ export default function SessionPage() {
           <Button
             size="lg"
             radius="md"
-            loading={
-              activeFocusSession.initializing ||
-              activeFocusSession.sprints.isLoading
-            }
             disabled={planning.sprints.every(({ tasks }) => tasks.length === 0)}
-            onClick={handleStartSession}
+            onClick={handleFinishPlanning}
           >
-            {t("startSession")}
+            {t("finishPlanning")}
           </Button>
         </Flex>
       </Main>
 
-      <Modal.Root
-        opened={!!activeFocusSession.sprints.data}
-        fullScreen
-        transitionProps={{ transition: "fade", duration: 1000 }}
+      <Modal
+        centered
+        closeOnEscape={false}
+        closeOnClickOutside={false}
+        withCloseButton={false}
+        radius="md"
+        size="xs"
+        opened={
+          session !== null || isCreatingSession || createdSession !== undefined
+        }
         onClose={() => void 0}
       >
-        <Modal.Content>
-          <FocusSession
-            session={activeFocusSession.session}
-            sprints={activeFocusSession.sprints.data ?? []}
-            onStartSprint={activeFocusSession.startSprint}
-            onFinishSprint={activeFocusSession.finishSprint}
-            onFinishBreak={activeFocusSession.finishBreak}
-            onCompleteTask={activeFocusSession.completeTask}
-            onSkipTask={activeFocusSession.skipTask}
-            onUnskipTask={activeFocusSession.unskipTask}
-            onFinishSession={handleFinishSession}
-          />
-        </Modal.Content>
-      </Modal.Root>
+        <Button
+          fullWidth
+          size="lg"
+          loading={isCreatingSession}
+          component={Link}
+          onClick={handleStartSession}
+          href={`/focus`}
+          target="_blank"
+        >
+          Start Session
+        </Button>
+      </Modal>
 
       <Modal
         centered

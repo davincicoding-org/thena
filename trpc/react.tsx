@@ -1,42 +1,17 @@
 "use client";
 
 import type { QueryClient } from "@tanstack/react-query";
-import type {
-  PersistedClient,
-  Persister,
-} from "@tanstack/react-query-persist-client";
 import { useState } from "react";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchStreamLink, loggerLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import { type inferRouterInputs, type inferRouterOutputs } from "@trpc/server";
-import { del, get, set } from "idb-keyval";
 import SuperJSON from "superjson";
 
 import { type AppRouter } from "@/server/root";
 
 import { createQueryClient } from "./query-client";
 
-export function createIDBPersister(idbValidKey: IDBValidKey = "reactQuery") {
-  return {
-    persistClient: async (client: PersistedClient) => {
-      await set(idbValidKey, client);
-    },
-    restoreClient: async () => {
-      return await get<PersistedClient>(idbValidKey);
-    },
-    removeClient: async () => {
-      await del(idbValidKey);
-    },
-  } as Persister;
-}
-
-let persisterSingleton: Persister | undefined = undefined;
-const getPersister = () => {
-  // if (typeof window === "undefined") return createIDBPersister();
-  persisterSingleton ??= createIDBPersister();
-  return persisterSingleton;
-};
 let clientQueryClientSingleton: QueryClient | undefined = undefined;
 const getQueryClient = () => {
   if (typeof window === "undefined") {
@@ -67,7 +42,6 @@ export type RouterOutputs = inferRouterOutputs<AppRouter>;
 
 export function TRPCReactProvider(props: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
-  const persister = getPersister();
   const [trpcClient] = useState(() =>
     api.createClient({
       links: [
@@ -90,14 +64,11 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
   );
 
   return (
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{ persister }}
-    >
+    <QueryClientProvider client={queryClient}>
       <api.Provider client={trpcClient} queryClient={queryClient}>
         {props.children}
       </api.Provider>
-    </PersistQueryClientProvider>
+    </QueryClientProvider>
   );
 }
 

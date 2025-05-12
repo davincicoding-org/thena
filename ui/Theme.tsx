@@ -29,6 +29,13 @@ const theme = createTheme({
   primaryColor: "primary",
   primaryShade: 7,
   cursorType: "pointer",
+  components: {
+    Loader: {
+      defaultProps: {
+        type: "dots",
+      },
+    },
+  },
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {

@@ -3,6 +3,8 @@ import {
   keepPreviousData,
   QueryClient,
 } from "@tanstack/react-query";
+import { experimental_createPersister } from "@tanstack/react-query-persist-client";
+import { del, get, set } from "idb-keyval";
 import SuperJSON from "superjson";
 
 export const createQueryClient = () =>
@@ -14,6 +16,14 @@ export const createQueryClient = () =>
         // above 0 to avoid refetching immediately on the client
         staleTime: 30 * 1000,
         placeholderData: keepPreviousData,
+        persister: experimental_createPersister({
+          storage: {
+            getItem: get,
+            setItem: set,
+            removeItem: del,
+          },
+          maxAge: 24 * 60 * 60 * 1000,
+        }),
       },
       dehydrate: {
         serializeData: SuperJSON.serialize,

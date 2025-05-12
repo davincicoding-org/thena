@@ -1,24 +1,22 @@
+/* eslint-disable max-lines */
 import { useEffect } from "react";
-import { useLocalStorage, usePrevious, useWindowEvent } from "@mantine/hooks";
+import { usePrevious, useWindowEvent } from "@mantine/hooks";
 import { chunk } from "lodash-es";
+import SuperJSON from "superjson";
 
-import type {
-  ActiveFocusSession,
-  RunnableSprint,
-  SprintPlan,
-  TaskRun,
-} from "@/core/deep-work";
+import type { RunnableSprint, TaskRun } from "@/core/deep-work";
 import type { TaskSelect } from "@/core/task-management";
 import { api } from "@/trpc/react";
+import { useActiveFocusSessionStorage } from "@/ui/deep-work/focus-session/useActiveFocusSessionStorage";
 
 export const useActiveFocusSession = () => {
   // MARK: State
 
-  const [storedSession, setStoredSession, clearStoredSession] =
-    useLocalStorage<ActiveFocusSession | null>({
-      key: "active-focus-session",
-      defaultValue: null,
-    });
+  const {
+    session: storedSession,
+    setSession,
+    clearSession,
+  } = useActiveFocusSessionStorage();
 
   const sprints = api.focusSessions.get.useQuery(storedSession?.id, {
     enabled: !!storedSession?.id,
@@ -26,19 +24,34 @@ export const useActiveFocusSession = () => {
 
   // MARK: Interruption Handling
 
+  const INTERRUPTION_KEY = "active-focus-session-interruption";
+
   const handleInterruption = () => {
     if (!storedSession?.currentTaskRunId) return;
-    // Track interruption timestamp
-    appendTaskRunTimestamp({ id: storedSession.currentTaskRunId });
+
+    localStorage.setItem(
+      INTERRUPTION_KEY,
+      SuperJSON.stringify({
+        runId: storedSession.currentTaskRunId,
+        timestamp: new Date(),
+      }),
+    );
   };
+
   useWindowEvent("beforeunload", () => {
     handleInterruption();
   });
+
   useEffect(() => {
     if (typeof window === "undefined") return;
-    return () => {
-      handleInterruption();
-    };
+    const interruption = localStorage.getItem(INTERRUPTION_KEY);
+    if (!interruption) return;
+    const { runId, timestamp } = SuperJSON.parse<{
+      runId: TaskRun["runId"];
+      timestamp: Date;
+    }>(interruption);
+    appendTaskRunTimestamp({ id: runId, timestamp });
+    localStorage.removeItem(INTERRUPTION_KEY);
   }, []);
 
   // Add timestamp for current task run on interruption restoration
@@ -54,17 +67,28 @@ export const useActiveFocusSession = () => {
   // MARK: Mutations
   const utils = api.useUtils();
 
-  const { mutateAsync: createSession, isPending: isCreatingSession } =
-    api.focusSessions.create.useMutation();
-
   const { mutate: updateSprint } =
     api.focusSessions.sprint.update.useMutation();
 
   const { mutate: updateTaskRunStatus } =
     api.focusSessions.taskRun.update.useMutation({
-      onSuccess: (updatedTaskRun) => {
-        if (!updatedTaskRun) return;
+      onMutate(variables) {
+        const prevData = utils.focusSessions.get.getData(storedSession?.id);
         void utils.focusSessions.get.setData(storedSession?.id, (data) => {
+          if (!data) return;
+          return data.map((sprint) => ({
+            ...sprint,
+            tasks: sprint.tasks.map((task) => {
+              if (task.runId !== variables.id) return task;
+              return { ...task, ...variables };
+            }),
+          }));
+        });
+        return { prevData };
+      },
+      onSettled: (updatedTaskRun, error, variables, context) => {
+        void utils.focusSessions.get.setData(storedSession?.id, (data) => {
+          if (!updatedTaskRun) return context?.prevData;
           if (!data) return;
           return data.map((sprint) => ({
             ...sprint,
@@ -130,15 +154,6 @@ export const useActiveFocusSession = () => {
 
   // MARK: Action Handlers
 
-  const initialize = async (sprintPlans: SprintPlan[]) => {
-    const { sessionId, sprintIds } = await createSession(sprintPlans);
-    setStoredSession({
-      id: sessionId,
-      status: "idle",
-      currentSprintId: sprintIds[0]!,
-    });
-  };
-
   const startSprint = (sprintId: RunnableSprint["id"]) => {
     updateSprint({
       id: sprintId,
@@ -149,7 +164,7 @@ export const useActiveFocusSession = () => {
     const firstTaskRun = sprints.data?.find((sprint) => sprint.id === sprintId)
       ?.tasks[0];
     if (!firstTaskRun) throw new Error("No task runs found");
-    setStoredSession(
+    setSession(
       (prev) =>
         prev && {
           ...prev,
@@ -179,7 +194,7 @@ export const useActiveFocusSession = () => {
 
     const nextTaskRun = getNextTaskRun(args.sprintId);
 
-    setStoredSession(
+    setSession(
       (prev) =>
         prev && {
           ...prev,
@@ -203,7 +218,7 @@ export const useActiveFocusSession = () => {
 
     const nextTaskRun = getNextTaskRun(args.sprintId);
 
-    setStoredSession(
+    setSession(
       (prev) =>
         prev && {
           ...prev,
@@ -229,7 +244,7 @@ export const useActiveFocusSession = () => {
         status: "pending",
       },
     });
-    setStoredSession(
+    setSession(
       (prev) =>
         prev && {
           ...prev,
@@ -296,7 +311,7 @@ export const useActiveFocusSession = () => {
 
     const nextSprint = getNextSprint(sprintId);
     if (nextSprint) {
-      setStoredSession(
+      setSession(
         (prev) =>
           prev && {
             ...prev,
@@ -305,7 +320,7 @@ export const useActiveFocusSession = () => {
           },
       );
     } else {
-      setStoredSession(
+      setSession(
         (prev) =>
           prev && {
             ...prev,
@@ -318,7 +333,7 @@ export const useActiveFocusSession = () => {
   };
 
   const finishBreak = () => {
-    setStoredSession(
+    setSession(
       (prev) =>
         prev && {
           ...prev,
@@ -336,14 +351,11 @@ export const useActiveFocusSession = () => {
         status,
       });
     });
-    clearStoredSession();
+    clearSession();
   };
 
   return {
-    initialize,
-    initializing: isCreatingSession,
     session: storedSession,
-    reset: clearStoredSession,
     sprints,
     startSprint,
     finishSprint,
