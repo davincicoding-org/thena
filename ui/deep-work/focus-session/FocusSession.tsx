@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Flex, FocusTrap, Modal, ScrollArea } from "@mantine/core";
-import { useWindowEvent } from "@mantine/hooks";
+import { readLocalStorageValue, useWindowEvent } from "@mantine/hooks";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import { AnimatePresence, motion } from "motion/react";
@@ -12,53 +12,74 @@ import type {
 } from "@/core/deep-work";
 import type { TaskSelect } from "@/core/task-management";
 import { WavyBackground } from "@/ui/components/WavyBackground";
-import { SessionReview } from "@/ui/deep-work/focus-session/SessionReview";
 import { cn } from "@/ui/utils";
 
 import { SessionBreak } from "./SessionBreak";
-import { SprintWidget } from "./SprintWidget";
+import { SessionReview } from "./SessionReview";
+import { SprintQueue } from "./SprintQueue";
 
 dayjs.extend(duration);
 
 export interface FocusSessionProps {
-  session: ActiveFocusSession | null;
+  session: Omit<ActiveFocusSession, "id"> | null;
   sprints: RunnableSprint[];
+
   onStartSprint: (sprintId: RunnableSprint["id"]) => void;
-  onEndSprint: (sprintId: RunnableSprint["id"]) => void;
-  onUpdateTaskStatus: (
-    updates: Record<TaskSelect["id"], TaskSelect["status"]>,
+  onFinishSprint: (sprintId: RunnableSprint["id"]) => void;
+  onFinishBreak: () => void;
+
+  onCompleteTask: (args: {
+    sprintId: RunnableSprint["id"];
+    runId: TaskRun["runId"];
+    taskId: TaskSelect["id"];
+  }) => void;
+  onSkipTask: (args: {
+    sprintId: RunnableSprint["id"];
+    runId: TaskRun["runId"];
+  }) => void;
+  onUnskipTask: (args: {
+    sprintId: RunnableSprint["id"];
+    runId: TaskRun["runId"];
+  }) => void;
+
+  onFinishSession: (
+    taskStatusUpdates: Record<TaskSelect["id"], TaskSelect["status"]>,
   ) => void;
-  onUpdateTaskRun: (taskRun: Pick<TaskRun, "runId" | "status">) => void;
   className?: string;
-  onLeave: () => void;
-  onStatusChange: (status: ActiveFocusSession["status"]) => void;
-  onSprintChange: (sprintId: RunnableSprint["id"] | undefined) => void;
-  onInterruption: (interruption: ActiveFocusSession["interruption"]) => void;
 }
 
 export function FocusSession({
   session,
   sprints,
-  onUpdateTaskRun,
-  onUpdateTaskStatus,
   onStartSprint,
-  onEndSprint,
-  onLeave,
-  onInterruption,
-  onStatusChange,
-  onSprintChange,
+  onFinishSprint,
+  onFinishBreak,
+  onCompleteTask,
+  onSkipTask,
+  onUnskipTask,
+  onFinishSession,
   className,
 }: FocusSessionProps) {
   const stopWatch = useStopWatch();
 
-  // Resume from interruption
   useEffect(() => {
-    if (!session?.interruption) return;
-    switch (session.status) {
+    switch (session?.status) {
+      case "idle":
+        stopWatch.reset();
+        break;
       case "running":
         void videoRef.current?.play();
+        stopWatch.start();
+        break;
       case "break":
-        stopWatch.start(session.interruption.timeElapsed);
+        stopWatch.start();
+        break;
+      case "paused":
+        void videoRef.current?.pause();
+        stopWatch.pause();
+        break;
+      case "finished":
+        void videoRef.current?.pause();
         break;
     }
     setTimeout(() => {
@@ -74,112 +95,39 @@ export function FocusSession({
           inline: "center",
         });
     }, 300);
-  }, [session?.interruption]);
-
-  useEffect(() => {
-    if (!session?.currentSprintId) return;
-    setTimeout(() => {
-      if (breakRef.current)
-        return breakRef.current.scrollIntoView({
-          behavior: "smooth",
-          inline: "center",
-        });
-
-      if (activeSprintRef.current)
-        return activeSprintRef.current.scrollIntoView({
-          behavior: "smooth",
-          inline: "center",
-        });
-    }, 300);
-  }, [session?.currentSprintId]);
-
-  const handleInterruption = () => {
-    if (!session) return;
-    if (session.status === "unstarted") return;
-    if (session.status === "idle") return;
-    if (session.status === "finished") return;
-    onInterruption({
-      timeElapsed:
-        // FIXME: This is a hack to get the time elapsed from the interruption
-        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-        stopWatch.timeElapsed || session.interruption?.timeElapsed || 0,
-    });
-  };
-
-  // Store timer on exit
-  useWindowEvent("beforeunload", () => {
-    handleInterruption();
-  });
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    return () => {
-      handleInterruption();
-    };
-  }, []);
+  }, [session?.status]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const breakRef = useRef<HTMLDivElement>(null);
   const activeSprintRef = useRef<HTMLDivElement>(null);
 
-  const handleStartSprint = () => {
-    if (!session?.currentSprintId) return;
-    onStartSprint(session.currentSprintId);
-    void videoRef.current?.play();
-    stopWatch.start();
-    onStatusChange("running");
+  const handleStartSprint = (sprintId: RunnableSprint["id"]) => {
+    stopWatch.reset();
+    onStartSprint(sprintId);
   };
 
   const handlePauseSprint = () => {
-    void videoRef.current?.pause();
-    stopWatch.pause();
-    onStatusChange("paused");
+    // NOT IMPLEMENTED
   };
 
   const handleResumeSprint = () => {
-    void videoRef.current?.play();
-    stopWatch.start();
-    onStatusChange("running");
+    // NOT IMPLEMENTED
   };
 
-  const handleFinishSprint = (
-    nextSprintId: RunnableSprint["id"] | undefined,
-  ) => {
-    if (!session?.currentSprintId) return;
-    onEndSprint(session.currentSprintId);
-    void videoRef.current?.pause();
-    stopWatch.start(0);
-    if (!nextSprintId) {
-      onStatusChange("finished");
-      onSprintChange(undefined);
-      return;
-    }
-
-    onStatusChange("break");
-    onSprintChange(nextSprintId);
-
-    setTimeout(() => {
-      breakRef.current?.scrollIntoView({
-        behavior: "smooth",
-        inline: "center",
-      });
-    }, 300);
+  const handleFinishSprint = (sprintId: RunnableSprint["id"]) => {
+    onFinishSprint(sprintId);
+    stopWatch.reset();
   };
 
   const handleFinishBreak = () => {
     stopWatch.reset();
-    onStatusChange("idle");
-    activeSprintRef.current?.scrollIntoView({
-      behavior: "smooth",
-      inline: "center",
-    });
+    onFinishBreak();
   };
 
   const handleLeaveSession = (
     statusUpdates: Record<TaskSelect["id"], TaskSelect["status"]>,
   ) => {
-    // TODO fix this
-    onUpdateTaskStatus(statusUpdates);
-    onLeave();
+    onFinishSession(statusUpdates);
   };
 
   return (
@@ -224,7 +172,6 @@ export function FocusSession({
             <div className="h-px w-[50vw] shrink-0" />
             <AnimatePresence>
               {sprints.map((sprint, index) => {
-                const nextSprintId = sprints[index + 1]?.id;
                 const isCurrentSprint = session?.currentSprintId === sprint.id;
 
                 return (
@@ -251,7 +198,7 @@ export function FocusSession({
                         </motion.div>
                       )}
 
-                    <SprintWidget
+                    <SprintQueue
                       className={cn(
                         "w-xs shrink-0 snap-center snap-always transition-opacity",
                         {
@@ -264,31 +211,28 @@ export function FocusSession({
                         },
                       )}
                       ref={isCurrentSprint ? activeSprintRef : undefined}
-                      disabled={
+                      readOnly={
                         !isCurrentSprint ||
                         !["idle", "running", "paused"].includes(session.status)
                       }
                       duration={sprint.duration}
                       timeElapsed={stopWatch.timeElapsed}
+                      currentTaskRunId={session?.currentTaskRunId}
                       tasks={sprint.tasks}
                       paused={session?.status === "paused"}
-                      onStart={handleStartSprint}
+                      onStart={() => handleStartSprint(sprint.id)}
                       onPause={handlePauseSprint}
                       onResume={handleResumeSprint}
-                      onFinish={() => handleFinishSprint(nextSprintId)}
-                      onCompleteTask={(runId) => {
-                        onUpdateTaskRun({ runId, status: "completed" });
-                        // TODO Log to PostHog
-                      }}
-                      onSkipTask={(runId) => {
-                        onUpdateTaskRun({ runId, status: "skipped" });
-                        // TODO Log to PostHog
-                      }}
-                      onUnskipTask={(runId) => {
-                        onUpdateTaskRun({ runId, status: "pending" });
-
-                        // TODO Log to PostHog
-                      }}
+                      onFinish={() => handleFinishSprint(sprint.id)}
+                      onCompleteTask={({ runId, taskId }) =>
+                        onCompleteTask({ sprintId: sprint.id, runId, taskId })
+                      }
+                      onSkipTask={({ runId }) =>
+                        onSkipTask({ sprintId: sprint.id, runId })
+                      }
+                      onUnskipTask={({ runId }) =>
+                        onUnskipTask({ sprintId: sprint.id, runId })
+                      }
                     />
                   </Fragment>
                 );
@@ -320,7 +264,29 @@ export function FocusSession({
 }
 
 function useStopWatch() {
-  const [timeElapsed, setTimeElapsed] = useState(0);
+  const STORAGE_KEY = "focus-session-time-elapsed";
+  const handleInterruption = () => {
+    if (!isRunning) return;
+    localStorage.setItem(STORAGE_KEY, timeElapsed.toString());
+  };
+  useWindowEvent("beforeunload", () => {
+    handleInterruption();
+  });
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    return () => {
+      handleInterruption();
+    };
+  }, []);
+
+  const [timeElapsed, setTimeElapsed] = useState<number>(() => {
+    const restoredTimeElapsed = readLocalStorageValue<number>({
+      key: STORAGE_KEY,
+      defaultValue: 0,
+    });
+    localStorage.removeItem(STORAGE_KEY);
+    return restoredTimeElapsed;
+  });
   const [isRunning, setIsRunning] = useState(false);
 
   useEffect(() => {
@@ -331,8 +297,7 @@ function useStopWatch() {
     return () => clearInterval(interval);
   }, [isRunning]);
 
-  const start = (timeElapsed?: number) => {
-    if (timeElapsed !== undefined) setTimeElapsed(timeElapsed);
+  const start = () => {
     setIsRunning(true);
   };
 
@@ -350,5 +315,6 @@ function useStopWatch() {
     start,
     pause,
     reset,
+    setTimeElapsed,
   };
 }

@@ -29,7 +29,9 @@ import {
 } from "@/ui/task-management";
 
 export default function HomePage() {
-  const intelligenceSummary = api.intelligence.summary.useQuery();
+  const intelligenceSummary = api.intelligence.summary.useQuery(undefined, {
+    refetchOnWindowFocus: false,
+  });
 
   const utils = api.useUtils();
   // Tasks

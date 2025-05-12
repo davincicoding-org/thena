@@ -61,7 +61,9 @@ export const tasks = pgTable(
     /* made DEFERRABLE via extraSql */
     uniqueIndex("leaf_or_root_only").on(t.id),
     index("idx_tasks_parent").on(t.parentId),
+    index("idx_tasks_project").on(t.projectId),
     index("idx_tasks_status").on(t.status),
+    index("idx_tasks_owner").on(t.userId),
   ],
 );
 
@@ -85,24 +87,32 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
 }));
 
 /* ═════════ PROJECTS ═════════ */
-export const projects = pgTable("projects", {
-  id: uuid().defaultRandom().notNull().primaryKey(),
-  userId: text().notNull(),
-  title: text().notNull(),
-  description: text(),
-  image: text(),
-});
+export const projects = pgTable(
+  "projects",
+  {
+    id: uuid().defaultRandom().notNull().primaryKey(),
+    userId: text().notNull(),
+    title: text().notNull(),
+    description: text(),
+    image: text(),
+  },
+  (t) => [index("idx_projects_owner").on(t.userId)],
+);
 
 export const projectsRelations = relations(projects, ({ many }) => ({
   tasks: many(tasks, { relationName: "project_tasks" }),
 }));
 
 /* ═════════ FOCUS SESSIONS ═════════ */
-export const focusSessions = pgTable("focus_sessions", {
-  id: uuid().defaultRandom().notNull().primaryKey(),
-  userId: text().notNull(),
-  createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-});
+export const focusSessions = pgTable(
+  "focus_sessions",
+  {
+    id: uuid().defaultRandom().notNull().primaryKey(),
+    userId: text().notNull(),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("idx_focus_sessions_owner").on(t.userId)],
+);
 
 export const focusSessionsRelations = relations(focusSessions, ({ many }) => ({
   sprints: many(sprints),
@@ -128,8 +138,17 @@ export const sprints = pgTable(
     createdAt: timestamp({ withTimezone: true }).defaultNow(),
     startedAt: timestamp({ withTimezone: true }),
     endedAt: timestamp({ withTimezone: true }),
+
+    focusTime: integer(),
+    completedTasks: integer(),
+    skippedTasks: integer(),
   },
-  (t) => [check("positive_duration", sql`${t.duration} > 0`)],
+  (t) => [
+    check("positive_duration", sql`${t.duration} > 0`),
+    index("idx_sprints_owner").on(t.userId),
+    index("idx_sprints_ended_at").on(t.endedAt),
+    index("idx_sprints_session").on(t.sessionId),
+  ],
 );
 
 export const sprintsRelations = relations(sprints, ({ one, many }) => ({
@@ -151,7 +170,11 @@ export const taskRuns = pgTable(
   "task_runs",
   {
     id: uuid().defaultRandom().notNull().primaryKey(),
-    sprintId: uuid().notNull(),
+    sprintId: uuid()
+      .notNull()
+      .references(() => sprints.id, {
+        onDelete: "cascade",
+      }),
     userId: text().notNull(),
     taskId: uuid()
       .notNull()
@@ -162,6 +185,9 @@ export const taskRuns = pgTable(
     status: taskRunStatusEnum().default("pending").notNull(),
     // addedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
     ordinal: integer().notNull(),
+
+    timestamps: timestamp({ withTimezone: true }).array().default([]),
+    duration: integer(),
   },
   (t) => [
     index("idx_task_run_sprint_id").on(t.sprintId),

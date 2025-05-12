@@ -13,22 +13,19 @@ import {
   Text,
   Transition,
 } from "@mantine/core";
-import {
-  useDebouncedCallback,
-  useDisclosure,
-  useLocalStorage,
-} from "@mantine/hooks";
+import { useDebouncedCallback, useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useTranslations } from "next-intl";
 
-import type { ActiveFocusSession, SprintPlan } from "@/core/deep-work";
-import type { TaskId, TaskInput } from "@/core/task-management";
+import type { SprintPlan } from "@/core/deep-work";
+import type { TaskId, TaskInput, TaskSelect } from "@/core/task-management";
 import type { FocusSessionPlannerProps } from "@/ui/deep-work";
 import { Main } from "@/app/shell";
 import { api } from "@/trpc/react";
 import {
   FocusSession,
   FocusSessionPlanner,
+  useActiveFocusSession,
   useSessionPlanningState,
 } from "@/ui/deep-work";
 import { useTimeTravel } from "@/ui/hooks/useTimeTravel";
@@ -323,38 +320,7 @@ export default function SessionPage() {
 
   // MARK: Session
 
-  const [activeSession, setActiveSession, clearActiveSession] =
-    useLocalStorage<ActiveFocusSession | null>({
-      key: "active-focus-session",
-      defaultValue: null,
-    });
-
-  const { mutateAsync: createSession, isPending: isCreatingSession } =
-    api.focusSessions.create.useMutation();
-
-  const runnableSprints = api.focusSessions.get.useQuery(activeSession?.id);
-
-  const { mutate: trackTime } =
-    api.focusSessions.sprint.trackTime.useMutation();
-
-  const { mutate: updateTaskRunStatus } =
-    api.focusSessions.taskRun.updateStatus.useMutation({
-      onSuccess: (_, { id, status }) => {
-        void utils.focusSessions.get.setData(activeSession?.id, (data) => {
-          if (!data) return;
-          return data.map((sprint) => ({
-            ...sprint,
-            tasks: sprint.tasks.map((task) => {
-              if (task.runId !== id) return task;
-              return { ...task, status };
-            }),
-          }));
-        });
-      },
-    });
-
-  const { mutate: updateTaskStatus } =
-    api.focusSessions.task.updateStatus.useMutation();
+  const activeFocusSession = useActiveFocusSession();
 
   // MARK: User Actions
 
@@ -363,13 +329,15 @@ export default function SessionPage() {
       (sprint) => sprint.tasks.length > 0,
     );
     if (validSprints.length === 0) return;
-    const sessionId = await createSession(validSprints);
-    setActiveSession({
-      id: sessionId,
-      status: "idle",
-      currentSprintId: validSprints[0]!.id,
-    });
+    await activeFocusSession.initialize(validSprints);
     planning.reset();
+  };
+
+  const handleFinishSession = (
+    taskStatusUpdates: Record<TaskSelect["id"], TaskSelect["status"]>,
+  ) => {
+    activeFocusSession.finishSession(taskStatusUpdates);
+    router.replace("/");
   };
 
   const [
@@ -448,7 +416,10 @@ export default function SessionPage() {
           <Button
             size="lg"
             radius="md"
-            loading={isCreatingSession || runnableSprints.isLoading}
+            loading={
+              activeFocusSession.initializing ||
+              activeFocusSession.sprints.isLoading
+            }
             disabled={planning.sprints.every(({ tasks }) => tasks.length === 0)}
             onClick={handleStartSession}
           >
@@ -458,52 +429,22 @@ export default function SessionPage() {
       </Main>
 
       <Modal.Root
-        opened={!!runnableSprints.data}
+        opened={!!activeFocusSession.sprints.data}
         fullScreen
         transitionProps={{ transition: "fade", duration: 1000 }}
         onClose={() => void 0}
       >
         <Modal.Content>
           <FocusSession
-            session={activeSession}
-            sprints={runnableSprints.data ?? []}
-            onStartSprint={(sprintId) =>
-              trackTime({ id: sprintId, type: "start" })
-            }
-            onEndSprint={(sprintId) => trackTime({ id: sprintId, type: "end" })}
-            onUpdateTaskRun={({ runId, status }) =>
-              updateTaskRunStatus({ id: runId, status })
-            }
-            onUpdateTaskStatus={(updates) => {
-              Object.entries(updates).forEach(([id, status]) => {
-                updateTaskStatus({ id, status });
-              });
-            }}
-            onInterruption={(interruption) => {
-              setActiveSession((prev) => {
-                if (!prev) return null;
-                return { ...prev, interruption };
-              });
-            }}
-            onStatusChange={(status) =>
-              setActiveSession((prev) => {
-                if (!prev) return null;
-                return {
-                  ...prev,
-                  status,
-                };
-              })
-            }
-            onSprintChange={(sprintId) => {
-              setActiveSession((prev) => {
-                if (!prev) return null;
-                return { ...prev, currentSprintId: sprintId };
-              });
-            }}
-            onLeave={() => {
-              router.replace("/");
-              clearActiveSession();
-            }}
+            session={activeFocusSession.session}
+            sprints={activeFocusSession.sprints.data ?? []}
+            onStartSprint={activeFocusSession.startSprint}
+            onFinishSprint={activeFocusSession.finishSprint}
+            onFinishBreak={activeFocusSession.finishBreak}
+            onCompleteTask={activeFocusSession.completeTask}
+            onSkipTask={activeFocusSession.skipTask}
+            onUnskipTask={activeFocusSession.unskipTask}
+            onFinishSession={handleFinishSession}
           />
         </Modal.Content>
       </Modal.Root>

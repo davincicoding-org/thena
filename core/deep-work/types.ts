@@ -21,28 +21,17 @@ export const sprintPlanSchema = z.object({
 });
 export type SprintPlan = z.infer<typeof sprintPlanSchema>;
 
-/**
- * Type helper that adds run metrics to any type, inferred from the schema
- */
-export type WithRunMetrics<T> = T & {
-  completedAt?: number;
-  skipped?: boolean;
-  pulledIn?: boolean;
-  promoted?: boolean;
-};
-
 export interface ActiveFocusSession {
-  id?: FocusSessionSelect["id"];
+  id: FocusSessionSelect["id"];
   currentSprintId?: RunnableSprint["id"];
-  status: "unstarted" | "idle" | "running" | "paused" | "break" | "finished";
-  interruption?: {
-    timeElapsed: number;
-  };
+  currentTaskRunId?: TaskRunSelect["id"];
+  status: "idle" | "running" | "paused" | "break" | "finished";
 }
 
 export interface TaskRun {
   runId: TaskRunSelect["id"];
   status: TaskRunSelect["status"];
+  timestamps: TaskRunSelect["timestamps"];
   task: FlatTask;
 }
 

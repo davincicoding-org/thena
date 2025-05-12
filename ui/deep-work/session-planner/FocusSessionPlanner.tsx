@@ -263,7 +263,10 @@ export function FocusSessionPlanner({
                           variant="outline"
                           size="xs"
                           mr={4}
-                          onClick={() => onAddSprint([])}
+                          onClick={() => {
+                            onAddSprint([]);
+                            toggleMode("dnd");
+                          }}
                         >
                           {t("TaskPool.createSprint")}
                         </Button>

@@ -1,12 +1,19 @@
-import { Card, Flex, Skeleton, Stack, Text } from "@mantine/core";
+import { Card, Flex, RingProgress, Skeleton, Stack, Text } from "@mantine/core";
 
 export interface IntelligenceTileProps {
   loading?: boolean;
   summary:
     | {
-        focusMinutes: number;
+        focusTime: number;
         completedTasks: number;
-        completedSprints: number;
+        completionRate: number;
+        completedSprints: {
+          id: string;
+          duration: number;
+          completedTasks: number;
+          skippedTasks: number;
+          completionRate: number;
+        }[];
       }
     | undefined;
 }
@@ -17,11 +24,12 @@ export function IntelligenceTile({ loading, summary }: IntelligenceTileProps) {
   }
 
   const focusDuration = (() => {
-    const hours = Math.floor(summary.focusMinutes / 60);
-    const minutes = summary.focusMinutes % 60;
-    if (hours === 0) return `${minutes}m`;
+    const focusTimeInMinutes = summary.focusTime / (1000 * 60);
+    const hours = Math.floor(focusTimeInMinutes / 60);
+    const minutes = focusTimeInMinutes % 60;
+    if (hours === 0) return `${minutes.toFixed(0)}m`;
 
-    return `${hours}h ${minutes}m`;
+    return `${hours}h ${minutes.toFixed(0)}m`;
   })();
 
   const tasksCompleted = (() => {
@@ -31,6 +39,8 @@ export function IntelligenceTile({ loading, summary }: IntelligenceTileProps) {
 
     return `${(summary.completedTasks / 1_000).toFixed(1)}k`;
   })();
+
+  const completionPercentage = summary.completionRate * 100;
 
   return (
     <Card
@@ -47,11 +57,23 @@ export function IntelligenceTile({ loading, summary }: IntelligenceTileProps) {
         align="center"
         className="h-full"
       >
+        <RingProgress
+          size={90}
+          rootColor="yellow"
+          roundCaps
+          thickness={10}
+          label={
+            <Text size="sm" ta="center">
+              {completionPercentage.toFixed(0)}%
+            </Text>
+          }
+          sections={[{ value: completionPercentage, color: "green" }]}
+        />
         <Stack gap={0} ta="center">
           <Text className="text-3xl!">{tasksCompleted}</Text>
           <Text size="sm">Tasks completed</Text>
         </Stack>
-        {/* <RingProgress size={90} sections={[{ value: 75, color: "primary" }]} /> */}
+
         <Stack gap={0} ta="center">
           <Text className="text-3xl!">{focusDuration}</Text>
           <Text size="sm">Focus Time</Text>

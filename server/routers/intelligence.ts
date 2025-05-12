@@ -1,39 +1,45 @@
-import dayjs from "dayjs";
-import { and, eq } from "drizzle-orm";
-
-import { tasks } from "@/db/schema";
-
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const intelligenceRouter = createTRPCRouter({
   summary: protectedProcedure.query(async ({ ctx: { db, auth } }) => {
-    const completedTasks = await db.$count(
-      tasks,
-      and(eq(tasks.userId, auth.userId), eq(tasks.status, "completed")),
-    );
-
-    const sprints = await db.query.sprints.findMany({
-      where: (sprints, { eq }) => eq(sprints.userId, auth.userId),
+    const completedSprints = await db.query.sprints.findMany({
+      where: (sprints, { eq, and, isNotNull }) =>
+        and(eq(sprints.userId, auth.userId), isNotNull(sprints.endedAt)),
     });
 
-    // FIXME: This is wrong, since a session might be aborted
-    const focusTimePerSprint = sprints.reduce<number[]>((acc, sprint) => {
-      if (!sprint.endedAt || !sprint.startedAt) return acc;
+    const sprintSummaries = completedSprints.map((sprint) => {
+      const completed = sprint.completedTasks ?? 0;
+      const skipped = sprint.skippedTasks ?? 0;
+      const total = completed + skipped;
 
-      const startedAt = dayjs(sprint.startedAt);
-      const endedAt = dayjs(sprint.endedAt);
+      return {
+        id: sprint.id,
+        duration: sprint.duration ?? 0,
+        completedTasks: completed,
+        skippedTasks: skipped,
+        completionRate: total > 0 ? completed / total : 0,
+      };
+    });
 
-      const duration = endedAt.diff(startedAt, "minutes");
+    const completedTasks = sprintSummaries.reduce((acc, sprint) => {
+      return acc + sprint.completedTasks;
+    }, 0);
 
-      return [...acc, duration];
-    }, []);
+    const skippedTasks = sprintSummaries.reduce((acc, sprint) => {
+      return acc + sprint.skippedTasks;
+    }, 0);
+
+    const totalTasks = completedTasks + skippedTasks;
+
+    const completionRate = totalTasks > 0 ? completedTasks / totalTasks : 0;
 
     return {
       completedTasks,
-      completedSprints: focusTimePerSprint.length,
-      focusMinutes: focusTimePerSprint.reduce((acc, sprintDuration) => {
-        return acc + sprintDuration;
+      completedSprints: sprintSummaries,
+      focusTime: completedSprints.reduce((acc, sprint) => {
+        return acc + (sprint.focusTime ?? 0);
       }, 0),
+      completionRate,
     };
   }),
 });

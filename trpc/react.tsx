@@ -31,6 +31,12 @@ export function createIDBPersister(idbValidKey: IDBValidKey = "reactQuery") {
   } as Persister;
 }
 
+let persisterSingleton: Persister | undefined = undefined;
+const getPersister = () => {
+  // if (typeof window === "undefined") return createIDBPersister();
+  persisterSingleton ??= createIDBPersister();
+  return persisterSingleton;
+};
 let clientQueryClientSingleton: QueryClient | undefined = undefined;
 const getQueryClient = () => {
   if (typeof window === "undefined") {
@@ -61,7 +67,7 @@ export type RouterOutputs = inferRouterOutputs<AppRouter>;
 
 export function TRPCReactProvider(props: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
-  const [persister] = useState(() => createIDBPersister());
+  const persister = getPersister();
   const [trpcClient] = useState(() =>
     api.createClient({
       links: [
