@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button, Flex } from "@mantine/core";
 
-import { Main } from "@/app/shell";
+import { Main } from "@/app/(shell)/shell";
 
 export default function DemosPage() {
   return (

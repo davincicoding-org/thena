@@ -1,3 +1,5 @@
+"use client";
+
 import type { ActionIconProps } from "@mantine/core";
 import { useEffect } from "react";
 import { useUser } from "@clerk/nextjs";

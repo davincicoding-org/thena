@@ -52,7 +52,7 @@ export function SessionReview({ sprints, onLeave }: SessionReviewProps) {
       <Text ta="center" size="xl" className="text-balance">
         {description}
       </Text>
-      {incompleteTasks.length && (
+      {incompleteTasks.length > 0 && (
         <>
           <Divider my="sm" />
           <Text>What should happen with your incompleted tasks?</Text>

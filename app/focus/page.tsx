@@ -1,9 +1,8 @@
 "use client";
 
-import { LoadingOverlay, Modal } from "@mantine/core";
+import { LoadingOverlay } from "@mantine/core";
 
 import type { TaskSelect } from "@/core/task-management";
-import { Main } from "@/app/shell";
 import { FocusSession, useActiveFocusSession } from "@/ui/deep-work";
 
 export default function FocusPage() {
@@ -19,29 +18,19 @@ export default function FocusPage() {
   };
 
   return (
-    <Main display="grid">
+    <>
       <LoadingOverlay visible={!isLoaded} />
-
-      <Modal.Root
-        opened={isLoaded}
-        fullScreen
-        transitionProps={{ transition: "fade", duration: 1000 }}
-        onClose={() => void 0}
-      >
-        <Modal.Content>
-          <FocusSession
-            session={activeFocusSession.session}
-            sprints={activeFocusSession.sprints.data ?? []}
-            onStartSprint={activeFocusSession.startSprint}
-            onFinishSprint={activeFocusSession.finishSprint}
-            onFinishBreak={activeFocusSession.finishBreak}
-            onCompleteTask={activeFocusSession.completeTask}
-            onSkipTask={activeFocusSession.skipTask}
-            onUnskipTask={activeFocusSession.unskipTask}
-            onFinishSession={handleFinishSession}
-          />
-        </Modal.Content>
-      </Modal.Root>
-    </Main>
+      <FocusSession
+        session={activeFocusSession.session}
+        sprints={activeFocusSession.sprints.data ?? []}
+        onStartSprint={activeFocusSession.startSprint}
+        onFinishSprint={activeFocusSession.finishSprint}
+        onFinishBreak={activeFocusSession.finishBreak}
+        onCompleteTask={activeFocusSession.completeTask}
+        onSkipTask={activeFocusSession.skipTask}
+        onUnskipTask={activeFocusSession.unskipTask}
+        onFinishSession={handleFinishSession}
+      />
+    </>
   );
 }

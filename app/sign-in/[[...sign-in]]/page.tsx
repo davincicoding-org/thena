@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { SignIn } from "@clerk/nextjs";
 
-import { Main } from "@/app/shell";
+import { Main } from "@/app/(shell)/shell";
 
 export const metadata: Metadata = {
   robots: {

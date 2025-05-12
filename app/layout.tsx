@@ -8,9 +8,8 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 
 import { TRPCReactProvider } from "@/trpc/react";
+import { BugReporter } from "@/ui/components/BugReporter";
 import { ThemeProvider } from "@/ui/Theme";
-
-import Shell from "./shell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,7 +50,13 @@ export default async function RootLayout({
           >
             <ThemeProvider>
               <NextIntlClientProvider>
-                <Shell>{children}</Shell>
+                {children}
+                <BugReporter
+                  className="fixed! top-2 right-2 z-[500]"
+                  variant="subtle"
+                  color="orange"
+                  size="xl"
+                />
               </NextIntlClientProvider>
             </ThemeProvider>
             <Analytics />

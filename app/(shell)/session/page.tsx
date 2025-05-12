@@ -21,7 +21,7 @@ import { useTranslations } from "next-intl";
 import type { SprintPlan } from "@/core/deep-work";
 import type { TaskId, TaskInput } from "@/core/task-management";
 import type { FocusSessionPlannerProps } from "@/ui/deep-work";
-import { Main } from "@/app/shell";
+import { Main } from "@/app/(shell)/shell";
 import { api } from "@/trpc/react";
 import { FocusSessionPlanner, useSessionPlanningState } from "@/ui/deep-work";
 import { useActiveFocusSessionStorage } from "@/ui/deep-work/focus-session/useActiveFocusSessionStorage";
@@ -347,7 +347,6 @@ export default function SessionPage() {
       status: "idle",
       currentSprintId: sprintIds[0]!,
     });
-    planning.reset();
   };
 
   const handleStartSession = () => {
@@ -426,7 +425,7 @@ export default function SessionPage() {
             variant="subtle"
             onClick={() => handleReset()}
           >
-            {t("resetSession")}
+            {t("cta.resetSession")}
           </Button>
           <Button
             size="lg"
@@ -434,7 +433,7 @@ export default function SessionPage() {
             disabled={planning.sprints.every(({ tasks }) => tasks.length === 0)}
             onClick={handleFinishPlanning}
           >
-            {t("finishPlanning")}
+            {t("cta.finishPlanning")}
           </Button>
         </Flex>
       </Main>
@@ -460,7 +459,7 @@ export default function SessionPage() {
           href={`/focus`}
           target="_blank"
         >
-          Start Session
+          {t("cta.startSession")}
         </Button>
       </Modal>
 

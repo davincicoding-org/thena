@@ -4,10 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AppShell, Flex, Text } from "@mantine/core";
 
-import { BugReporter } from "@/ui/components/BugReporter";
 import { cn } from "@/ui/utils";
 
-export default function Shell({ children }: { children: React.ReactNode }) {
+export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
@@ -50,12 +49,6 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           {/* </SignedIn> */}
         </Flex>
       </AppShell.Header>
-      <BugReporter
-        className="fixed! top-2 right-2 z-[500]"
-        variant="subtle"
-        color="orange"
-        size="xl"
-      />
       {children}
     </AppShell>
   );

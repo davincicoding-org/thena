@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { Center, Container } from "@mantine/core";
 
-import { Main } from "@/app/shell";
+import { Main } from "@/app/(shell)/shell";
 import { useModelsConfigStore } from "@/core/config/models";
 import { Chat } from "@/ui/misc/Chat";
 

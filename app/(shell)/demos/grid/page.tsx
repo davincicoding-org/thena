@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Card, Center, Container } from "@mantine/core";
 
-import { Main } from "@/app/shell";
+import { Main } from "@/app/(shell)/shell";
 import { cn } from "@/ui/utils";
 
 export default function Grid() {

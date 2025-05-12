@@ -1,6 +1,6 @@
 import { Center, Title } from "@mantine/core";
 
-import { Main } from "@/app/shell";
+import { Main } from "@/app/(shell)/shell";
 
 export default function IntelligencePage() {
   return (

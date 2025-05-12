@@ -12,7 +12,7 @@ import {
 } from "@mantine/core";
 import { useInputState } from "@mantine/hooks";
 
-import { Main } from "@/app/shell";
+import { Main } from "@/app/(shell)/shell";
 import {
   useSpeechConfigStore,
   useSpeechRecognition,

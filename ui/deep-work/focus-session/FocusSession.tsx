@@ -284,7 +284,8 @@ function useStopWatch() {
       key: STORAGE_KEY,
       defaultValue: 0,
     });
-    localStorage.removeItem(STORAGE_KEY);
+    if (typeof window === "undefined") return 0;
+    localStorage?.removeItem(STORAGE_KEY);
     return restoredTimeElapsed;
   });
   const [isRunning, setIsRunning] = useState(false);

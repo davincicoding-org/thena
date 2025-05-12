@@ -14,7 +14,7 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 
-import { Main } from "@/app/shell";
+import { Main } from "@/app/(shell)/shell";
 import { countTasks } from "@/core/task-management";
 import { api } from "@/trpc/react";
 import { SidePanel } from "@/ui/components/SidePanel";
