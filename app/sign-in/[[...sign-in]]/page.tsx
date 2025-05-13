@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { SignIn } from "@clerk/nextjs";
-
-import { Main } from "@/app/(shell)/shell";
+import { Center } from "@mantine/core";
 
 export const metadata: Metadata = {
   robots: {
@@ -11,8 +10,8 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <Main display="grid" className="h-dvh items-center justify-center">
+    <Center className="h-dvh">
       <SignIn />
-    </Main>
+    </Center>
   );
 }
