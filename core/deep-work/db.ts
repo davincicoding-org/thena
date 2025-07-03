@@ -5,18 +5,18 @@ import {
   createUpdateSchema,
 } from "drizzle-zod";
 
-import { focusSessions, sprints, taskRuns } from "@/db/schema";
+import { sprints, taskRuns } from "@/database/schema";
 
 // MARK: Focus Session
 
-export const focusSessionInsert = createInsertSchema(focusSessions);
-export type FocusSessionInsert = z.infer<typeof focusSessionInsert>;
+// export const focusSessionInsert = createInsertSchema(focusSessions);
+// export type FocusSessionInsert = z.infer<typeof focusSessionInsert>;
 
-export const focusSessionSelect = createSelectSchema(focusSessions);
-export type FocusSessionSelect = z.infer<typeof focusSessionSelect>;
+// export const focusSessionSelect = createSelectSchema(focusSessions);
+// export type FocusSessionSelect = z.infer<typeof focusSessionSelect>;
 
-export const focusSessionUpdate = createUpdateSchema(focusSessions);
-export type FocusSessionUpdate = z.infer<typeof focusSessionUpdate>;
+// export const focusSessionUpdate = createUpdateSchema(focusSessions);
+// export type FocusSessionUpdate = z.infer<typeof focusSessionUpdate>;
 
 // MARK: Sprint
 

@@ -19,8 +19,11 @@ import { resolveDuration } from "@/core/deep-work";
 import { Panel } from "@/ui/components/Panel";
 import { cn } from "@/ui/utils";
 
-import { FlatTaskBase } from "./components";
-import { SortableTasksContainer, useSortableTask } from "./dnd";
+import { FlatTaskBase } from "../ui/deep-work/session-planner/components";
+import {
+  SortableTasksContainer,
+  useSortableTask,
+} from "../ui/deep-work/session-planner/dnd";
 
 export interface SprintPanelProps {
   sprintId: SprintPlan["id"];

@@ -130,12 +130,7 @@ export function SprintBuilder({
           scrollHideDelay={300}
           viewportRef={viewport}
         >
-          <Flex
-            py="lg"
-            align="start"
-            justify="space-evenly"
-            className="h-full space-x-6"
-          >
+          <Flex py="lg" align="start" className="h-full space-x-6">
             <Space className="mr-3 h-1 w-2 shrink-0" />
 
             {sprints.map((sprint, index) => (

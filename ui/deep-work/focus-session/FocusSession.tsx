@@ -6,11 +6,11 @@ import duration from "dayjs/plugin/duration";
 import { AnimatePresence, motion } from "motion/react";
 
 import type {
-  ActiveFocusSession,
+  // ActiveFocusSession,
   RunnableSprint,
   TaskRun,
 } from "@/core/deep-work";
-import type { TaskSelect } from "@/core/task-management";
+import type { FlatTask, TaskSelect } from "@/core/task-management";
 import { WavyBackground } from "@/ui/components/WavyBackground";
 import { cn } from "@/ui/utils";
 
@@ -21,8 +21,9 @@ import { SprintQueue } from "./SprintQueue";
 dayjs.extend(duration);
 
 export interface FocusSessionProps {
-  session: Omit<ActiveFocusSession, "id"> | null;
-  sprints: RunnableSprint[];
+  tasks: FlatTask[];
+  // session: Omit<ActiveFocusSession, "id"> | null;
+  // sprints: RunnableSprint[];
 
   onStartSprint: (sprintId: RunnableSprint["id"]) => void;
   onFinishSprint: (sprintId: RunnableSprint["id"]) => void;
@@ -33,69 +34,65 @@ export interface FocusSessionProps {
     runId: TaskRun["runId"];
     taskId: TaskSelect["id"];
   }) => void;
-  onSkipTask: (args: {
-    sprintId: RunnableSprint["id"];
-    runId: TaskRun["runId"];
-  }) => void;
-  onUnskipTask: (args: {
-    sprintId: RunnableSprint["id"];
-    runId: TaskRun["runId"];
-  }) => void;
+  // onSkipTask: (args: {
+  //   sprintId: RunnableSprint["id"];
+  //   runId: TaskRun["runId"];
+  // }) => void;
+  // onUnskipTask: (args: {
+  //   sprintId: RunnableSprint["id"];
+  //   runId: TaskRun["runId"];
+  // }) => void;
 
-  onFinishSession: (
-    taskStatusUpdates: Record<TaskSelect["id"], TaskSelect["status"]>,
-  ) => void;
+  onFinishSession: () // taskStatusUpdates: Record<TaskSelect["id"], TaskSelect["status"]>,
+  => void;
   className?: string;
 }
 
 export function FocusSession({
-  session,
-  sprints,
+  tasks,
   onStartSprint,
   onFinishSprint,
   onFinishBreak,
   onCompleteTask,
-  onSkipTask,
-  onUnskipTask,
   onFinishSession,
   className,
 }: FocusSessionProps) {
   const stopWatch = useStopWatch();
 
-  useEffect(() => {
-    switch (session?.status) {
-      case "idle":
-        stopWatch.reset();
-        break;
-      case "running":
-        void videoRef.current?.play();
-        stopWatch.start();
-        break;
-      case "break":
-        stopWatch.start();
-        break;
-      case "paused":
-        void videoRef.current?.pause();
-        stopWatch.pause();
-        break;
-      case "finished":
-        void videoRef.current?.pause();
-        break;
-    }
-    setTimeout(() => {
-      if (breakRef.current)
-        return breakRef.current.scrollIntoView({
-          behavior: "smooth",
-          inline: "center",
-        });
+  // useEffect(() => {
+  //   switch (session?.status) {
+  //     case "idle":
+  //       stopWatch.reset();
+  //       break;
+  //     case "running":
+  //       void videoRef.current?.play();
+  //       stopWatch.start();
+  //       break;
+  //     case "break":
+  //       stopWatch.start();
+  //       break;
+  //     case "paused":
+  //       void videoRef.current?.pause();
+  //       stopWatch.pause();
+  //       break;
+  //     case "finished":
+  //       void videoRef.current?.pause();
+  //       break;
+  //   }
+  //   setTimeout(() => {
+  //     if (breakRef.current)
+  //       return breakRef.current.scrollIntoView({
+  //         behavior: "smooth",
+  //         inline: "center",
+  //       });
 
-      if (activeSprintRef.current)
-        return activeSprintRef.current.scrollIntoView({
-          behavior: "smooth",
-          inline: "center",
-        });
-    }, 300);
-  }, [session?.status]);
+  //     if (activeSprintRef.current)
+  //       return activeSprintRef.current.scrollIntoView({
+  //         behavior: "smooth",
+  //         inline: "center",
+  //       });
+  //   }, 300);
+  // }, [session?.status]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const breakRef = useRef<HTMLDivElement>(null);
@@ -127,14 +124,15 @@ export function FocusSession({
   const handleLeaveSession = (
     statusUpdates: Record<TaskSelect["id"], TaskSelect["status"]>,
   ) => {
-    onFinishSession(statusUpdates);
+    alert("TODO");
+    // onFinishSession(statusUpdates);
   };
 
   return (
     <WavyBackground
       speed="slow"
       className="h-full"
-      disabled={session?.status === "running"}
+      // disabled={session?.status === "running"}
     >
       <FocusTrap.InitialFocus />
       <Flex className={cn("h-full", className)}>
@@ -146,7 +144,7 @@ export function FocusSession({
           className={cn(
             "absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-1000",
             {
-              "opacity-100": session?.status === "running",
+              // "opacity-100": session?.status === "running",
             },
           )}
         >
@@ -170,7 +168,7 @@ export function FocusSession({
         >
           <div className="flex items-start gap-12">
             <div className="h-px w-[50vw] shrink-0" />
-            <AnimatePresence>
+            {/* <AnimatePresence>
               {sprints.map((sprint, index) => {
                 const isCurrentSprint = session?.currentSprintId === sprint.id;
 
@@ -237,14 +235,15 @@ export function FocusSession({
                   </Fragment>
                 );
               })}
-            </AnimatePresence>
+            </AnimatePresence> */}
             <div className="h-px w-[50vw] shrink-0" />
           </div>
         </ScrollArea>
       </Flex>
-      <Modal
+      {/* <Modal
         centered
-        opened={session?.status === "finished"}
+        opened={false}
+        // opened={session?.status === "finished"}
         withCloseButton={false}
         closeOnEscape={false}
         closeOnClickOutside={false}
@@ -258,7 +257,7 @@ export function FocusSession({
         }}
       >
         <SessionReview sprints={sprints} onLeave={handleLeaveSession} />
-      </Modal>
+      </Modal> */}
     </WavyBackground>
   );
 }

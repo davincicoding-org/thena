@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { FocusSessionSelect, TaskRunSelect } from "@/core/deep-work/db";
+import type { TaskRunSelect } from "@/core/deep-work/db";
 import type { FlatTask } from "@/core/task-management";
 import { taskIdSchema } from "@/core/task-management";
 
@@ -21,12 +21,12 @@ export const sprintPlanSchema = z.object({
 });
 export type SprintPlan = z.infer<typeof sprintPlanSchema>;
 
-export interface ActiveFocusSession {
-  id: FocusSessionSelect["id"];
-  currentSprintId?: RunnableSprint["id"];
-  currentTaskRunId?: TaskRunSelect["id"];
-  status: "idle" | "running" | "paused" | "break" | "finished";
-}
+// export interface ActiveFocusSession {
+//   id: FocusSessionSelect["id"];
+//   currentSprintId?: RunnableSprint["id"];
+//   currentTaskRunId?: TaskRunSelect["id"];
+//   status: "idle" | "running" | "paused" | "break" | "finished";
+// }
 
 export interface TaskRun {
   runId: TaskRunSelect["id"];

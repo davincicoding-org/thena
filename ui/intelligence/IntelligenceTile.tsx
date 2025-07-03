@@ -16,7 +16,7 @@ export interface IntelligenceTileProps {
         completedTasks: number;
         completionRate: number;
         completedSprints: {
-          id: string;
+          id: number;
           duration: number;
           completedTasks: number;
           skippedTasks: number;

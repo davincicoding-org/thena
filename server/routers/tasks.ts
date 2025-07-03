@@ -1,18 +1,19 @@
 import { and, eq } from "drizzle-orm";
 
+import type { TaskTree } from "@/core/task-management";
 import {
-  taskInputSchema,
+  taskFormSchema,
   taskSelectionSchema,
   taskSelectSchema,
   taskUpdateSchema,
 } from "@/core/task-management";
-import { tasks } from "@/db/schema";
+import { tasks } from "@/database/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const tasksRouter = createTRPCRouter({
   create: protectedProcedure
-    .input(taskInputSchema)
+    .input(taskFormSchema)
     .mutation(async ({ ctx: { db, auth }, input }) => {
       const [result] = await db
         .insert(tasks)
@@ -22,28 +23,26 @@ export const tasksRouter = createTRPCRouter({
         })
         .returning();
 
+      if (!result) throw new Error("Failed to create task");
+
       return result;
     }),
 
   update: protectedProcedure
-    .input(
-      taskSelectSchema.pick({ id: true }).extend({
-        updates: taskUpdateSchema,
-      }),
-    )
-    .mutation(async ({ ctx: { db, auth }, input }) => {
+    .input(taskUpdateSchema.required({ id: true, parentId: true }))
+    .mutation(async ({ ctx: { db, auth }, input: { id, ...updates } }) => {
       const [result] = await db
         .update(tasks)
-        .set(input.updates)
-        .where(and(eq(tasks.id, input.id), eq(tasks.userId, auth.userId)))
+        .set(updates)
+        .where(and(eq(tasks.id, id), eq(tasks.userId, auth.userId)))
         .returning();
+      if (!result) throw new Error("Failed to update task");
       return result;
     }),
 
   delete: protectedProcedure
-    .input(taskSelectSchema.pick({ id: true }))
+    .input(taskSelectSchema)
     .mutation(async ({ ctx: { db, auth }, input }) => {
-      // TODO: Maybe update status to deleted instead?
       const [result] = await db
         .delete(tasks)
         .where(and(eq(tasks.id, input.id), eq(tasks.userId, auth.userId)))
@@ -53,7 +52,7 @@ export const tasksRouter = createTRPCRouter({
 
   list: protectedProcedure
     .input(taskSelectSchema.pick({ status: true }))
-    .query(async ({ ctx: { db, auth }, input }) => {
+    .query<TaskTree[]>(async ({ ctx: { db, auth }, input }) => {
       const result = await db.query.tasks.findMany({
         where: (tasks, { eq, and, isNull }) =>
           and(
@@ -61,8 +60,11 @@ export const tasksRouter = createTRPCRouter({
             isNull(tasks.parentId),
             eq(tasks.status, input.status),
           ),
+        orderBy: (tasks, { asc }) => [asc(tasks.sortOrder)],
         with: {
-          subtasks: true,
+          subtasks: {
+            orderBy: (tasks, { asc }) => [asc(tasks.sortOrder)],
+          },
         },
       });
       return result;

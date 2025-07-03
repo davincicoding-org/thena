@@ -1,15 +1,12 @@
+import type { SQL } from "drizzle-orm";
 import type { AnyPgColumn } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 import {
   check,
   index,
-  integer,
   pgEnum,
   pgTable,
-  text,
-  timestamp,
   uniqueIndex,
-  uuid,
 } from "drizzle-orm/pg-core";
 
 /* ═════════ TASKS  ═════════ */
@@ -31,31 +28,42 @@ export const taskComplexity = pgEnum("task_complexity", [
 
 export const taskStatusEnum = pgEnum("task_status", [
   "todo",
-  "pending",
   "completed",
   "deleted",
 ]);
 
 export const tasks = pgTable(
   "tasks",
-  {
-    id: uuid().defaultRandom().notNull().primaryKey(),
-    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp({ withTimezone: true }).$onUpdate(() => new Date()),
-    userId: text().notNull(),
+  (d) => ({
+    id: d.serial().primaryKey(),
+    createdAt: d
+      .timestamp({ withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    updatedAt: d
+      .timestamp({ withTimezone: true, mode: "date" })
+      .$onUpdate(() => new Date()),
+    userId: d.text().notNull(),
+    customSortOrder: d.doublePrecision(),
+    sortOrder: d
+      .doublePrecision()
+      .generatedAlwaysAs(
+        (): SQL => sql`COALESCE(${tasks.customSortOrder}, ${tasks.id})`,
+      )
+      .notNull(),
 
-    parentId: uuid().references((): AnyPgColumn => tasks.id, {
+    parentId: d.integer().references((): AnyPgColumn => tasks.id, {
       onDelete: "cascade",
     }),
-    projectId: uuid().references(() => projects.id, {
+    projectId: d.integer().references(() => projects.id, {
       onDelete: "set null",
     }),
 
     status: taskStatusEnum().default("todo").notNull(),
-    title: text().notNull(),
+    title: d.text().notNull(),
     priority: taskPriority(),
     complexity: taskComplexity(),
-  },
+  }),
   (t) => [
     check("no_task_as_own_parent", sql`${t.id} IS DISTINCT FROM ${t.parentId}`),
     /* made DEFERRABLE via extraSql */
@@ -89,13 +97,13 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
 /* ═════════ PROJECTS ═════════ */
 export const projects = pgTable(
   "projects",
-  {
-    id: uuid().defaultRandom().notNull().primaryKey(),
-    userId: text().notNull(),
-    title: text().notNull(),
-    description: text(),
-    image: text(),
-  },
+  (d) => ({
+    id: d.serial().primaryKey(),
+    userId: d.text().notNull(),
+    title: d.text().notNull(),
+    description: d.text(),
+    image: d.text(),
+  }),
   (t) => [index("idx_projects_owner").on(t.userId)],
 );
 
@@ -104,58 +112,58 @@ export const projectsRelations = relations(projects, ({ many }) => ({
 }));
 
 /* ═════════ FOCUS SESSIONS ═════════ */
-export const focusSessions = pgTable(
-  "focus_sessions",
-  {
-    id: uuid().defaultRandom().notNull().primaryKey(),
-    userId: text().notNull(),
-    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-  },
-  (t) => [index("idx_focus_sessions_owner").on(t.userId)],
-);
+// export const focusSessions = pgTable(
+//   "focus_sessions",
+//   {
+//     id: uuid().defaultRandom().notNull().primaryKey(),
+//     userId: text().notNull(),
+//     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+//   },
+//   (t) => [index("idx_focus_sessions_owner").on(t.userId)],
+// );
 
-export const focusSessionsRelations = relations(focusSessions, ({ many }) => ({
-  sprints: many(sprints),
-}));
+// export const focusSessionsRelations = relations(focusSessions, ({ many }) => ({
+//   sprints: many(sprints),
+// }));
 
 /* ═════════ SPRINTS ═════════ */
 export const sprints = pgTable(
   "sprints",
-  {
-    id: uuid().defaultRandom().notNull().primaryKey(),
-    userId: text().notNull(),
-    sessionId: uuid().references(() => focusSessions.id, {
-      onDelete: "cascade",
-    }),
+  (d) => ({
+    id: d.serial().primaryKey(),
+    userId: d.text().notNull(),
+    // sessionId: uuid().references(() => focusSessions.id, {
+    //   onDelete: "cascade",
+    // }),
 
     /** Duration in minutes */
-    duration: integer().notNull(),
+    duration: d.integer().notNull(),
     /** Break after sprint in minutes */
-    recoveryTime: integer(),
-    scheduledStart: timestamp({ withTimezone: true }),
-    ordinal: integer().notNull(),
+    recoveryTime: d.integer(),
+    // scheduledStart: timestamp({ withTimezone: true }),
+    // ordinal: integer().notNull(),
 
-    createdAt: timestamp({ withTimezone: true }).defaultNow(),
-    startedAt: timestamp({ withTimezone: true }),
-    endedAt: timestamp({ withTimezone: true }),
+    // createdAt: timestamp({ withTimezone: true }).defaultNow(),
+    startedAt: d.timestamp({ withTimezone: true }),
+    endedAt: d.timestamp({ withTimezone: true }),
 
-    focusTime: integer(),
-    completedTasks: integer(),
-    skippedTasks: integer(),
-  },
+    focusTime: d.integer(),
+    completedTasks: d.integer(),
+    skippedTasks: d.integer(),
+  }),
   (t) => [
     check("positive_duration", sql`${t.duration} > 0`),
     index("idx_sprints_owner").on(t.userId),
     index("idx_sprints_ended_at").on(t.endedAt),
-    index("idx_sprints_session").on(t.sessionId),
+    // index("idx_sprints_session").on(t.sessionId),
   ],
 );
 
 export const sprintsRelations = relations(sprints, ({ one, many }) => ({
-  focusSession: one(focusSessions, {
-    fields: [sprints.sessionId, sprints.userId],
-    references: [focusSessions.id, focusSessions.userId],
-  }),
+  // focusSession: one(focusSessions, {
+  //   fields: [sprints.sessionId, sprints.userId],
+  //   references: [focusSessions.id, focusSessions.userId],
+  // }),
   taskRuns: many(taskRuns),
 }));
 
@@ -168,15 +176,17 @@ export const taskRunStatusEnum = pgEnum("task_run_status", [
 
 export const taskRuns = pgTable(
   "task_runs",
-  {
-    id: uuid().defaultRandom().notNull().primaryKey(),
-    sprintId: uuid()
+  (d) => ({
+    id: d.serial().primaryKey(),
+    sprintId: d
+      .integer()
       .notNull()
       .references(() => sprints.id, {
         onDelete: "cascade",
       }),
-    userId: text().notNull(),
-    taskId: uuid()
+    userId: d.text().notNull(),
+    taskId: d
+      .integer()
       .notNull()
       .references(() => tasks.id, {
         onDelete: "cascade",
@@ -184,11 +194,11 @@ export const taskRuns = pgTable(
 
     status: taskRunStatusEnum().default("pending").notNull(),
     // addedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-    ordinal: integer().notNull(),
+    ordinal: d.integer().notNull(),
 
-    timestamps: timestamp({ withTimezone: true }).array().default([]),
-    duration: integer(),
-  },
+    timestamps: d.timestamp({ withTimezone: true }).array().default([]),
+    duration: d.integer(),
+  }),
   (t) => [
     index("idx_task_run_sprint_id").on(t.sprintId),
     index("idx_task_run_owner").on(t.userId),
@@ -251,43 +261,44 @@ export const taskRunsRelations = relations(taskRuns, ({ one }) => ({
 
 // TODO this is not applied yet. Apply it or remove
 
-export const extraSql = sql`
-/* 1. make leaf_or_root_only deferrable + stop sub-subtasks */
-  ALTER TABLE tasks
-    ALTER CONSTRAINT leaf_or_root_only
-    DEFERRABLE INITIALLY DEFERRED;
+// TODO: Fix extraSql - currently commented out due to column name mismatches
+// export const extraSql = sql`
+// /* 1. make leaf_or_root_only deferrable + stop sub-subtasks */
+//   ALTER TABLE tasks
+//     ALTER CONSTRAINT leaf_or_root_only
+//     DEFERRABLE INITIALLY DEFERRED;
 
-  CREATE OR REPLACE FUNCTION enforce_one_level()
-  RETURNS trigger LANGUAGE plpgsql AS $$
-  BEGIN
-    IF NEW.parent_task_id IS NOT NULL THEN
-      PERFORM 1 FROM tasks WHERE parent_task_id = NEW.task_id LIMIT 1;
-      IF FOUND THEN
-        RAISE EXCEPTION 'Subtasks cannot have subtasks (%).', NEW.task_id;
-      END IF;
-    END IF;
-    RETURN NEW;
-  END $$;
+//   CREATE OR REPLACE FUNCTION enforce_one_level()
+//   RETURNS trigger LANGUAGE plpgsql AS $$
+//   BEGIN
+//     IF NEW.parent_task_id IS NOT NULL THEN
+//       PERFORM 1 FROM tasks WHERE parent_task_id = NEW.task_id LIMIT 1;
+//       IF FOUND THEN
+//         RAISE EXCEPTION 'Subtasks cannot have subtasks (%).', NEW.task_id;
+//       END IF;
+//     END IF;
+//     RETURN NEW;
+//   END $$;
 
-  CREATE CONSTRAINT TRIGGER chk_one_level
-  AFTER INSERT OR UPDATE ON tasks
-  DEFERRABLE INITIALLY DEFERRED
-  FOR EACH ROW EXECUTE FUNCTION enforce_one_level();
+//   CREATE CONSTRAINT TRIGGER chk_one_level
+//   AFTER INSERT OR UPDATE ON tasks
+//   DEFERRABLE INITIALLY DEFERRED
+//   FOR EACH ROW EXECUTE FUNCTION enforce_one_level();
 
-  /* 2. leaf-only sprint rule */
+//   /* 2. leaf-only sprint rule */
 
-  CREATE OR REPLACE FUNCTION only_leaf_tasks_in_sprint()
-  RETURNS trigger LANGUAGE plpgsql AS $$
-  BEGIN
-    PERFORM 1 FROM tasks WHERE parent_task_id = NEW.task_id LIMIT 1;
-    IF FOUND THEN
-      RAISE EXCEPTION 'Task % has subtasks; add its subtasks instead.', NEW.task_id;
-    END IF;
+//   CREATE OR REPLACE FUNCTION only_leaf_tasks_in_sprint()
+//   RETURNS trigger LANGUAGE plpgsql AS $$
+//   BEGIN
+//     PERFORM 1 FROM tasks WHERE parent_task_id = NEW.task_id LIMIT 1;
+//     IF FOUND THEN
+//       RAISE EXCEPTION 'Task % has subtasks; add its subtasks instead.', NEW.task_id;
+//     END IF;
 
-    RETURN NEW;
-  END $$;
+//     RETURN NEW;
+//   END $$;
 
-  CREATE TRIGGER trg_leaf_only
-  BEFORE INSERT ON sprint_tasks
-  FOR EACH ROW EXECUTE FUNCTION only_leaf_tasks_in_sprint();
-`;
+//   CREATE TRIGGER trg_leaf_only
+//   BEFORE INSERT ON sprint_tasks
+//   FOR EACH ROW EXECUTE FUNCTION only_leaf_tasks_in_sprint();
+// `;

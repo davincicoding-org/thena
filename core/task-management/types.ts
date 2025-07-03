@@ -1,12 +1,17 @@
 import { z } from "zod";
 
 import type { ProjectSelect } from "./db";
-import { projectInsertSchema, taskInsertSchema, taskSelectSchema } from "./db";
+import { projectInsertSchema, taskSelectSchema } from "./db";
 
-export const taskInputSchema = taskInsertSchema.omit({
-  userId: true,
+export const taskFormSchema = taskSelectSchema.pick({
+  title: true,
+  priority: true,
+  complexity: true,
+  projectId: true,
+  parentId: true,
+  customSortOrder: true,
 });
-export type TaskInput = z.infer<typeof taskInputSchema>;
+export type TaskFormValues = z.infer<typeof taskFormSchema>;
 
 export const taskSelectionSchema = taskSelectSchema.pick({ id: true }).extend({
   subtasks: taskSelectSchema.shape.id.array().optional(),

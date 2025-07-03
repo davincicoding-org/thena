@@ -18,14 +18,14 @@ export const createQueryClient = () =>
         placeholderData: keepPreviousData,
         refetchOnWindowFocus: false,
         refetchOnMount: false,
-        persister: experimental_createPersister({
-          storage: {
-            getItem: get,
-            setItem: set,
-            removeItem: del,
-          },
-          maxAge: 24 * 60 * 60 * 1000,
-        }),
+        // persister: experimental_createPersister({
+        //   storage: {
+        //     getItem: get,
+        //     setItem: set,
+        //     removeItem: del,
+        //   },
+        //   maxAge: 24 * 60 * 60 * 1000,
+        // }),
       },
       dehydrate: {
         serializeData: SuperJSON.serialize,

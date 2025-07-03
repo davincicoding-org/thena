@@ -11,15 +11,10 @@
       "keepTasks": "Keep"
     },
     "TaskPool": {
-      "title": {
-        "all": "Tasks",
-        "unassigned": "Unassigned Tasks"
-      },
-      "createSprint": "Create Sprint",
       "ModeSwitcher": {
-        "edit": "Edit",
-        "assign": "Assign",
-        "hotKeyTip": "Press <kbd></kbd> to quickly toggle between editing and assigning tasks."
+        "edit": "EDIT",
+        "reorder": "REORDER",
+        "hotKeyTip": "Press <kbd></kbd> to quickly toggle between editing and reordering tasks."
       },
 
       "emptyMessage": "Add all the tasks you want to work on today.",
@@ -30,7 +25,7 @@
       },
       "TaskCreator": {
         "cta": "Create Task",
-        "hotKeyHint": "Press <kbd>space</kbd> to create a new task",
+        "hotKeyHint": "Press <kbd></kbd> to create a new task",
         "placeholder": "New Task"
       },
       "TaskImporter": {

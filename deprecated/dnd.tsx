@@ -22,9 +22,9 @@ import { CSS } from "@dnd-kit/utilities";
 import { Alert, Stack } from "@mantine/core";
 
 import type { FlatTask, TaskId } from "@/core/task-management";
-import type { FocusSessionPlannerProps } from "@/ui/deep-work/session-planner/FocusSessionPlanner";
+import type { FocusSessionPlannerProps } from "@/ui/task-management/TaskListEditor";
 
-import { FlatTaskBase } from "./components";
+import { FlatTaskBase } from "../ui/deep-work/session-planner/components";
 
 export const TASK_POOL_ID = "$TASK_POOL$";
 
@@ -33,23 +33,14 @@ interface DraggingTaskData extends Partial<SortableData> {
 }
 
 export interface DndWrapperProps
-  extends Pick<
-    FocusSessionPlannerProps,
-    | "onUnassignTasksFromSprint"
-    | "onMoveTask"
-    | "onAssignTasksToSprint"
-    | "onReorderSprintTasks"
-  > {
+  extends Pick<FocusSessionPlannerProps, "onReorderTasks"> {
   enabled: boolean;
 }
 
 export function DndWrapper({
   children,
   enabled,
-  onAssignTasksToSprint,
-  onUnassignTasksFromSprint,
-  onMoveTask: onMoveTasks,
-  onReorderSprintTasks,
+  onReorderTasks,
 }: PropsWithChildren<DndWrapperProps>) {
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -69,46 +60,48 @@ export function DndWrapper({
         const { item } = active.data.current as DraggingTaskData;
         setActiveItem(item);
       }}
-      onDragOver={(event) => {
-        if (!event.active.data.current) return;
-        if (!event.over) return;
+      // onDragOver={(event) => {
+      //   if (!event.active.data.current) return;
+      //   if (!event.over) return;
 
-        const overData = event.over.data.current as SortableData | undefined;
+      //   const overData = event.over.data.current as SortableData | undefined;
 
-        const targetContainerId =
-          overData?.sortable.containerId ?? event.over.id;
+      //   const targetContainerId =
+      //     overData?.sortable.containerId ?? event.over.id;
 
-        const active = event.active.data.current as DraggingTaskData;
+      //   const active = event.active.data.current as DraggingTaskData;
 
-        if (active.sortable?.containerId === targetContainerId) return;
+      //   if (active.sortable?.containerId === targetContainerId) return;
 
-        if (active.sortable) {
-          if (targetContainerId === TASK_POOL_ID) {
-            onUnassignTasksFromSprint({
-              sprintId: active.sortable.containerId.toString(),
-              tasks: [active.item.id],
-            });
-            return;
-          }
+      //   if (active.sortable) {
+      //     if (targetContainerId === TASK_POOL_ID) {
+      //       onUnassignTasksFromSprint({
+      //         sprintId: active.sortable.containerId.toString(),
+      //         tasks: [active.item.id],
+      //       });
+      //       return;
+      //     }
 
-          onMoveTasks({
-            sourceSprint: active.sortable.containerId.toString(),
-            targetSprint: targetContainerId.toString(),
-            tasks: [active.item.id],
-            targetIndex: (event.over.data.current as SortableData | undefined)
-              ?.sortable.index,
-          });
-          return;
-        }
-        if (targetContainerId !== TASK_POOL_ID) {
-          onAssignTasksToSprint({
-            sprintId: targetContainerId.toString(),
-            tasks: [active.item.id],
-          });
-        }
-      }}
+      //     onMoveTasks({
+      //       sourceSprint: active.sortable.containerId.toString(),
+      //       targetSprint: targetContainerId.toString(),
+      //       tasks: [active.item.id],
+      //       targetIndex: (event.over.data.current as SortableData | undefined)
+      //         ?.sortable.index,
+      //     });
+      //     return;
+      //   }
+      //   if (targetContainerId !== TASK_POOL_ID) {
+      //     onAssignTasksToSprint({
+      //       sprintId: targetContainerId.toString(),
+      //       tasks: [active.item.id],
+      //     });
+      //   }
+      // }}
       onDragEnd={(event) => {
+        console.log("draggable");
         setActiveItem(undefined);
+        console.log(event);
         if (!event.active.data.current) return;
         if (!event.over?.data.current) return;
 
@@ -119,14 +112,14 @@ export function DndWrapper({
 
         if (active.sortable.containerId !== over.sortable.containerId) return;
 
-        onReorderSprintTasks({
-          sprintId: over.sortable.containerId.toString(),
-          from: active.sortable.index,
-          to: over.sortable.index,
-        });
+        // onReorderSprintTasks({
+        //   sprintId: over.sortable.containerId.toString(),
+        //   from: active.sortable.index,
+        //   to: over.sortable.index,
+        // });
       }}
     >
-      <DragOverlay>
+      {/* <DragOverlay>
         {activeItem && enabled ? (
           <FlatTaskBase
             className="cursor-grabbing!"
@@ -134,7 +127,7 @@ export function DndWrapper({
             group={activeItem.parent?.title}
           />
         ) : null}
-      </DragOverlay>
+      </DragOverlay> */}
       {children}
     </DndContext>
   );

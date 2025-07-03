@@ -2,35 +2,33 @@
 
 import { LoadingOverlay } from "@mantine/core";
 
-import type { TaskSelect } from "@/core/task-management";
-import { FocusSession, useActiveFocusSession } from "@/ui/deep-work";
+import { flattenTasks } from "@/core/task-management";
+import { FocusSession } from "@/ui/deep-work";
+import { useTodos } from "@/ui/task-management";
 
 export default function FocusPage() {
-  // TODO handle no active session
-  const activeFocusSession = useActiveFocusSession();
+  const todos = useTodos();
+  const tasks = flattenTasks(todos.tasks);
 
-  const isLoaded = !activeFocusSession.sprints.isLoading;
-  const handleFinishSession = (
-    taskStatusUpdates: Record<TaskSelect["id"], TaskSelect["status"]>,
-  ) => {
-    activeFocusSession.finishSession(taskStatusUpdates);
-    window.close();
-  };
+  // const isLoaded = !activeFocusSession.sprints.isLoading;
+  // const handleFinishSession = (
+  //   taskStatusUpdates: Record<TaskSelect["id"], TaskSelect["status"]>,
+  // ) => {
+  //   activeFocusSession.finishSession(taskStatusUpdates);
+  //   window.close();
+  // };
 
   return (
-    <>
-      <LoadingOverlay visible={!isLoaded} />
+    <main className="h-dvh">
+      <LoadingOverlay visible={todos.isLoading} />
       <FocusSession
-        session={activeFocusSession.session}
-        sprints={activeFocusSession.sprints.data ?? []}
-        onStartSprint={activeFocusSession.startSprint}
-        onFinishSprint={activeFocusSession.finishSprint}
-        onFinishBreak={activeFocusSession.finishBreak}
-        onCompleteTask={activeFocusSession.completeTask}
-        onSkipTask={activeFocusSession.skipTask}
-        onUnskipTask={activeFocusSession.unskipTask}
-        onFinishSession={handleFinishSession}
+        tasks={tasks}
+        onStartSprint={() => console.log("start sprint")}
+        onFinishSprint={() => console.log("finish sprint")}
+        onFinishBreak={() => console.log("finish break")}
+        onCompleteTask={() => console.log("complete task")}
+        onFinishSession={() => console.log("finish session")}
       />
-    </>
+    </main>
   );
 }

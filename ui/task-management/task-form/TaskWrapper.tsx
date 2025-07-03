@@ -1,6 +1,6 @@
 import type { PaperProps } from "@mantine/core";
-import type { ReactElement, Ref } from "react";
-import { Children, cloneElement, Fragment } from "react";
+import type { ReactElement, ReactNode, Ref } from "react";
+import { cloneElement } from "react";
 import {
   ActionIcon,
   Box,
@@ -13,19 +13,16 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconX } from "@tabler/icons-react";
+import { useForm } from "@tanstack/react-form";
+import z from "zod";
 
-import type { TaskInput } from "@/core/task-management";
-import {
-  taskFormOpts,
-  useTaskForm,
-} from "@/ui/task-management/task-form/useTaskForm";
 import { cn } from "@/ui/utils";
 
 export interface TaskWrapperProps {
   task: ReactElement<{ onAddSubtask?: () => void }>;
-  subtasks: ReactElement[] | undefined;
+  subtasks: ReactNode;
   ref?: Ref<HTMLDivElement>;
-  onAddSubtask: (task: TaskInput) => void;
+  onAddSubtask: (title: string) => void;
 }
 
 export const TaskWrapper = createPolymorphicComponent<
@@ -41,10 +38,17 @@ export const TaskWrapper = createPolymorphicComponent<
   }: TaskWrapperProps & PaperProps) => {
     const [isAddingSubtask, subtaskAdder] = useDisclosure();
 
-    const form = useTaskForm({
-      ...taskFormOpts,
+    const form = useForm({
+      defaultValues: {
+        title: "",
+      },
+      validators: {
+        onChange: z.object({
+          title: z.string().min(3),
+        }),
+      },
       onSubmit: ({ value }) => {
-        onAddSubtask(value);
+        onAddSubtask(value.title);
         form.reset();
       },
     });
@@ -62,15 +66,7 @@ export const TaskWrapper = createPolymorphicComponent<
       >
         {cloneElement(task, { onAddSubtask: subtaskAdder.open })}
 
-        <Box>
-          {subtasks &&
-            Children.map(subtasks, (subtask) => (
-              <Fragment key={subtask.key}>
-                <Divider />
-                {subtask}
-              </Fragment>
-            ))}
-        </Box>
+        {subtasks}
         <Collapse in={isAddingSubtask}>
           <Divider />
           <Box p="xs">
@@ -100,6 +96,9 @@ export const TaskWrapper = createPolymorphicComponent<
                     }
                     onBlur={subtaskAdder.close}
                     onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        e.currentTarget.blur();
+                      }
                       if (e.key === "Enter") {
                         void form.handleSubmit();
                       }

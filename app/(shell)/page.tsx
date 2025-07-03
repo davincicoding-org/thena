@@ -17,64 +17,36 @@ import { useDisclosure } from "@mantine/hooks";
 import { Main } from "@/app/(shell)/shell";
 import { countTasks } from "@/core/task-management";
 import { api } from "@/trpc/react";
-import { SidePanel } from "@/ui/components/SidePanel";
 import { IntelligenceTile } from "@/ui/intelligence";
 import {
-  Backlog,
   ProjectForm,
   projectFormOpts,
   ProjectsTile,
   useProjectForm,
-  useTasksQueryOptions,
+  useProjects,
 } from "@/ui/task-management";
 
 export default function HomePage() {
   const intelligenceSummary = api.intelligence.summary.useQuery();
 
-  const utils = api.useUtils();
   // Tasks
 
   const { data: tasks = [] } = api.tasks.list.useQuery({ status: "todo" });
-  // const { mutateAsync: createTask } = api.tasks.create.useMutation();
-  const { mutateAsync: updateTask } = api.tasks.update.useMutation();
-  const { mutateAsync: deleteTask } = api.tasks.delete.useMutation({
-    onSuccess: (_, { id }) => {
-      void utils.tasks.list.setData({ status: "todo" }, (tasks) =>
-        tasks?.filter((task) => task.id !== id),
-      );
-    },
-  });
 
   const taskCount = countTasks(tasks);
 
-  const { filters, filterTasks, updateFilters, sort, sortFn, updateSort } =
-    useTasksQueryOptions();
-
-  const filteredTasks = filterTasks(tasks).sort(sortFn);
-
   // Projects
-  const projects = api.projects.list.useQuery();
-  const createProject = api.projects.create.useMutation({
-    onSuccess(newProject) {
-      if (!newProject) return;
-      utils.projects.list.setData(
-        undefined,
-        (prev) => prev && [newProject, ...prev],
-      );
-    },
-  });
+  const projects = useProjects();
   const [isAddingProject, projectFormModal] = useDisclosure();
 
   const projectForm = useProjectForm({
     ...projectFormOpts,
     onSubmit: ({ value }) => {
-      createProject.mutate(value);
+      projects.create.mutate(value);
       projectFormModal.close();
       projectForm.reset();
     },
   });
-
-  const [isBacklogPanelOpen, backlogPanel] = useDisclosure();
 
   return (
     <Main display="grid">
@@ -89,9 +61,10 @@ export default function HomePage() {
             radius="md"
             fullWidth
             component={Link}
-            href="/session"
+            href="/focus"
+            target="_blank"
           >
-            Focus Session
+            Start Focus Session
           </Button>
 
           <Divider />
@@ -105,14 +78,14 @@ export default function HomePage() {
                   `${taskCount > 100 ? "100+" : taskCount} Tasks`}
               </Text>
               <Space h="xs" />
-              <Button variant="light" fullWidth onClick={backlogPanel.open}>
-                Open Backlog
+              <Button variant="light" fullWidth component={Link} href="/tasks">
+                View
               </Button>
             </Card>
             <ProjectsTile
               flex={1}
               loading={projects.isLoading}
-              items={projects.data ?? []}
+              items={projects.items}
               onCreate={projectFormModal.open}
             />
           </Flex>
@@ -157,34 +130,6 @@ export default function HomePage() {
           />
         </form>
       </Modal>
-      {/* TODO: Make side panel close on escape. Setting closeOnEscape={false} is
-      a workaround, because pressing escape on the task adder form would the
-      side panel. */}
-      <SidePanel
-        opened={isBacklogPanelOpen}
-        size="sm"
-        closeOnEscape={false}
-        onClose={backlogPanel.close}
-      >
-        <Flex className="h-full" direction="column">
-          <Backlog
-            mode="edit"
-            flex={1}
-            tasks={filteredTasks}
-            className="min-h-0 rounded-b-none!"
-            filters={filters}
-            onFiltersUpdate={updateFilters}
-            sort={sort}
-            onSortUpdate={updateSort}
-            projects={projects.data ?? []}
-            onUpdateTask={(taskId, updates) =>
-              updateTask({ id: taskId, updates })
-            }
-            onDeleteTask={(taskId) => deleteTask({ id: taskId })}
-            onCreateProject={(input) => createProject.mutate(input)}
-          />
-        </Flex>
-      </SidePanel>
     </Main>
   );
 }

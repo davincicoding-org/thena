@@ -16,8 +16,8 @@ import type {
   ProjectInput,
   ProjectSelect,
   TaskFilters,
+  TaskFormValues,
   TaskId,
-  TaskInput,
   TaskSelection,
   TasksSortOptions,
   TaskTree,
@@ -30,9 +30,9 @@ import { TaskForm, taskFormOpts, useTaskForm } from "@/ui/task-management";
 import { TasksQueryPanel } from "@/ui/task-management/tasks/TasksQueryPanel";
 import { cn } from "@/ui/utils";
 
-import type { TasksQueryOptionsHookReturn } from "../tasks/useTasksQueryOptions";
-import { SubtaskForm } from "../task-form/SubtaskForm";
-import { TaskWrapper } from "../task-form/TaskWrapper";
+import type { TasksQueryOptionsHookReturn } from "../../ui/task-management/tasks/useTasksQueryOptions";
+import { SubtaskForm } from "../../ui/task-management/task-form/SubtaskForm";
+import { TaskWrapper } from "../../ui/task-management/task-form/TaskWrapper";
 
 // MARK: Component
 
@@ -44,7 +44,7 @@ export interface BacklogProps {
   onFiltersUpdate: TasksQueryOptionsHookReturn["updateFilters"];
   onSortUpdate: TasksQueryOptionsHookReturn["updateSort"];
   projects: ProjectSelect[];
-  onAddTask?: (task: TaskInput) => void;
+  onAddTask?: (task: TaskFormValues) => void;
   onUpdateTask?: (taskId: TaskId, updates: TaskUpdate) => void;
   onDeleteTask?: (taskId: TaskId) => void;
   onCreateProject?: UseMutateFunction<
@@ -200,9 +200,9 @@ export function Backlog({
 interface TaskItemProps
   extends Pick<TaskFormProps, "TaskActions" | "projects" | "onCreateProject"> {
   mode: "select" | "edit";
-  task: TaskInput;
+  task: TaskFormValues;
   isSubtask?: boolean;
-  onUpdate: (update: TaskInput) => void;
+  onUpdate: (update: TaskFormValues) => void;
   onDelete?: () => void;
 }
 

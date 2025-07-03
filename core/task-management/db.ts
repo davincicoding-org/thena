@@ -5,7 +5,12 @@ import {
   createUpdateSchema,
 } from "drizzle-zod";
 
-import { projects, taskComplexity, taskPriority, tasks } from "@/db/schema";
+import {
+  projects,
+  taskComplexity,
+  taskPriority,
+  tasks,
+} from "@/database/schema";
 
 // MARK: Task
 

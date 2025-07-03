@@ -7,7 +7,7 @@ import {
   projectSelectSchema,
   projectUpdateSchema,
 } from "@/core/task-management";
-import { projects } from "@/db/schema";
+import { projects } from "@/database/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 

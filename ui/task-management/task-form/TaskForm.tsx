@@ -1,5 +1,5 @@
 import type { UseMutateFunction } from "@tanstack/react-query";
-import type { FunctionComponent, ReactNode } from "react";
+import type { CSSProperties, FunctionComponent, ReactNode, Ref } from "react";
 import { useState } from "react";
 import {
   ActionIcon,
@@ -14,7 +14,7 @@ import { useClickOutside, useDisclosure } from "@mantine/hooks";
 import {
   IconCube,
   IconCubeOff,
-  IconDotsVertical,
+  IconPencil,
   IconPlus,
 } from "@tabler/icons-react";
 
@@ -43,8 +43,11 @@ export type TaskFormProps = {
     Error,
     ProjectInput
   >;
+  ref?: Ref<HTMLDivElement>;
   readOnly?: boolean;
   TaskActions?: TaskActionsComponent;
+  rightSection?: ReactNode;
+  style?: CSSProperties;
 };
 
 export const TaskForm = withTaskForm({
@@ -56,6 +59,9 @@ export const TaskForm = withTaskForm({
     projects,
     onCreateProject,
     readOnly,
+    rightSection,
+    ref,
+    style,
     TaskActions = (({ defaultActions }) =>
       defaultActions) as TaskActionsComponent,
   }) => {
@@ -140,7 +146,7 @@ export const TaskForm = withTaskForm({
           }, 300);
         }}
       >
-        <Flex align="center" p={4} bg="dark.6">
+        <Flex align="center" p={4} bg="dark.6" style={style} ref={ref}>
           <form.Field
             name="projectId"
             children={({ state: { value } }) => {
@@ -213,14 +219,15 @@ export const TaskForm = withTaskForm({
                 aria-label="Task Actions"
                 className="disabled:cursor-default!"
                 disabled={isActionsPanelOpen}
-                variant="transparent"
+                variant="subtle"
                 color="gray"
                 onClick={actionsPanel.open}
               >
-                <IconDotsVertical size={16} />
+                <IconPencil size={16} />
               </ActionIcon>
             </Popover.Target>
           )}
+          {rightSection}
         </Flex>
 
         <Popover.Dropdown p={0} ref={actionsPanelRef} className="overflow-clip">

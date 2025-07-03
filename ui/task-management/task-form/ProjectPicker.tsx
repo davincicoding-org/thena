@@ -15,7 +15,7 @@ import { IconChevronLeft, IconX } from "@tabler/icons-react";
 import type {
   ProjectInput,
   ProjectSelect,
-  TaskInput,
+  TaskFormValues,
 } from "@/core/task-management";
 import { cn } from "@/ui/utils";
 
@@ -25,7 +25,7 @@ import { projectFormOpts, useProjectForm } from "../project/useProjectForm";
 
 export interface ProjectPickerProps {
   projects: Pick<ProjectSelect, "id" | "title" | "image">[];
-  onChange: (value: NonNullable<TaskInput["projectId"]>) => void;
+  onChange: (value: NonNullable<TaskFormValues["projectId"]>) => void;
   onCreate?: (
     input: ProjectInput,
     callback: (project: ProjectSelect | undefined) => void,

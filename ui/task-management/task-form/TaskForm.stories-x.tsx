@@ -4,7 +4,7 @@ import { Button, Divider } from "@mantine/core";
 import { action } from "@storybook/addon-actions";
 import { fn } from "@storybook/test";
 
-import type { TaskInput } from "@/core/task-management";
+import type { TaskFormValues } from "@/core/task-management";
 import { MOCK_PROJECTS } from "@/core/task-management/mock";
 
 import type { TaskFormProps } from "./TaskForm";
@@ -12,8 +12,8 @@ import { TaskForm } from "./TaskForm";
 import { taskFormOpts, useTaskForm } from "./useTaskForm";
 
 interface PlaygroundProps extends TaskFormProps {
-  initialValues: TaskInput;
-  onSubmit: (values: TaskInput) => void;
+  initialValues: TaskFormValues;
+  onSubmit: (values: TaskFormValues) => void;
 }
 const Playground = ({ initialValues, onSubmit, ...props }: PlaygroundProps) => {
   const form = useTaskForm({

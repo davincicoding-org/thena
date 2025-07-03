@@ -1,3 +1,4 @@
+import type { CSSProperties, ReactNode, Ref } from "react";
 import {
   ActionIcon,
   Button,
@@ -7,7 +8,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useClickOutside, useDisclosure } from "@mantine/hooks";
-import { IconDotsVertical, IconX } from "@tabler/icons-react";
+import { IconPencil, IconX } from "@tabler/icons-react";
 
 import { cn } from "@/ui/utils";
 
@@ -18,13 +19,16 @@ import { taskFormOpts, withTaskForm } from "./useTaskForm";
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type SubtaskFormProps = {
   readOnly?: boolean;
+  style?: CSSProperties;
+  ref?: Ref<HTMLDivElement>;
+  rightSection?: ReactNode;
   onRemove?: () => void;
 };
 
 export const SubtaskForm = withTaskForm({
   ...taskFormOpts,
   props: {} as SubtaskFormProps,
-  render: ({ form, readOnly, onRemove }) => {
+  render: ({ form, ref, style, readOnly, onRemove, rightSection }) => {
     /* eslint-disable react-hooks/rules-of-hooks */
     const [isActionsPanelOpen, actionsPanel] = useDisclosure(false);
     const actionsPanelRef = useClickOutside(() => actionsPanel.close());
@@ -37,7 +41,14 @@ export const SubtaskForm = withTaskForm({
         opened={isActionsPanelOpen}
         onClose={actionsPanel.close}
       >
-        <Flex p={4} gap={4} className="group" align="center">
+        <Flex
+          p={4}
+          gap={4}
+          className="group"
+          align="center"
+          ref={ref}
+          style={style}
+        >
           <form.Field
             name="title"
             children={(titleField) => (
@@ -102,10 +113,11 @@ export const SubtaskForm = withTaskForm({
                 color="gray"
                 onClick={actionsPanel.open}
               >
-                <IconDotsVertical size={16} />
+                <IconPencil size={16} />
               </ActionIcon>
             </Popover.Target>
           )}
+          {rightSection}
         </Flex>
 
         <Popover.Dropdown p={0} ref={actionsPanelRef}>

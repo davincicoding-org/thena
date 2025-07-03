@@ -4,111 +4,111 @@ import { z } from "zod";
 import type { RunnableSprint, TaskRun } from "@/core/deep-work";
 import { resolveDuration, sprintPlanSchema } from "@/core/deep-work";
 import {
-  focusSessionSelect,
+  // focusSessionSelect,
   sprintSelect,
   sprintUpdate,
   taskRunSelect,
   taskRunUpdate,
 } from "@/core/deep-work/db";
 import { taskSelectSchema } from "@/core/task-management";
-import { focusSessions, sprints, taskRuns, tasks } from "@/db/schema";
+import { sprints, taskRuns, tasks } from "@/database/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const focusSessionsRouter = createTRPCRouter({
-  create: protectedProcedure
-    .input(sprintPlanSchema.array())
-    .mutation(async ({ ctx: { db, auth }, input }) => {
-      const [session] = await db
-        .insert(focusSessions)
-        .values({
-          userId: auth.userId,
-        })
-        .returning();
+  // create: protectedProcedure
+  //   .input(sprintPlanSchema.array())
+  //   .mutation(async ({ ctx: { db, auth }, input }) => {
+  //     const [session] = await db
+  //       .insert(focusSessions)
+  //       .values({
+  //         userId: auth.userId,
+  //       })
+  //       .returning();
 
-      if (!session) throw new Error("Failed to create session");
-      const sprintIds = await Promise.all(
-        input.map(
-          async ({ tasks, duration, scheduledStart }, sprintOrdinal) => {
-            const [insertedSprint] = await db
-              .insert(sprints)
-              .values({
-                userId: auth.userId,
-                sessionId: session.id,
-                duration: resolveDuration(duration).asMinutes(),
-                scheduledStart,
-                // recoveryTimeMinutes,
-                ordinal: sprintOrdinal,
-              })
-              .returning();
+  //     if (!session) throw new Error("Failed to create session");
+  //     const sprintIds = await Promise.all(
+  //       input.map(
+  //         async ({ tasks, duration, scheduledStart }, sprintOrdinal) => {
+  //           const [insertedSprint] = await db
+  //             .insert(sprints)
+  //             .values({
+  //               userId: auth.userId,
+  //               sessionId: session.id,
+  //               duration: resolveDuration(duration).asMinutes(),
+  //               scheduledStart,
+  //               // recoveryTimeMinutes,
+  //               ordinal: sprintOrdinal,
+  //             })
+  //             .returning();
 
-            if (!insertedSprint) throw new Error("Failed to create sprint");
+  //           if (!insertedSprint) throw new Error("Failed to create sprint");
 
-            await db.insert(taskRuns).values(
-              tasks.map((task, taskOrdinal) => ({
-                userId: auth.userId,
-                sprintId: insertedSprint.id,
-                taskId: task,
-                ordinal: taskOrdinal,
-              })),
-            );
-            return insertedSprint.id;
-          },
-        ),
-      );
+  //           await db.insert(taskRuns).values(
+  //             tasks.map((task, taskOrdinal) => ({
+  //               userId: auth.userId,
+  //               sprintId: insertedSprint.id,
+  //               taskId: task,
+  //               ordinal: taskOrdinal,
+  //             })),
+  //           );
+  //           return insertedSprint.id;
+  //         },
+  //       ),
+  //     );
 
-      return { sessionId: session.id, sprintIds };
-    }),
+  //     return { sessionId: session.id, sprintIds };
+  //   }),
 
-  get: protectedProcedure
-    .input(focusSessionSelect.shape.id.optional())
-    .query(async ({ ctx: { db, auth }, input }) => {
-      if (!input) return null;
-      const session = await db.query.focusSessions.findFirst({
-        where: (focusSessions, { eq, and }) =>
-          and(
-            eq(focusSessions.id, input),
-            eq(focusSessions.userId, auth.userId),
-          ),
-        with: {
-          sprints: {
-            orderBy: (sprints, { asc }) => asc(sprints.ordinal),
-            with: {
-              taskRuns: {
-                columns: {
-                  id: true,
-                  status: true,
-                  timestamps: true,
-                },
-                orderBy: (taskRuns, { asc }) => asc(taskRuns.ordinal),
-                with: {
-                  task: {
-                    with: {
-                      parent: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      });
+  // get: protectedProcedure
+  //   .input(focusSessionSelect.shape.id.optional())
+  //   .query(async ({ ctx: { db, auth }, input }) => {
+  //     if (!input) return null;
+  //     const session = await db.query.focusSessions.findFirst({
+  //       where: (focusSessions, { eq, and }) =>
+  //         and(
+  //           eq(focusSessions.id, input),
+  //           eq(focusSessions.userId, auth.userId),
+  //         ),
+  //       with: {
+  //         sprints: {
+  //           orderBy: (sprints, { asc }) => asc(sprints.ordinal),
+  //           with: {
+  //             taskRuns: {
+  //               columns: {
+  //                 id: true,
+  //                 status: true,
+  //                 timestamps: true,
+  //               },
+  //               orderBy: (taskRuns, { asc }) => asc(taskRuns.ordinal),
+  //               with: {
+  //                 task: {
+  //                   with: {
+  //                     parent: true,
+  //                   },
+  //                 },
+  //               },
+  //             },
+  //           },
+  //         },
+  //       },
+  //     });
 
-      if (!session) return null;
+  //     if (!session) return null;
 
-      return session.sprints.map<RunnableSprint>((sprint) => ({
-        id: sprint.id,
-        duration: {
-          minutes: sprint.duration,
-        },
-        tasks: sprint.taskRuns.map<TaskRun>((taskRun) => ({
-          runId: taskRun.id,
-          status: taskRun.status,
-          timestamps: taskRun.timestamps,
-          task: taskRun.task,
-        })),
-      }));
-    }),
+  //     return session.sprints.map<RunnableSprint>((sprint) => ({
+  //       id: sprint.id,
+  //       duration: {
+  //         minutes: sprint.duration,
+  //       },
+  //       tasks: sprint.taskRuns.map<TaskRun>((taskRun) => ({
+  //         runId: taskRun.id,
+  //         status: taskRun.status,
+  //         timestamps: taskRun.timestamps,
+  //         task: taskRun.task,
+  //       })),
+  //     }));
+  //   }),
 
   sprint: {
     update: protectedProcedure
