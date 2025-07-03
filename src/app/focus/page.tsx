@@ -22,12 +22,10 @@ export default function FocusPage() {
     <main className="h-dvh">
       <LoadingOverlay visible={todos.isLoading} />
       <FocusSession
-        tasks={tasks}
-        onStartSprint={() => console.log("start sprint")}
-        onFinishSprint={() => console.log("finish sprint")}
-        onFinishBreak={() => console.log("finish break")}
-        onCompleteTask={() => console.log("complete task")}
+        todos={tasks}
+        onStartSession={() => console.log("start session")}
         onFinishSession={() => console.log("finish session")}
+        onCompleteTask={() => console.log("complete task")}
       />
     </main>
   );

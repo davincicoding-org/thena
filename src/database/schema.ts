@@ -9,7 +9,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-/* ═════════ TASKS  ═════════ */
+// MARK:  TASKS
 
 export const taskPriority = pgEnum("task_priority", [
   "critical",
@@ -94,7 +94,7 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
   // events: many(taskRunEvents),
 }));
 
-/* ═════════ PROJECTS ═════════ */
+// MARK:  PROJECTS
 export const projects = pgTable(
   "projects",
   (d) => ({
@@ -111,77 +111,42 @@ export const projectsRelations = relations(projects, ({ many }) => ({
   tasks: many(tasks, { relationName: "project_tasks" }),
 }));
 
-/* ═════════ FOCUS SESSIONS ═════════ */
-// export const focusSessions = pgTable(
-//   "focus_sessions",
-//   {
-//     id: uuid().defaultRandom().notNull().primaryKey(),
-//     userId: text().notNull(),
-//     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-//   },
-//   (t) => [index("idx_focus_sessions_owner").on(t.userId)],
-// );
-
-// export const focusSessionsRelations = relations(focusSessions, ({ many }) => ({
-//   sprints: many(sprints),
-// }));
-
-/* ═════════ SPRINTS ═════════ */
-export const sprints = pgTable(
-  "sprints",
+// MARK:  FOCUS SESSIONS
+export const focusSessions = pgTable(
+  "focus_sessions",
   (d) => ({
     id: d.serial().primaryKey(),
     userId: d.text().notNull(),
-    // sessionId: uuid().references(() => focusSessions.id, {
-    //   onDelete: "cascade",
-    // }),
-
-    /** Duration in minutes */
-    duration: d.integer().notNull(),
-    /** Break after sprint in minutes */
-    recoveryTime: d.integer(),
-    // scheduledStart: timestamp({ withTimezone: true }),
-    // ordinal: integer().notNull(),
-
-    // createdAt: timestamp({ withTimezone: true }).defaultNow(),
-    startedAt: d.timestamp({ withTimezone: true }),
-    endedAt: d.timestamp({ withTimezone: true }),
-
-    focusTime: d.integer(),
-    completedTasks: d.integer(),
-    skippedTasks: d.integer(),
+    startedAt: d
+      .timestamp({ withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    endedAt: d.timestamp({ withTimezone: true, mode: "date" }),
+    duration: d.integer(),
+    status: d.text().notNull(),
   }),
-  (t) => [
-    check("positive_duration", sql`${t.duration} > 0`),
-    index("idx_sprints_owner").on(t.userId),
-    index("idx_sprints_ended_at").on(t.endedAt),
-    // index("idx_sprints_session").on(t.sessionId),
-  ],
+  (t) => [index("idx_focus_sessions_owner").on(t.userId)],
 );
 
-export const sprintsRelations = relations(sprints, ({ one, many }) => ({
-  // focusSession: one(focusSessions, {
-  //   fields: [sprints.sessionId, sprints.userId],
-  //   references: [focusSessions.id, focusSessions.userId],
-  // }),
+export const focusSessionsRelations = relations(focusSessions, ({ many }) => ({
   taskRuns: many(taskRuns),
 }));
 
-/* ═════════ TASK RUNS ═════════ */
+// MARK:  TASK RUNS
 export const taskRunStatusEnum = pgEnum("task_run_status", [
   "pending", // planned but not yet done
   "skipped", // unfinished, skipped
-  "completed", // finished in this sprint
+  "completed", // finished in this focus session
 ]);
 
 export const taskRuns = pgTable(
   "task_runs",
   (d) => ({
     id: d.serial().primaryKey(),
-    sprintId: d
+    focusSessionId: d
       .integer()
       .notNull()
-      .references(() => sprints.id, {
+      .references(() => focusSessions.id, {
         onDelete: "cascade",
       }),
     userId: d.text().notNull(),
@@ -192,30 +157,30 @@ export const taskRuns = pgTable(
         onDelete: "cascade",
       }),
 
-    status: taskRunStatusEnum().default("pending").notNull(),
+    // status: taskRunStatusEnum().default("pending").notNull(),
     // addedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-    ordinal: d.integer().notNull(),
-
-    timestamps: d.timestamp({ withTimezone: true }).array().default([]),
-    duration: d.integer(),
+    // ordinal: d.integer().notNull(),
+    // timestamps: d.timestamp({ withTimezone: true }).array().default([]),
+    // duration: d.integer(),
   }),
   (t) => [
-    index("idx_task_run_sprint_id").on(t.sprintId),
+    index("idx_task_run_focus_session_id").on(t.focusSessionId),
     index("idx_task_run_owner").on(t.userId),
-    uniqueIndex("ux_task_run_order").on(t.sprintId, t.ordinal),
   ],
 );
 
 export const taskRunsRelations = relations(taskRuns, ({ one }) => ({
-  sprint: one(sprints, {
-    fields: [taskRuns.sprintId, taskRuns.userId],
-    references: [sprints.id, sprints.userId],
+  focusSession: one(focusSessions, {
+    fields: [taskRuns.focusSessionId, taskRuns.userId],
+    references: [focusSessions.id, focusSessions.userId],
   }),
   task: one(tasks, {
     fields: [taskRuns.taskId, taskRuns.userId],
     references: [tasks.id, tasks.userId],
   }),
 }));
+
+// MARK:  DEPRECATED
 
 // /* ═════════ SPRINT‑TASK EVENTS (remote-only) ═════════ */
 // export const taskRunEventEnum = pgEnum("task_run_event", [
@@ -247,6 +212,47 @@ export const taskRunsRelations = relations(taskRuns, ({ one }) => ({
 //     index("idx_task_run_events").on(t.sprintId, t.timestamp),
 //   ],
 // );
+
+/* ═════════ SPRINTS ═════════ */
+// export const sprints = pgTable(
+//   "sprints",
+//   (d) => ({
+//     id: d.serial().primaryKey(),
+//     userId: d.text().notNull(),
+//     // sessionId: uuid().references(() => focusSessions.id, {
+//     //   onDelete: "cascade",
+//     // }),
+
+//     /** Duration in minutes */
+//     duration: d.integer().notNull(),
+//     /** Break after sprint in minutes */
+//     recoveryTime: d.integer(),
+//     // scheduledStart: timestamp({ withTimezone: true }),
+//     // ordinal: integer().notNull(),
+
+//     // createdAt: timestamp({ withTimezone: true }).defaultNow(),
+//     startedAt: d.timestamp({ withTimezone: true }),
+//     endedAt: d.timestamp({ withTimezone: true }),
+
+//     focusTime: d.integer(),
+//     completedTasks: d.integer(),
+//     skippedTasks: d.integer(),
+//   }),
+//   (t) => [
+//     check("positive_duration", sql`${t.duration} > 0`),
+//     index("idx_sprints_owner").on(t.userId),
+//     index("idx_sprints_ended_at").on(t.endedAt),
+//     // index("idx_sprints_session").on(t.sessionId),
+//   ],
+// );
+
+// export const sprintsRelations = relations(sprints, ({ one, many }) => ({
+//   // focusSession: one(focusSessions, {
+//   //   fields: [sprints.sessionId, sprints.userId],
+//   //   references: [focusSessions.id, focusSessions.userId],
+//   // }),
+//   taskRuns: many(taskRuns),
+// }));
 
 /* ═════════ CLIENT MIGRATIONS (client-only) ═════════ */
 

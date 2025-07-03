@@ -13,19 +13,24 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const tasksRouter = createTRPCRouter({
   create: protectedProcedure
-    .input(taskFormSchema)
+    .input(taskFormSchema.array())
     .mutation(async ({ ctx: { db, auth }, input }) => {
-      const [result] = await db
-        .insert(tasks)
-        .values({
-          ...input,
-          userId: auth.userId,
-        })
-        .returning();
+      const results = await db.transaction(async (tx) => {
+        const rows = await tx
+          .insert(tasks)
+          .values(
+            input.map((task) => ({
+              ...task,
+              userId: auth.userId,
+            })),
+          )
+          .returning();
+        return rows;
+      });
 
-      if (!result) throw new Error("Failed to create task");
+      if (!results) throw new Error("Failed to create tasks");
 
-      return result;
+      return results;
     }),
 
   update: protectedProcedure

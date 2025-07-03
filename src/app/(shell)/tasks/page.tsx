@@ -12,7 +12,7 @@ export default function SessionPage() {
   const projects = useProjects();
 
   return (
-    <Main display="flex" className="h-dvh flex-col">
+    <Main display="flex" className="flex-col">
       <Transition mounted={todos.isLoading} transition="fade" duration={500}>
         {(styles) => (
           <LoadingOverlay
@@ -33,7 +33,7 @@ export default function SessionPage() {
         tasks={todos.tasks}
         onUpdateTask={todos.updateTask}
         onDeleteTasks={todos.deleteTasks}
-        onCreateTask={todos.createTask}
+        onCreateTasks={todos.createTasks}
         projects={projects.items}
         onCreateProject={(input) => projects.create.mutate(input)}
       />

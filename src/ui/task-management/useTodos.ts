@@ -17,73 +17,81 @@ export function useTodos() {
     status: "todo",
   });
 
-  const createTaskMutation = api.tasks.create.useMutation<{
+  const createTasksMutation = api.tasks.create.useMutation<{
     prev: TaskTree[] | undefined;
-    tempId: number;
+    tempIds: number[];
   }>({
-    onMutate: async (taskInsert) => {
+    onMutate: async (taskInserts) => {
       await utils.tasks.list.cancel({ status: "todo" });
       const prev = utils.tasks.list.getData({ status: "todo" });
 
-      const tempId = Math.max(...(prev ?? []).map((task) => task.id), 0) + 1;
+      const latestId = Math.max(...(prev ?? []).map((task) => task.id), 0);
 
-      const mockedTask: TaskSelect = {
-        id: tempId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        userId: "",
-        sortOrder: tempId,
-        status: "todo",
-        ...taskInsert,
-      };
-      utils.tasks.list.setData({ status: "todo" }, (prev = []) => {
-        if (typeof taskInsert.parentId !== "number") {
-          return [...prev, { ...mockedTask, subtasks: [] }].sort(
-            (a, b) => a.sortOrder - b.sortOrder,
-          );
-        }
-
-        return prev.map((task) => {
-          if (task.id !== taskInsert.parentId) return task;
-          return {
-            ...task,
-            subtasks: [...task.subtasks, mockedTask].sort(
-              (a, b) => a.sortOrder - b.sortOrder,
-            ),
-          };
-        });
+      const mockedTasks = taskInserts.map<TaskSelect>((taskInsert, index) => {
+        const tempId = latestId + (index + 1) + 0.1;
+        return {
+          id: tempId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          userId: "",
+          sortOrder: tempId,
+          status: "todo",
+          ...taskInsert,
+        };
       });
-      return { prev, tempId };
+
+      utils.tasks.list.setData({ status: "todo" }, (prev = []) => {
+        return mockedTasks.reduce((acc, mockedTask) => {
+          if (typeof mockedTask.parentId !== "number") {
+            return [...acc, { ...mockedTask, subtasks: [] }].sort(
+              (a, b) => a.sortOrder - b.sortOrder,
+            );
+          }
+
+          return acc.map((task) => {
+            if (task.id !== mockedTask.parentId) return task;
+            return {
+              ...task,
+              subtasks: [...task.subtasks, mockedTask].sort(
+                (a, b) => a.sortOrder - b.sortOrder,
+              ),
+            };
+          });
+        }, prev);
+      });
+      return { prev, tempIds: mockedTasks.map((task) => task.id) };
     },
     onError: (err, variables, context) => {
       utils.tasks.list.setData({ status: "todo" }, context?.prev);
     },
-    onSuccess: (createdTask, variables, context) => {
+    onSuccess: (createdTasks, variables, context) => {
       utils.tasks.list.setData({ status: "todo" }, (prev = []) => {
-        if (createdTask.parentId === null)
-          return prev
-            .map((task) => {
-              if (task.id !== context.tempId) return task;
+        return createdTasks.reduce((acc, createdTask, index) => {
+          if (createdTask.parentId === null)
+            return acc
+              .map((task) => {
+                if (task.id !== context.tempIds[index]) return task;
 
-              return {
-                ...createdTask,
-                subtasks: [],
-              };
-            })
-            .sort((a, b) => a.sortOrder - b.sortOrder);
-
-        return prev.map((task) => {
-          if (task.id !== createdTask.parentId) return task;
-          return {
-            ...task,
-            subtasks: task.subtasks
-              .map((subtask) => {
-                if (subtask.id !== context.tempId) return subtask;
-                return createdTask;
+                return {
+                  ...createdTask,
+                  subtasks: [],
+                };
               })
-              .sort((a, b) => a.sortOrder - b.sortOrder),
-          };
-        });
+              .sort((a, b) => a.sortOrder - b.sortOrder);
+
+          return acc.map((task) => {
+            if (task.id !== createdTask.parentId) return task;
+            return {
+              ...task,
+              subtasks: task.subtasks
+                .map((subtask) => {
+                  if (subtask.id !== context.tempIds[index]) return subtask;
+                  return createdTask;
+                })
+                .sort((a, b) => a.sortOrder - b.sortOrder),
+            };
+          });
+        }, prev);
       });
     },
   });
@@ -175,10 +183,11 @@ export function useTodos() {
     },
   });
 
-  const createTask = timeTravel.createAction({
-    name: "create-task",
-    apply: (input: TaskFormValues) => createTaskMutation.mutateAsync(input),
-    revert: (task) => void deleteTaskMutation.mutateAsync(task),
+  const createTasks = timeTravel.createAction({
+    name: "create-tasks",
+    apply: (input: TaskFormValues[]) => createTasksMutation.mutateAsync(input),
+    revert: (tasks) =>
+      tasks.forEach((task) => void deleteTaskMutation.mutateAsync(task)),
   });
 
   const deleteTasks = timeTravel.createAction({
@@ -190,11 +199,7 @@ export function useTodos() {
 
       return tasks;
     },
-    revert: (tasks) => {
-      tasks.forEach(
-        (task) => task && void createTaskMutation.mutateAsync(task),
-      );
-    },
+    revert: (tasks) => void createTasksMutation.mutateAsync(tasks),
   });
 
   const updateTask = timeTravel.createAction({
@@ -232,7 +237,7 @@ export function useTodos() {
   return {
     tasks: data,
     isLoading,
-    createTask,
+    createTasks,
     deleteTasks,
     updateTask,
   };

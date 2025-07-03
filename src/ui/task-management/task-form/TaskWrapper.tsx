@@ -8,7 +8,9 @@ import {
   createPolymorphicComponent,
   Divider,
   FocusTrap,
+  Kbd,
   Paper,
+  Textarea,
   TextInput,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
@@ -22,7 +24,7 @@ export interface TaskWrapperProps {
   task: ReactElement<{ onAddSubtask?: () => void }>;
   subtasks: ReactNode;
   ref?: Ref<HTMLDivElement>;
-  onAddSubtask: (title: string) => void;
+  onAddSubtasks: (titles: string[]) => void;
 }
 
 export const TaskWrapper = createPolymorphicComponent<
@@ -33,22 +35,26 @@ export const TaskWrapper = createPolymorphicComponent<
     task,
     subtasks,
     className,
-    onAddSubtask,
+    onAddSubtasks,
     ...paperProps
   }: TaskWrapperProps & PaperProps) => {
     const [isAddingSubtask, subtaskAdder] = useDisclosure();
 
     const form = useForm({
       defaultValues: {
-        title: "",
+        content: "",
       },
       validators: {
-        onChange: z.object({
-          title: z.string().min(3),
+        onSubmit: z.object({
+          content: z.string().trim().min(3),
         }),
       },
       onSubmit: ({ value }) => {
-        onAddSubtask(value.title);
+        const titles = value.content
+          .split("\n")
+          .map((line) => line.trim())
+          .filter(Boolean);
+        onAddSubtasks(titles);
         form.reset();
       },
     });
@@ -71,40 +77,57 @@ export const TaskWrapper = createPolymorphicComponent<
           <Divider />
           <Box p="xs">
             <form.Field
-              name="title"
+              name="content"
               children={(field) => (
-                <FocusTrap active={isAddingSubtask}>
-                  <TextInput
-                    placeholder="New subtask"
-                    rightSection={
-                      <ActionIcon
-                        aria-label="Cancel"
-                        variant="transparent"
-                        color="gray"
-                        onClick={handleAbort}
-                      >
-                        <IconX size={16} />
-                      </ActionIcon>
-                    }
-                    value={field.state.value}
-                    error={field.state.meta.errors.length > 0}
-                    onChange={(e) => field.handleChange(e.target.value)}
-                    onFocus={(e) =>
-                      e.currentTarget.scrollIntoView({
-                        behavior: "smooth",
-                      })
-                    }
-                    onBlur={subtaskAdder.close}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") {
-                        e.currentTarget.blur();
+                <div>
+                  <FocusTrap active={isAddingSubtask}>
+                    <Textarea
+                      autosize
+                      maxRows={3}
+                      placeholder="New subtask"
+                      rightSection={
+                        <ActionIcon
+                          aria-label="Cancel"
+                          variant="transparent"
+                          color="gray"
+                          onClick={handleAbort}
+                        >
+                          <IconX size={16} />
+                        </ActionIcon>
                       }
-                      if (e.key === "Enter") {
-                        void form.handleSubmit();
+                      value={field.state.value}
+                      error={field.state.meta.errors.length > 0}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onFocus={(e) =>
+                        e.currentTarget.scrollIntoView({
+                          behavior: "smooth",
+                          block: "center",
+                        })
                       }
-                    }}
-                  />
-                </FocusTrap>
+                      // onBlur={subtaskAdder.close}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          e.currentTarget.blur();
+                        }
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          void form.handleSubmit();
+                        }
+                      }}
+                    />
+                  </FocusTrap>
+                  <p className="mt-3 mb-0 text-center text-xs text-gray-400 italic">
+                    Press{" "}
+                    <Kbd size="xs" className="align-top">
+                      Shift
+                    </Kbd>{" "}
+                    +{" "}
+                    <Kbd size="xs" className="align-top">
+                      Enter
+                    </Kbd>{" "}
+                    to add multiple subtasks
+                  </p>
+                </div>
               )}
             />
           </Box>

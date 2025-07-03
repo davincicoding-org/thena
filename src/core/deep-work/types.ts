@@ -30,8 +30,8 @@ export type SprintPlan = z.infer<typeof sprintPlanSchema>;
 
 export interface TaskRun {
   runId: TaskRunSelect["id"];
-  status: TaskRunSelect["status"];
-  timestamps: TaskRunSelect["timestamps"];
+  // status: TaskRunSelect["status"];
+  // timestamps: TaskRunSelect["timestamps"];
   task: FlatTask;
 }
 

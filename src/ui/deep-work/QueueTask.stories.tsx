@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { Paper } from "@mantine/core";
 import { fn } from "@storybook/test";
 
-import { QueueTask } from "../QueueTask";
+import { QueueTask } from "./QueueTask";
 
 const meta = {
   component: QueueTask,

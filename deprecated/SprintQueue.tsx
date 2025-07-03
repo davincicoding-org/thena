@@ -19,7 +19,7 @@ import type { TaskId } from "@/core/task-management";
 import { resolveDuration } from "@/core/deep-work";
 import { cn } from "@/ui/utils";
 
-import { QueueTask } from "./QueueTask";
+import { QueueTask } from "../src/ui/deep-work/QueueTask";
 
 type SprintStatus = "idle" | "running" | "paused";
 

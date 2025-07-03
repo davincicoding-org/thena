@@ -1,17 +1,17 @@
 import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
-import type { RunnableSprint, TaskRun } from "@/core/deep-work";
-import { resolveDuration, sprintPlanSchema } from "@/core/deep-work";
+// import type { RunnableSprint, TaskRun } from "@/core/deep-work";
+// import { resolveDuration, sprintPlanSchema } from "@/core/deep-work";
 import {
   // focusSessionSelect,
-  sprintSelect,
-  sprintUpdate,
+  // sprintSelect,
+  // sprintUpdate,
   taskRunSelect,
   taskRunUpdate,
 } from "@/core/deep-work/db";
 import { taskSelectSchema } from "@/core/task-management";
-import { sprints, taskRuns, tasks } from "@/database/schema";
+import { taskRuns, tasks } from "@/database/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -110,22 +110,22 @@ export const focusSessionsRouter = createTRPCRouter({
   //     }));
   //   }),
 
-  sprint: {
-    update: protectedProcedure
-      .input(
-        sprintSelect.pick({ id: true }).extend({
-          updates: sprintUpdate,
-        }),
-      )
-      .mutation(async ({ ctx: { db, auth }, input }) => {
-        return await db
-          .update(sprints)
-          .set(input.updates)
-          .where(
-            and(eq(sprints.id, input.id), eq(sprints.userId, auth.userId)),
-          );
-      }),
-  },
+  // sprint: {
+  //   update: protectedProcedure
+  //     .input(
+  //       sprintSelect.pick({ id: true }).extend({
+  //         updates: sprintUpdate,
+  //       }),
+  //     )
+  //     .mutation(async ({ ctx: { db, auth }, input }) => {
+  //       return await db
+  //         .update(sprints)
+  //         .set(input.updates)
+  //         .where(
+  //           and(eq(sprints.id, input.id), eq(sprints.userId, auth.userId)),
+  //         );
+  //     }),
+  // },
   taskRun: {
     update: protectedProcedure
       .input(
@@ -144,25 +144,25 @@ export const focusSessionsRouter = createTRPCRouter({
 
         return result;
       }),
-    appendTimestamp: protectedProcedure
-      .input(
-        taskRunSelect.pick({ id: true }).extend({
-          timestamp: z.date().optional(),
-        }),
-      )
-      .mutation(async ({ ctx: { db, auth }, input }) => {
-        const timestamp = input.timestamp ?? new Date();
-        const [result] = await db
-          .update(taskRuns)
-          .set({
-            timestamps: sql`array_append(${taskRuns.timestamps}, ${timestamp})`,
-          })
-          .where(
-            and(eq(taskRuns.id, input.id), eq(taskRuns.userId, auth.userId)),
-          )
-          .returning();
-        return result;
-      }),
+    // appendTimestamp: protectedProcedure
+    //   .input(
+    //     taskRunSelect.pick({ id: true }).extend({
+    //       timestamp: z.date().optional(),
+    //     }),
+    //   )
+    //   .mutation(async ({ ctx: { db, auth }, input }) => {
+    //     const timestamp = input.timestamp ?? new Date();
+    //     const [result] = await db
+    //       .update(taskRuns)
+    //       .set({
+    //         timestamps: sql`array_append(${taskRuns.timestamps}, ${timestamp})`,
+    //       })
+    //       .where(
+    //         and(eq(taskRuns.id, input.id), eq(taskRuns.userId, auth.userId)),
+    //       )
+    //       .returning();
+    //     return result;
+    //   }),
   },
   task: {
     updateStatus: protectedProcedure

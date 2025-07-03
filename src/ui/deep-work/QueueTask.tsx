@@ -2,7 +2,6 @@ import type { NavLinkProps } from "@mantine/core";
 import { ActionIcon, Button, Flex, NavLink, Tooltip } from "@mantine/core";
 import { IconArrowDownDashed, IconCheck } from "@tabler/icons-react";
 
-import type { TaskRun } from "@/core/deep-work";
 import { BoundOverlay } from "@/ui/components/BoundOverlay";
 import { cn } from "@/ui/utils";
 
@@ -10,7 +9,7 @@ export interface QueueTaskProps {
   label: string;
   group?: string;
   active: boolean;
-  status: TaskRun["status"];
+  // status: TaskRun["status"];
   readOnly?: boolean;
   onComplete: () => void;
   onSkip: () => void;
@@ -21,7 +20,7 @@ export interface QueueTaskProps {
 export function QueueTask({
   label,
   group,
-  status,
+  // status,
   active,
   readOnly,
   onComplete,
@@ -31,14 +30,14 @@ export function QueueTask({
 }: QueueTaskProps) {
   const color = ((): NavLinkProps["color"] => {
     if (active) return undefined;
-    switch (status) {
-      case "completed":
-        return "green";
-      case "skipped":
-        return "yellow";
-      default:
-        return "gray";
-    }
+    // switch (status) {
+    //   case "completed":
+    //     return "green";
+    //   case "skipped":
+    //     return "yellow";
+    //   default:
+    //     return "gray";
+    // }
   })();
 
   return (
@@ -88,17 +87,17 @@ export function QueueTask({
         color={color}
         classNames={{
           root: cn("min-w-48 opacity-100! transition-all", {
-            "pointer-events-none": status !== "skipped",
+            // "pointer-events-none": status !== "skipped",
           }),
           body: cn("flex flex-col-reverse", {
-            "line-through": status === "completed",
-            "opacity-30":
-              status === "skipped" || (status === "pending" && !active),
+            // "line-through": status === "completed",
+            // "opacity-30":
+            //   status === "skipped" || (status === "pending" && !active),
           }),
         }}
         rightSection={null}
         onClick={() => {
-          if (status !== "skipped") return;
+          // if (status !== "skipped") return;
           onUnskip();
         }}
       />

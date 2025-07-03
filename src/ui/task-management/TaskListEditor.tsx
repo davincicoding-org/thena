@@ -63,7 +63,7 @@ export interface TaskListEditorProps {
   tasks: TaskTree[];
   onUpdateTask: (task: SetRequired<TaskUpdate, "id" | "parentId">) => void;
   onDeleteTasks: (tasks: TaskSelect[]) => void;
-  onCreateTask: (task: TaskFormValues) => void;
+  onCreateTasks: (tasks: TaskFormValues[]) => void;
   onRefineTask?: (task: TaskSelect) => void;
   projects: ProjectSelect[];
   onCreateProject: UseMutateFunction<
@@ -76,7 +76,7 @@ export interface TaskListEditorProps {
 
 export function TaskListEditor({
   tasks,
-  onCreateTask,
+  onCreateTasks,
   onUpdateTask,
   onRefineTask,
   onDeleteTasks,
@@ -113,13 +113,13 @@ export function TaskListEditor({
               {index !== 0 && (
                 <TaskAdder
                   order={(tasks[index - 1]!.sortOrder + task.sortOrder) / 2}
-                  onCreateTask={onCreateTask}
+                  onCreateTasks={onCreateTasks}
                 />
               )}
               <TaskTreeItem
                 key={task.id}
                 task={task}
-                onCreateTask={onCreateTask}
+                onCreateTasks={onCreateTasks}
                 onUpdateTask={onUpdateTask}
                 onRefineTask={onRefineTask}
                 onDeleteTasks={onDeleteTasks}
@@ -131,7 +131,7 @@ export function TaskListEditor({
         </AnimatePresence>
       </SortableTasksContainer>
       <div className="h-[22px]" />
-      <TaskAdder hotkey="space" onCreateTask={onCreateTask} />
+      <TaskAdder hotkey="space" onCreateTasks={onCreateTasks} />
     </Box>
   );
 }
@@ -139,10 +139,10 @@ export function TaskListEditor({
 interface TaskAdderProps {
   hotkey?: string;
   order?: number;
-  onCreateTask: TaskListEditorProps["onCreateTask"];
+  onCreateTasks: TaskListEditorProps["onCreateTasks"];
 }
 
-function TaskAdder({ hotkey = "", onCreateTask, order }: TaskAdderProps) {
+function TaskAdder({ hotkey = "", onCreateTasks, order }: TaskAdderProps) {
   useHotkeys([
     [
       hotkey,
@@ -167,14 +167,16 @@ function TaskAdder({ hotkey = "", onCreateTask, order }: TaskAdderProps) {
       }),
     },
     onSubmit: ({ value }) => {
-      onCreateTask({
-        ...value,
-        customSortOrder: order ?? null,
-        parentId: null,
-        projectId: null,
-        priority: null,
-        complexity: null,
-      });
+      onCreateTasks([
+        {
+          ...value,
+          customSortOrder: order ?? null,
+          parentId: null,
+          projectId: null,
+          priority: null,
+          complexity: null,
+        },
+      ]);
       setOpened(false);
       taskForm.reset();
     },
@@ -270,19 +272,19 @@ function TaskAdder({ hotkey = "", onCreateTask, order }: TaskAdderProps) {
 interface TaskItemProps
   extends Pick<
     TaskListEditorProps,
+    | "onCreateTasks"
     | "onUpdateTask"
     | "onRefineTask"
     | "onDeleteTasks"
     | "projects"
     | "onCreateProject"
-    | "onCreateTask"
   > {
   task: TaskTree;
 }
 
 function TaskTreeItem({
   task,
-  onCreateTask,
+  onCreateTasks,
   onUpdateTask,
   onRefineTask,
   onDeleteTasks,
@@ -402,15 +404,17 @@ function TaskTreeItem({
           </SortableTasksContainer>
         ) : undefined
       }
-      onAddSubtask={(title) =>
-        onCreateTask({
-          title,
-          customSortOrder: task.subtasks.length,
-          parentId: task.id,
-          projectId: null,
-          priority: null,
-          complexity: null,
-        })
+      onAddSubtasks={(titles) =>
+        onCreateTasks(
+          titles.map((title, index) => ({
+            title,
+            customSortOrder: task.subtasks.length + index,
+            parentId: task.id,
+            projectId: null,
+            priority: null,
+            complexity: null,
+          })),
+        )
       }
     />
   );

@@ -1,9 +1,16 @@
-import { Fragment, useEffect, useRef, useState } from "react";
-import { Flex, FocusTrap, Modal, ScrollArea } from "@mantine/core";
-import { readLocalStorageValue, useWindowEvent } from "@mantine/hooks";
+import { Fragment, useRef, useState } from "react";
+import {
+  Button,
+  Card,
+  Divider,
+  Flex,
+  ScrollArea,
+  Select,
+  Stack,
+  Text,
+} from "@mantine/core";
 import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
-import { AnimatePresence, motion } from "motion/react";
 
 import type {
   // ActiveFocusSession,
@@ -14,22 +21,23 @@ import type { FlatTask, TaskSelect } from "@/core/task-management";
 import { WavyBackground } from "@/ui/components/WavyBackground";
 import { cn } from "@/ui/utils";
 
-import { SessionBreak } from "./SessionBreak";
-import { SessionReview } from "./SessionReview";
-import { SprintQueue } from "./SprintQueue";
+import { QueueTask } from "./QueueTask";
+import { useStopWatch } from "./useStopWatch";
 
 dayjs.extend(duration);
 
 export interface FocusSessionProps {
-  tasks: FlatTask[];
+  todos: FlatTask[];
+  completedSessions?: [];
+  onStartSession: (params: { duration: number }) => void;
   // session: Omit<ActiveFocusSession, "id"> | null;
   // sprints: RunnableSprint[];
 
-  onStartSprint: (sprintId: RunnableSprint["id"]) => void;
-  onFinishSprint: (sprintId: RunnableSprint["id"]) => void;
-  onFinishBreak: () => void;
+  onStartSprint?: (sprintId: RunnableSprint["id"]) => void;
+  onFinishSprint?: (sprintId: RunnableSprint["id"]) => void;
+  onFinishBreak?: () => void;
 
-  onCompleteTask: (args: {
+  onCompleteTask?: (args: {
     sprintId: RunnableSprint["id"];
     runId: TaskRun["runId"];
     taskId: TaskSelect["id"];
@@ -49,7 +57,8 @@ export interface FocusSessionProps {
 }
 
 export function FocusSession({
-  tasks,
+  todos,
+  onStartSession,
   onStartSprint,
   onFinishSprint,
   onFinishBreak,
@@ -57,7 +66,7 @@ export function FocusSession({
   onFinishSession,
   className,
 }: FocusSessionProps) {
-  const stopWatch = useStopWatch();
+  const activeSession = useActiveSession();
 
   // useEffect(() => {
   //   switch (session?.status) {
@@ -98,43 +107,44 @@ export function FocusSession({
   const breakRef = useRef<HTMLDivElement>(null);
   const activeSprintRef = useRef<HTMLDivElement>(null);
 
-  const handleStartSprint = (sprintId: RunnableSprint["id"]) => {
-    stopWatch.reset();
-    onStartSprint(sprintId);
+  const handleStartSession = (params: { duration: number }) => {
+    activeSession.controls.start(params.duration);
+    void videoRef.current?.play();
   };
 
-  const handlePauseSprint = () => {
-    // NOT IMPLEMENTED
+  const handlePauseSession = () => {
+    activeSession.controls.pause();
+    void videoRef.current?.pause();
   };
 
-  const handleResumeSprint = () => {
-    // NOT IMPLEMENTED
+  const handleResumeSession = () => {
+    activeSession.controls.resume();
+    void videoRef.current?.play();
   };
 
-  const handleFinishSprint = (sprintId: RunnableSprint["id"]) => {
-    onFinishSprint(sprintId);
-    stopWatch.reset();
-  };
+  // const handleFinishSprint = (sprintId: RunnableSprint["id"]) => {
+  //   onFinishSprint(sprintId);
+  //   stopwatch.reset();
+  // };
 
-  const handleFinishBreak = () => {
-    stopWatch.reset();
-    onFinishBreak();
-  };
+  // const handleFinishBreak = () => {
+  //   stopwatch.reset();
+  //   onFinishBreak();
+  // };
 
-  const handleLeaveSession = (
-    statusUpdates: Record<TaskSelect["id"], TaskSelect["status"]>,
-  ) => {
-    alert("TODO");
-    // onFinishSession(statusUpdates);
-  };
+  // const handleLeaveSession = (
+  //   statusUpdates: Record<TaskSelect["id"], TaskSelect["status"]>,
+  // ) => {
+  //   alert("TODO");
+  //   // onFinishSession(statusUpdates);
+  // };
 
   return (
     <WavyBackground
       speed="slow"
       className="h-full"
-      // disabled={session?.status === "running"}
+      disabled={activeSession.status === "running"}
     >
-      <FocusTrap.InitialFocus />
       <Flex className={cn("h-full", className)}>
         <video
           ref={videoRef}
@@ -144,7 +154,7 @@ export function FocusSession({
           className={cn(
             "absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-1000",
             {
-              // "opacity-100": session?.status === "running",
+              "opacity-100": activeSession.status === "running",
             },
           )}
         >
@@ -160,16 +170,59 @@ export function FocusSession({
 
         <ScrollArea
           classNames={{
-            root: cn("relative my-auto w-screen"),
+            root: cn("relative my-auto w-screen transition-all"),
             viewport: cn("snap-x snap-mandatory"),
           }}
           scrollbars="x"
           type="never"
         >
           <div className="flex items-start gap-12">
-            <div className="h-px w-[50vw] shrink-0" />
-            {/* <AnimatePresence>
-              {sprints.map((sprint, index) => {
+            <div className={cn("h-px w-[50vw] shrink-0")} />
+            {/* <AnimatePresence> */}
+
+            <SessionInitiator
+              className={cn(
+                "shrink-0 snap-center snap-always transition-opacity",
+                {
+                  "pointer-events-none opacity-0":
+                    activeSession.status !== "idle",
+                },
+              )}
+              onSubmit={handleStartSession}
+            />
+
+            <Card
+              radius="md"
+              p={0}
+              className={cn("shrink-0 transition-all", {
+                "ml-auto": activeSession.status === "running",
+              })}
+            >
+              {/* TODO add Session Controls */}
+              <ScrollArea>
+                {todos.map((todo, index) => (
+                  <Fragment key={todo.id}>
+                    {index > 0 && <Divider />}
+                    <QueueTask
+                      readOnly
+                      group={todo.parent?.title}
+                      label={todo.title}
+                      active
+                      onComplete={() => {
+                        alert("TODO");
+                      }}
+                      onSkip={() => {
+                        alert("TODO");
+                      }}
+                      onUnskip={() => {
+                        alert("TODO");
+                      }}
+                    />
+                  </Fragment>
+                ))}
+              </ScrollArea>
+            </Card>
+            {/* {sprints.map((sprint, index) => {
                 const isCurrentSprint = session?.currentSprintId === sprint.id;
 
                 return (
@@ -234,9 +287,13 @@ export function FocusSession({
                     />
                   </Fragment>
                 );
+              })} */}
+            {/* </AnimatePresence> */}
+            <div
+              className={cn("h-px w-[50vw] shrink-0 transition-all", {
+                "w-0": activeSession.status === "running",
               })}
-            </AnimatePresence> */}
-            <div className="h-px w-[50vw] shrink-0" />
+            />
           </div>
         </ScrollArea>
       </Flex>
@@ -262,59 +319,74 @@ export function FocusSession({
   );
 }
 
-function useStopWatch() {
-  const STORAGE_KEY = "focus-session-time-elapsed";
-  const handleInterruption = () => {
-    if (!isRunning) return;
-    localStorage.setItem(STORAGE_KEY, timeElapsed.toString());
-  };
-  useWindowEvent("beforeunload", () => {
-    handleInterruption();
-  });
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    return () => {
-      handleInterruption();
-    };
-  }, []);
+interface SessionInitiatorProps {
+  className?: string;
+  onSubmit: (params: { duration: number }) => void;
+}
 
-  const [timeElapsed, setTimeElapsed] = useState<number>(() => {
-    const restoredTimeElapsed = readLocalStorageValue<number>({
-      key: STORAGE_KEY,
-      defaultValue: 0,
-    });
-    if (typeof window === "undefined") return 0;
-    localStorage?.removeItem(STORAGE_KEY);
-    return restoredTimeElapsed;
-  });
-  const [isRunning, setIsRunning] = useState(false);
+function SessionInitiator({ className, onSubmit }: SessionInitiatorProps) {
+  const durationOptions = [15, 25, 45];
+  const [duration, setDuration] = useState(25);
 
-  useEffect(() => {
-    if (!isRunning) return;
-    const interval = setInterval(() => {
-      setTimeElapsed((prev) => prev + 100);
-    }, 100);
-    return () => clearInterval(interval);
-  }, [isRunning]);
+  return (
+    <Card radius="md" p={0} className={cn(className)}>
+      <Stack p="md" mb="xs">
+        <Text size="xl" ta="center">
+          Next Session
+        </Text>
+        <Select
+          size="md"
+          value={duration.toString()}
+          data={durationOptions.map((minutes) => ({
+            label: `${minutes} minutes`,
+            value: minutes.toString(),
+          }))}
+          onChange={(value) => setDuration(Number(value))}
+        />
+      </Stack>
 
-  const start = () => {
-    setIsRunning(true);
+      <Button size="lg" radius={0} onClick={() => onSubmit({ duration })}>
+        Start
+      </Button>
+    </Card>
+  );
+}
+
+function useActiveSession() {
+  const [status, setStatus] = useState<
+    "idle" | "running" | "paused" | "finished"
+  >("idle");
+  const stopwatch = useStopWatch();
+
+  const start = (duration: number) => {
+    stopwatch.start(duration);
+    setStatus("running");
   };
 
   const pause = () => {
-    setIsRunning(false);
+    stopwatch.pause();
+    setStatus("paused");
   };
 
-  const reset = () => {
-    setTimeElapsed(0);
-    setIsRunning(false);
+  const resume = () => {
+    stopwatch.resume();
+    setStatus("running");
+  };
+
+  const finish = () => {
+    stopwatch.reset();
+    setStatus("finished");
   };
 
   return {
-    timeElapsed,
-    start,
-    pause,
-    reset,
-    setTimeElapsed,
+    status,
+    duration: stopwatch.totalTime,
+    timeElapsed: stopwatch.timeElapsed,
+    controls: {
+      start,
+      pause,
+      resume,
+      finish,
+    },
   };
 }
