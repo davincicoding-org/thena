@@ -1,6 +1,5 @@
 import type { Message, UseChatHelpers } from "@ai-sdk/react";
-import type {
-  BoxProps} from "@mantine/core";
+import type { BoxProps } from "@mantine/core";
 import {
   ActionIcon,
   Box,

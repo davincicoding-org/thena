@@ -1,5 +1,5 @@
-import type { ReactNode, Ref } from "react";
 import type { CardProps, PaperProps } from "@mantine/core";
+import type { ReactNode, Ref } from "react";
 import { Card, Divider, Paper } from "@mantine/core";
 
 import { cn } from "@/ui/utils";

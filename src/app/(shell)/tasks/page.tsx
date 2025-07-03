@@ -1,7 +1,6 @@
 "use client";
 
 import { LoadingOverlay, Transition } from "@mantine/core";
-import { useDebouncedCallback } from "@mantine/hooks";
 
 import { Main } from "@/app/(shell)/shell";
 import { TaskListEditor, useProjects, useTodos } from "@/ui/task-management";

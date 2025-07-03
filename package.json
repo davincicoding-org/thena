@@ -16,7 +16,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "storybook": "storybook dev -p 6006 --no-open",
+    "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "format": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md,css,html}\"",
     "format:fix": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md,css,html}\"",
@@ -85,11 +85,14 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@chromatic-com/storybook": "^1.0.0",
     "@commitlint/cli": "^19.8.0",
     "@commitlint/config-conventional": "^19.8.0",
     "@eslint/eslintrc": "^3.3.1",
     "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
+    "@storybook/addon-a11y": "^8.6.14",
     "@storybook/addon-actions": "^8.6.12",
+    "@storybook/addon-docs": "^8.6.14",
     "@storybook/addon-essentials": "^8.6.12",
     "@storybook/addon-interactions": "^8.6.12",
     "@storybook/addon-onboarding": "^8.6.12",
@@ -104,7 +107,7 @@
     "@types/node": "^20.17.30",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
-    "@vitest/coverage-v8": "^0.33.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "babel-plugin-react-compiler": "19.1.0-rc.1",
     "drizzle-kit": "^0.31.1",
     "eslint": "^9.25.0",
@@ -119,11 +122,11 @@
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "raw-loader": "^4.0.2",
-    "storybook": "^8.6.12",
+    "storybook": "^8.6.14",
     "type-fest": "^4.40.1",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.31.1",
-    "vitest": "^0.33.0"
+    "vitest": "^2.1.5"
   },
   "peerDependencies": {
     "react": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"

@@ -1,8 +1,8 @@
-import { ReactNode, StrictMode } from "react";
-
 import type { Preview } from "@storybook/react";
+import type { ReactNode } from "react";
+import { StrictMode } from "react";
 
-import { ThemeProvider } from "../ui/Theme";
+import { ThemeProvider } from "../src/ui/Theme";
 
 const preview: Preview = {
   parameters: {

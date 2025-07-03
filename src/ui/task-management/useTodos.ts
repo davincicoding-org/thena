@@ -32,13 +32,8 @@ export function useTodos() {
         createdAt: new Date(),
         updatedAt: new Date(),
         userId: "",
-        customSortOrder: null,
         sortOrder: tempId,
-        projectId: null,
-        parentId: null,
         status: "todo",
-        priority: null,
-        complexity: null,
         ...taskInsert,
       };
       utils.tasks.list.setData({ status: "todo" }, (prev = []) => {

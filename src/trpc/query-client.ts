@@ -3,8 +3,8 @@ import {
   keepPreviousData,
   QueryClient,
 } from "@tanstack/react-query";
-import { experimental_createPersister } from "@tanstack/react-query-persist-client";
-import { del, get, set } from "idb-keyval";
+// import {  } from "@tanstack/react-query-persist-client";
+// import { del, get, set } from "idb-keyval";
 import SuperJSON from "superjson";
 
 export const createQueryClient = () =>

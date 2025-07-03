@@ -30,9 +30,9 @@ import { TaskForm, taskFormOpts, useTaskForm } from "@/ui/task-management";
 import { TasksQueryPanel } from "@/ui/task-management/tasks/TasksQueryPanel";
 import { cn } from "@/ui/utils";
 
-import type { TasksQueryOptionsHookReturn } from "../../ui/task-management/tasks/useTasksQueryOptions";
-import { SubtaskForm } from "../../ui/task-management/task-form/SubtaskForm";
-import { TaskWrapper } from "../../ui/task-management/task-form/TaskWrapper";
+import type { TasksQueryOptionsHookReturn } from "../../src/ui/task-management/tasks/useTasksQueryOptions";
+import { SubtaskForm } from "../../src/ui/task-management/task-form/SubtaskForm";
+import { TaskWrapper } from "../../src/ui/task-management/task-form/TaskWrapper";
 
 // MARK: Component
 
