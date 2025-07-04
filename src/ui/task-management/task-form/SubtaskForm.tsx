@@ -21,14 +21,14 @@ export type SubtaskFormProps = {
   readOnly?: boolean;
   style?: CSSProperties;
   ref?: Ref<HTMLDivElement>;
-  rightSection?: ReactNode;
+  dragHandle?: ReactNode;
   onRemove?: () => void;
 };
 
 export const SubtaskForm = withTaskForm({
   ...taskFormOpts,
   props: {} as SubtaskFormProps,
-  render: ({ form, ref, style, readOnly, onRemove, rightSection }) => {
+  render: ({ form, ref, style, readOnly, onRemove, dragHandle }) => {
     /* eslint-disable react-hooks/rules-of-hooks */
     const [isActionsPanelOpen, actionsPanel] = useDisclosure(false);
     const actionsPanelRef = useClickOutside(() => actionsPanel.close());
@@ -106,18 +106,20 @@ export const SubtaskForm = withTaskForm({
             }}
           />
           {!readOnly && (
-            <Popover.Target>
-              <ActionIcon
-                aria-label="Subtask Actions"
-                variant="transparent"
-                color="gray"
-                onClick={actionsPanel.open}
-              >
-                <IconPencil size={16} />
-              </ActionIcon>
-            </Popover.Target>
+            <div className="flex items-center opacity-0 group-focus-within:opacity-100 group-hover:opacity-100">
+              <Popover.Target>
+                <ActionIcon
+                  aria-label="Subtask Actions"
+                  variant="transparent"
+                  color="gray"
+                  onClick={actionsPanel.open}
+                >
+                  <IconPencil size={16} />
+                </ActionIcon>
+              </Popover.Target>
+              {dragHandle}
+            </div>
           )}
-          {rightSection}
         </Flex>
 
         <Popover.Dropdown p={0} ref={actionsPanelRef}>

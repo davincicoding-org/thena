@@ -46,7 +46,7 @@ export type TaskFormProps = {
   ref?: Ref<HTMLDivElement>;
   readOnly?: boolean;
   TaskActions?: TaskActionsComponent;
-  rightSection?: ReactNode;
+  dragHandle?: ReactNode;
   style?: CSSProperties;
 };
 
@@ -59,7 +59,7 @@ export const TaskForm = withTaskForm({
     projects,
     onCreateProject,
     readOnly,
-    rightSection,
+    dragHandle,
     ref,
     style,
     TaskActions = (({ defaultActions }) =>
@@ -146,7 +146,14 @@ export const TaskForm = withTaskForm({
           }, 300);
         }}
       >
-        <Flex align="center" p={4} bg="dark.6" style={style} ref={ref}>
+        <Flex
+          align="center"
+          p={4}
+          bg="dark.6"
+          style={style}
+          ref={ref}
+          className="group"
+        >
           <form.Field
             name="projectId"
             children={({ state: { value } }) => {
@@ -214,20 +221,22 @@ export const TaskForm = withTaskForm({
             }}
           />
           {!readOnly && (
-            <Popover.Target>
-              <ActionIcon
-                aria-label="Task Actions"
-                className="disabled:cursor-default!"
-                disabled={isActionsPanelOpen}
-                variant="subtle"
-                color="gray"
-                onClick={actionsPanel.open}
-              >
-                <IconPencil size={16} />
-              </ActionIcon>
-            </Popover.Target>
+            <div className="flex items-center opacity-0 group-focus-within:opacity-100 group-hover:opacity-100">
+              <Popover.Target>
+                <ActionIcon
+                  aria-label="Task Actions"
+                  className="disabled:cursor-default!"
+                  disabled={isActionsPanelOpen}
+                  variant="subtle"
+                  color="gray"
+                  onClick={actionsPanel.open}
+                >
+                  <IconPencil size={16} />
+                </ActionIcon>
+              </Popover.Target>
+              {dragHandle}
+            </div>
           )}
-          {rightSection}
         </Flex>
 
         <Popover.Dropdown p={0} ref={actionsPanelRef} className="overflow-clip">

@@ -1,12 +1,4 @@
-import {
-  Card,
-  Flex,
-  RingProgress,
-  Skeleton,
-  Stack,
-  Text,
-  Tooltip,
-} from "@mantine/core";
+import { Card, Flex, Skeleton, Stack, Text } from "@mantine/core";
 
 import type { FocusSessionSelect } from "@/core/deep-work/db";
 
@@ -17,7 +9,6 @@ export interface IntelligenceTileProps {
         focusMinutes: number;
         completedTasks: number;
         completedSessions: FocusSessionSelect[];
-        // completionRate: number;
       }
     | undefined;
 }

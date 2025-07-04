@@ -38,6 +38,7 @@ export default function SessionPage() {
         onUpdateTask={updateTask}
         onDeleteTasks={deleteTasks}
         onCreateTasks={createTasks}
+        onBulkCreateTasks={(tasks) => todos.bulkCreateTasks.mutateAsync(tasks)}
         projects={projects.items}
         onCreateProject={(input) => projects.create.mutate(input)}
       />

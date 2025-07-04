@@ -86,6 +86,15 @@ export function useTodos() {
     },
   });
 
+  const bulkCreateTasks = api.tasks.bulkCreate.useMutation<TaskTree[]>({
+    onSuccess: (taskTrees) => {
+      utils.tasks.list.setData({ status: "todo" }, (prev = []) => [
+        ...prev,
+        ...taskTrees,
+      ]);
+    },
+  });
+
   const updateTask = api.tasks.update.useMutation<{
     prev: TaskTree[] | undefined;
   }>({
@@ -161,5 +170,6 @@ export function useTodos() {
     createTasks,
     deleteTask,
     updateTask,
+    bulkCreateTasks,
   };
 }

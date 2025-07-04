@@ -1,4 +1,7 @@
-import type { UseMutateFunction } from "@tanstack/react-query";
+import type {
+  UseMutateAsyncFunction,
+  UseMutateFunction,
+} from "@tanstack/react-query";
 import type { SetRequired } from "type-fest";
 import { Fragment, useEffect, useRef } from "react";
 import {
@@ -57,6 +60,11 @@ export interface FocusSessionProps {
   onUpdateTask: (task: SetRequired<TaskUpdate, "id" | "parentId">) => void;
   onDeleteTasks: (tasks: TaskSelect[]) => void;
   onCreateTasks: (tasks: TaskFormValues[]) => void;
+  onBulkCreateTasks: UseMutateAsyncFunction<
+    TaskTree[],
+    Error,
+    { title: string; subtasks: string[] }[]
+  >;
   projects: ProjectSelect[];
   onCreateProject: UseMutateFunction<
     ProjectSelect | undefined,
@@ -85,6 +93,7 @@ export function FocusSession({
   onUpdateTask,
   onDeleteTasks,
   onCreateTasks,
+  onBulkCreateTasks,
   projects,
   onCreateProject,
   className,
@@ -240,6 +249,7 @@ export function FocusSession({
             onUpdateTask={onUpdateTask}
             onDeleteTasks={onDeleteTasks}
             onCreateTasks={onCreateTasks}
+            onBulkCreateTasks={onBulkCreateTasks}
             projects={projects}
             onCreateProject={onCreateProject}
           />

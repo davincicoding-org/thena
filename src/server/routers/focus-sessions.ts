@@ -1,14 +1,7 @@
 import { and, eq } from "drizzle-orm";
 
-import {
-  focusSessionInsert,
-  focusSessionSelect,
-  taskRunInsert,
-  taskRunSelect,
-  taskRunUpdate,
-} from "@/core/deep-work/db";
-import { taskSelectSchema } from "@/core/task-management";
-import { focusSessions, taskRuns, tasks } from "@/database/schema";
+import { focusSessionInsert, focusSessionSelect } from "@/core/deep-work/db";
+import { focusSessions } from "@/database/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 

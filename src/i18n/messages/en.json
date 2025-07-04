@@ -17,7 +17,7 @@
         "hotKeyTip": "Press <kbd></kbd> to quickly toggle between editing and reordering tasks."
       },
 
-      "emptyMessage": "Add all the tasks you want to work on today.",
+      "emptyMessage": "Start adding your tasks.",
       "TaskActions": {
         "refine": "Refine",
         "postpone": "Postpone for later",

@@ -1,7 +1,10 @@
 /* eslint-disable max-lines */
 // TODO move some components to their own files
 
-import type { UseMutateFunction } from "@tanstack/react-query";
+import type {
+  UseMutateAsyncFunction,
+  UseMutateFunction,
+} from "@tanstack/react-query";
 import type { CSSProperties, PropsWithChildren } from "react";
 import type { SetRequired } from "type-fest";
 import { Fragment, useState } from "react";
@@ -30,9 +33,17 @@ import {
   Divider,
   FocusTrap,
   Kbd,
+  Modal,
+  Stack,
+  Textarea,
   TextInput,
 } from "@mantine/core";
-import { useDebouncedCallback, useHotkeys } from "@mantine/hooks";
+import {
+  useDebouncedCallback,
+  useDisclosure,
+  useHotkeys,
+  useInputState,
+} from "@mantine/hooks";
 import { IconGripVertical, IconPlus, IconTrash } from "@tabler/icons-react";
 import { useForm } from "@tanstack/react-form";
 import { isEqual, pickBy } from "lodash-es";
@@ -64,6 +75,11 @@ export interface TaskListEditorProps {
   onUpdateTask: (task: SetRequired<TaskUpdate, "id" | "parentId">) => void;
   onDeleteTasks: (tasks: TaskSelect[]) => void;
   onCreateTasks: (tasks: TaskFormValues[]) => void;
+  onBulkCreateTasks: UseMutateAsyncFunction<
+    TaskTree[],
+    Error,
+    { title: string; subtasks: string[] }[]
+  >;
   onRefineTask?: (task: TaskSelect) => void;
   projects: ProjectSelect[];
   onCreateProject: UseMutateFunction<
@@ -80,59 +96,153 @@ export function TaskListEditor({
   onUpdateTask,
   onRefineTask,
   onDeleteTasks,
+  onBulkCreateTasks,
   projects,
   onCreateProject,
   className,
 }: TaskListEditorProps) {
   const t = useTranslations("SessionPlanner");
 
-  return (
-    <Box className={cn("mx-auto max-h-full shrink-0 grow-0", className)}>
-      <SortableTasksContainer
-        tasks={tasks}
-        onChangeOrder={(params) => onUpdateTask({ parentId: null, ...params })}
-      >
-        <AnimatePresence>
-          {tasks.length === 0 && (
-            <Alert
-              radius="sm"
-              className="w-xs"
-              classNames={{
-                message: cn("text-center text-xl! text-balance"),
-              }}
-              color="gray"
-              variant="transparent"
-              opacity={0.5}
-            >
-              {t("TaskPool.emptyMessage")}
-            </Alert>
-          )}
+  const [
+    isBulkCreatorOpen,
+    { open: openBulkCreator, close: closeBulkCreator },
+  ] = useDisclosure(false);
+  useHotkeys([["mod+p", openBulkCreator]]);
 
-          {tasks.map((task, index) => (
-            <Fragment key={task.id}>
-              {index !== 0 && (
-                <TaskAdder
-                  order={(tasks[index - 1]!.sortOrder + task.sortOrder) / 2}
+  const [isBulkCreating, setIsBulkCreating] = useState(false);
+  const handleBulkCreateTasks = async (
+    tasks: { title: string; subtasks: string[] }[],
+  ) => {
+    setIsBulkCreating(true);
+    await onBulkCreateTasks(tasks);
+    setIsBulkCreating(false);
+    closeBulkCreator();
+  };
+
+  return (
+    <>
+      <Box className={cn("mx-auto max-h-full shrink-0 grow-0", className)}>
+        <SortableTasksContainer
+          tasks={tasks}
+          onChangeOrder={(params) =>
+            onUpdateTask({ parentId: null, ...params })
+          }
+        >
+          <AnimatePresence>
+            {tasks.length === 0 && (
+              <Alert
+                radius="sm"
+                className="w-xs"
+                classNames={{
+                  message: cn("text-center text-xl! text-balance"),
+                }}
+                color="gray"
+                variant="transparent"
+                opacity={0.5}
+              >
+                {t("TaskPool.emptyMessage")}
+              </Alert>
+            )}
+
+            {tasks.map((task, index) => (
+              <Fragment key={task.id}>
+                {index !== 0 && (
+                  <TaskAdder
+                    order={(tasks[index - 1]!.sortOrder + task.sortOrder) / 2}
+                    onCreateTasks={onCreateTasks}
+                  />
+                )}
+                <TaskTreeItem
+                  key={task.id}
+                  task={task}
                   onCreateTasks={onCreateTasks}
+                  onUpdateTask={onUpdateTask}
+                  onRefineTask={onRefineTask}
+                  onDeleteTasks={onDeleteTasks}
+                  projects={projects}
+                  onCreateProject={onCreateProject}
                 />
-              )}
-              <TaskTreeItem
-                key={task.id}
-                task={task}
-                onCreateTasks={onCreateTasks}
-                onUpdateTask={onUpdateTask}
-                onRefineTask={onRefineTask}
-                onDeleteTasks={onDeleteTasks}
-                projects={projects}
-                onCreateProject={onCreateProject}
-              />
-            </Fragment>
-          ))}
-        </AnimatePresence>
-      </SortableTasksContainer>
-      <div className="h-[22px]" />
-      <TaskAdder hotkey="space" onCreateTasks={onCreateTasks} />
-    </Box>
+              </Fragment>
+            ))}
+          </AnimatePresence>
+        </SortableTasksContainer>
+        <div className="h-[22px]" />
+        <TaskAdder hotkey="space" onCreateTasks={onCreateTasks} />
+      </Box>
+      <BulkCreator
+        opened={isBulkCreatorOpen}
+        submitting={isBulkCreating}
+        onClose={closeBulkCreator}
+        onSubmit={handleBulkCreateTasks}
+      />
+    </>
+  );
+}
+
+interface BulkCreatorProps {
+  opened: boolean;
+  submitting: boolean;
+  onClose: () => void;
+  onSubmit: (tasks: { title: string; subtasks: string[] }[]) => void;
+}
+function BulkCreator({
+  opened,
+  submitting,
+  onClose,
+  onSubmit,
+}: BulkCreatorProps) {
+  const [input, setInput] = useInputState("");
+
+  const handleSubmit = () => {
+    const rawLines = input
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => line.trim());
+
+    const tasks = rawLines.reduce<{ title: string; subtasks: string[] }[]>(
+      (acc, line) => {
+        const isSubtask = line.startsWith("-");
+        if (!isSubtask) return [...acc, { title: line, subtasks: [] }];
+        const accCopy = [...acc];
+        const parentTask = accCopy.pop();
+        if (!parentTask) return acc;
+        return [
+          ...accCopy,
+          {
+            ...parentTask,
+            subtasks: [...parentTask.subtasks, line.slice(1).trim()],
+          },
+        ];
+      },
+      [],
+    );
+    onSubmit(tasks);
+  };
+
+  return (
+    <Modal
+      title="Bulk Create Tasks"
+      centered
+      radius="md"
+      opened={opened}
+      onClose={onClose}
+    >
+      <FocusTrap.InitialFocus />
+      <Stack>
+        <Textarea
+          value={input}
+          onChange={setInput}
+          autosize
+          minRows={10}
+          maxRows={16}
+          disabled={submitting}
+          placeholder={`Task 1\n- Subtask\n- Subtask\nTask 2\nTask 3\n- Subtask\n- Subtask`}
+        />
+        <Button loading={submitting} onClick={handleSubmit}>
+          Create
+        </Button>
+      </Stack>
+    </Modal>
   );
 }
 
@@ -323,7 +433,7 @@ function TaskTreeItem({
           }
           projects={projects}
           onCreateProject={onCreateProject}
-          rightSection={
+          dragHandle={
             <div
               {...attributes}
               {...listeners}
@@ -528,7 +638,7 @@ function SubtaskItem({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      rightSection={
+      dragHandle={
         <div
           {...attributes}
           {...listeners}
