@@ -106,7 +106,6 @@ export function QueueTask({
             "pointer-events-none": status !== "skipped",
           }),
           body: cn("flex flex-col-reverse", {
-            "line-through": status === "completed",
             "opacity-30":
               status === "skipped" || (status === "todo" && !active),
           }),

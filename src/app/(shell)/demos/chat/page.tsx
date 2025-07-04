@@ -5,7 +5,7 @@ import { Center, Container } from "@mantine/core";
 
 import { Main } from "@/app/(shell)/shell";
 import { useModelsConfigStore } from "@/core/config/models";
-import { Chat } from "@/ui/misc/Chat";
+import { Chat } from "@/ui/components/Chat";
 
 export default function ChatPage() {
   const { llm } = useModelsConfigStore();
