@@ -9,10 +9,10 @@ console.log(process.env.DATABASE_URL);
 
 export default defineConfig({
   dialect: "postgresql",
-  schema: "./database/schema.ts",
+  schema: "./src/database/schema.ts",
   dbCredentials: {
     url: process.env.DATABASE_URL!,
   },
-  out: "./database/migrations",
+  out: "./src/database/migrations",
   casing: "snake_case",
 });

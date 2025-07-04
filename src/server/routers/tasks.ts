@@ -34,7 +34,7 @@ export const tasksRouter = createTRPCRouter({
     }),
 
   update: protectedProcedure
-    .input(taskUpdateSchema.required({ id: true, parentId: true }))
+    .input(taskUpdateSchema.required({ id: true }))
     .mutation(async ({ ctx: { db, auth }, input: { id, ...updates } }) => {
       const [result] = await db
         .update(tasks)

@@ -4,10 +4,14 @@ import { LoadingOverlay, Transition } from "@mantine/core";
 
 import { Main } from "@/app/(shell)/shell";
 import { TaskListEditor, useProjects, useTodos } from "@/ui/task-management";
+import { useTodosWithTimeTravel } from "@/ui/task-management/useTodosWithTimeTravel";
 import { cn } from "@/ui/utils";
 
 export default function SessionPage() {
   const todos = useTodos();
+
+  const { createTasks, deleteTasks, updateTask } =
+    useTodosWithTimeTravel(todos);
 
   const projects = useProjects();
 
@@ -31,9 +35,9 @@ export default function SessionPage() {
           },
         )}
         tasks={todos.tasks}
-        onUpdateTask={todos.updateTask}
-        onDeleteTasks={todos.deleteTasks}
-        onCreateTasks={todos.createTasks}
+        onUpdateTask={updateTask}
+        onDeleteTasks={deleteTasks}
+        onCreateTasks={createTasks}
         projects={projects.items}
         onCreateProject={(input) => projects.create.mutate(input)}
       />

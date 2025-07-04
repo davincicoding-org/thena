@@ -8,47 +8,38 @@ import {
   Tooltip,
 } from "@mantine/core";
 
+import type { FocusSessionSelect } from "@/core/deep-work/db";
+
 export interface IntelligenceTileProps {
   loading?: boolean;
   summary:
     | {
-        focusTime: number;
+        focusMinutes: number;
         completedTasks: number;
-        completionRate: number;
-        completedSprints: {
-          id: number;
-          duration: number;
-          completedTasks: number;
-          skippedTasks: number;
-          completionRate: number;
-        }[];
+        completedSessions: FocusSessionSelect[];
+        // completionRate: number;
       }
     | undefined;
 }
 
 export function IntelligenceTile({ loading, summary }: IntelligenceTileProps) {
-  if (loading || !summary) {
-    return <Skeleton height={90} radius="md" />;
-  }
+  if (loading || !summary) return <Skeleton height={90} radius="md" />;
 
   const focusDuration = (() => {
-    const focusTimeInMinutes = summary.focusTime / (1000 * 60);
-    const hours = Math.floor(focusTimeInMinutes / 60);
-    const minutes = focusTimeInMinutes % 60;
+    const hours = Math.floor(summary.focusMinutes / 60);
+    const minutes = summary.focusMinutes % 60;
     if (hours === 0) return `${minutes.toFixed(0)}m`;
 
     return `${hours}h ${minutes.toFixed(0)}m`;
   })();
 
   const tasksCompleted = (() => {
-    if (summary.completedTasks < 1_000) {
-      return summary.completedTasks;
-    }
+    if (summary.completedTasks < 1_000) return summary.completedTasks;
 
     return `${(summary.completedTasks / 1_000).toFixed(1)}k`;
   })();
 
-  const completionPercentage = summary.completionRate * 100;
+  // const completionPercentage = summary.completionRate * 100;
 
   return (
     <Card
@@ -65,7 +56,7 @@ export function IntelligenceTile({ loading, summary }: IntelligenceTileProps) {
         align="center"
         className="h-full"
       >
-        <Tooltip
+        {/* <Tooltip
           label="Completion Rate"
           position="bottom"
           transitionProps={{ transition: "slide-down" }}
@@ -82,10 +73,15 @@ export function IntelligenceTile({ loading, summary }: IntelligenceTileProps) {
             }
             sections={[{ value: completionPercentage, color: "green" }]}
           />
-        </Tooltip>
+        </Tooltip> */}
         <Stack gap={0} ta="center">
           <Text className="text-3xl!">{tasksCompleted}</Text>
           <Text size="sm">Tasks completed</Text>
+        </Stack>
+
+        <Stack gap={0} ta="center">
+          <Text className="text-3xl!">{summary.completedSessions.length}</Text>
+          <Text size="sm">Sessions completed</Text>
         </Stack>
 
         <Stack gap={0} ta="center">

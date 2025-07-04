@@ -112,6 +112,13 @@ export const projectsRelations = relations(projects, ({ many }) => ({
 }));
 
 // MARK:  FOCUS SESSIONS
+
+export const focusSessionStatusEnum = pgEnum("focus_session_status", [
+  "active",
+  "completed",
+  "cancelled",
+]);
+
 export const focusSessions = pgTable(
   "focus_sessions",
   (d) => ({
@@ -122,8 +129,14 @@ export const focusSessions = pgTable(
       .defaultNow()
       .notNull(),
     endedAt: d.timestamp({ withTimezone: true, mode: "date" }),
-    duration: d.integer(),
-    status: d.text().notNull(),
+    plannedDuration: d.integer().notNull(),
+    actualDuration: d
+      .integer()
+      .generatedAlwaysAs(
+        (): SQL =>
+          sql`EXTRACT(EPOCH FROM (${focusSessions.endedAt} - ${focusSessions.startedAt}))`,
+      ),
+    status: focusSessionStatusEnum().default("active").notNull(),
   }),
   (t) => [index("idx_focus_sessions_owner").on(t.userId)],
 );
@@ -134,22 +147,24 @@ export const focusSessionsRelations = relations(focusSessions, ({ many }) => ({
 
 // MARK:  TASK RUNS
 export const taskRunStatusEnum = pgEnum("task_run_status", [
-  "pending", // planned but not yet done
-  "skipped", // unfinished, skipped
-  "completed", // finished in this focus session
+  "active",
+  "completed",
+  "skipped",
+  "resumed",
+  "cancelled",
 ]);
 
 export const taskRuns = pgTable(
   "task_runs",
   (d) => ({
     id: d.serial().primaryKey(),
+    userId: d.text().notNull(),
     focusSessionId: d
       .integer()
       .notNull()
       .references(() => focusSessions.id, {
         onDelete: "cascade",
       }),
-    userId: d.text().notNull(),
     taskId: d
       .integer()
       .notNull()
@@ -157,11 +172,20 @@ export const taskRuns = pgTable(
         onDelete: "cascade",
       }),
 
-    // status: taskRunStatusEnum().default("pending").notNull(),
-    // addedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-    // ordinal: d.integer().notNull(),
+    status: taskRunStatusEnum().default("active").notNull(),
+    startedAt: d
+      .timestamp({ withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    endedAt: d.timestamp({ withTimezone: true, mode: "date" }),
+    duration: d
+      .integer()
+      .generatedAlwaysAs(
+        (): SQL =>
+          sql`EXTRACT(EPOCH FROM (${taskRuns.endedAt} - ${taskRuns.startedAt}))`,
+      ),
+
     // timestamps: d.timestamp({ withTimezone: true }).array().default([]),
-    // duration: d.integer(),
   }),
   (t) => [
     index("idx_task_run_focus_session_id").on(t.focusSessionId),

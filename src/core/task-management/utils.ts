@@ -136,3 +136,25 @@ export const unflattenTasks = (tasks: FlatTask[]): TaskTree[] =>
 export const hasFiltersApplied = ({ projectIds, search }: TaskFilters) => {
   return Boolean(projectIds?.length ?? search);
 };
+
+export const filterTaskTrees = (
+  tasks: TaskTree[],
+  filter: (task: Omit<TaskSelect, "parentId">) => boolean,
+) => {
+  return tasks.flatMap<TaskTree>((taskTree) => {
+    if (!filter(taskTree)) return [];
+
+    if (taskTree.subtasks.length === 0) return [taskTree];
+
+    const filteredSubtasks = taskTree.subtasks.filter(filter);
+
+    if (filteredSubtasks.length === 0) return [];
+
+    return [
+      {
+        ...taskTree,
+        subtasks: filteredSubtasks,
+      },
+    ];
+  });
+};

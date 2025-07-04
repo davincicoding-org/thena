@@ -1,7 +1,7 @@
-import { focusSessionsRouter } from "./routers/focus-session";
+import { focusSessionsRouter } from "./routers/focus-sessions";
 import { intelligenceRouter } from "./routers/intelligence";
 import { projectsRouter } from "./routers/projects";
-import { sprintsRouter } from "./routers/sprints";
+import { taskRunsRouter } from "./routers/task-runs";
 import { tasksRouter } from "./routers/tasks";
 import { createCallerFactory, createTRPCRouter } from "./trpc";
 
@@ -14,11 +14,10 @@ export const appRouter = createTRPCRouter({
   tasks: tasksRouter,
   projects: projectsRouter,
   focusSessions: focusSessionsRouter,
-  sprints: sprintsRouter,
+  taskRuns: taskRunsRouter,
   intelligence: intelligenceRouter,
 });
 
-// export type definition of API
 export type AppRouter = typeof appRouter;
 
 /**

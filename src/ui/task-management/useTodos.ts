@@ -1,15 +1,5 @@
-import type { SetRequired } from "type-fest";
-import { notifications } from "@mantine/notifications";
-
-import type {
-  TaskFormValues,
-  TaskSelect,
-  TaskTree,
-  TaskUpdate,
-} from "@/core/task-management";
-import { taskSelectSchema } from "@/core/task-management";
+import type { TaskSelect, TaskTree } from "@/core/task-management";
 import { api } from "@/trpc/react";
-import { useTimeTravel } from "@/ui/hooks/useTimeTravel";
 
 export function useTodos() {
   const utils = api.useUtils();
@@ -17,7 +7,7 @@ export function useTodos() {
     status: "todo",
   });
 
-  const createTasksMutation = api.tasks.create.useMutation<{
+  const createTasks = api.tasks.create.useMutation<{
     prev: TaskTree[] | undefined;
     tempIds: number[];
   }>({
@@ -96,7 +86,7 @@ export function useTodos() {
     },
   });
 
-  const updateTaskMutation = api.tasks.update.useMutation<{
+  const updateTask = api.tasks.update.useMutation<{
     prev: TaskTree[] | undefined;
   }>({
     onMutate: async (taskUpdate) => {
@@ -138,7 +128,7 @@ export function useTodos() {
     },
   });
 
-  const deleteTaskMutation = api.tasks.delete.useMutation<{
+  const deleteTask = api.tasks.delete.useMutation<{
     prev: TaskTree[] | undefined;
   }>({
     onMutate: async (taskId) => {
@@ -165,80 +155,11 @@ export function useTodos() {
     },
   });
 
-  // MARK: Task Actions
-
-  // useHotkeys([
-  //   ["mod+z", timeTravel.undo],
-  //   ["mod+shift+z", timeTravel.redo],
-  // ]);
-
-  const timeTravel = useTimeTravel({
-    onNavigated: ({ event, action }) => {
-      if (event === "push") return;
-      notifications.show({
-        title: event,
-        message: action,
-        position: "top-right",
-      });
-    },
-  });
-
-  const createTasks = timeTravel.createAction({
-    name: "create-tasks",
-    apply: (input: TaskFormValues[]) => createTasksMutation.mutateAsync(input),
-    revert: (tasks) =>
-      tasks.forEach((task) => void deleteTaskMutation.mutateAsync(task)),
-  });
-
-  const deleteTasks = timeTravel.createAction({
-    name: "remove-tasks",
-    apply: async (tasks: TaskSelect[]) => {
-      await Promise.all(
-        tasks.map((task) => deleteTaskMutation.mutateAsync(task)),
-      );
-
-      return tasks;
-    },
-    revert: (tasks) => void createTasksMutation.mutateAsync(tasks),
-  });
-
-  const updateTask = timeTravel.createAction({
-    name: "update-task",
-    apply: (taskToUpdate: SetRequired<TaskUpdate, "id" | "parentId">) => {
-      const prevState = ((): TaskSelect | undefined => {
-        if (taskToUpdate.parentId === null) {
-          const match = data.find((task) => task.id === taskToUpdate.id);
-          if (!match) return;
-          return taskSelectSchema.strip().parse({
-            ...match,
-            parentId: null,
-          });
-        }
-
-        const match = data
-          .find((task) => task.id === taskToUpdate.parentId)
-          ?.subtasks.find((subtask) => subtask.id === taskToUpdate.id);
-        if (!match) return;
-        return taskSelectSchema.strip().parse({
-          ...match,
-          parentId: taskToUpdate.parentId,
-        });
-      })();
-      if (!prevState) return;
-      void updateTaskMutation.mutateAsync(taskToUpdate);
-      return prevState;
-    },
-    revert: (prevState) => {
-      if (!prevState) return;
-      void updateTaskMutation.mutateAsync(prevState);
-    },
-  });
-
   return {
     tasks: data,
     isLoading,
     createTasks,
-    deleteTasks,
+    deleteTask,
     updateTask,
   };
 }

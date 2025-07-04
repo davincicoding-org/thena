@@ -1,4 +1,6 @@
 import type { NavLinkProps } from "@mantine/core";
+import type { ReactNode } from "react";
+import { useEffect, useRef } from "react";
 import { ActionIcon, Button, Flex, NavLink, Tooltip } from "@mantine/core";
 import { IconArrowDownDashed, IconCheck } from "@tabler/icons-react";
 
@@ -8,36 +10,48 @@ import { cn } from "@/ui/utils";
 export interface QueueTaskProps {
   label: string;
   group?: string;
-  active: boolean;
-  // status: TaskRun["status"];
+  active?: boolean;
+  status: "completed" | "skipped" | "todo";
   readOnly?: boolean;
-  onComplete: () => void;
-  onSkip: () => void;
-  onUnskip: () => void;
-  // onRunManually: () => void;
+  leftSection?: ReactNode;
+  rightSection?: ReactNode;
+  onComplete?: () => void;
+  onSkip?: () => void;
+  onUnskip?: () => void;
+  onActivate?: (el: HTMLDivElement) => void;
 }
 
 export function QueueTask({
   label,
   group,
-  // status,
+  status,
   active,
   readOnly,
+  leftSection,
+  rightSection = null,
   onComplete,
   onSkip,
   onUnskip,
-  // onRunManually,
+  onActivate,
 }: QueueTaskProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!active) return;
+    if (!ref.current) return;
+    onActivate?.(ref.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
+
   const color = ((): NavLinkProps["color"] => {
     if (active) return undefined;
-    // switch (status) {
-    //   case "completed":
-    //     return "green";
-    //   case "skipped":
-    //     return "yellow";
-    //   default:
-    //     return "gray";
-    // }
+    switch (status) {
+      case "completed":
+        return "green";
+      case "skipped":
+        return "yellow";
+      default:
+        return "gray";
+    }
   })();
 
   return (
@@ -81,24 +95,26 @@ export function QueueTask({
         label={label}
         description={group}
         component="div"
+        ref={ref}
         py={active ? undefined : 4}
-        disabled={(status === "pending" && !active) || readOnly}
+        disabled={(status === "todo" && !active) || readOnly}
         active={!active}
         color={color}
+        leftSection={leftSection}
         classNames={{
           root: cn("min-w-48 opacity-100! transition-all", {
-            // "pointer-events-none": status !== "skipped",
+            "pointer-events-none": status !== "skipped",
           }),
           body: cn("flex flex-col-reverse", {
-            // "line-through": status === "completed",
-            // "opacity-30":
-            //   status === "skipped" || (status === "pending" && !active),
+            "line-through": status === "completed",
+            "opacity-30":
+              status === "skipped" || (status === "todo" && !active),
           }),
         }}
-        rightSection={null}
+        rightSection={rightSection}
         onClick={() => {
-          // if (status !== "skipped") return;
-          onUnskip();
+          if (status !== "skipped") return;
+          onUnskip?.();
         }}
       />
     </BoundOverlay>

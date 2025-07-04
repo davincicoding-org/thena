@@ -11,7 +11,6 @@ import {
   Kbd,
   Paper,
   Textarea,
-  TextInput,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconX } from "@tabler/icons-react";
@@ -24,7 +23,7 @@ export interface TaskWrapperProps {
   task: ReactElement<{ onAddSubtask?: () => void }>;
   subtasks: ReactNode;
   ref?: Ref<HTMLDivElement>;
-  onAddSubtasks: (titles: string[]) => void;
+  onAddSubtasks?: (titles: string[]) => void;
 }
 
 export const TaskWrapper = createPolymorphicComponent<
@@ -54,7 +53,7 @@ export const TaskWrapper = createPolymorphicComponent<
           .split("\n")
           .map((line) => line.trim())
           .filter(Boolean);
-        onAddSubtasks(titles);
+        onAddSubtasks?.(titles);
         form.reset();
       },
     });

@@ -51,3 +51,22 @@ export interface SessionBreakSlot {
 }
 
 export type FocusSessionStatus = "sprint" | "break" | "finished";
+
+export const focusSessionInterruptionSchema = z.object({
+  taskRunId: z.preprocess(
+    (val) => (typeof val === "string" ? Number(val) : val),
+    z.number().nullable(),
+  ),
+  focusSessionId: z.preprocess(
+    (val) => (typeof val === "string" ? Number(val) : val),
+    z.number().nullable(),
+  ),
+  userId: z.string(),
+  timestamp: z.preprocess(
+    (val) => (typeof val === "string" ? Number(val) : val),
+    z.number(),
+  ),
+});
+export type FocusSessionInterruption = z.infer<
+  typeof focusSessionInterruptionSchema
+>;
