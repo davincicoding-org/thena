@@ -10,8 +10,13 @@ import type {
 import { filterTaskTrees } from "@/core/task-management";
 import { FocusSession, useActiveFocusSession } from "@/ui/focus-session";
 import { useSessionBreak } from "@/ui/focus-session/useSessionBreak";
-import { useProjects, useTodos } from "@/ui/task-management";
-import { useTodosWithTimeTravel } from "@/ui/task-management/useTodosWithTimeTravel";
+import {
+  useProjects,
+  useTodos,
+  useTodosWithTimeTravel,
+} from "@/ui/task-management";
+
+import { Main } from "../shell";
 
 export default function FocusPage() {
   const [status, setStatus] = useState<FocusSessionStatus>("idle");
@@ -66,8 +71,9 @@ export default function FocusPage() {
   const projects = useProjects();
 
   return (
-    <main className="h-dvh">
+    <Main display="grid" className="h-dvh">
       <FocusSession
+        className="h-full min-h-0"
         loading={todos.isLoading}
         status={status}
         onStartSession={handleStartSession}
@@ -89,6 +95,6 @@ export default function FocusPage() {
         projects={projects.items}
         onCreateProject={(input) => projects.create.mutate(input)}
       />
-    </main>
+    </Main>
   );
 }

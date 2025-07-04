@@ -1,8 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "@clerk/nextjs";
-import { useWindowEvent } from "@mantine/hooks";
 
-import type { FocusSessionInterruption } from "@/core/deep-work";
 import type { TaskId, TaskTree } from "@/core/task-management";
 import { flattenTasks } from "@/core/task-management";
 import { api } from "@/trpc/react";
@@ -13,6 +10,7 @@ import type {
   FocusSessionSummary,
   TaskQueueItem,
 } from "./types";
+import { useSessionInterruption } from "./useSessionInterruption";
 import { useStopWatch } from "./useStopWatch";
 
 export function useActiveFocusSession({
@@ -24,7 +22,6 @@ export function useActiveFocusSession({
   onTaskCompleted: (taskId: TaskId) => void;
   onRanOutOfTasks: () => void;
 }) {
-  const { userId } = useAuth();
   const {
     data: sessionId,
     mutateAsync: openSession,
@@ -41,31 +38,9 @@ export function useActiveFocusSession({
 
   const { mutateAsync: closeTaskRun } = api.taskRuns.close.useMutation();
 
-  useWindowEvent("beforeunload", (e) => {
-    const shouldWarn = !!sessionId || !!currentTaskRun;
-    if (!shouldWarn) return;
-
-    e.preventDefault();
-    e.returnValue = "";
-  });
-
-  // TODO when quitting the browser,the beacon is not sent
-  useWindowEvent("pagehide", (e) => {
-    if (e.persisted) return;
-    if (!sessionId && !currentTaskRun) return;
-    if (!userId) return;
-
-    const url = "/api/focus-session-interruption";
-    const data: FocusSessionInterruption = {
-      taskRunId: currentTaskRun?.id ?? null,
-      focusSessionId: sessionId ?? null,
-      userId,
-      timestamp: Date.now(),
-    };
-    navigator.sendBeacon(
-      url,
-      new Blob([JSON.stringify(data)], { type: "application/json" }),
-    );
+  useSessionInterruption({
+    sessionId,
+    taskRunId: currentTaskRun?.id,
   });
 
   const [queue, setQueue] = useState<TaskQueueItem[]>([]);

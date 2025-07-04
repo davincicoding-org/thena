@@ -1,5 +1,7 @@
 import { api } from "@/trpc/react";
 
+import { useSessionInterruption } from "./useSessionInterruption";
+
 export function useSessionBreak() {
   const {
     data: currentBreakId,
@@ -8,6 +10,10 @@ export function useSessionBreak() {
   } = api.focusSessionBreaks.start.useMutation();
   const { mutate: skipBreak } = api.focusSessionBreaks.skip.useMutation();
   const { mutate: stopBreak } = api.focusSessionBreaks.stop.useMutation();
+
+  useSessionInterruption({
+    breakId: currentBreakId,
+  });
 
   const start = (duration: number) => {
     startBreak({ plannedDuration: duration * 60 });

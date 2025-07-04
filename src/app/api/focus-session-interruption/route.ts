@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 
 import { focusSessionInterruptionSchema } from "@/core/deep-work";
 import { db } from "@/database";
-import { focusSessions, taskRuns } from "@/database/schema";
+import { focusSessionBreaks, focusSessions, taskRuns } from "@/database/schema";
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,10 +17,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { taskRunId, focusSessionId, userId, timestamp } = result.data;
+    const { taskRunId, sessionId, breakId, userId, timestamp } = result.data;
 
-    if (focusSessionId !== null) {
-      const focusSession = await db
+    if (sessionId !== undefined) {
+      await db
         .update(focusSessions)
         .set({
           status: "cancelled",
@@ -28,14 +28,14 @@ export async function POST(req: NextRequest) {
         })
         .where(
           and(
-            eq(focusSessions.id, focusSessionId),
+            eq(focusSessions.id, sessionId),
             eq(focusSessions.userId, userId),
           ),
         );
     }
 
-    if (taskRunId !== null) {
-      const taskRun = await db
+    if (taskRunId !== undefined) {
+      await db
         .update(taskRuns)
         .set({
           status: "cancelled",
@@ -44,6 +44,17 @@ export async function POST(req: NextRequest) {
         .where(and(eq(taskRuns.id, taskRunId), eq(taskRuns.userId, userId)));
     }
 
+    if (breakId !== undefined) {
+      await db
+        .update(focusSessionBreaks)
+        .set({ status: "cancelled", endedAt: new Date(timestamp) })
+        .where(
+          and(
+            eq(focusSessionBreaks.id, breakId),
+            eq(focusSessionBreaks.userId, userId),
+          ),
+        );
+    }
     return NextResponse.json({ status: "ok" });
   } catch (err) {
     console.error("Failed to parse beacon data:", err);

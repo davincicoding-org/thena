@@ -208,7 +208,7 @@ export const taskRunsRelations = relations(taskRuns, ({ one }) => ({
 
 export const focusSessionBreakStatusEnum = pgEnum(
   "focus_session_break_status",
-  ["active", "completed", "skipped"],
+  ["active", "completed", "cancelled", "skipped"],
 );
 
 export const focusSessionBreaks = pgTable(

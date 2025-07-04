@@ -119,6 +119,7 @@ export function FocusSession({
   return (
     <WavyBackground
       speed="slow"
+      containerClassName={className}
       className="h-full w-full"
       disabled={status === "session"}
     >
@@ -168,7 +169,6 @@ export function FocusSession({
             "pointer-events-none opacity-0": status === "session",
             "opacity-0": loading,
           },
-          className,
         )}
       >
         <ScrollArea

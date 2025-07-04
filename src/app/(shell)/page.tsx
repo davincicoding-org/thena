@@ -62,7 +62,6 @@ export default function HomePage() {
             fullWidth
             component={Link}
             href="/focus"
-            target="_blank"
           >
             Start Focus Session
           </Button>

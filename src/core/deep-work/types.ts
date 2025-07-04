@@ -55,11 +55,15 @@ export type FocusSessionStatus = "sprint" | "break" | "finished";
 export const focusSessionInterruptionSchema = z.object({
   taskRunId: z.preprocess(
     (val) => (typeof val === "string" ? Number(val) : val),
-    z.number().nullable(),
+    z.number().optional(),
   ),
-  focusSessionId: z.preprocess(
+  sessionId: z.preprocess(
     (val) => (typeof val === "string" ? Number(val) : val),
-    z.number().nullable(),
+    z.number().optional(),
+  ),
+  breakId: z.preprocess(
+    (val) => (typeof val === "string" ? Number(val) : val),
+    z.number().optional(),
   ),
   userId: z.string(),
   timestamp: z.preprocess(
