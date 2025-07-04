@@ -194,6 +194,13 @@ export function useActiveFocusSession({
     if (!sessionId) throw new Error("No session id");
     void closeSession({ id: sessionId, status: "completed" });
     resetSession();
+    if (currentTaskRun) {
+      void closeTaskRun({
+        id: currentTaskRun.id,
+        status: "cancelled",
+      });
+      resetTaskRun();
+    }
     stopwatch.reset();
 
     return {

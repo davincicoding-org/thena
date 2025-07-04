@@ -1,3 +1,4 @@
+import { focusSessionBreaksRouter } from "./routers/focus-session-breaks";
 import { focusSessionsRouter } from "./routers/focus-sessions";
 import { intelligenceRouter } from "./routers/intelligence";
 import { projectsRouter } from "./routers/projects";
@@ -14,6 +15,7 @@ export const appRouter = createTRPCRouter({
   tasks: tasksRouter,
   projects: projectsRouter,
   focusSessions: focusSessionsRouter,
+  focusSessionBreaks: focusSessionBreaksRouter,
   taskRuns: taskRunsRouter,
   intelligence: intelligenceRouter,
 });

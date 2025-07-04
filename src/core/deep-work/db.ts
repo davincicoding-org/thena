@@ -5,7 +5,7 @@ import {
   createUpdateSchema,
 } from "drizzle-zod";
 
-import { focusSessions, taskRuns } from "@/database/schema";
+import { focusSessionBreaks, focusSessions, taskRuns } from "@/database/schema";
 
 // MARK:  Focus Session
 
@@ -28,6 +28,17 @@ export type TaskRunSelect = typeof taskRuns.$inferSelect;
 
 export const taskRunUpdate = createUpdateSchema(taskRuns);
 export type TaskRunUpdate = z.infer<typeof taskRunUpdate>;
+
+// MARK:  Focus Session Break
+
+export const focusSessionBreakInsert = createInsertSchema(focusSessionBreaks);
+export type FocusSessionBreakInsert = z.infer<typeof focusSessionBreakInsert>;
+
+export const focusSessionBreakSelect = createSelectSchema(focusSessionBreaks);
+export type FocusSessionBreakSelect = z.infer<typeof focusSessionBreakSelect>;
+
+export const focusSessionBreakUpdate = createUpdateSchema(focusSessionBreaks);
+export type FocusSessionBreakUpdate = z.infer<typeof focusSessionBreakUpdate>;
 
 // MARK: Sprint
 

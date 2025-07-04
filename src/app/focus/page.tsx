@@ -9,17 +9,11 @@ import type {
 } from "@/ui/focus-session/types";
 import { filterTaskTrees } from "@/core/task-management";
 import { FocusSession, useActiveFocusSession } from "@/ui/focus-session";
+import { useSessionBreak } from "@/ui/focus-session/useSessionBreak";
 import { useProjects, useTodos } from "@/ui/task-management";
 import { useTodosWithTimeTravel } from "@/ui/task-management/useTodosWithTimeTravel";
 
 export default function FocusPage() {
-  // const handleFinishSession = (
-  //   taskStatusUpdates: Record<TaskSelect["id"], TaskSelect["status"]>,
-  // ) => {
-  //   activeFocusSession.finishSession(taskStatusUpdates);
-  //   window.close();
-  // };
-
   const [status, setStatus] = useState<FocusSessionStatus>("idle");
   const todos = useTodos();
   const filteredTodos = filterTaskTrees(
@@ -34,6 +28,9 @@ export default function FocusPage() {
       setStatus("finished");
     },
   });
+
+  const sessionBreak = useSessionBreak();
+
   const [completedSessions, setCompletedSessions] = useState<
     FocusSessionSummary[]
   >([]);
@@ -45,22 +42,23 @@ export default function FocusPage() {
   const handleFinishSession = () => {
     const summary = activeSession.finish();
     setCompletedSessions((prev) => [...prev, summary]);
-    setStatus("idle");
-  };
-  const handleStartBreak = (duration: number) => {
-    // TODO insert break into db
     setStatus("break");
   };
-  const handleFinishBreak = (timeElapsed: number | null) => {
-    // TODO update break in db
+  const handleStartBreak = (duration: number) => {
+    sessionBreak.start(duration);
+  };
+  const handleFinishBreak = () => {
+    sessionBreak.stop();
     setStatus("idle");
   };
   const handleSkipBreak = () => {
-    // TODO insert break into db
+    sessionBreak.skip();
     setStatus("idle");
   };
-  const handleFinish = () => {
+  const handleExit = () => {
+    alert("Not implemented");
     // TODO show summary
+    //   window.close();
   };
 
   const { createTasks, deleteTasks, updateTask } =
@@ -77,7 +75,7 @@ export default function FocusPage() {
         onStartBreak={handleStartBreak}
         onFinishBreak={handleFinishBreak}
         onSkipBreak={handleSkipBreak}
-        onFinish={handleFinish}
+        onExit={handleExit}
         completedSessions={completedSessions}
         activeSession={activeSession.session}
         onCompleteTask={activeSession.completeTask}

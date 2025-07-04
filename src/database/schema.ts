@@ -124,6 +124,7 @@ export const focusSessions = pgTable(
   (d) => ({
     id: d.serial().primaryKey(),
     userId: d.text().notNull(),
+    status: focusSessionStatusEnum().default("active").notNull(),
     startedAt: d
       .timestamp({ withTimezone: true, mode: "date" })
       .defaultNow()
@@ -136,7 +137,6 @@ export const focusSessions = pgTable(
         (): SQL =>
           sql`EXTRACT(EPOCH FROM (${focusSessions.endedAt} - ${focusSessions.startedAt}))`,
       ),
-    status: focusSessionStatusEnum().default("active").notNull(),
   }),
   (t) => [index("idx_focus_sessions_owner").on(t.userId)],
 );
@@ -203,6 +203,35 @@ export const taskRunsRelations = relations(taskRuns, ({ one }) => ({
     references: [tasks.id, tasks.userId],
   }),
 }));
+
+// MARK:  FOCUS SESSION BREAKS
+
+export const focusSessionBreakStatusEnum = pgEnum(
+  "focus_session_break_status",
+  ["active", "completed", "skipped"],
+);
+
+export const focusSessionBreaks = pgTable(
+  "focus_session_breaks",
+  (d) => ({
+    id: d.serial().primaryKey(),
+    userId: d.text().notNull(),
+    status: focusSessionBreakStatusEnum().default("active").notNull(),
+    startedAt: d
+      .timestamp({ withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    endedAt: d.timestamp({ withTimezone: true, mode: "date" }),
+    plannedDuration: d.integer().notNull(),
+    actualDuration: d
+      .integer()
+      .generatedAlwaysAs(
+        (): SQL =>
+          sql`EXTRACT(EPOCH FROM (${focusSessionBreaks.endedAt} - ${focusSessionBreaks.startedAt}))`,
+      ),
+  }),
+  (t) => [index("idx_focus_session_breaks_owner").on(t.userId)],
+);
 
 // MARK:  DEPRECATED
 

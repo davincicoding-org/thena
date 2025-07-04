@@ -44,8 +44,8 @@ export interface FocusSessionProps {
   onFinishSession: () => void;
   onStartBreak: (duration: number) => void;
   onSkipBreak: () => void;
-  onFinishBreak: (timeElapsed: number | null) => void;
-  onFinish: () => void;
+  onFinishBreak: () => void;
+  onExit: () => void;
 
   completedSessions: FocusSessionSummary[];
 
@@ -83,7 +83,7 @@ export function FocusSession({
   onStartBreak,
   onSkipBreak,
   onFinishBreak,
-  onFinish,
+  onExit,
   completedSessions,
   activeSession,
   onCompleteTask,
@@ -224,11 +224,12 @@ export function FocusSession({
         <ControlPanel
           className={cn("my-auto")}
           status={status}
+          hasTodos={todos.length > 0}
           onStartSession={onStartSession}
           onStartBreak={onStartBreak}
           onSkipBreak={onSkipBreak}
-          onContinue={onFinishBreak}
-          onFinish={onFinish}
+          onFinishBreak={onFinishBreak}
+          onExit={onExit}
         />
 
         <ScrollArea

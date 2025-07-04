@@ -4,8 +4,8 @@ import {
   Button,
   Card,
   Collapse,
+  NumberInput,
   Progress,
-  Select,
   SimpleGrid,
   Stack,
   Text,
@@ -18,55 +18,71 @@ import { useStopWatch } from "./useStopWatch";
 
 export interface ControlPanelProps {
   status: FocusSessionStatus;
+  hasTodos: boolean;
   className?: string;
-  onContinue: (timeElapsed: number) => void;
   onStartBreak: (duration: number) => void;
+  onFinishBreak: () => void;
   onSkipBreak: () => void;
-  onFinish: () => void;
   onStartSession: (config: FocusSessionConfig) => void;
+  onExit: () => void;
 }
 
 export function ControlPanel({
   status,
+  hasTodos,
   className,
   onStartSession,
   onStartBreak,
   onSkipBreak,
-  onContinue,
-  onFinish,
+  onFinishBreak,
+  onExit,
 }: ControlPanelProps) {
-  const sessionDurationOptions = [15, 25, 45];
   const [sessionDuration, setSessionDuration] = useState(25);
+  const [breakDuration, setBreakDuration] = useState(10);
 
   const breakStopwatch = useStopWatch();
 
   const handleStartBreak = (duration: number) => {
-    breakStopwatch.start(duration * 60 * 1000);
+    breakStopwatch.start(duration * 60);
     onStartBreak(duration);
+  };
+
+  const handleFinishBreak = () => {
+    breakStopwatch.reset();
+    onFinishBreak();
   };
 
   return (
     <Card radius="md" p={0} className={cn(className)}>
       <Collapse in={status === "idle"}>
         <Stack p="md">
-          <Text size="xl" ta="center">
-            Next Session
-          </Text>
-          <Select
-            size="md"
-            value={sessionDuration.toString()}
-            data={sessionDurationOptions.map((minutes) => ({
-              label: `${minutes} minutes`,
-              value: minutes.toString(),
-            }))}
-            onChange={(value) => setSessionDuration(Number(value))}
-          />
+          {hasTodos ? (
+            <>
+              <Text size="xl" ta="center">
+                Next Session
+              </Text>
+              <NumberInput
+                min={15}
+                max={90}
+                step={5}
+                size="lg"
+                variant="filled"
+                radius="md"
+                value={sessionDuration}
+                suffix=" Minutes"
+                onChange={(value) => setSessionDuration(Number(value))}
+              />
+            </>
+          ) : (
+            <Text>Create some tasks to get started</Text>
+          )}
         </Stack>
 
         <Button
           size="lg"
           radius={0}
           fullWidth
+          disabled={sessionDuration < 15 || sessionDuration > 90}
           onClick={() =>
             onStartSession({ plannedDuration: sessionDuration * 60 })
           }
@@ -82,14 +98,26 @@ export function ControlPanel({
           </Text>
 
           <Stack gap="xs">
-            {/* <Menu>
-          <Menu.Target> */}
-            <Button size="md" fullWidth onClick={() => handleStartBreak(10)}>
+            <NumberInput
+              min={5}
+              max={60}
+              step={5}
+              size="lg"
+              variant="filled"
+              radius="md"
+              value={breakDuration}
+              suffix=" Minutes"
+              onChange={(value) => setBreakDuration(Number(value))}
+            />
+            <Button
+              size="md"
+              fullWidth
+              disabled={breakDuration < 5 || breakDuration > 60}
+              onClick={() => handleStartBreak(breakDuration)}
+            >
               Take a Break
             </Button>
-            {/* </Menu.Target>
-          <Menu.Dropdown></Menu.Dropdown>
-        </Menu> */}
+
             <SimpleGrid cols={2}>
               <Button
                 size="xs"
@@ -99,13 +127,8 @@ export function ControlPanel({
               >
                 Skip Break
               </Button>
-              <Button
-                size="xs"
-                variant="subtle"
-                color="gray"
-                onClick={onFinish}
-              >
-                Stop Working
+              <Button size="xs" variant="subtle" color="gray" onClick={onExit}>
+                Exit Session
               </Button>
             </SimpleGrid>
           </Stack>
@@ -128,7 +151,7 @@ export function ControlPanel({
           size="md"
           radius={0}
           fullWidth
-          onClick={() => onContinue(breakStopwatch.timeElapsed)}
+          onClick={handleFinishBreak}
           variant={
             breakStopwatch.timeElapsed > breakStopwatch.totalTime
               ? "filled"
