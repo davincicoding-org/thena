@@ -17,8 +17,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log(result.data);
-
     const { taskRunId, focusSessionId, userId, timestamp } = result.data;
 
     if (focusSessionId !== null) {
@@ -34,7 +32,6 @@ export async function POST(req: NextRequest) {
             eq(focusSessions.userId, userId),
           ),
         );
-      console.log(focusSession);
     }
 
     if (taskRunId !== null) {
@@ -45,7 +42,6 @@ export async function POST(req: NextRequest) {
           endedAt: new Date(timestamp),
         })
         .where(and(eq(taskRuns.id, taskRunId), eq(taskRuns.userId, userId)));
-      console.log(taskRun);
     }
 
     return NextResponse.json({ status: "ok" });

@@ -121,7 +121,6 @@ export const tasksRouter = createTRPCRouter({
           },
         },
       });
-      console.log(result);
       return result;
     }),
 

@@ -26,8 +26,3 @@ jobs:
             conventional-changelog-conventionalcommits
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Trigger Vercel Deployment
-        if: success()
-        run: |
-          curl -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"

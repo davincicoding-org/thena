@@ -5,8 +5,6 @@ config({ path: ".env.development.local" });
 config({ path: ".env.local" });
 config({ path: ".env" });
 
-console.log(process.env.DATABASE_URL);
-
 export default defineConfig({
   dialect: "postgresql",
   schema: "./src/database/schema.ts",

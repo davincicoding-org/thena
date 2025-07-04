@@ -99,9 +99,7 @@ export function DndWrapper({
       //   }
       // }}
       onDragEnd={(event) => {
-        console.log("draggable");
         setActiveItem(undefined);
-        console.log(event);
         if (!event.active.data.current) return;
         if (!event.over?.data.current) return;
 

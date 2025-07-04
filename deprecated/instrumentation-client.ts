@@ -10,7 +10,9 @@ Sentry.init({
 
   // Add optional integrations for additional features
   integrations: [
-    Sentry.replayIntegration(),
+    Sentry.replayIntegration({
+      maskAllText: false,
+    }),
     Sentry.feedbackIntegration({
       colorScheme: "dark",
       autoInject: false,
