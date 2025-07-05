@@ -9,7 +9,7 @@ export function useTodos() {
 
   const createTasks = api.tasks.create.useMutation<{
     prev: TaskTree[] | undefined;
-    tempIds: number[];
+    tempIds: Pick<TaskSelect, "id" | "parentId">[];
   }>({
     onMutate: async (taskInserts) => {
       await utils.tasks.list.cancel({ status: "todo" });
@@ -49,18 +49,29 @@ export function useTodos() {
           });
         }, prev);
       });
-      return { prev, tempIds: mockedTasks.map((task) => task.id) };
+      return {
+        prev,
+        tempIds: mockedTasks.map(({ id, parentId }) => ({
+          id,
+          parentId,
+        })),
+      };
     },
     onError: (err, variables, context) => {
       utils.tasks.list.setData({ status: "todo" }, context?.prev);
     },
     onSuccess: (createdTasks, variables, context) => {
       utils.tasks.list.setData({ status: "todo" }, (prev = []) => {
-        return createdTasks.reduce((acc, createdTask, index) => {
-          if (createdTask.parentId === null)
+        return context.tempIds.reduce((acc, tempTask, index) => {
+          const createdTask = createdTasks[index];
+
+          if (tempTask.parentId === null) {
+            if (!createdTask)
+              return acc.filter((task) => task.id !== tempTask.id);
+
             return acc
               .map((task) => {
-                if (task.id !== context.tempIds[index]) return task;
+                if (task.id !== tempTask.id) return task;
 
                 return {
                   ...createdTask,
@@ -68,14 +79,24 @@ export function useTodos() {
                 };
               })
               .sort((a, b) => a.sortOrder - b.sortOrder);
+          }
 
           return acc.map((task) => {
-            if (task.id !== createdTask.parentId) return task;
+            if (task.id !== tempTask.parentId) return task;
+
+            if (!createdTask)
+              return {
+                ...task,
+                subtasks: task.subtasks.filter(
+                  (subtask) => subtask.id !== tempTask.id,
+                ),
+              };
+
             return {
               ...task,
               subtasks: task.subtasks
                 .map((subtask) => {
-                  if (subtask.id !== context.tempIds[index]) return subtask;
+                  if (subtask.id !== tempTask.id) return subtask;
                   return createdTask;
                 })
                 .sort((a, b) => a.sortOrder - b.sortOrder),

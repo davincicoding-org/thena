@@ -16,60 +16,58 @@ export const tasksRouter = createTRPCRouter({
   create: protectedProcedure
     .input(taskFormSchema.array())
     .mutation(async ({ ctx: { db, auth }, input }) => {
-      const results = await db.transaction(async (tx) => {
-        const rows = await tx
-          .insert(tasks)
-          .values(
-            input.map((task) => ({
+      const createdTasks = await Promise.all(
+        input.map(async (task) => {
+          const [result] = await db
+            .insert(tasks)
+            .values({
               ...task,
               userId: auth.userId,
-            })),
-          )
-          .returning();
-        return rows;
-      });
+            })
+            .returning();
 
-      if (!results) throw new Error("Failed to create tasks");
+          return result;
+        }),
+      );
 
-      return results;
+      return createdTasks;
     }),
+
   bulkCreate: protectedProcedure
     .input(bulkTasksSchema)
     .mutation(async ({ ctx: { db, auth }, input }) => {
-      const results = await db.transaction(async (tx) =>
-        Promise.all(
-          input.map<Promise<TaskTree>>(async (task) =>
-            tx
-              .insert(tasks)
-              .values({
-                ...task,
-                userId: auth.userId,
-              })
-              .returning()
-              .then(([parentTask]) => {
-                if (!parentTask) throw new Error("Failed to create task");
-                if (task.subtasks.length === 0)
-                  return {
-                    ...parentTask,
-                    subtasks: [],
-                  };
-                return tx
-                  .insert(tasks)
-                  .values(
-                    task.subtasks.map((subtask, index) => ({
-                      title: subtask,
-                      userId: auth.userId,
-                      parentId: parentTask.id,
-                      customSortOrder: index,
-                    })),
-                  )
-                  .returning()
-                  .then((createdSubtasks) => ({
-                    ...parentTask,
-                    subtasks: createdSubtasks,
-                  }));
-              }),
-          ),
+      const results = await Promise.all(
+        input.map<Promise<TaskTree>>(async (task) =>
+          db
+            .insert(tasks)
+            .values({
+              ...task,
+              userId: auth.userId,
+            })
+            .returning()
+            .then(([parentTask]) => {
+              if (!parentTask) throw new Error("Failed to create task");
+              if (task.subtasks.length === 0)
+                return {
+                  ...parentTask,
+                  subtasks: [],
+                };
+              return db
+                .insert(tasks)
+                .values(
+                  task.subtasks.map((subtask, index) => ({
+                    title: subtask,
+                    userId: auth.userId,
+                    parentId: parentTask.id,
+                    customSortOrder: index,
+                  })),
+                )
+                .returning()
+                .then((createdSubtasks) => ({
+                  ...parentTask,
+                  subtasks: createdSubtasks,
+                }));
+            }),
         ),
       );
       return results;

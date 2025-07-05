@@ -31,7 +31,10 @@ export function useTodosWithTimeTravel(todos: ReturnType<typeof useTodos>) {
     name: "create-tasks",
     apply: (input: TaskFormValues[]) => todos.createTasks.mutateAsync(input),
     revert: (tasks) =>
-      tasks.forEach((task) => void todos.deleteTask.mutateAsync(task)),
+      tasks.forEach((task) => {
+        if (!task) return;
+        void todos.deleteTask.mutateAsync(task);
+      }),
   });
 
   const deleteTasks = timeTravel.createAction({
