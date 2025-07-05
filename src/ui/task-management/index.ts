@@ -11,8 +11,7 @@ export * from "./project/ProjectForm";
 export * from "./project/useProjectForm";
 export * from "./project/useProjects";
 
-export * from "./metadata/PriorityBadge";
-export * from "./metadata/ComplexityBadge";
+export * from "./metadata/PriorityIcon";
 
 export * from "./task-list/TaskListEditor";
 export * from "./useTodos";

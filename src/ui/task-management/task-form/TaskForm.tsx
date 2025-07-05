@@ -11,15 +11,16 @@ import {
   Popover,
   Tabs,
   TextInput,
+  Tooltip,
 } from "@mantine/core";
 import { useClickOutside, useDisclosure } from "@mantine/hooks";
 import { IconCube, IconCubeOff, IconPencil } from "@tabler/icons-react";
+import { useTranslations } from "next-intl";
 
 import type { ProjectInput, ProjectSelect } from "@/core/task-management";
 import { cn } from "@/ui/utils";
 
-import { ComplexityBadge } from "../metadata/ComplexityBadge";
-import { PriorityBadge } from "../metadata/PriorityBadge";
+import { PriorityIcon } from "../metadata/PriorityIcon";
 import { ProjectAvatar } from "../project/ProjectAvatar";
 import { ProjectPicker } from "./ProjectPicker";
 import { taskFormOpts, withTaskForm } from "./useTaskForm";
@@ -32,7 +33,6 @@ export type TaskFormProps = {
   actions?: (
     | "assign-project"
     | "edit-priority"
-    | "edit-complexity"
     | "-"
     | {
         name: string;
@@ -69,6 +69,7 @@ export const TaskForm = withTaskForm({
     ...boxProps
   }) => {
     /* eslint-disable react-hooks/rules-of-hooks */
+    const t = useTranslations("task");
     const [isActionsPanelOpen, actionsPanel] = useDisclosure(false);
     const actionsPanelRef = useClickOutside(() => actionsPanel.close());
     const [tab, setTab] = useState<"actions" | "tags" | "projects">("actions");
@@ -94,9 +95,38 @@ export const TaskForm = withTaskForm({
             align="center"
             p={4}
             ref={ref}
-            className={cn("group", className)}
+            className={cn("group !gap-1.5", className)}
             {...boxProps}
           >
+            <form.Field
+              name="priority"
+              children={(priorityField) => {
+                if (!priorityField.state.value) return null;
+
+                return (
+                  <Tooltip
+                    label={t(`priority.labels.${priorityField.state.value}`)}
+                    withArrow
+                    position="bottom-start"
+                    transitionProps={{
+                      transition: "pop-top-left",
+                    }}
+                    py={1}
+                    px={6}
+                    classNames={{
+                      tooltip: "text-xs",
+                    }}
+                  >
+                    <PriorityIcon
+                      priority={priorityField.state.value}
+                      size="xs"
+                      className="ml-1"
+                    />
+                  </Tooltip>
+                );
+              }}
+            />
+
             <form.Field
               name="projectId"
               children={({ state: { value } }) => {
@@ -119,7 +149,7 @@ export const TaskForm = withTaskForm({
                   readOnly={readOnly}
                   classNames={{
                     input: cn(
-                      "mr-auto h-8! min-h-0! truncate !bg-transparent px-1.5! not-focus:border-transparent! read-only:border-transparent!",
+                      "mr-auto h-8! min-h-0! truncate !bg-transparent px-1! not-focus:border-transparent! group-hover:not-focus:!border-[var(--paper-border-color)] read-only:border-transparent!",
                     ),
                   }}
                   placeholder="Title"
@@ -135,36 +165,7 @@ export const TaskForm = withTaskForm({
                 />
               )}
             />
-            <form.Field
-              name="priority"
-              children={(priorityField) => {
-                if (!priorityField.state.value) return null;
-                if (priorityField.state.value === "default") return null;
 
-                return (
-                  <PriorityBadge
-                    priority={priorityField.state.value}
-                    className="cursor-pointer!"
-                    size="xs"
-                  />
-                );
-              }}
-            />
-            <form.Field
-              name="complexity"
-              children={(complexityField) => {
-                if (!complexityField.state.value) return null;
-                if (complexityField.state.value === "default") return null;
-
-                return (
-                  <ComplexityBadge
-                    className="cursor-pointer!"
-                    complexity={complexityField.state.value}
-                    size="xs"
-                  />
-                );
-              }}
-            />
             {!readOnly && (
               <div className="flex items-center opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 empty:hidden">
                 {actions.length > 0 && (
@@ -234,15 +235,6 @@ export const TaskForm = withTaskForm({
                           </Button>
                         );
                       }}
-                    />
-                  );
-
-                if (action === "edit-complexity")
-                  return (
-                    <form.AppField
-                      key="edit-complexity"
-                      name="complexity"
-                      children={(field) => <field.ComplexityPicker />}
                     />
                   );
 

@@ -49,5 +49,20 @@
       "dropSprint": "Drop Sprint",
       "unassignTask": "Unassign"
     }
+  },
+  "task": {
+    "priority": {
+      "labels": {
+        "URGENT": "Urgent",
+        "HIGH": "High Priority",
+        "LOW": "Low Priority"
+      },
+      "options": {
+        "URGENT": "Urgent",
+        "HIGH": "High",
+        "DEFAULT": "Default",
+        "LOW": "Low"
+      }
+    }
   }
 }

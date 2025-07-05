@@ -11,20 +11,7 @@ import {
 
 // MARK:  TASKS
 
-export const taskPriority = pgEnum("task_priority", [
-  "critical",
-  "urgent",
-  "default",
-  "deferred",
-  "optional",
-]);
-
-export const taskComplexity = pgEnum("task_complexity", [
-  "trivial",
-  "simple",
-  "default",
-  "complex",
-]);
+export const taskPriority = pgEnum("task_priority", ["URGENT", "HIGH", "LOW"]);
 
 export const taskStatusEnum = pgEnum("task_status", [
   "todo",
@@ -62,7 +49,6 @@ export const tasks = pgTable(
     status: taskStatusEnum().default("todo").notNull(),
     title: d.text().notNull(),
     priority: taskPriority(),
-    complexity: taskComplexity(),
   }),
   (t) => [
     check("no_task_as_own_parent", sql`${t.id} IS DISTINCT FROM ${t.parentId}`),

@@ -226,7 +226,6 @@ function TaskTreeItem({
             "assign-project",
             "-",
             "edit-priority",
-            "edit-complexity",
             "-",
             {
               name: "delete",
@@ -348,7 +347,6 @@ function SubtaskItem({
       }
       actions={[
         "edit-priority",
-        "edit-complexity",
         "-",
         {
           name: "delete",

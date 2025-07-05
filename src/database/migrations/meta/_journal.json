@@ -8,6 +8,13 @@
       "when": 1751645050224,
       "tag": "0000_worthless_roulette",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1751733713758,
+      "tag": "0001_brave_longshot",
+      "breakpoints": true
     }
   ]
 }

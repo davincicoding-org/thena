@@ -4,13 +4,10 @@ import {
   createFormHookContexts,
   formOptions,
 } from "@tanstack/react-form";
+import { useTranslations } from "next-intl";
 
 import type { TaskFormValues } from "@/core/task-management";
-import {
-  taskComplexityEnum,
-  taskFormSchema,
-  taskPriorityEnum,
-} from "@/core/task-management";
+import { taskFormSchema } from "@/core/task-management";
 
 export const { fieldContext, formContext, useFieldContext } =
   createFormHookContexts();
@@ -20,8 +17,15 @@ export const { useAppForm: useTaskForm, withForm: withTaskForm } =
     fieldComponents: {
       PriorityPicker: () => {
         const field = useFieldContext<TaskFormValues["priority"]>();
+        const t = useTranslations("task");
+
         return (
-          <Menu position="bottom-end">
+          <Menu
+            position="right-start"
+            withArrow
+            arrowPosition="center"
+            classNames={{ itemLabel: "font-medium" }}
+          >
             <Menu.Target>
               <Button
                 justify="flex-start"
@@ -34,44 +38,30 @@ export const { useAppForm: useTaskForm, withForm: withTaskForm } =
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
-              {taskPriorityEnum.options.map((option) => (
-                <Menu.Item
-                  key={option}
-                  color={field.state.value === option ? "primary" : undefined}
-                  onClick={() => field.handleChange(option)}
-                >
-                  {option.toUpperCase()}
-                </Menu.Item>
-              ))}
-            </Menu.Dropdown>
-          </Menu>
-        );
-      },
-      ComplexityPicker: () => {
-        const field = useFieldContext<TaskFormValues["complexity"]>();
-        return (
-          <Menu position="bottom-end">
-            <Menu.Target>
-              <Button
-                justify="flex-start"
-                fullWidth
-                radius={0}
-                color="gray"
-                variant="subtle"
+              <Menu.Item
+                color={field.state.value === "URGENT" ? "primary" : undefined}
+                onClick={() => field.handleChange("URGENT")}
               >
-                Set Complexity
-              </Button>
-            </Menu.Target>
-            <Menu.Dropdown>
-              {taskComplexityEnum.options.map((option) => (
-                <Menu.Item
-                  key={option}
-                  color={field.state.value === option ? "primary" : undefined}
-                  onClick={() => field.handleChange(option)}
-                >
-                  {option.toUpperCase()}
-                </Menu.Item>
-              ))}
+                {t("priority.options.URGENT")}
+              </Menu.Item>
+              <Menu.Item
+                color={field.state.value === "HIGH" ? "primary" : undefined}
+                onClick={() => field.handleChange("HIGH")}
+              >
+                {t("priority.options.HIGH")}
+              </Menu.Item>
+              <Menu.Item
+                color={field.state.value === null ? "primary" : undefined}
+                onClick={() => field.handleChange(null)}
+              >
+                {t("priority.options.DEFAULT")}
+              </Menu.Item>
+              <Menu.Item
+                color={field.state.value === "LOW" ? "primary" : undefined}
+                onClick={() => field.handleChange("LOW")}
+              >
+                {t("priority.options.LOW")}
+              </Menu.Item>
             </Menu.Dropdown>
           </Menu>
         );
