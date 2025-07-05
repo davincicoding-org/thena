@@ -126,3 +126,11 @@ export type Tag = z.infer<typeof tagSchema>;
 
 export const tagInputSchema = tagSchema.omit({ id: true });
 export type TagInput = z.infer<typeof tagInputSchema>;
+
+export const bulkTasksSchema = z.array(
+  z.object({
+    title: z.string(),
+    subtasks: z.array(z.string()),
+  }),
+);
+export type BulkTasks = z.infer<typeof bulkTasksSchema>;

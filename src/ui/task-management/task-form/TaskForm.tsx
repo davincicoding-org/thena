@@ -1,6 +1,8 @@
+import type { BoxProps, ButtonProps, MantineColor } from "@mantine/core";
 import type { UseMutateFunction } from "@tanstack/react-query";
-import type { CSSProperties, FunctionComponent, ReactNode, Ref } from "react";
-import { useState } from "react";
+import type { ReactElement, ReactNode, Ref } from "react";
+import type { Simplify } from "type-fest";
+import { cloneElement, isValidElement, useState } from "react";
 import {
   ActionIcon,
   Button,
@@ -11,12 +13,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useClickOutside, useDisclosure } from "@mantine/hooks";
-import {
-  IconCube,
-  IconCubeOff,
-  IconPencil,
-  IconPlus,
-} from "@tabler/icons-react";
+import { IconCube, IconCubeOff, IconPencil } from "@tabler/icons-react";
 
 import type { ProjectInput, ProjectSelect } from "@/core/task-management";
 import { cn } from "@/ui/utils";
@@ -27,43 +24,49 @@ import { ProjectAvatar } from "../project/ProjectAvatar";
 import { ProjectPicker } from "./ProjectPicker";
 import { taskFormOpts, withTaskForm } from "./useTaskForm";
 
-type TaskActionsComponent = FunctionComponent<{
-  defaultActions: ReactNode;
-  closeMenu: () => void;
-}>;
-
 // MARK: Component
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type TaskFormProps = {
-  onAddSubtask?: () => void;
+  ref?: Ref<HTMLDivElement>;
+  readOnly?: boolean;
+  actions?: (
+    | "assign-project"
+    | "edit-priority"
+    | "edit-complexity"
+    | "-"
+    | {
+        name: string;
+        icon?: ReactNode;
+        label: ReactNode;
+        variant?: ButtonProps["variant"];
+        color?: MantineColor;
+        onClick: () => void;
+      }
+    | ReactElement<{ onCloseActions?: () => void }>
+    | null
+  )[];
   projects: ProjectSelect[];
   onCreateProject?: UseMutateFunction<
     ProjectSelect | undefined,
     Error,
     ProjectInput
   >;
-  ref?: Ref<HTMLDivElement>;
-  readOnly?: boolean;
-  TaskActions?: TaskActionsComponent;
   dragHandle?: ReactNode;
-  style?: CSSProperties;
-};
+} & Simplify<BoxProps>;
 
 export const TaskForm = withTaskForm({
   ...taskFormOpts,
   props: {} as TaskFormProps,
   render: ({
     form,
-    onAddSubtask,
-    projects,
-    onCreateProject,
     readOnly,
     dragHandle,
     ref,
-    style,
-    TaskActions = (({ defaultActions }) =>
-      defaultActions) as TaskActionsComponent,
+    actions = [],
+    projects,
+    onCreateProject,
+    className,
+    ...boxProps
   }) => {
     /* eslint-disable react-hooks/rules-of-hooks */
     const [isActionsPanelOpen, actionsPanel] = useDisclosure(false);
@@ -71,181 +74,210 @@ export const TaskForm = withTaskForm({
     const [tab, setTab] = useState<"actions" | "tags" | "projects">("actions");
     /* eslint-enable react-hooks/rules-of-hooks */
 
-    const defaultActions = (
-      <>
-        <Button
-          variant="subtle"
-          justify="flex-start"
-          fullWidth
-          radius={0}
-          color="gray"
-          leftSection={<IconPlus size={16} />}
-          onClick={() => {
-            onAddSubtask?.();
-            actionsPanel.close();
-          }}
-        >
-          Add Subtasks
-        </Button>
-        <Divider />
-        <form.Field
-          name="projectId"
-          children={(projectField) => {
-            if (projectField.state.value)
-              return (
-                <Button
-                  variant="subtle"
-                  justify="flex-start"
-                  leftSection={<IconCubeOff size={16} />}
-                  fullWidth
-                  radius={0}
-                  color="gray"
-                  onClick={() => {
-                    projectField.setValue(null);
-                    actionsPanel.close();
-                  }}
-                >
-                  Unassign from Project
-                </Button>
-              );
-
-            return (
-              <Button
-                variant="subtle"
-                justify="flex-start"
-                leftSection={<IconCube size={16} />}
-                fullWidth
-                radius={0}
-                color="gray"
-                onClick={() => setTab("projects")}
-              >
-                Assign to Project
-              </Button>
-            );
-          }}
-        />
-        <Divider />
-        <form.AppField
-          name="priority"
-          children={(field) => <field.PriorityPicker />}
-        />
-        <form.AppField
-          name="complexity"
-          children={(field) => <field.ComplexityPicker />}
-        />
-      </>
-    );
-
     return (
       <Popover
-        position="bottom-end"
+        position="right-start"
+        withArrow
+        arrowPosition="center"
         opened={isActionsPanelOpen}
+        offset={{
+          mainAxis: 8,
+        }}
         onClose={() => {
           setTimeout(() => {
             setTab("actions");
           }, 300);
         }}
       >
-        <Flex
-          align="center"
-          p={4}
-          bg="dark.6"
-          style={style}
-          ref={ref}
-          className="group"
-        >
-          <form.Field
-            name="projectId"
-            children={({ state: { value } }) => {
-              const project = projects.find((project) => project.id === value);
-              if (!project) return null;
+        <Popover.Target>
+          <Flex
+            align="center"
+            p={4}
+            ref={ref}
+            className={cn("group", className)}
+            {...boxProps}
+          >
+            <form.Field
+              name="projectId"
+              children={({ state: { value } }) => {
+                const project = projects.find(
+                  (project) => project.id === value,
+                );
+                if (!project) return null;
 
-              return (
-                <ProjectAvatar ml={4} mr={4} project={project} size="sm" />
-              );
-            }}
-          />
-          <form.Field
-            name="title"
-            children={(field) => (
-              <TextInput
-                size="md"
-                flex={1}
-                readOnly={readOnly}
-                classNames={{
-                  input: cn(
-                    "mr-auto h-8! min-h-0! truncate px-1.5! not-focus:border-transparent! read-only:border-transparent!",
-                  ),
-                }}
-                placeholder="Title"
-                value={field.state.value}
-                error={field.state.meta.errors.length > 0}
-                onChange={(e) => field.handleChange(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    void form.handleSubmit();
-                    e.currentTarget.blur();
-                  }
-                }}
-              />
+                return (
+                  <ProjectAvatar ml={4} mr={4} project={project} size="sm" />
+                );
+              }}
+            />
+            <form.Field
+              name="title"
+              children={(field) => (
+                <TextInput
+                  size="md"
+                  flex={1}
+                  readOnly={readOnly}
+                  classNames={{
+                    input: cn(
+                      "mr-auto h-8! min-h-0! truncate !bg-transparent px-1.5! not-focus:border-transparent! read-only:border-transparent!",
+                    ),
+                  }}
+                  placeholder="Title"
+                  value={field.state.value}
+                  error={field.state.meta.errors.length > 0}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      void form.handleSubmit();
+                      e.currentTarget.blur();
+                    }
+                  }}
+                />
+              )}
+            />
+            <form.Field
+              name="priority"
+              children={(priorityField) => {
+                if (!priorityField.state.value) return null;
+                if (priorityField.state.value === "default") return null;
+
+                return (
+                  <PriorityBadge
+                    priority={priorityField.state.value}
+                    className="cursor-pointer!"
+                    size="xs"
+                  />
+                );
+              }}
+            />
+            <form.Field
+              name="complexity"
+              children={(complexityField) => {
+                if (!complexityField.state.value) return null;
+                if (complexityField.state.value === "default") return null;
+
+                return (
+                  <ComplexityBadge
+                    className="cursor-pointer!"
+                    complexity={complexityField.state.value}
+                    size="xs"
+                  />
+                );
+              }}
+            />
+            {!readOnly && (
+              <div className="flex items-center opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 empty:hidden">
+                {actions.length > 0 && (
+                  <ActionIcon
+                    aria-label="Task Actions"
+                    className="disabled:cursor-default!"
+                    disabled={isActionsPanelOpen}
+                    variant="subtle"
+                    color="gray"
+                    onClick={actionsPanel.open}
+                  >
+                    <IconPencil size={16} />
+                  </ActionIcon>
+                )}
+                {dragHandle}
+              </div>
             )}
-          />
-          <form.Field
-            name="priority"
-            children={(priorityField) => {
-              if (!priorityField.state.value) return null;
-              if (priorityField.state.value === "default") return null;
+          </Flex>
+        </Popover.Target>
 
-              return (
-                <PriorityBadge
-                  priority={priorityField.state.value}
-                  className="cursor-pointer!"
-                  size="xs"
-                />
-              );
-            }}
-          />
-          <form.Field
-            name="complexity"
-            children={(complexityField) => {
-              if (!complexityField.state.value) return null;
-              if (complexityField.state.value === "default") return null;
-
-              return (
-                <ComplexityBadge
-                  className="cursor-pointer!"
-                  complexity={complexityField.state.value}
-                  size="xs"
-                />
-              );
-            }}
-          />
-          {!readOnly && (
-            <div className="flex items-center opacity-0 group-focus-within:opacity-100 group-hover:opacity-100">
-              <Popover.Target>
-                <ActionIcon
-                  aria-label="Task Actions"
-                  className="disabled:cursor-default!"
-                  disabled={isActionsPanelOpen}
-                  variant="subtle"
-                  color="gray"
-                  onClick={actionsPanel.open}
-                >
-                  <IconPencil size={16} />
-                </ActionIcon>
-              </Popover.Target>
-              {dragHandle}
-            </div>
-          )}
-        </Flex>
-
-        <Popover.Dropdown p={0} ref={actionsPanelRef} className="overflow-clip">
+        <Popover.Dropdown p={0} ref={actionsPanelRef}>
           <Tabs value={tab}>
-            <Tabs.Panel value="actions">
-              <TaskActions
-                defaultActions={defaultActions}
-                closeMenu={actionsPanel.close}
-              />
+            <Tabs.Panel
+              value="actions"
+              className="*:first:!rounded-t-[0.175rem] *:last:!rounded-b-[0.175rem]"
+            >
+              {actions.map((action, index) => {
+                if (!action) return null;
+
+                if (action === "-") return <Divider key={`divider-${index}`} />;
+
+                if (action === "assign-project")
+                  return (
+                    <form.Field
+                      key="assign-project"
+                      name="projectId"
+                      children={(projectField) => {
+                        if (projectField.state.value)
+                          return (
+                            <Button
+                              variant="subtle"
+                              justify="flex-start"
+                              leftSection={<IconCubeOff size={16} />}
+                              fullWidth
+                              radius={0}
+                              color="gray"
+                              onClick={() => {
+                                projectField.setValue(null);
+                                actionsPanel.close();
+                              }}
+                            >
+                              Unassign from Project
+                            </Button>
+                          );
+
+                        return (
+                          <Button
+                            variant="subtle"
+                            justify="flex-start"
+                            leftSection={<IconCube size={16} />}
+                            fullWidth
+                            radius={0}
+                            color="gray"
+                            onClick={() => setTab("projects")}
+                          >
+                            Assign to Project
+                          </Button>
+                        );
+                      }}
+                    />
+                  );
+
+                if (action === "edit-complexity")
+                  return (
+                    <form.AppField
+                      key="edit-complexity"
+                      name="complexity"
+                      children={(field) => <field.ComplexityPicker />}
+                    />
+                  );
+
+                if (action === "edit-priority")
+                  return (
+                    <form.AppField
+                      key="edit-priority"
+                      name="priority"
+                      children={(field) => <field.PriorityPicker />}
+                    />
+                  );
+
+                if (isValidElement(action))
+                  return cloneElement(action, {
+                    onCloseActions: actionsPanel.close,
+                  });
+
+                return (
+                  <Button
+                    key={action.name}
+                    variant={action.variant ?? "subtle"}
+                    justify="flex-start"
+                    fullWidth
+                    radius={0}
+                    color={action.color ?? "gray"}
+                    leftSection={action.icon}
+                    onClick={() => {
+                      action.onClick();
+                      actionsPanel.close();
+                    }}
+                  >
+                    {action.label}
+                  </Button>
+                );
+              })}
             </Tabs.Panel>
             <Tabs.Panel value="projects">
               <form.Field

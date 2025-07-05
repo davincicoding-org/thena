@@ -1,8 +1,8 @@
 import { and, eq } from "drizzle-orm";
-import z from "zod";
 
 import type { TaskTree } from "@/core/task-management";
 import {
+  bulkTasksSchema,
   taskFormSchema,
   taskSelectionSchema,
   taskSelectSchema,
@@ -34,14 +34,7 @@ export const tasksRouter = createTRPCRouter({
       return results;
     }),
   bulkCreate: protectedProcedure
-    .input(
-      z
-        .object({
-          title: z.string(),
-          subtasks: z.array(z.string()),
-        })
-        .array(),
-    )
+    .input(bulkTasksSchema)
     .mutation(async ({ ctx: { db, auth }, input }) => {
       const results = await db.transaction(async (tx) =>
         Promise.all(

@@ -1,28 +1,29 @@
-import type { PaperProps } from "@mantine/core";
+import type { BoxProps, PaperProps } from "@mantine/core";
 import type { ReactElement, ReactNode, Ref } from "react";
-import { cloneElement } from "react";
 import {
   ActionIcon,
-  Box,
   Collapse,
   createPolymorphicComponent,
   Divider,
+  Flex,
   FocusTrap,
   Kbd,
   Paper,
   Textarea,
+  Tooltip,
 } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
-import { IconX } from "@tabler/icons-react";
+import { IconInfoCircleFilled, IconX } from "@tabler/icons-react";
 import { useForm } from "@tanstack/react-form";
 import z from "zod";
 
 import { cn } from "@/ui/utils";
 
 export interface TaskWrapperProps {
-  task: ReactElement<{ onAddSubtask?: () => void }>;
+  task: ReactElement<{ onAddSubtask?: () => void } & BoxProps>;
   subtasks: ReactNode;
   ref?: Ref<HTMLDivElement>;
+  isAddingSubtask?: boolean;
+  onCloseSubtaskAdder?: () => void;
   onAddSubtasks?: (titles: string[]) => void;
 }
 
@@ -34,11 +35,11 @@ export const TaskWrapper = createPolymorphicComponent<
     task,
     subtasks,
     className,
+    isAddingSubtask = false,
+    onCloseSubtaskAdder,
     onAddSubtasks,
     ...paperProps
   }: TaskWrapperProps & PaperProps) => {
-    const [isAddingSubtask, subtaskAdder] = useDisclosure();
-
     const form = useForm({
       defaultValues: {
         content: "",
@@ -60,7 +61,7 @@ export const TaskWrapper = createPolymorphicComponent<
 
     const handleAbort = () => {
       form.reset();
-      subtaskAdder.close();
+      onCloseSubtaskAdder?.();
     };
 
     return (
@@ -69,67 +70,84 @@ export const TaskWrapper = createPolymorphicComponent<
         className={cn("overflow-clip", className)}
         {...paperProps}
       >
-        {cloneElement(task, { onAddSubtask: subtaskAdder.open })}
+        {task}
 
         {subtasks}
         <Collapse in={isAddingSubtask}>
           <Divider />
-          <Box p="xs">
+          <Flex p="xs" pr={0} wrap="nowrap">
             <form.Field
               name="content"
               children={(field) => (
-                <div>
-                  <FocusTrap active={isAddingSubtask}>
-                    <Textarea
-                      autosize
-                      maxRows={3}
-                      placeholder="New subtask"
-                      rightSection={
-                        <ActionIcon
-                          aria-label="Cancel"
-                          variant="transparent"
-                          color="gray"
-                          onClick={handleAbort}
-                        >
-                          <IconX size={16} />
-                        </ActionIcon>
+                <FocusTrap active={isAddingSubtask}>
+                  <Textarea
+                    autosize
+                    flex={1}
+                    maxRows={3}
+                    placeholder="New subtask"
+                    rightSection={
+                      <ActionIcon
+                        aria-label="Cancel"
+                        variant="transparent"
+                        color="gray"
+                        onClick={handleAbort}
+                      >
+                        <IconX size={16} />
+                      </ActionIcon>
+                    }
+                    value={field.state.value}
+                    error={field.state.meta.errors.length > 0}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    onFocus={(e) =>
+                      e.currentTarget.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                      })
+                    }
+                    // onBlur={subtaskAdder.close}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") {
+                        e.currentTarget.blur();
                       }
-                      value={field.state.value}
-                      error={field.state.meta.errors.length > 0}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      onFocus={(e) =>
-                        e.currentTarget.scrollIntoView({
-                          behavior: "smooth",
-                          block: "center",
-                        })
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        void form.handleSubmit();
                       }
-                      // onBlur={subtaskAdder.close}
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") {
-                          e.currentTarget.blur();
-                        }
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          void form.handleSubmit();
-                        }
-                      }}
-                    />
-                  </FocusTrap>
-                  <p className="mt-3 mb-0 text-center text-xs text-gray-400 italic">
-                    Press{" "}
-                    <Kbd size="xs" className="align-top">
-                      Shift
-                    </Kbd>{" "}
-                    +{" "}
-                    <Kbd size="xs" className="align-top">
-                      Enter
-                    </Kbd>{" "}
-                    to add multiple subtasks
-                  </p>
-                </div>
+                    }}
+                  />
+                </FocusTrap>
               )}
             />
-          </Box>
+            <Tooltip
+              position="bottom-end"
+              transitionProps={{
+                transition: "pop-top-right",
+              }}
+              label={
+                <>
+                  Press{" "}
+                  <Kbd size="xs" className="align-text-bottom">
+                    Shift
+                  </Kbd>{" "}
+                  +{" "}
+                  <Kbd size="xs" className="align-text-bottom">
+                    Enter
+                  </Kbd>{" "}
+                  to add multiple subtasks
+                </>
+              }
+            >
+              <ActionIcon
+                variant="transparent"
+                color="gray"
+                size="input-sm"
+                px={8}
+                className="!w-auto !min-w-0"
+              >
+                <IconInfoCircleFilled size={12} />
+              </ActionIcon>
+            </Tooltip>
+          </Flex>
         </Collapse>
       </Paper>
     );

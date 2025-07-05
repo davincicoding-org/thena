@@ -24,7 +24,6 @@ import type {
   TaskUpdate,
 } from "@/core/task-management";
 import { WavyBackground } from "@/ui/components/WavyBackground";
-import { QueueTask } from "@/ui/focus-session/QueueTask";
 import { TaskListEditor } from "@/ui/task-management";
 import { cn } from "@/ui/utils";
 
@@ -36,6 +35,7 @@ import type {
 } from "./types";
 import { ActiveSessionPanel } from "./ActiveSessionPanel";
 import { ControlPanel } from "./ControlPanel";
+import { QueueTask } from "./QueueTask";
 
 export interface FocusSessionProps {
   loading?: boolean;

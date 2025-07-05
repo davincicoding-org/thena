@@ -1,5 +1,4 @@
 export * from "./task-form/TaskForm";
-export * from "./task-form/SubtaskForm";
 export * from "./task-form/TaskWrapper";
 export * from "./task-form/useTaskForm";
 
@@ -15,6 +14,6 @@ export * from "./project/useProjects";
 export * from "./metadata/PriorityBadge";
 export * from "./metadata/ComplexityBadge";
 
-export * from "./TaskListEditor";
+export * from "./task-list/TaskListEditor";
 export * from "./useTodos";
 export * from "./useTodosWithTimeTravel";
