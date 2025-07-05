@@ -13,7 +13,7 @@ import {
   TextInput,
   Tooltip,
 } from "@mantine/core";
-import { useClickOutside, useDisclosure } from "@mantine/hooks";
+import { useClickOutside, useDisclosure, useElementSize } from "@mantine/hooks";
 import { IconCube, IconCubeOff, IconPencil } from "@tabler/icons-react";
 import { useTranslations } from "next-intl";
 
@@ -30,6 +30,9 @@ import { taskFormOpts, withTaskForm } from "./useTaskForm";
 export type TaskFormProps = {
   ref?: Ref<HTMLDivElement>;
   readOnly?: boolean;
+  disableHover?: boolean;
+  disableRightSection?: boolean;
+  rightSection?: ReactNode;
   actions?: (
     | "assign-project"
     | "edit-priority"
@@ -51,7 +54,6 @@ export type TaskFormProps = {
     Error,
     ProjectInput
   >;
-  dragHandle?: ReactNode;
 } & Simplify<BoxProps>;
 
 export const TaskForm = withTaskForm({
@@ -60,8 +62,10 @@ export const TaskForm = withTaskForm({
   render: ({
     form,
     readOnly,
-    dragHandle,
     ref,
+    disableHover,
+    rightSection,
+    disableRightSection,
     actions = [],
     projects,
     onCreateProject,
@@ -73,7 +77,13 @@ export const TaskForm = withTaskForm({
     const [isActionsPanelOpen, actionsPanel] = useDisclosure(false);
     const actionsPanelRef = useClickOutside(() => actionsPanel.close());
     const [tab, setTab] = useState<"actions" | "tags" | "projects">("actions");
+    const { ref: rightSectionRef, width: rightSectionWidth } = useElementSize();
+    const [isHovering, setIsHovering] = useState(false);
+    const [isInputFocused, setIsInputFocused] = useState(false);
     /* eslint-enable react-hooks/rules-of-hooks */
+
+    const isRightSectionOpen =
+      !disableRightSection && !isInputFocused && isHovering;
 
     return (
       <Popover
@@ -93,9 +103,10 @@ export const TaskForm = withTaskForm({
         <Popover.Target>
           <Flex
             align="center"
-            p={4}
             ref={ref}
-            className={cn("group !gap-1.5", className)}
+            className={cn("group overflow-clip py-1 pl-1.5", className)}
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
             {...boxProps}
           >
             <form.Field
@@ -120,7 +131,7 @@ export const TaskForm = withTaskForm({
                     <PriorityIcon
                       priority={priorityField.state.value}
                       size="xs"
-                      className="ml-1"
+                      className="mr-1.5 ml-0.5"
                     />
                   </Tooltip>
                 );
@@ -148,13 +159,19 @@ export const TaskForm = withTaskForm({
                   flex={1}
                   readOnly={readOnly}
                   classNames={{
+                    root: "mr-1.5",
                     input: cn(
-                      "mr-auto h-8! min-h-0! truncate !bg-transparent px-1! not-focus:border-transparent! group-hover:not-focus:!border-[var(--paper-border-color)] read-only:border-transparent!",
+                      "h-8! min-h-0! truncate !bg-transparent px-1! not-focus:border-transparent! read-only:border-transparent!",
+                      {
+                        "group-hover:not-focus:!border-current": !disableHover,
+                      },
                     ),
                   }}
                   placeholder="Title"
                   value={field.state.value}
                   error={field.state.meta.errors.length > 0}
+                  onFocus={() => setIsInputFocused(true)}
+                  onBlur={() => setIsInputFocused(false)}
                   onChange={(e) => field.handleChange(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
@@ -167,20 +184,29 @@ export const TaskForm = withTaskForm({
             />
 
             {!readOnly && (
-              <div className="flex items-center opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 empty:hidden">
+              <div
+                ref={rightSectionRef}
+                className={cn("flex transition-all duration-200 empty:hidden", {
+                  "focus-within:!mr-0 focus-within:!opacity-100":
+                    !disableRightSection,
+                  "opacity-0": !isRightSectionOpen,
+                })}
+                style={{
+                  marginRight: isRightSectionOpen ? 0 : -rightSectionWidth,
+                }}
+              >
                 {actions.length > 0 && (
                   <ActionIcon
                     aria-label="Task Actions"
-                    className="disabled:cursor-default!"
-                    disabled={isActionsPanelOpen}
-                    variant="subtle"
+                    className="mr-1 !h-8 !w-8 !outline-offset-0"
+                    variant="light"
                     color="gray"
                     onClick={actionsPanel.open}
                   >
                     <IconPencil size={16} />
                   </ActionIcon>
                 )}
-                {dragHandle}
+                {rightSection}
               </div>
             )}
           </Flex>

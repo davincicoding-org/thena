@@ -5,7 +5,7 @@
   "packageManager": "pnpm@9.14.2",
   "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbo",
     "typecheck": "tsc --noEmit",
     "check": "next lint && tsc --noEmit",
     "profile": "next build --profile && next start",

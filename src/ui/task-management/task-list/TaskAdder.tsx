@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useDndContext } from "@dnd-kit/core";
 import { ActionIcon, Button, FocusTrap, Kbd, TextInput } from "@mantine/core";
 import { useHotkeys } from "@mantine/hooks";
 import { IconPlus } from "@tabler/icons-react";
@@ -22,6 +23,7 @@ export function TaskAdder({
   onCreateTasks,
   order,
 }: TaskAdderProps) {
+  const { active } = useDndContext();
   useHotkeys([
     [
       hotkey,
@@ -132,7 +134,12 @@ export function TaskAdder({
               flex={1}
               size="xs"
               variant="light"
-              className="my-0.5 opacity-0 transition-opacity hover:opacity-100"
+              className={cn(
+                "my-0.5 opacity-0 transition-opacity !outline-none hover:opacity-100 focus-visible:opacity-100",
+                {
+                  "pointer-events-none": active,
+                },
+              )}
               onClick={() => {
                 createTaskTip.close();
                 setOpened(true);

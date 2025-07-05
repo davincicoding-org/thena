@@ -1,4 +1,5 @@
 import { Button, Menu } from "@mantine/core";
+import { IconArrowBigUpLinesFilled } from "@tabler/icons-react";
 import {
   createFormHook,
   createFormHookContexts,
@@ -29,6 +30,7 @@ export const { useAppForm: useTaskForm, withForm: withTaskForm } =
             <Menu.Target>
               <Button
                 justify="flex-start"
+                leftSection={<IconArrowBigUpLinesFilled size={16} />}
                 fullWidth
                 radius={0}
                 color="gray"

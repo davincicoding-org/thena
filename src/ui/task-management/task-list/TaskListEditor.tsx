@@ -7,7 +7,12 @@ import type { SetRequired } from "type-fest";
 import { Fragment, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Alert, Box, createPolymorphicComponent } from "@mantine/core";
+import {
+  ActionIcon,
+  Alert,
+  Box,
+  createPolymorphicComponent,
+} from "@mantine/core";
 import {
   useDebouncedCallback,
   useDisclosure,
@@ -171,20 +176,15 @@ function TaskTreeItem({
     });
 
   const style: CSSProperties = {
-    // opacity: isDragging ? 0.4 : undefined,
     transform: CSS.Translate.toString(transform),
     transition,
   };
 
   return (
     <TaskWrapper
-      // component={motion.div}
-      className="w-xs"
-      // initial={{ opacity: 0 }}
-      // animate={{ opacity: 1, x: 0 }}
-      // exit={{ opacity: 0, x: 25 }}
-      // layoutId={task.id.toString()}
-      // transition={{ duration: 0.3 }}
+      className={cn("w-xs", {
+        "cursor-grabbing *:pointer-events-none": active,
+      })}
       style={style}
       ref={setNodeRef}
       task={
@@ -195,19 +195,8 @@ function TaskTreeItem({
             onUpdateTask?.({ id: task.id, parentId: null, ...updates })
           }
           projects={projects}
+          disableRightSection={!!active}
           onCreateProject={onCreateProject}
-          dragHandle={
-            <div
-              {...attributes}
-              {...listeners}
-              className={cn(
-                "flex items-center self-stretch px-1 focus:text-[var(--mantine-color-primary-filled)] focus:outline-none",
-                active ? "cursor-grabbing" : "cursor-grab",
-              )}
-            >
-              <IconGripVertical size={16} />
-            </div>
-          }
           actions={[
             onRefineTask
               ? {
@@ -224,7 +213,6 @@ function TaskTreeItem({
             },
             "-",
             "assign-project",
-            "-",
             "edit-priority",
             "-",
             {
@@ -245,6 +233,19 @@ function TaskTreeItem({
                 ]),
             },
           ]}
+          rightSection={
+            <ActionIcon
+              {...attributes}
+              {...listeners}
+              color="gray"
+              variant="transparent"
+              className={cn(
+                "mr-1 flex !h-8 !w-auto !min-w-0 !cursor-grab px-1 !outline-offset-0",
+              )}
+            >
+              <IconGripVertical size={16} />
+            </ActionIcon>
+          }
         />
       }
       subtasks={
@@ -316,7 +317,6 @@ function SubtaskItem({
     });
 
   const style: CSSProperties = {
-    // opacity: isDragging ? 0.4 : undefined,
     transform: CSS.Translate.toString(transform),
     transition,
   };
@@ -327,23 +327,23 @@ function SubtaskItem({
       style={style}
       ref={setNodeRef}
       item={task}
-      // isSubtask
-      // component={motion.div}
-      // initial={{ opacity: 0 }}
-      // animate={{ opacity: 1 }}
-      // transition={{ duration: 0.3 }}
-      // layoutId={task.id.toString()}
-      dragHandle={
-        <div
+      className={cn({
+        "cursor-grabbing *:pointer-events-none": active,
+      })}
+      disableHover={!!active}
+      disableRightSection={!!active}
+      rightSection={
+        <ActionIcon
           {...attributes}
           {...listeners}
+          color="gray"
+          variant="transparent"
           className={cn(
-            "flex items-center self-stretch px-1 focus:text-[var(--mantine-color-primary-filled)] focus:outline-none",
-            active ? "cursor-grabbing" : "cursor-grab",
+            "mr-1 flex !h-8 !w-auto !min-w-0 !cursor-grab px-1 !outline-offset-0",
           )}
         >
           <IconGripVertical size={16} />
-        </div>
+        </ActionIcon>
       }
       actions={[
         "edit-priority",
