@@ -1,6 +1,7 @@
 import type { Preview } from "@storybook/react";
-import type { ReactNode } from "react";
 import { StrictMode } from "react";
+
+import { Motion } from "@/app/motion";
 
 import { ThemeProvider } from "../src/ui/Theme";
 
@@ -15,15 +16,14 @@ const preview: Preview = {
     },
   },
   decorators: [
-    (Story: () => ReactNode) => (
-      <StrictMode>
-        <Story />
-      </StrictMode>
-    ),
     (Story) => (
-      <ThemeProvider>
-        <Story />
-      </ThemeProvider>
+      <StrictMode>
+        <Motion>
+          <ThemeProvider>
+            <Story />
+          </ThemeProvider>
+        </Motion>
+      </StrictMode>
     ),
   ],
 };

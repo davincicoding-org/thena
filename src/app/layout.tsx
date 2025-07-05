@@ -11,6 +11,8 @@ import { TRPCReactProvider } from "@/trpc/react";
 import { BugReporter } from "@/ui/components/BugReporter";
 import { ThemeProvider } from "@/ui/Theme";
 
+import { Motion } from "./motion";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -48,17 +50,19 @@ export default async function RootLayout({
           <body
             className={`${geistSans.variable} ${geistMono.variable} ${logoFont.variable}`}
           >
-            <ThemeProvider>
-              <NextIntlClientProvider>
-                {children}
-                <BugReporter
-                  className="fixed! top-2 right-2 z-[500]"
-                  variant="subtle"
-                  color="orange"
-                  size="xl"
-                />
-              </NextIntlClientProvider>
-            </ThemeProvider>
+            <Motion>
+              <ThemeProvider>
+                <NextIntlClientProvider>
+                  {children}
+                  <BugReporter
+                    className="fixed! top-2 right-2 z-[500]"
+                    variant="subtle"
+                    color="orange"
+                    size="xl"
+                  />
+                </NextIntlClientProvider>
+              </ThemeProvider>
+            </Motion>
             <Analytics />
           </body>
         </html>

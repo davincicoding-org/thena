@@ -1,3 +1,5 @@
+"use client";
+
 import type { BoxProps, ButtonProps, MantineColor } from "@mantine/core";
 import type { UseMutateFunction } from "@tanstack/react-query";
 import type { ReactElement, ReactNode, Ref } from "react";
@@ -13,8 +15,9 @@ import {
   TextInput,
   Tooltip,
 } from "@mantine/core";
-import { useClickOutside, useDisclosure, useElementSize } from "@mantine/hooks";
+import { useClickOutside, useDisclosure } from "@mantine/hooks";
 import { IconCube, IconCubeOff, IconPencil } from "@tabler/icons-react";
+import * as m from "motion/react-m";
 import { useTranslations } from "next-intl";
 
 import type { ProjectInput, ProjectSelect } from "@/core/task-management";
@@ -24,8 +27,6 @@ import { PriorityIcon } from "../metadata/PriorityIcon";
 import { ProjectAvatar } from "../project/ProjectAvatar";
 import { ProjectPicker } from "./ProjectPicker";
 import { taskFormOpts, withTaskForm } from "./useTaskForm";
-
-// MARK: Component
 
 export type TaskFormProps = {
   ref?: Ref<HTMLDivElement>;
@@ -77,7 +78,6 @@ export const TaskForm = withTaskForm({
     const [isActionsPanelOpen, actionsPanel] = useDisclosure(false);
     const actionsPanelRef = useClickOutside(() => actionsPanel.close());
     const [tab, setTab] = useState<"actions" | "tags" | "projects">("actions");
-    const { ref: rightSectionRef, width: rightSectionWidth } = useElementSize();
     const [isHovering, setIsHovering] = useState(false);
     const [isInputFocused, setIsInputFocused] = useState(false);
     /* eslint-enable react-hooks/rules-of-hooks */
@@ -104,53 +104,43 @@ export const TaskForm = withTaskForm({
           <Flex
             align="center"
             ref={ref}
-            className={cn("group overflow-clip py-1 pl-1.5", className)}
+            className={cn("group overflow-clip py-1 pr-0.5 pl-1.5", className)}
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
             {...boxProps}
           >
-            <form.Field
-              name="priority"
-              children={(priorityField) => {
-                if (!priorityField.state.value) return null;
-
-                return (
-                  <Tooltip
-                    label={t(`priority.labels.${priorityField.state.value}`)}
-                    withArrow
-                    position="bottom-start"
-                    transitionProps={{
-                      transition: "pop-top-left",
-                    }}
-                    py={1}
-                    px={6}
-                    classNames={{
-                      tooltip: "text-xs",
-                    }}
-                  >
-                    <PriorityIcon
-                      priority={priorityField.state.value}
-                      size="xs"
-                      className="mr-1.5 ml-0.5"
-                    />
-                  </Tooltip>
-                );
+            <m.div
+              key="left-section"
+              initial={{
+                width: "auto",
+                opacity: 1,
               }}
-            />
+              animate={
+                isInputFocused
+                  ? {
+                      width: 0,
+                      opacity: 0,
+                    }
+                  : {
+                      width: "auto",
+                      opacity: 1,
+                    }
+              }
+            >
+              <form.Field
+                name="projectId"
+                children={({ state: { value } }) => {
+                  const project = projects.find(
+                    (project) => project.id === value,
+                  );
+                  if (!project) return null;
 
-            <form.Field
-              name="projectId"
-              children={({ state: { value } }) => {
-                const project = projects.find(
-                  (project) => project.id === value,
-                );
-                if (!project) return null;
-
-                return (
-                  <ProjectAvatar ml={4} mr={4} project={project} size="sm" />
-                );
-              }}
-            />
+                  return (
+                    <ProjectAvatar ml={4} mr={4} project={project} size="sm" />
+                  );
+                }}
+              />
+            </m.div>
             <form.Field
               name="title"
               children={(field) => (
@@ -159,7 +149,7 @@ export const TaskForm = withTaskForm({
                   flex={1}
                   readOnly={readOnly}
                   classNames={{
-                    root: "mr-1.5",
+                    root: "mr-1",
                     input: cn(
                       "h-8! min-h-0! truncate !bg-transparent px-1! not-focus:border-transparent! read-only:border-transparent!",
                       {
@@ -183,17 +173,71 @@ export const TaskForm = withTaskForm({
               )}
             />
 
-            {!readOnly && (
-              <div
-                ref={rightSectionRef}
-                className={cn("flex transition-all duration-200 empty:hidden", {
-                  "focus-within:!mr-0 focus-within:!opacity-100":
-                    !disableRightSection,
-                  "opacity-0": !isRightSectionOpen,
-                })}
-                style={{
-                  marginRight: isRightSectionOpen ? 0 : -rightSectionWidth,
+            <m.div
+              key="task-metadata"
+              className="mr-2 flex items-center gap-1 overflow-hidden"
+              initial={{
+                width: "auto",
+                opacity: 1,
+              }}
+              animate={
+                isRightSectionOpen || isInputFocused
+                  ? {
+                      width: 0,
+                      opacity: 0,
+                    }
+                  : {
+                      width: "auto",
+                      opacity: 1,
+                    }
+              }
+            >
+              <form.Field
+                name="priority"
+                children={(priorityField) => {
+                  if (!priorityField.state.value) return null;
+
+                  return (
+                    <Tooltip
+                      label={t(`priority.labels.${priorityField.state.value}`)}
+                      withArrow
+                      position="bottom-start"
+                      transitionProps={{
+                        transition: "pop-top-left",
+                      }}
+                      py={1}
+                      px={6}
+                      classNames={{
+                        tooltip: "text-xs",
+                      }}
+                    >
+                      <PriorityIcon
+                        priority={priorityField.state.value}
+                        size="xs"
+                      />
+                    </Tooltip>
+                  );
                 }}
+              />
+            </m.div>
+            {!readOnly && (
+              <m.div
+                key="task-actions"
+                layoutId="right-section"
+                className="flex empty:hidden"
+                onFocus={() => setIsHovering(true)}
+                onBlur={() => setIsHovering(false)}
+                animate={
+                  isRightSectionOpen
+                    ? {
+                        width: "auto",
+                        opacity: 1,
+                      }
+                    : {
+                        width: 0,
+                        opacity: 0,
+                      }
+                }
               >
                 {actions.length > 0 && (
                   <ActionIcon
@@ -207,7 +251,7 @@ export const TaskForm = withTaskForm({
                   </ActionIcon>
                 )}
                 {rightSection}
-              </div>
+              </m.div>
             )}
           </Flex>
         </Popover.Target>
