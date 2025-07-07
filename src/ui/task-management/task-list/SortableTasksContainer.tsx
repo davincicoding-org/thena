@@ -18,12 +18,14 @@ import type { TaskSelect } from "@/core/task-management";
 
 export interface SortableTasksContainerProps {
   tasks: Pick<TaskSelect, "id" | "sortOrder">[];
+  onReorder: (tasks: Pick<TaskSelect, "id">[]) => void;
   onChangeOrder: (params: Pick<TaskSelect, "id" | "customSortOrder">) => void;
 }
 
 export function SortableTasksContainer({
   tasks,
   children,
+  onReorder,
   onChangeOrder,
 }: PropsWithChildren<SortableTasksContainerProps>) {
   const sensors = useSensors(
@@ -46,6 +48,8 @@ export function SortableTasksContainer({
         const overIndex = tasks.findIndex(({ id }) => id === over.id);
 
         const reorderedItems = arrayMove(tasks, activeIndex, overIndex);
+
+        onReorder(reorderedItems);
 
         const prevItem = reorderedItems[overIndex - 1];
         const nextItem = reorderedItems[overIndex + 1];
