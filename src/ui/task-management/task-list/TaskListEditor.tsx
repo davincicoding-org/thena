@@ -293,9 +293,9 @@ function TaskTreeItem({
       onCloseSubtaskAdder={subtaskAdder.close}
       onAddSubtasks={(titles) =>
         onCreateTasks(
-          titles.map((title, index) => ({
+          titles.map((title) => ({
             title,
-            customSortOrder: task.subtasks.length + index,
+            customSortOrder: null,
             parentId: task.id,
             projectId: null,
             priority: null,
