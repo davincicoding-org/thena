@@ -26,10 +26,7 @@ import { projectFormOpts, useProjectForm } from "../project/useProjectForm";
 export interface ProjectPickerProps {
   projects: Pick<ProjectSelect, "id" | "title" | "image">[];
   onChange: (value: NonNullable<TaskFormValues["projectId"]>) => void;
-  onCreate?: (
-    input: ProjectInput,
-    callback: (project: ProjectSelect | undefined) => void,
-  ) => void;
+  onCreate?: (input: ProjectInput) => void;
   onClose: () => void;
 }
 
@@ -46,11 +43,8 @@ export function ProjectPicker({
     ...projectFormOpts,
     onSubmit: ({ value }) => {
       createPanel.close();
-      onCreate?.(value, (project) => {
-        if (!project) return;
-        form.reset();
-        onChange(project.id);
-      });
+      onCreate?.(value);
+      form.reset();
     },
   });
 

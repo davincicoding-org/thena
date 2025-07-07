@@ -1,7 +1,7 @@
 "use client";
 
 import type { BoxProps, ButtonProps, MantineColor } from "@mantine/core";
-import type { UseMutateFunction } from "@tanstack/react-query";
+import type { UseMutateAsyncFunction } from "@tanstack/react-query";
 import type { ReactElement, ReactNode, Ref } from "react";
 import type { Simplify } from "type-fest";
 import { cloneElement, isValidElement, useState } from "react";
@@ -50,7 +50,7 @@ export type TaskFormProps = {
     | null
   )[];
   projects: ProjectSelect[];
-  onCreateProject?: UseMutateFunction<
+  onCreateProject?: UseMutateAsyncFunction<
     ProjectSelect | undefined,
     Error,
     ProjectInput
@@ -352,11 +352,11 @@ export const TaskForm = withTaskForm({
                       projectField.handleChange(projectId);
                       actionsPanel.close();
                     }}
-                    onCreate={(project, callback) => {
-                      onCreateProject?.(project, {
-                        onSuccess: callback,
-                      });
+                    onCreate={async (project) => {
                       actionsPanel.close();
+                      const createdProject = await onCreateProject?.(project);
+                      if (createdProject)
+                        projectField.handleChange(createdProject.id);
                     }}
                   />
                 )}
