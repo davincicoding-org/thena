@@ -17,7 +17,7 @@ import {
 import type { TaskSelect } from "@/core/task-management";
 
 export interface SortableTasksContainerProps {
-  tasks: Pick<TaskSelect, "id" | "sortOrder">[];
+  tasks: Pick<TaskSelect, "id" | "customSortOrder">[];
   onReorder: (tasks: Pick<TaskSelect, "id">[]) => void;
   onChangeOrder: (params: Pick<TaskSelect, "id" | "customSortOrder">) => void;
 }
@@ -44,41 +44,75 @@ export function SortableTasksContainer({
         if (active.id === over.id) return;
 
         const activeIndex = tasks.findIndex(({ id }) => id === active.id);
-        const activeItemId = Number(active.id);
         const overIndex = tasks.findIndex(({ id }) => id === over.id);
 
         const reorderedItems = arrayMove(tasks, activeIndex, overIndex);
 
         onReorder(reorderedItems);
 
-        const prevItem = reorderedItems[overIndex - 1];
-        const nextItem = reorderedItems[overIndex + 1];
+        // Calculate which items need customSortOrder updates
+        const updates: Pick<TaskSelect, "id" | "customSortOrder">[] = [];
 
-        const order = (() => {
-          if (prevItem && nextItem) {
-            const average = (prevItem.sortOrder + nextItem.sortOrder) / 2;
-            if (average === activeItemId) return null;
-            return average;
+        // Start by assuming all items will use their natural sortOrder (their ID)
+        const effectiveSortOrders = new Map<number, number>();
+        reorderedItems.forEach((item) => {
+          effectiveSortOrders.set(item.id, item.id);
+        });
+
+        // Check if any items conflict with this natural ordering and need customSortOrder
+        for (let i = 0; i < reorderedItems.length; i++) {
+          const currentItem = reorderedItems[i]!;
+          const prevItem = reorderedItems[i - 1];
+          const nextItem = reorderedItems[i + 1];
+
+          const naturalSortOrder = currentItem.id;
+          const prevEffectiveSortOrder = prevItem
+            ? effectiveSortOrders.get(prevItem.id)!
+            : null;
+          const nextEffectiveSortOrder = nextItem
+            ? effectiveSortOrders.get(nextItem.id)!
+            : null;
+
+          const canUseNaturalPosition =
+            (!prevItem || prevEffectiveSortOrder! < naturalSortOrder) &&
+            (!nextItem || naturalSortOrder < nextEffectiveSortOrder!);
+
+          if (!canUseNaturalPosition) {
+            // This item needs a customSortOrder to maintain its position
+            let newCustomSortOrder: number;
+
+            if (prevItem && nextItem) {
+              newCustomSortOrder =
+                (prevEffectiveSortOrder! + nextEffectiveSortOrder!) / 2;
+            } else if (nextItem) {
+              newCustomSortOrder = nextEffectiveSortOrder! - 0.5;
+            } else if (prevItem) {
+              newCustomSortOrder = prevEffectiveSortOrder! + 0.5;
+            } else {
+              newCustomSortOrder = currentItem.id;
+            }
+
+            // Update the effective sortOrder for this item
+            effectiveSortOrders.set(currentItem.id, newCustomSortOrder);
+
+            if (currentItem.customSortOrder !== newCustomSortOrder) {
+              updates.push({
+                id: currentItem.id,
+                customSortOrder: newCustomSortOrder,
+              });
+            }
+          } else {
+            // Item can use natural position, remove customSortOrder if it has one
+            if (currentItem.customSortOrder !== null) {
+              updates.push({ id: currentItem.id, customSortOrder: null });
+            }
           }
+        }
 
-          // Is moved to start of list
-          if (nextItem) {
-            if (activeItemId < nextItem.id) return null;
-            return nextItem.sortOrder - 1;
-          }
-
-          // Is moved to end of list
-          if (prevItem) {
-            if (activeItemId > prevItem.id) return null;
-            return prevItem.sortOrder + 0.5;
-          }
-
-          return;
-        })();
-
-        if (order === undefined) return;
-
-        onChangeOrder({ id: activeItemId, customSortOrder: order });
+        // Apply all updates
+        updates.forEach((update) => {
+          onChangeOrder(update);
+        });
       }}
     >
       <SortableContext items={tasks} strategy={verticalListSortingStrategy}>
