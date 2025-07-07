@@ -33,9 +33,9 @@ import type {
   TaskUpdate,
 } from "@/core/task-management";
 import type { TaskFormProps } from "@/ui/task-management";
-import { isTaskTree, taskFormSchema } from "@/core/task-management";
+import { taskFormSchema } from "@/core/task-management";
 import { TaskForm, TaskWrapper, useTaskForm } from "@/ui/task-management";
-import { cn } from "@/ui/utils";
+import { cn, useSyncedState } from "@/ui/utils";
 
 import { BulkCreator } from "./BulkCreator";
 import { SortableTasksContainer } from "./SortableTasksContainer";
@@ -69,6 +69,7 @@ export function TaskListEditor({
   className,
 }: TaskListEditorProps) {
   const t = useTranslations("SessionPlanner");
+  const [reorderedTasks, setReorderedTasks] = useSyncedState(tasks);
 
   const [
     isBulkCreatorOpen,
@@ -88,13 +89,18 @@ export function TaskListEditor({
     <>
       <Box className={cn("mx-auto max-h-full shrink-0 grow-0", className)}>
         <SortableTasksContainer
-          tasks={tasks}
+          tasks={reorderedTasks}
+          onReorder={(updatedOrder) => {
+            setReorderedTasks(
+              updatedOrder.map((task) => tasks.find((t) => t.id === task.id)!),
+            );
+          }}
           onChangeOrder={(params) =>
             onUpdateTask({ parentId: null, ...params })
           }
         >
           <AnimatePresence>
-            {tasks.length === 0 && (
+            {reorderedTasks.length === 0 && (
               <Alert
                 radius="sm"
                 className="w-xs"
@@ -109,7 +115,7 @@ export function TaskListEditor({
               </Alert>
             )}
 
-            {tasks.map((task, index) => (
+            {reorderedTasks.map((task, index) => (
               <Fragment key={task.id}>
                 {index !== 0 && (
                   <TaskAdder
@@ -167,6 +173,10 @@ function TaskTreeItem({
   onCreateProject,
 }: TaskItemProps) {
   const [isAddingSubtask, subtaskAdder] = useDisclosure();
+
+  const [reorderedSubtasks, setReorderedSubtasks] = useSyncedState(
+    task.subtasks,
+  );
 
   const t = useTranslations("SessionPlanner");
   const { attributes, listeners, setNodeRef, active, transform, transition } =
@@ -249,14 +259,21 @@ function TaskTreeItem({
         />
       }
       subtasks={
-        isTaskTree(task) ? (
+        reorderedSubtasks.length > 0 ? (
           <SortableTasksContainer
             tasks={task.subtasks}
+            onReorder={(updatedOrder) => {
+              setReorderedSubtasks(
+                updatedOrder.map(
+                  (subtask) => task.subtasks.find((t) => t.id === subtask.id)!,
+                ),
+              );
+            }}
             onChangeOrder={(params) =>
               onUpdateTask({ parentId: task.id, ...params })
             }
           >
-            {task.subtasks.map((subtask) => (
+            {reorderedSubtasks.map((subtask) => (
               <SubtaskItem
                 key={subtask.id}
                 task={{
