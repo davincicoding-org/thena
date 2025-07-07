@@ -104,7 +104,7 @@ export const TaskWrapper = createPolymorphicComponent<
                         block: "center",
                       })
                     }
-                    // onBlur={subtaskAdder.close}
+                    onBlur={onCloseSubtaskAdder}
                     onKeyDown={(e) => {
                       if (e.key === "Escape") {
                         e.currentTarget.blur();
