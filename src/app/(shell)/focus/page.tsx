@@ -93,7 +93,7 @@ export default function FocusPage() {
         onCreateTasks={createTasks}
         onBulkCreateTasks={(tasks) => todos.bulkCreateTasks.mutateAsync(tasks)}
         projects={projects.items}
-        onCreateProject={(input) => projects.create.mutate(input)}
+        onCreateProject={(input) => projects.create.mutateAsync(input)}
       />
     </Main>
   );

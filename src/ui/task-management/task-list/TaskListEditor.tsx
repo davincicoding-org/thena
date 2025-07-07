@@ -1,7 +1,4 @@
-import type {
-  UseMutateAsyncFunction,
-  UseMutateFunction,
-} from "@tanstack/react-query";
+import type { UseMutateAsyncFunction } from "@tanstack/react-query";
 import type { CSSProperties } from "react";
 import type { SetRequired } from "type-fest";
 import { Fragment, useState } from "react";
@@ -49,7 +46,7 @@ export interface TaskListEditorProps {
   onBulkCreateTasks: UseMutateAsyncFunction<TaskTree[], Error, BulkTasks>;
   onRefineTask?: (task: TaskSelect) => void;
   projects: ProjectSelect[];
-  onCreateProject: UseMutateFunction<
+  onCreateProject: UseMutateAsyncFunction<
     ProjectSelect | undefined,
     Error,
     ProjectInput

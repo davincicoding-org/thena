@@ -1,7 +1,4 @@
-import type {
-  UseMutateAsyncFunction,
-  UseMutateFunction,
-} from "@tanstack/react-query";
+import type { UseMutateAsyncFunction } from "@tanstack/react-query";
 import type { SetRequired } from "type-fest";
 import { Fragment, useEffect, useRef } from "react";
 import {
@@ -66,7 +63,7 @@ export interface FocusSessionProps {
     { title: string; subtasks: string[] }[]
   >;
   projects: ProjectSelect[];
-  onCreateProject: UseMutateFunction<
+  onCreateProject: UseMutateAsyncFunction<
     ProjectSelect | undefined,
     Error,
     ProjectInput
