@@ -10,7 +10,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useDisclosure, useInputState } from "@mantine/hooks";
-import { IconChevronLeft, IconX } from "@tabler/icons-react";
+import { IconChevronLeft, IconPlus, IconX } from "@tabler/icons-react";
 
 import type {
   ProjectInput,
@@ -55,18 +55,17 @@ export function ProjectPicker({
   });
 
   return (
-    <Box className="w-48">
+    <Box className="w-48 overflow-clip rounded-[0.175rem]">
       <Collapse in={!isCreating}>
-        <Divider />
         <ScrollArea
           scrollbars="y"
-          className="h-32"
+          className="h-40"
           classNames={{
             scrollbar: cn("pt-10!"),
           }}
         >
           <Box className="sticky top-0 z-10 backdrop-blur-xs">
-            <Flex align="center">
+            <Flex align="center" className="gap-1.5 pr-1.5">
               <ActionIcon
                 radius={0}
                 variant="subtle"
@@ -78,7 +77,6 @@ export function ProjectPicker({
               </ActionIcon>
               <TextInput
                 placeholder="Search Project"
-                className="m-1"
                 autoFocus
                 value={search}
                 size="xs"
@@ -112,32 +110,32 @@ export function ProjectPicker({
               leftSection={
                 <ProjectAvatar
                   project={project}
-                  size="xs"
+                  size="sm"
                   tooltipProps={{ disabled: true }}
                 />
               }
             />
           ))}
         </ScrollArea>
-        <Divider />
-
-        <Button
-          variant="light"
-          size="xs"
-          radius={0}
-          fullWidth
-          onClick={createPanel.open}
-        >
-          Create New Project
-        </Button>
+        <div className="p-1">
+          <Button
+            variant="light"
+            fullWidth
+            size="xs"
+            leftSection={<IconPlus size={16} />}
+            onClick={createPanel.open}
+          >
+            Create Project
+          </Button>
+        </div>
       </Collapse>
-      <Divider />
       <Collapse in={isCreating}>
         <Flex gap={4} align="center" pr="md">
           <ActionIcon
             radius={0}
             variant="subtle"
             color="gray"
+            h={38}
             onClick={createPanel.close}
           >
             <IconChevronLeft size={16} />
@@ -156,8 +154,7 @@ export function ProjectPicker({
             p="xs"
             gap="xs"
             withImage={false}
-            NameFieldProps={{ size: "xs" }}
-            DescriptionFieldProps={{ size: "xs", rows: 2 }}
+            DescriptionFieldProps={{ rows: 2 }}
           />
           <Divider />
           <form.Subscribe
@@ -165,7 +162,6 @@ export function ProjectPicker({
             children={(isValid) => (
               <Button
                 radius={0}
-                size="xs"
                 className="transition-colors"
                 fullWidth
                 type="submit"

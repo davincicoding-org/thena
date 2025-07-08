@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
   Button,
@@ -7,13 +8,17 @@ import {
   Center,
   Divider,
   Flex,
+  FocusTrap,
   Modal,
   Space,
   Stack,
   Text,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 
+import type { ProjectSelect } from "@/core/task-management";
 import { Main } from "@/app/(shell)/shell";
 import { countTasks } from "@/core/task-management";
 import { api } from "@/trpc/react";
@@ -21,6 +26,7 @@ import { IntelligenceTile } from "@/ui/intelligence";
 import {
   ProjectForm,
   projectFormOpts,
+  ProjectOverview,
   ProjectsTile,
   useProjectForm,
   useProjects,
@@ -38,6 +44,9 @@ export default function HomePage() {
   // Projects
   const projects = useProjects();
   const [isAddingProject, projectFormModal] = useDisclosure();
+  const [openedProject, setOpenedProject] = useState<ProjectSelect | null>(
+    null,
+  );
 
   const projectForm = useProjectForm({
     ...projectFormOpts,
@@ -86,10 +95,13 @@ export default function HomePage() {
               loading={projects.isLoading}
               items={projects.items}
               onCreate={projectFormModal.open}
+              onSelect={setOpenedProject}
             />
           </Flex>
         </Stack>
       </Center>
+
+      {/* Project Form */}
       <Modal
         opened={isAddingProject}
         centered
@@ -128,6 +140,42 @@ export default function HomePage() {
             )}
           />
         </form>
+      </Modal>
+
+      {/* Project Overview */}
+      <Modal
+        opened={openedProject !== null}
+        centered
+        radius="md"
+        classNames={{
+          body: "p-0!",
+        }}
+        transitionProps={{ transition: "pop", duration: 300 }}
+        overlayProps={{
+          className: "backdrop-blur-xs",
+        }}
+        withCloseButton={false}
+        onClose={() => setOpenedProject(null)}
+      >
+        <FocusTrap.InitialFocus />
+        <AnimatePresence>
+          {openedProject && (
+            <m.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ProjectOverview
+                project={openedProject}
+                onDeleteProject={() => {
+                  projects.delete.mutate(openedProject);
+                  setOpenedProject(null);
+                }}
+              />
+            </m.div>
+          )}
+        </AnimatePresence>
       </Modal>
     </Main>
   );

@@ -18,12 +18,14 @@ export interface ProjectsTileProps {
   loading?: boolean;
   items: ProjectSelect[];
   onCreate: () => void;
+  onSelect: (project: ProjectSelect) => void;
 }
 
 export function ProjectsTile({
   loading,
   items,
   onCreate,
+  onSelect,
   ...props
 }: ProjectsTileProps & CardProps) {
   return (
@@ -40,9 +42,8 @@ export function ProjectsTile({
                   project={project}
                   size="md"
                   radius="md"
-                  // component={Link}
-                  // href={`/projects/${project.id}`}
-                  // aria-label={`Open "${project.title}" project`}
+                  className="cursor-pointer"
+                  onClick={() => onSelect(project)}
                 />
               ))
             ) : (

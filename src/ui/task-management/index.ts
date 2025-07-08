@@ -10,6 +10,7 @@ export * from "./project/ProjectsTile";
 export * from "./project/ProjectForm";
 export * from "./project/useProjectForm";
 export * from "./project/useProjects";
+export * from "./project/ProjectOverview";
 
 export * from "./metadata/PriorityIcon";
 
