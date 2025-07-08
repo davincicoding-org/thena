@@ -1,7 +1,6 @@
 "use client";
 
 import type { BoxProps, ButtonProps, MantineColor } from "@mantine/core";
-import type { UseMutateAsyncFunction } from "@tanstack/react-query";
 import type { ReactElement, ReactNode, Ref } from "react";
 import type { Simplify } from "type-fest";
 import { cloneElement, isValidElement, useState } from "react";
@@ -20,7 +19,7 @@ import { IconCube, IconCubeOff, IconPencil } from "@tabler/icons-react";
 import * as m from "motion/react-m";
 import { useTranslations } from "next-intl";
 
-import type { ProjectInput, ProjectSelect } from "@/core/task-management";
+import type { ProjectSelect } from "@/core/task-management";
 import { cn } from "@/ui/utils";
 
 import { PriorityIcon } from "../metadata/PriorityIcon";

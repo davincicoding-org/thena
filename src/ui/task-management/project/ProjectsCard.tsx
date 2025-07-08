@@ -2,6 +2,7 @@ import type { CardProps } from "@mantine/core";
 import { useRef } from "react";
 import {
   ActionIcon,
+  Badge,
   Card,
   Flex,
   ScrollArea,
@@ -12,44 +13,65 @@ import { IconPlus } from "@tabler/icons-react";
 
 import type { ProjectSelect } from "@/core/task-management";
 import { ProjectAvatar } from "@/ui/task-management";
+import { cn } from "@/ui/utils";
 
-const PROJECT_SKELETONS = Array.from({ length: 3 }, (_, index) => (
-  <div key={index} className="shrink-0">
-    <Skeleton key={index} height={96} width={96} radius="md" />
+const LoadingSkeleton = () => (
+  <div className="shrink-0">
+    <Skeleton height={96} width={96} radius="md" />
     <Skeleton height={16} width={80} radius="md" mx="auto" mt={8} />
   </div>
+);
+
+const PROJECT_SKELETONS = Array.from({ length: 3 }, (_, index) => (
+  <LoadingSkeleton key={index} />
 ));
 
-export interface ProjectsTileProps {
-  loading?: boolean;
+export interface ProjectsCardProps {
+  loading: boolean;
   items: ProjectSelect[];
-  onCreate: (callback: (projectId: ProjectSelect["id"]) => void) => void;
-  onView: (project: ProjectSelect) => void;
+  onCreateProject: (callback: (projectId: ProjectSelect["id"]) => void) => void;
+  onViewProject: (project: ProjectSelect) => void;
 }
 
-export function ProjectsTile({
+export function ProjectsCard({
   loading,
   items,
-  onCreate,
-  onView,
+  onCreateProject,
+  onViewProject,
+  className,
   ...props
-}: ProjectsTileProps & CardProps) {
+}: ProjectsCardProps & CardProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
 
+  // const todosLabel = derive(() => {
+  //   if (todos === 0) return "-";
+  //   if (todos <= 100) return todos.toString();
+  //   return "100+";
+  // });
+
   return (
-    <Card radius="md" shadow="sm" {...props}>
+    <Card radius="md" className={cn("!overflow-visible", className)} {...props}>
+      <Badge
+        color="gray"
+        size="lg"
+        radius="md"
+        pos="absolute"
+        className="top-0 left-2 -translate-y-2/5"
+      >
+        Projects
+      </Badge>
       <Card.Section>
         <ScrollArea
           scrollbars="x"
           scrollHideDelay={300}
           viewportRef={viewportRef}
         >
-          <Flex gap="lg" pb="sm" pt="lg">
+          <Flex gap="lg" pt="xs" pb="md" align="start">
             <div className="h-1 w-0.5 shrink-0" />
 
             {loading ? (
               PROJECT_SKELETONS
-            ) : items.length ? (
+            ) : (
               <>
                 {items.map((project) => (
                   <div key={project.id}>
@@ -59,10 +81,13 @@ export function ProjectsTile({
                       radius="md"
                       tooltipProps={{ disabled: true }}
                       className="cursor-pointer transition-transform hover:scale-105"
-                      onClick={() => onView(project)}
+                      onClick={() => onViewProject(project)}
                     />
 
-                    <Text className="text-center !leading-none" mt={8}>
+                    <Text
+                      className="max-w-24 truncate text-center !leading-none"
+                      mt={8}
+                    >
                       {project.title}
                     </Text>
                   </div>
@@ -72,7 +97,7 @@ export function ProjectsTile({
                   radius="md"
                   size={96}
                   onClick={() =>
-                    onCreate(() => {
+                    onCreateProject(() => {
                       if (!viewportRef.current) return;
                       viewportRef.current.scrollTo({
                         left: 0,
@@ -84,9 +109,8 @@ export function ProjectsTile({
                   <IconPlus size={48} stroke={1} />
                 </ActionIcon>
               </>
-            ) : (
-              <Text className="text-2xl!">No projects</Text>
             )}
+
             <div className="h-1 w-0.5 shrink-0" />
           </Flex>
         </ScrollArea>

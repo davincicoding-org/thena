@@ -2,16 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 import {
-  Button,
   Card,
   Center,
   Flex,
   FocusTrap,
+  Loader,
   Modal,
-  Space,
   Stack,
-  Text,
 } from "@mantine/core";
 import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
@@ -24,71 +23,112 @@ import { IntelligenceTile } from "@/ui/intelligence";
 import {
   ProjectCreator,
   ProjectOverview,
-  ProjectsTile,
+  ProjectsCard,
   useProjectCreator,
   useProjects,
 } from "@/ui/task-management";
+import { cn, derive } from "@/ui/utils";
+
+const MotionLoader = m.create(Loader);
 
 export default function HomePage() {
-  const intelligenceSummary = api.intelligence.summary.useQuery();
+  const { user } = useUser();
 
-  // Tasks
+  // TODOS
 
-  const { data: tasks = [] } = api.tasks.list.useQuery({ status: "todo" });
-
+  const { data: tasks = [], isLoading: loadingTodos } = api.tasks.list.useQuery(
+    { status: "todo" },
+  );
   const taskCount = countTasks(tasks);
 
+  const todosLabel = derive(() => {
+    if (taskCount === 0) return "-";
+    if (taskCount <= 100) return taskCount.toString();
+    return "100+";
+  });
+
   // Projects
+
   const projects = useProjects();
   const [openedProject, setOpenedProject] = useState<ProjectSelect | null>(
     null,
   );
-
   const projectCreator = useProjectCreator((input) =>
     projects.create.mutateAsync(input),
   );
 
+  // Intelligence
+
+  const intelligenceSummary = api.intelligence.summary.useQuery();
+
   return (
     <Main display="grid">
       <Center>
-        <Stack gap="lg" className="w-md" p="lg">
+        <Stack gap="xl" className="w-full max-w-2xl" p="lg">
+          <p
+            className={cn(
+              "my-0 text-5xl leading-none font-light transition-opacity",
+              {
+                "opacity-0": !user?.fullName,
+              },
+            )}
+          >
+            Hello, {user?.firstName}
+          </p>
+
+          <Flex gap="lg" align="center">
+            <Card
+              component={Link}
+              href="/tasks"
+              withBorder
+              className={cn(
+                "h-40 w-40 shrink-0 cursor-pointer transition-transform hover:scale-105",
+                {
+                  "pointer-events-none": loadingTodos,
+                },
+              )}
+              radius="md"
+            >
+              <AnimatePresence>
+                {loadingTodos ? (
+                  <MotionLoader
+                    size="xl"
+                    m="auto"
+                    color="gray"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  />
+                ) : (
+                  <m.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className="m-auto text-5xl font-bold"
+                  >
+                    {todosLabel}
+                  </m.span>
+                )}
+              </AnimatePresence>
+
+              <span className="text-center text-2xl leading-none font-light">
+                TODOS
+              </span>
+            </Card>
+
+            <ProjectsCard
+              loading={projects.isLoading}
+              items={projects.items}
+              className="min-w-0 grow-0"
+              onCreateProject={projectCreator.open}
+              onViewProject={setOpenedProject}
+            />
+          </Flex>
+
           <IntelligenceTile
             loading={intelligenceSummary.isLoading}
             summary={intelligenceSummary.data}
           />
-          {/* <Button
-            size="xl"
-            radius="md"
-            fullWidth
-            component={Link}
-            href="/focus"
-          >
-            Start Focus Session
-          </Button>
-
-          <Divider /> */}
-
-          <Flex gap="md">
-            <Card radius="md" shadow="sm">
-              <Text className="text-2xl!" my="auto">
-                {taskCount === 0 && "No Tasks"}
-                {taskCount === 1 && "1 Task"}
-                {taskCount > 1 &&
-                  `${taskCount > 100 ? "100+" : taskCount} Tasks`}
-              </Text>
-              <Space h="xs" />
-              <Button variant="light" fullWidth component={Link} href="/tasks">
-                View
-              </Button>
-            </Card>
-            <ProjectsTile
-              flex={1}
-              loading={projects.isLoading}
-              items={projects.items}
-              onCreate={projectCreator.open}
-              onView={setOpenedProject}
-            />
-          </Flex>
         </Stack>
       </Center>
 
