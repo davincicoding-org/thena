@@ -1,6 +1,6 @@
 import path from "path";
 import { put } from "@vercel/blob";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import {
   projectInputSchema,
@@ -52,6 +52,8 @@ export const projectsRouter = createTRPCRouter({
         })
         .returning();
 
+      if (!result) throw new Error("Failed to create project");
+
       return result;
     }),
 
@@ -81,6 +83,7 @@ export const projectsRouter = createTRPCRouter({
   list: protectedProcedure.query(async ({ ctx: { db, auth } }) => {
     const result = await db.query.projects.findMany({
       where: eq(projects.userId, auth.userId),
+      orderBy: desc(projects.updatedAt),
     });
     return result;
   }),

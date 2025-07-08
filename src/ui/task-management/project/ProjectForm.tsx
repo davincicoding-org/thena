@@ -5,22 +5,30 @@ import type {
   TextInputProps,
 } from "@mantine/core";
 import {
+  ActionIcon,
   Avatar,
+  Box,
   Button,
+  Divider,
   FileButton,
   Flex,
   Popover,
+  SimpleGrid,
   Stack,
   Textarea,
   TextInput,
 } from "@mantine/core";
 import { useClickOutside, useDisclosure } from "@mantine/hooks";
-import { IconUpload } from "@tabler/icons-react";
+import { IconCube, IconPhoto } from "@tabler/icons-react";
+
+import { colorsEnum } from "@/core/task-management";
+import { cn } from "@/ui/utils";
 
 import { projectFormOpts, withProjectForm } from "./useProjectForm";
 
 export type ProjectFormProps = {
   withImage?: boolean;
+  disabled?: boolean;
   NameFieldProps?: TextInputProps;
   DescriptionFieldProps?: TextareaProps;
   ImageFieldProps?: AvatarProps;
@@ -32,6 +40,7 @@ export const ProjectForm = withProjectForm({
   props: {} as ProjectFormProps,
   render: ({
     form,
+    disabled,
     NameFieldProps,
     DescriptionFieldProps,
     ImageFieldProps,
@@ -39,26 +48,27 @@ export const ProjectForm = withProjectForm({
     gap = "md" as FlexProps["gap"],
     ...flexProps
   }) => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
+    /* eslint-disable react-hooks/rules-of-hooks */
     const [isAvatarPanelOpen, avatarPanel] = useDisclosure(false);
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const avatarPanelRef = useClickOutside(() => avatarPanel.close());
+    /* eslint-enable react-hooks/rules-of-hooks */
 
     return (
-      <Flex gap={gap} p="lg" {...flexProps}>
+      <Flex gap={gap} {...flexProps}>
         {withImage && (
           <Popover
             opened={isAvatarPanelOpen}
             position="bottom-start"
             onClose={avatarPanel.close}
+            disabled={disabled}
           >
             <form.Subscribe
               selector={(state) => state.values}
-              children={({ title, image }) => (
+              children={({ title, image, color }) => (
                 <Popover.Target>
                   <Avatar
                     className="cursor-pointer"
-                    size={130}
+                    size={136}
                     src={(() => {
                       if (image === null) return null;
                       if (typeof image === "object") {
@@ -67,11 +77,13 @@ export const ProjectForm = withProjectForm({
                       return image;
                     })()}
                     radius="md"
-                    // color={color}
-                    name={title || "P"}
+                    color={color ?? "gray"}
+                    name={title}
                     onClick={avatarPanel.toggle}
                     {...ImageFieldProps}
-                  />
+                  >
+                    {title ? null : <IconCube size={64} />}
+                  </Avatar>
                 </Popover.Target>
               )}
             />
@@ -107,7 +119,7 @@ export const ProjectForm = withProjectForm({
                             {...props}
                             fullWidth
                             size="md"
-                            leftSection={<IconUpload size={20} />}
+                            leftSection={<IconPhoto size={20} />}
                             variant="subtle"
                             color="gray"
                           >
@@ -136,8 +148,8 @@ export const ProjectForm = withProjectForm({
                 }}
               />
 
-              {/* <Divider /> */}
-              {/* <form.Field
+              <Divider />
+              <form.Field
                 name="color"
                 children={(field) => (
                   <SimpleGrid cols={4} p="xs" className="gap-1!">
@@ -160,7 +172,7 @@ export const ProjectForm = withProjectForm({
                     ))}
                   </SimpleGrid>
                 )}
-              /> */}
+              />
             </Popover.Dropdown>
           </Popover>
         )}
@@ -172,6 +184,8 @@ export const ProjectForm = withProjectForm({
               <TextInput
                 placeholder="Project title"
                 value={field.state.value}
+                size="md"
+                disabled={disabled}
                 onChange={(e) => field.handleChange(e.target.value)}
                 {...NameFieldProps}
               />
@@ -185,6 +199,7 @@ export const ProjectForm = withProjectForm({
                 placeholder="Description (optional)"
                 rows={3}
                 value={field.state.value ?? ""}
+                disabled={disabled}
                 onChange={(e) => field.handleChange(e.target.value)}
                 {...DescriptionFieldProps}
               />

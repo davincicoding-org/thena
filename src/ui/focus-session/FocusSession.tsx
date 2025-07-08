@@ -12,7 +12,6 @@ import {
 import { IconCircleCheck } from "@tabler/icons-react";
 
 import type {
-  ProjectInput,
   ProjectSelect,
   TaskFormValues,
   TaskId,
@@ -63,11 +62,7 @@ export interface FocusSessionProps {
     { title: string; subtasks: string[] }[]
   >;
   projects: ProjectSelect[];
-  onCreateProject: UseMutateAsyncFunction<
-    ProjectSelect | undefined,
-    Error,
-    ProjectInput
-  >;
+  onCreateProject: (callback: (projectId: ProjectSelect["id"]) => void) => void;
 
   className?: string;
 }

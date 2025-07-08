@@ -3,7 +3,13 @@
 import { LoadingOverlay, Transition } from "@mantine/core";
 
 import { Main } from "@/app/(shell)/shell";
-import { TaskListEditor, useProjects, useTodos } from "@/ui/task-management";
+import {
+  ProjectCreator,
+  TaskListEditor,
+  useProjectCreator,
+  useProjects,
+  useTodos,
+} from "@/ui/task-management";
 import { useTodosWithTimeTravel } from "@/ui/task-management/useTodosWithTimeTravel";
 import { cn } from "@/ui/utils";
 
@@ -14,6 +20,9 @@ export default function SessionPage() {
     useTodosWithTimeTravel(todos);
 
   const projects = useProjects();
+  const projectCreator = useProjectCreator((input) =>
+    projects.create.mutateAsync(input),
+  );
 
   return (
     <Main display="flex" className="flex-col">
@@ -40,7 +49,12 @@ export default function SessionPage() {
         onCreateTasks={createTasks}
         onBulkCreateTasks={(tasks) => todos.bulkCreateTasks.mutateAsync(tasks)}
         projects={projects.items}
-        onCreateProject={(input) => projects.create.mutateAsync(input)}
+        onCreateProject={projectCreator.open}
+      />
+      <ProjectCreator
+        opened={projectCreator.opened}
+        onClose={projectCreator.close}
+        onCreate={projectCreator.create}
       />
     </Main>
   );

@@ -2,31 +2,24 @@ import {
   ActionIcon,
   Box,
   Button,
-  Collapse,
   Divider,
   Flex,
   NavLink,
   ScrollArea,
   TextInput,
 } from "@mantine/core";
-import { useDisclosure, useInputState } from "@mantine/hooks";
+import { useInputState } from "@mantine/hooks";
 import { IconChevronLeft, IconPlus, IconX } from "@tabler/icons-react";
 
-import type {
-  ProjectInput,
-  ProjectSelect,
-  TaskFormValues,
-} from "@/core/task-management";
+import type { ProjectSelect, TaskFormValues } from "@/core/task-management";
 import { cn } from "@/ui/utils";
 
 import { ProjectAvatar } from "../project/ProjectAvatar";
-import { ProjectForm } from "../project/ProjectForm";
-import { projectFormOpts, useProjectForm } from "../project/useProjectForm";
 
 export interface ProjectPickerProps {
   projects: Pick<ProjectSelect, "id" | "title" | "image">[];
   onChange: (value: NonNullable<TaskFormValues["projectId"]>) => void;
-  onCreate?: (input: ProjectInput) => void;
+  onCreate?: () => void;
   onClose: () => void;
 }
 
@@ -36,17 +29,7 @@ export function ProjectPicker({
   onCreate,
   onClose,
 }: ProjectPickerProps) {
-  const [isCreating, createPanel] = useDisclosure(false);
   const [search, setSearch] = useInputState("");
-
-  const form = useProjectForm({
-    ...projectFormOpts,
-    onSubmit: ({ value }) => {
-      createPanel.close();
-      onCreate?.(value);
-      form.reset();
-    },
-  });
 
   const trimmedSearch = search.trim();
   const filteredOptions = projects.filter((project) => {
@@ -56,123 +39,77 @@ export function ProjectPicker({
 
   return (
     <Box className="w-48 overflow-clip rounded-[0.175rem]">
-      <Collapse in={!isCreating}>
-        <ScrollArea
-          scrollbars="y"
-          className="h-40"
-          classNames={{
-            scrollbar: cn("pt-10!"),
-          }}
-        >
-          <Box className="sticky top-0 z-10 backdrop-blur-xs">
-            <Flex align="center" className="gap-1.5 pr-1.5">
-              <ActionIcon
-                radius={0}
-                variant="subtle"
-                color="gray"
-                h={38}
-                onClick={onClose}
-              >
-                <IconChevronLeft size={16} />
-              </ActionIcon>
-              <TextInput
-                placeholder="Search Project"
-                autoFocus
-                value={search}
-                size="xs"
-                onChange={setSearch}
-                rightSection={
-                  <ActionIcon
-                    className={cn("transition-opacity", {
-                      "opacity-0": !trimmedSearch,
-                    })}
-                    variant="subtle"
-                    color="gray"
-                    size="xs"
-                    onClick={() => setSearch("")}
-                  >
-                    <IconX size={12} />
-                  </ActionIcon>
-                }
-              />
-            </Flex>
-            <Divider />
-          </Box>
-
-          {filteredOptions.map((project) => (
-            <NavLink
-              key={project.id}
-              component="button"
-              className="py-1!"
+      <ScrollArea
+        scrollbars="y"
+        className="h-40"
+        classNames={{
+          scrollbar: cn("pt-10!"),
+        }}
+      >
+        <Box className="sticky top-0 z-10 backdrop-blur-xs">
+          <Flex align="center" className="gap-1.5 pr-1.5">
+            <ActionIcon
+              radius={0}
+              variant="subtle"
               color="gray"
-              onClick={() => onChange(project.id)}
-              label={project.title}
-              leftSection={
-                <ProjectAvatar
-                  project={project}
-                  size="sm"
-                  tooltipProps={{ disabled: true }}
-                />
+              h={38}
+              onClick={onClose}
+            >
+              <IconChevronLeft size={16} />
+            </ActionIcon>
+            <TextInput
+              placeholder="Search Project"
+              autoFocus
+              value={search}
+              size="xs"
+              onChange={setSearch}
+              rightSection={
+                <ActionIcon
+                  className={cn("transition-opacity", {
+                    "opacity-0": !trimmedSearch,
+                  })}
+                  variant="subtle"
+                  color="gray"
+                  size="xs"
+                  onClick={() => setSearch("")}
+                >
+                  <IconX size={12} />
+                </ActionIcon>
               }
             />
-          ))}
-        </ScrollArea>
-        <div className="p-1">
-          <Button
-            variant="light"
-            fullWidth
-            size="xs"
-            leftSection={<IconPlus size={16} />}
-            onClick={createPanel.open}
-          >
-            Create Project
-          </Button>
-        </div>
-      </Collapse>
-      <Collapse in={isCreating}>
-        <Flex gap={4} align="center" pr="md">
-          <ActionIcon
-            radius={0}
-            variant="subtle"
-            color="gray"
-            h={38}
-            onClick={createPanel.close}
-          >
-            <IconChevronLeft size={16} />
-          </ActionIcon>
-          New Project
-        </Flex>
-        <Divider />
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            void form.handleSubmit();
-          }}
-        >
-          <ProjectForm
-            form={form}
-            p="xs"
-            gap="xs"
-            withImage={false}
-            DescriptionFieldProps={{ rows: 2 }}
-          />
+          </Flex>
           <Divider />
-          <form.Subscribe
-            selector={(state) => state.isValid && state.isDirty}
-            children={(isValid) => (
-              <Button
-                radius={0}
-                className="transition-colors"
-                fullWidth
-                type="submit"
-                disabled={!isValid}
-              >
-                Create Project
-              </Button>
-            )}
+        </Box>
+
+        {filteredOptions.map((project) => (
+          <NavLink
+            key={project.id}
+            component="button"
+            className="py-1!"
+            color="gray"
+            onClick={() => onChange(project.id)}
+            label={project.title}
+            leftSection={
+              <ProjectAvatar
+                project={project}
+                size="sm"
+                tooltipProps={{ disabled: true }}
+              />
+            }
           />
-        </form>
-      </Collapse>
+        ))}
+      </ScrollArea>
+      <div className="p-1">
+        <Button
+          variant="light"
+          fullWidth
+          size="xs"
+          leftSection={<IconPlus size={16} />}
+          onClick={onCreate}
+        >
+          Create Project
+        </Button>
+      </div>
     </Box>
   );
 }

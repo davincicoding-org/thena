@@ -11,6 +11,8 @@ import { filterTaskTrees } from "@/core/task-management";
 import { FocusSession, useActiveFocusSession } from "@/ui/focus-session";
 import { useSessionBreak } from "@/ui/focus-session/useSessionBreak";
 import {
+  ProjectCreator,
+  useProjectCreator,
   useProjects,
   useTodos,
   useTodosWithTimeTravel,
@@ -69,6 +71,9 @@ export default function FocusPage() {
   const { createTasks, deleteTasks, updateTask } =
     useTodosWithTimeTravel(todos);
   const projects = useProjects();
+  const projectCreator = useProjectCreator((input) =>
+    projects.create.mutateAsync(input),
+  );
 
   return (
     <Main display="grid" className="h-dvh">
@@ -93,7 +98,12 @@ export default function FocusPage() {
         onCreateTasks={createTasks}
         onBulkCreateTasks={(tasks) => todos.bulkCreateTasks.mutateAsync(tasks)}
         projects={projects.items}
-        onCreateProject={(input) => projects.create.mutateAsync(input)}
+        onCreateProject={projectCreator.open}
+      />
+      <ProjectCreator
+        opened={projectCreator.opened}
+        onClose={projectCreator.close}
+        onCreate={projectCreator.create}
       />
     </Main>
   );

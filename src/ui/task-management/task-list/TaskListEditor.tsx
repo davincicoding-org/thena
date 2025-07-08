@@ -25,7 +25,6 @@ import { useTranslations } from "next-intl";
 
 import type {
   BulkTasks,
-  ProjectInput,
   ProjectSelect,
   TaskFormValues,
   TaskSelect,
@@ -49,11 +48,7 @@ export interface TaskListEditorProps {
   onBulkCreateTasks: UseMutateAsyncFunction<TaskTree[], Error, BulkTasks>;
   onRefineTask?: (task: TaskSelect) => void;
   projects: ProjectSelect[];
-  onCreateProject: UseMutateAsyncFunction<
-    ProjectSelect | undefined,
-    Error,
-    ProjectInput
-  >;
+  onCreateProject: (callback: (projectId: ProjectSelect["id"]) => void) => void;
   className?: string;
 }
 

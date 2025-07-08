@@ -11,6 +11,8 @@ export * from "./project/ProjectForm";
 export * from "./project/useProjectForm";
 export * from "./project/useProjects";
 export * from "./project/ProjectOverview";
+export * from "./project/ProjectCreator";
+export * from "./project/useProjectCreator";
 
 export * from "./metadata/PriorityIcon";
 

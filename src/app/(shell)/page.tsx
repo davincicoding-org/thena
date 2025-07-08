@@ -6,7 +6,6 @@ import {
   Button,
   Card,
   Center,
-  Divider,
   Flex,
   FocusTrap,
   Modal,
@@ -14,7 +13,6 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
 import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
 
@@ -24,11 +22,10 @@ import { countTasks } from "@/core/task-management";
 import { api } from "@/trpc/react";
 import { IntelligenceTile } from "@/ui/intelligence";
 import {
-  ProjectForm,
-  projectFormOpts,
+  ProjectCreator,
   ProjectOverview,
   ProjectsTile,
-  useProjectForm,
+  useProjectCreator,
   useProjects,
 } from "@/ui/task-management";
 
@@ -43,19 +40,13 @@ export default function HomePage() {
 
   // Projects
   const projects = useProjects();
-  const [isAddingProject, projectFormModal] = useDisclosure();
   const [openedProject, setOpenedProject] = useState<ProjectSelect | null>(
     null,
   );
 
-  const projectForm = useProjectForm({
-    ...projectFormOpts,
-    onSubmit: ({ value }) => {
-      projects.create.mutate(value);
-      projectFormModal.close();
-      projectForm.reset();
-    },
-  });
+  const projectCreator = useProjectCreator((input) =>
+    projects.create.mutateAsync(input),
+  );
 
   return (
     <Main display="grid">
@@ -65,7 +56,7 @@ export default function HomePage() {
             loading={intelligenceSummary.isLoading}
             summary={intelligenceSummary.data}
           />
-          <Button
+          {/* <Button
             size="xl"
             radius="md"
             fullWidth
@@ -75,7 +66,7 @@ export default function HomePage() {
             Start Focus Session
           </Button>
 
-          <Divider />
+          <Divider /> */}
 
           <Flex gap="md">
             <Card radius="md" shadow="sm">
@@ -94,53 +85,18 @@ export default function HomePage() {
               flex={1}
               loading={projects.isLoading}
               items={projects.items}
-              onCreate={projectFormModal.open}
-              onSelect={setOpenedProject}
+              onCreate={projectCreator.open}
+              onView={setOpenedProject}
             />
           </Flex>
         </Stack>
       </Center>
 
-      {/* Project Form */}
-      <Modal
-        opened={isAddingProject}
-        centered
-        radius="md"
-        classNames={{
-          body: "p-0!",
-        }}
-        transitionProps={{ transition: "pop" }}
-        overlayProps={{
-          className: "backdrop-blur-xs",
-        }}
-        withCloseButton={false}
-        onClose={projectFormModal.close}
-      >
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            void projectForm.handleSubmit();
-          }}
-        >
-          <ProjectForm form={projectForm} />
-
-          <Divider />
-          <projectForm.Subscribe
-            selector={(state) => state.isValid && state.isDirty}
-            children={(isValid) => (
-              <Button
-                fullWidth
-                radius={0}
-                size="md"
-                type="submit"
-                disabled={!isValid}
-              >
-                Create Project
-              </Button>
-            )}
-          />
-        </form>
-      </Modal>
+      <ProjectCreator
+        opened={projectCreator.opened}
+        onClose={projectCreator.close}
+        onCreate={projectCreator.create}
+      />
 
       {/* Project Overview */}
       <Modal

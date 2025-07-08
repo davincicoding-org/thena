@@ -50,11 +50,9 @@ export type TaskFormProps = {
     | null
   )[];
   projects: ProjectSelect[];
-  onCreateProject?: UseMutateAsyncFunction<
-    ProjectSelect | undefined,
-    Error,
-    ProjectInput
-  >;
+  onCreateProject?: (
+    callback: (projectId: ProjectSelect["id"]) => void,
+  ) => void;
 } & Simplify<BoxProps>;
 
 export const TaskForm = withTaskForm({
@@ -352,11 +350,11 @@ export const TaskForm = withTaskForm({
                       projectField.handleChange(projectId);
                       actionsPanel.close();
                     }}
-                    onCreate={async (project) => {
+                    onCreate={() => {
                       actionsPanel.close();
-                      const createdProject = await onCreateProject?.(project);
-                      if (createdProject)
-                        projectField.handleChange(createdProject.id);
+                      onCreateProject?.((projectId) =>
+                        projectField.handleChange(projectId),
+                      );
                     }}
                   />
                 )}

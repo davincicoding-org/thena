@@ -89,6 +89,16 @@ export const projects = pgTable(
     title: d.text().notNull(),
     description: d.text(),
     image: d.text(),
+    color: d.text(),
+    createdAt: d
+      .timestamp({ withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    updatedAt: d
+      .timestamp({ withTimezone: true, mode: "date" })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
   }),
   (t) => [index("idx_projects_owner").on(t.userId)],
 );
