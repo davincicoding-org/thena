@@ -1,7 +1,9 @@
+"use client";
+
 import type { UseMutateAsyncFunction } from "@tanstack/react-query";
 import type { CSSProperties } from "react";
 import type { SetRequired } from "type-fest";
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
@@ -18,6 +20,7 @@ import {
 import { IconGripVertical, IconPlus, IconTrash } from "@tabler/icons-react";
 import { isEqual, pickBy } from "lodash-es";
 import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 import { useTranslations } from "next-intl";
 
 import type {
@@ -113,7 +116,12 @@ export function TaskListEditor({
             )}
 
             {reorderedTasks.map((task, index) => (
-              <Fragment key={task.id}>
+              <m.div
+                key={task.id}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 100, height: "auto" }}
+                exit={{ opacity: 0, x: 10, height: 0 }}
+              >
                 {index !== 0 && (
                   <TaskAdder
                     order={(tasks[index - 1]!.sortOrder + task.sortOrder) / 2}
@@ -130,7 +138,7 @@ export function TaskListEditor({
                   projects={projects}
                   onCreateProject={onCreateProject}
                 />
-              </Fragment>
+              </m.div>
             ))}
           </AnimatePresence>
         </SortableTasksContainer>
