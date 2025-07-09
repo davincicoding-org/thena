@@ -1,5 +1,5 @@
 {
-  "id": "52f8fdae-11e5-4a4b-9aad-d9cbab29a65e",
+  "id": "b230b69b-443c-4cfe-a095-4fde6720f357",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -193,6 +193,26 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "color": {
+          "name": "color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {
@@ -413,14 +433,16 @@
           "type": "task_priority",
           "typeSchema": "public",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "'0'"
         },
         "complexity": {
           "name": "complexity",
           "type": "task_complexity",
           "typeSchema": "public",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "'0'"
         }
       },
       "indexes": {
@@ -536,7 +558,7 @@
     "public.focus_session_break_status": {
       "name": "focus_session_break_status",
       "schema": "public",
-      "values": ["active", "completed", "skipped"]
+      "values": ["active", "completed", "cancelled", "skipped"]
     },
     "public.focus_session_status": {
       "name": "focus_session_status",
@@ -546,12 +568,12 @@
     "public.task_complexity": {
       "name": "task_complexity",
       "schema": "public",
-      "values": ["trivial", "simple", "default", "complex"]
+      "values": ["-1", "0", "1"]
     },
     "public.task_priority": {
       "name": "task_priority",
       "schema": "public",
-      "values": ["critical", "urgent", "default", "deferred", "optional"]
+      "values": ["-1", "0", "1", "2"]
     },
     "public.task_run_status": {
       "name": "task_run_status",

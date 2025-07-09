@@ -63,6 +63,17 @@
         "0": "Default",
         "-1": "Low"
       }
+    },
+    "complexity": {
+      "labels": {
+        "1": "High Focus",
+        "-1": "Low Focus"
+      },
+      "options": {
+        "1": "High Focus",
+        "0": "Default",
+        "-1": "Low Focus"
+      }
     }
   }
 }

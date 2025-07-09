@@ -243,6 +243,7 @@ function TaskTreeItem({
             "-",
             "assign-project",
             "edit-priority",
+            task.subtasks.length === 0 ? "edit-complexity" : null,
             "-",
             {
               name: "delete",
@@ -320,7 +321,7 @@ function TaskTreeItem({
             parentId: task.id,
             projectId: null,
             priority: "0",
-            complexity: null,
+            complexity: "0",
           })),
         )
       }
@@ -388,6 +389,8 @@ function SubtaskItem({
         )
       }
       actions={[
+        "edit-complexity",
+        "-",
         {
           name: "delete",
           label: t("TaskPool.TaskActions.delete"),

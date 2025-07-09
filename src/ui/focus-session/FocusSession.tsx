@@ -163,7 +163,7 @@ export function FocusSession({
 
       <div
         className={cn(
-          "grid h-full grid-cols-[1fr_auto_1fr] gap-12 transition-opacity duration-1000",
+          "flex h-full flex-nowrap gap-12 transition-opacity duration-1000",
           {
             "pointer-events-none opacity-0": status === "session",
             "opacity-0": loading,
@@ -184,7 +184,7 @@ export function FocusSession({
           <p className="my-0 -mt-20 flex h-20 items-center text-4xl font-light">
             Completed Sessions
           </p>
-          <Stack className="!flex-col-reverse" gap="lg">
+          <Stack className="w-xs !flex-col-reverse" gap="lg">
             {completedSessions.map((session) => (
               <Paper
                 key={session.id}

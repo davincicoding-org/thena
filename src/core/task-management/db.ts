@@ -5,7 +5,12 @@ import {
   createUpdateSchema,
 } from "drizzle-zod";
 
-import { projects, taskPriority, tasks } from "@/database/schema";
+import {
+  projects,
+  taskComplexity,
+  taskPriority,
+  tasks,
+} from "@/database/schema";
 
 // MARK: Task
 
@@ -23,6 +28,9 @@ export type TaskId = z.infer<typeof taskIdSchema>;
 
 export const taskPriorityEnum = createSelectSchema(taskPriority);
 export type TaskPriority = z.infer<typeof taskPriorityEnum>;
+
+export const taskComplexityEnum = createSelectSchema(taskComplexity);
+export type TaskComplexity = z.infer<typeof taskComplexityEnum>;
 
 // MARK: Project
 

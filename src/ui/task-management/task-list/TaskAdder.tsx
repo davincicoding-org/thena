@@ -57,6 +57,7 @@ export function TaskAdder({
           parentId: null,
           projectId: null,
           priority: "0",
+          complexity: "0",
         },
       ]);
       setOpened(false);

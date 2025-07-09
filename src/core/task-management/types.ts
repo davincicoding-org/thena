@@ -6,6 +6,7 @@ import { projectInsertSchema, taskSelectSchema } from "./db";
 export const taskFormSchema = taskSelectSchema.pick({
   title: true,
   priority: true,
+  complexity: true,
   projectId: true,
   parentId: true,
   customSortOrder: true,

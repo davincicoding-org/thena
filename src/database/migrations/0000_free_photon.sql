@@ -1,7 +1,7 @@
-CREATE TYPE "public"."focus_session_break_status" AS ENUM('active', 'completed', 'skipped');--> statement-breakpoint
+CREATE TYPE "public"."focus_session_break_status" AS ENUM('active', 'completed', 'cancelled', 'skipped');--> statement-breakpoint
 CREATE TYPE "public"."focus_session_status" AS ENUM('active', 'completed', 'cancelled');--> statement-breakpoint
-CREATE TYPE "public"."task_complexity" AS ENUM('trivial', 'simple', 'default', 'complex');--> statement-breakpoint
-CREATE TYPE "public"."task_priority" AS ENUM('critical', 'urgent', 'default', 'deferred', 'optional');--> statement-breakpoint
+CREATE TYPE "public"."task_complexity" AS ENUM('-1', '0', '1');--> statement-breakpoint
+CREATE TYPE "public"."task_priority" AS ENUM('-1', '0', '1', '2');--> statement-breakpoint
 CREATE TYPE "public"."task_run_status" AS ENUM('active', 'completed', 'skipped', 'resumed', 'cancelled');--> statement-breakpoint
 CREATE TYPE "public"."task_status" AS ENUM('todo', 'completed', 'deleted');--> statement-breakpoint
 CREATE TABLE "focus_session_breaks" (
@@ -29,7 +29,10 @@ CREATE TABLE "projects" (
 	"user_id" text NOT NULL,
 	"title" text NOT NULL,
 	"description" text,
-	"image" text
+	"image" text,
+	"color" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "task_runs" (
@@ -54,8 +57,8 @@ CREATE TABLE "tasks" (
 	"project_id" integer,
 	"status" "task_status" DEFAULT 'todo' NOT NULL,
 	"title" text NOT NULL,
-	"priority" "task_priority",
-	"complexity" "task_complexity",
+	"priority" "task_priority" DEFAULT '0' NOT NULL,
+	"complexity" "task_complexity" DEFAULT '0' NOT NULL,
 	CONSTRAINT "no_task_as_own_parent" CHECK ("tasks"."id" IS DISTINCT FROM "tasks"."parent_id")
 );
 --> statement-breakpoint

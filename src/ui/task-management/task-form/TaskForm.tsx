@@ -3,7 +3,7 @@
 import type { BoxProps, ButtonProps, MantineColor } from "@mantine/core";
 import type { ReactElement, ReactNode, Ref } from "react";
 import type { Simplify } from "type-fest";
-import { cloneElement, isValidElement, useRef, useState } from "react";
+import { cloneElement, isValidElement, useState } from "react";
 import {
   ActionIcon,
   Button,
@@ -15,16 +15,22 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { useClickOutside, useDisclosure } from "@mantine/hooks";
-import { IconCube, IconCubeOff, IconPencil } from "@tabler/icons-react";
+import {
+  IconArrowBigUpLinesFilled,
+  IconBrain,
+  IconCube,
+  IconCubeOff,
+  IconPencil,
+} from "@tabler/icons-react";
 import * as m from "motion/react-m";
 import { useTranslations } from "next-intl";
 
 import type { ProjectSelect } from "@/core/task-management";
+import { ComplexityIcon } from "@/ui/task-management/metadata/ComplexityIcon";
 import { cn } from "@/ui/utils";
 
 import { PriorityIcon } from "../metadata/PriorityIcon";
 import { ProjectAvatar } from "../project/ProjectAvatar";
-import { ProjectPicker } from "./ProjectPicker";
 import { taskFormOpts, withTaskForm } from "./useTaskForm";
 
 export type TaskFormProps = {
@@ -36,6 +42,7 @@ export type TaskFormProps = {
   actions?: (
     | "assign-project"
     | "edit-priority"
+    | "edit-complexity"
     | "-"
     | {
         name: string;
@@ -75,11 +82,10 @@ export const TaskForm = withTaskForm({
     /* eslint-disable react-hooks/rules-of-hooks */
     const t = useTranslations("task");
     const [isActionsPanelOpen, actionsPanel] = useDisclosure(false);
-    const priorityPickerRef = useRef<HTMLDivElement>(null);
-    const actionsPanelRef = useClickOutside(() => actionsPanel.close(), null, [
-      priorityPickerRef.current,
-    ]);
-    const [tab, setTab] = useState<"actions" | "tags" | "projects">("actions");
+    const actionsPanelRef = useClickOutside(() => actionsPanel.close());
+    const [tab, setTab] = useState<
+      "actions" | "tags" | "projects" | "priority" | "complexity"
+    >("actions");
 
     const [isHovering, setIsHovering] = useState(false);
     const [isInputFocused, setIsInputFocused] = useState(false);
@@ -116,21 +122,21 @@ export const TaskForm = withTaskForm({
           >
             <m.div
               key="left-section"
-              initial={{
-                width: "auto",
-                opacity: 1,
-              }}
-              animate={
-                isInputFocused
-                  ? {
-                      width: 0,
-                      opacity: 0,
-                    }
-                  : {
-                      width: "auto",
-                      opacity: 1,
-                    }
-              }
+              // initial={{
+              //   width: "auto",
+              //   opacity: 1,
+              // }}
+              // animate={
+              //   isInputFocused
+              //     ? {
+              //         width: 0,
+              //         opacity: 0,
+              //       }
+              //     : {
+              //         width: "auto",
+              //         opacity: 1,
+              //       }
+              // }
             >
               <form.Field
                 name="projectId"
@@ -162,7 +168,6 @@ export const TaskForm = withTaskForm({
                   flex={1}
                   readOnly={readOnly}
                   classNames={{
-                    root: "mr-1",
                     input: cn(
                       "h-8! min-h-0! truncate !bg-transparent px-1! transition-colors not-focus:border-transparent! read-only:border-transparent!",
                       {
@@ -187,14 +192,9 @@ export const TaskForm = withTaskForm({
             />
 
             <m.div
-              key="task-metadata"
               className="mr-2 flex items-center gap-1 overflow-hidden"
-              initial={{
-                width: "auto",
-                opacity: 1,
-              }}
               animate={
-                isRightSectionOpen || isInputFocused
+                isInputFocused
                   ? {
                       width: 0,
                       opacity: 0,
@@ -206,6 +206,35 @@ export const TaskForm = withTaskForm({
               }
             >
               <form.Field
+                name="complexity"
+                children={(complexityField) => {
+                  if (complexityField.state.value === "0") return null;
+                  return (
+                    <Tooltip
+                      label={t(
+                        `complexity.labels.${complexityField.state.value}`,
+                      )}
+                      withArrow
+                      position="bottom"
+                      transitionProps={{
+                        transition: "scale-y",
+                      }}
+                      py={1}
+                      px={6}
+                      classNames={{
+                        tooltip: "text-xs",
+                      }}
+                    >
+                      <ComplexityIcon
+                        className="last:mx-2"
+                        complexity={complexityField.state.value}
+                        size="sm"
+                      />
+                    </Tooltip>
+                  );
+                }}
+              />
+              <form.Field
                 name="priority"
                 children={(priorityField) => {
                   if (priorityField.state.value === "0") return null;
@@ -213,9 +242,9 @@ export const TaskForm = withTaskForm({
                     <Tooltip
                       label={t(`priority.labels.${priorityField.state.value}`)}
                       withArrow
-                      position="bottom-start"
+                      position="bottom"
                       transitionProps={{
-                        transition: "pop-top-left",
+                        transition: "scale-y",
                       }}
                       py={1}
                       px={6}
@@ -323,16 +352,34 @@ export const TaskForm = withTaskForm({
 
                 if (action === "edit-priority")
                   return (
-                    <form.AppField
+                    <Button
                       key="edit-priority"
-                      name="priority"
-                      children={(field) => (
-                        <field.PriorityPicker
-                          ref={priorityPickerRef}
-                          onClick={() => actionsPanel.close()}
-                        />
-                      )}
-                    />
+                      justify="flex-start"
+                      leftSection={<IconArrowBigUpLinesFilled size={16} />}
+                      fullWidth
+                      radius={0}
+                      color="gray"
+                      variant="subtle"
+                      onClick={() => setTab("priority")}
+                    >
+                      Priority
+                    </Button>
+                  );
+
+                if (action === "edit-complexity")
+                  return (
+                    <Button
+                      key="edit-complexity"
+                      justify="flex-start"
+                      leftSection={<IconBrain size={16} />}
+                      fullWidth
+                      radius={0}
+                      color="gray"
+                      variant="subtle"
+                      onClick={() => setTab("complexity")}
+                    >
+                      Complexity
+                    </Button>
                   );
 
                 if (isValidElement(action))
@@ -360,22 +407,40 @@ export const TaskForm = withTaskForm({
               })}
             </Tabs.Panel>
             <Tabs.Panel value="projects">
-              <form.Field
+              <form.AppField
                 name="projectId"
-                children={(projectField) => (
-                  <ProjectPicker
+                children={(field) => (
+                  <field.ProjectPicker
                     projects={projects}
                     onClose={() => setTab("actions")}
-                    onChange={(projectId) => {
-                      projectField.handleChange(projectId);
+                    onClosePanel={() => actionsPanel.close()}
+                    onCreate={(callback) => {
                       actionsPanel.close();
+                      onCreateProject?.(callback);
                     }}
-                    onCreate={() => {
-                      actionsPanel.close();
-                      onCreateProject?.((projectId) =>
-                        projectField.handleChange(projectId),
-                      );
-                    }}
+                  />
+                )}
+              />
+            </Tabs.Panel>
+
+            <Tabs.Panel value="priority">
+              <form.AppField
+                name="priority"
+                children={(field) => (
+                  <field.PriorityPicker
+                    onClose={() => setTab("actions")}
+                    onClosePanel={() => actionsPanel.close()}
+                  />
+                )}
+              />
+            </Tabs.Panel>
+            <Tabs.Panel value="complexity">
+              <form.AppField
+                name="complexity"
+                children={(field) => (
+                  <field.ComplexityPicker
+                    onClose={() => setTab("actions")}
+                    onClosePanel={() => actionsPanel.close()}
                   />
                 )}
               />
