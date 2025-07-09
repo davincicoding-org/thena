@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createParser, parseAsStringLiteral, useQueryStates } from "nuqs";
 
 import type {
   FocusSessionConfig,
@@ -17,16 +18,42 @@ import {
   useTodos,
   useTodosWithTimeTravel,
 } from "@/ui/task-management";
+import { useFilteredTasks } from "@/ui/task-management/task-list/useFilteredTasks";
 
 import { Main } from "../shell";
+
+const parseAsProjectFilter = createParser({
+  parse(queryValue) {
+    if (queryValue === "unassigned") return "unassigned";
+    return Number(queryValue);
+  },
+  serialize(value) {
+    if (value === "unassigned") return "unassigned";
+    return value.toString();
+  },
+});
 
 export default function FocusPage() {
   const [status, setStatus] = useState<FocusSessionStatus>("idle");
   const todos = useTodos();
-  const filteredTodos = filterTaskTrees(
+  const openTodos = filterTaskTrees(
     todos.tasks,
     (task) => task.status === "todo",
   );
+
+  const [filters, setFilters] = useQueryStates(
+    {
+      project: parseAsProjectFilter,
+      sort: parseAsStringLiteral(["default", "priority"]).withDefault(
+        "default",
+      ),
+    },
+    {
+      history: "replace",
+    },
+  );
+
+  const filteredTodos = useFilteredTasks(openTodos, filters);
   const activeSession = useActiveFocusSession({
     todos: filteredTodos,
     onTaskCompleted: (taskId) =>
@@ -93,6 +120,8 @@ export default function FocusPage() {
         onSkipTask={activeSession.skipTask}
         onUnskipTask={activeSession.unskipTask}
         todos={filteredTodos}
+        taskFilters={filters}
+        onUpdateFilters={setFilters}
         onUpdateTask={updateTask}
         onDeleteTasks={deleteTasks}
         onCreateTasks={createTasks}

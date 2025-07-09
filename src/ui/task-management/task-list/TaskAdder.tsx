@@ -15,6 +15,7 @@ import { cn } from "@/ui/utils";
 export interface TaskAdderProps {
   hotkey?: string;
   order?: number;
+  disabled?: boolean;
   onCreateTasks: (tasks: TaskFormValues[]) => void;
 }
 
@@ -22,6 +23,7 @@ export function TaskAdder({
   hotkey = "",
   onCreateTasks,
   order,
+  disabled,
 }: TaskAdderProps) {
   const { active } = useDndContext();
   useHotkeys([
@@ -54,7 +56,7 @@ export function TaskAdder({
           customSortOrder: order ?? null,
           parentId: null,
           projectId: null,
-          priority: null,
+          priority: "0",
         },
       ]);
       setOpened(false);
@@ -99,7 +101,9 @@ export function TaskAdder({
       ) : (
         <motion.div
           key="task-adders"
-          className="flex gap-3"
+          className={cn("flex gap-3", {
+            "pointer-events-none": disabled,
+          })}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

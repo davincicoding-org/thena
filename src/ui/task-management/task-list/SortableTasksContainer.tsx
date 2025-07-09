@@ -19,6 +19,7 @@ import { reorderTasks } from "./reorderTasks";
 
 export interface SortableTasksContainerProps {
   tasks: Pick<TaskSelect, "id" | "customSortOrder">[];
+  disabled?: boolean;
   onReorder: (tasks: Pick<TaskSelect, "id">[]) => void;
   onChangeOrder: (params: Pick<TaskSelect, "id" | "customSortOrder">) => void;
 }
@@ -26,6 +27,7 @@ export interface SortableTasksContainerProps {
 export function SortableTasksContainer({
   tasks,
   children,
+  disabled,
   onReorder,
   onChangeOrder,
 }: PropsWithChildren<SortableTasksContainerProps>) {
@@ -61,7 +63,11 @@ export function SortableTasksContainer({
         });
       }}
     >
-      <SortableContext items={tasks} strategy={verticalListSortingStrategy}>
+      <SortableContext
+        disabled={disabled}
+        items={tasks}
+        strategy={verticalListSortingStrategy}
+      >
         {children}
       </SortableContext>
     </DndContext>

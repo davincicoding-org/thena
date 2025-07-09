@@ -19,8 +19,10 @@ import type {
   TaskTree,
   TaskUpdate,
 } from "@/core/task-management";
+import type { TaskFilters } from "@/ui/task-management/task-list/useFilteredTasks";
 import { WavyBackground } from "@/ui/components/WavyBackground";
 import { TaskListEditor } from "@/ui/task-management";
+import { TaskListFilter } from "@/ui/task-management/task-list/TaskListFilter";
 import { cn } from "@/ui/utils";
 
 import type {
@@ -53,6 +55,8 @@ export interface FocusSessionProps {
 
   // TODOS
   todos: TaskTree[];
+  taskFilters: TaskFilters;
+  onUpdateFilters: (filters: Partial<TaskFilters>) => void;
   onUpdateTask: (task: SetRequired<TaskUpdate, "id" | "parentId">) => void;
   onDeleteTasks: (tasks: TaskSelect[]) => void;
   onCreateTasks: (tasks: TaskFormValues[]) => void;
@@ -82,6 +86,8 @@ export function FocusSession({
   onSkipTask,
   onUnskipTask,
   todos,
+  taskFilters,
+  onUpdateFilters,
   onUpdateTask,
   onDeleteTasks,
   onCreateTasks,
@@ -112,6 +118,7 @@ export function FocusSession({
     <WavyBackground
       speed="slow"
       containerClassName={className}
+      backgroundFill="#242424"
       className="h-full w-full"
       disabled={status === "session"}
     >
@@ -237,15 +244,44 @@ export function FocusSession({
           <p className="my-0 -mt-20 flex h-20 items-center text-4xl font-light">
             Upcoming Tasks
           </p>
-          <TaskListEditor
-            tasks={todos}
-            onUpdateTask={onUpdateTask}
-            onDeleteTasks={onDeleteTasks}
-            onCreateTasks={onCreateTasks}
-            onBulkCreateTasks={onBulkCreateTasks}
-            projects={projects}
-            onCreateProject={onCreateProject}
-          />
+          <Paper
+            withBorder
+            radius="md"
+            className="w-xs overflow-clip !bg-black/30 backdrop-blur-xs"
+          >
+            <TaskListFilter
+              filters={taskFilters}
+              onUpdateFilters={onUpdateFilters}
+              projects={projects}
+              className="bg-[var(--mantine-color-body)]"
+            />
+            <Divider />
+
+            <TaskListEditor
+              className="mx-2 mt-1 mb-3"
+              tasks={todos}
+              hideProject={taskFilters.project !== null}
+              addBetweenDisabled={taskFilters.sort !== "default"}
+              reorderingDisabled={taskFilters.sort !== "default"}
+              onUpdateTask={onUpdateTask}
+              onDeleteTasks={onDeleteTasks}
+              onCreateTasks={(taskInputs) =>
+                onCreateTasks(
+                  taskInputs.map((task) => {
+                    if (typeof taskFilters.project !== "number") return task;
+                    if (task.parentId !== null) return task;
+                    return {
+                      ...task,
+                      projectId: taskFilters.project,
+                    };
+                  }),
+                )
+              }
+              onBulkCreateTasks={onBulkCreateTasks}
+              projects={projects}
+              onCreateProject={onCreateProject}
+            />
+          </Paper>
         </ScrollArea>
       </div>
     </WavyBackground>

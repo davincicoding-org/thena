@@ -11,7 +11,7 @@ import {
 
 // MARK:  TASKS
 
-export const taskPriority = pgEnum("task_priority", ["URGENT", "HIGH", "LOW"]);
+export const taskPriority = pgEnum("task_priority", ["-1", "0", "1", "2"]);
 
 export const taskStatusEnum = pgEnum("task_status", [
   "todo",
@@ -48,7 +48,7 @@ export const tasks = pgTable(
 
     status: taskStatusEnum().default("todo").notNull(),
     title: d.text().notNull(),
-    priority: taskPriority(),
+    priority: taskPriority().default("0").notNull(),
   }),
   (t) => [
     check("no_task_as_own_parent", sql`${t.id} IS DISTINCT FROM ${t.parentId}`),

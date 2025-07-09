@@ -3,7 +3,7 @@
 import type { BoxProps, ButtonProps, MantineColor } from "@mantine/core";
 import type { ReactElement, ReactNode, Ref } from "react";
 import type { Simplify } from "type-fest";
-import { cloneElement, isValidElement, useState } from "react";
+import { cloneElement, isValidElement, useRef, useState } from "react";
 import {
   ActionIcon,
   Button,
@@ -49,6 +49,7 @@ export type TaskFormProps = {
     | null
   )[];
   projects: ProjectSelect[];
+  hideProject?: boolean;
   onCreateProject?: (
     callback: (projectId: ProjectSelect["id"]) => void,
   ) => void;
@@ -66,6 +67,7 @@ export const TaskForm = withTaskForm({
     disableRightSection,
     actions = [],
     projects,
+    hideProject,
     onCreateProject,
     className,
     ...boxProps
@@ -73,8 +75,12 @@ export const TaskForm = withTaskForm({
     /* eslint-disable react-hooks/rules-of-hooks */
     const t = useTranslations("task");
     const [isActionsPanelOpen, actionsPanel] = useDisclosure(false);
-    const actionsPanelRef = useClickOutside(() => actionsPanel.close());
+    const priorityPickerRef = useRef<HTMLDivElement>(null);
+    const actionsPanelRef = useClickOutside(() => actionsPanel.close(), null, [
+      priorityPickerRef.current,
+    ]);
     const [tab, setTab] = useState<"actions" | "tags" | "projects">("actions");
+
     const [isHovering, setIsHovering] = useState(false);
     const [isInputFocused, setIsInputFocused] = useState(false);
     /* eslint-enable react-hooks/rules-of-hooks */
@@ -84,12 +90,14 @@ export const TaskForm = withTaskForm({
 
     return (
       <Popover
-        position="right-start"
-        withArrow
-        arrowPosition="center"
+        position="bottom-end"
         opened={isActionsPanelOpen}
         offset={{
-          mainAxis: 8,
+          mainAxis: 0,
+          crossAxis: -2,
+        }}
+        transitionProps={{
+          transition: "scale-y",
         }}
         onClose={() => {
           setTimeout(() => {
@@ -101,7 +109,7 @@ export const TaskForm = withTaskForm({
           <Flex
             align="center"
             ref={ref}
-            className={cn("group overflow-clip py-1 pr-0.5 pl-1.5", className)}
+            className={cn("group overflow-clip py-2 pr-0.5 pl-1.5", className)}
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
             {...boxProps}
@@ -127,13 +135,21 @@ export const TaskForm = withTaskForm({
               <form.Field
                 name="projectId"
                 children={({ state: { value } }) => {
+                  if (hideProject) return null;
                   const project = projects.find(
                     (project) => project.id === value,
                   );
                   if (!project) return null;
 
                   return (
-                    <ProjectAvatar ml={4} mr={4} project={project} size="sm" />
+                    <Tooltip label={project.title} withArrow>
+                      <ProjectAvatar
+                        ml={4}
+                        mr={4}
+                        project={project}
+                        size="sm"
+                      />
+                    </Tooltip>
                   );
                 }}
               />
@@ -148,9 +164,9 @@ export const TaskForm = withTaskForm({
                   classNames={{
                     root: "mr-1",
                     input: cn(
-                      "h-8! min-h-0! truncate !bg-transparent px-1! not-focus:border-transparent! read-only:border-transparent!",
+                      "h-8! min-h-0! truncate !bg-transparent px-1! transition-colors not-focus:border-transparent! read-only:border-transparent!",
                       {
-                        "group-hover:not-focus:!border-current": !disableHover,
+                        "group-hover:not-focus:!bg-white/5": !disableHover,
                       },
                     ),
                   }}
@@ -192,8 +208,7 @@ export const TaskForm = withTaskForm({
               <form.Field
                 name="priority"
                 children={(priorityField) => {
-                  if (!priorityField.state.value) return null;
-
+                  if (priorityField.state.value === "0") return null;
                   return (
                     <Tooltip
                       label={t(`priority.labels.${priorityField.state.value}`)}
@@ -253,12 +268,13 @@ export const TaskForm = withTaskForm({
           </Flex>
         </Popover.Target>
 
-        <Popover.Dropdown p={0} ref={actionsPanelRef}>
+        <Popover.Dropdown
+          p={0}
+          ref={actionsPanelRef}
+          className="!overflow-clip !rounded-t-none"
+        >
           <Tabs value={tab}>
-            <Tabs.Panel
-              value="actions"
-              className="*:first:!rounded-t-[0.175rem] *:last:!rounded-b-[0.175rem]"
-            >
+            <Tabs.Panel value="actions">
               {actions.map((action, index) => {
                 if (!action) return null;
 
@@ -310,7 +326,12 @@ export const TaskForm = withTaskForm({
                     <form.AppField
                       key="edit-priority"
                       name="priority"
-                      children={(field) => <field.PriorityPicker />}
+                      children={(field) => (
+                        <field.PriorityPicker
+                          ref={priorityPickerRef}
+                          onClick={() => actionsPanel.close()}
+                        />
+                      )}
                     />
                   );
 

@@ -127,12 +127,13 @@ export function useTodos() {
           return prev
             .map((task) => {
               if (task.id !== taskUpdate.id) return task;
-              return { ...task, ...taskUpdate };
+              return {
+                ...task,
+                ...taskUpdate,
+                sortOrder: taskUpdate.customSortOrder ?? task.sortOrder,
+              };
             })
-            .sort(
-              (a, b) =>
-                (a.customSortOrder ?? a.id) - (b.customSortOrder ?? b.id),
-            );
+            .sort((a, b) => a.sortOrder - b.sortOrder);
         }
         return prev.map((task) => {
           if (task.id !== taskUpdate.parentId) return task;
@@ -142,12 +143,13 @@ export function useTodos() {
             subtasks: task.subtasks
               .map((subtask) => {
                 if (subtask.id !== taskUpdate.id) return subtask;
-                return { ...subtask, ...taskUpdate };
+                return {
+                  ...subtask,
+                  ...taskUpdate,
+                  sortOrder: taskUpdate.customSortOrder ?? subtask.sortOrder,
+                };
               })
-              .sort(
-                (a, b) =>
-                  (a.customSortOrder ?? a.id) - (b.customSortOrder ?? b.id),
-              ),
+              .sort((a, b) => a.sortOrder - b.sortOrder),
           };
         });
       });

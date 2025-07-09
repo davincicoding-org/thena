@@ -18,6 +18,8 @@ export function PriorityIcon({
   priority,
   ...props
 }: PriorityIconProps & ThemeIconProps) {
+  if (priority === "0") return null;
+
   const { color, variant, icon, radius } = ((): {
     color: ThemeIconProps["color"];
     variant: ThemeIconProps["variant"];
@@ -25,20 +27,20 @@ export function PriorityIcon({
     icon: ReactNode;
   } => {
     switch (priority) {
-      case "URGENT":
+      case "2":
         return {
           color: "orange",
           variant: "filled",
           icon: <IconExclamationMark size="100%" />,
         };
-      case "HIGH":
+      case "1":
         return {
           color: "orange",
           variant: "outline",
           radius: "xl",
           icon: <IconArrowBigUpLineFilled size="70%" />,
         };
-      case "LOW":
+      case "-1":
         return {
           color: "dark",
           variant: "outline",

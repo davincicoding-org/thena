@@ -1,3 +1,4 @@
+import type { Ref } from "react";
 import { Button, Menu } from "@mantine/core";
 import { IconArrowBigUpLinesFilled } from "@tabler/icons-react";
 import {
@@ -16,9 +17,20 @@ export const { fieldContext, formContext, useFieldContext } =
 export const { useAppForm: useTaskForm, withForm: withTaskForm } =
   createFormHook({
     fieldComponents: {
-      PriorityPicker: () => {
+      PriorityPicker: ({
+        ref,
+        onClick,
+      }: {
+        ref: Ref<HTMLDivElement>;
+        onClick: () => void;
+      }) => {
         const field = useFieldContext<TaskFormValues["priority"]>();
         const t = useTranslations("task");
+
+        const handleClickOption = (value: TaskFormValues["priority"]) => {
+          onClick();
+          field.handleChange(value);
+        };
 
         return (
           <Menu
@@ -39,30 +51,30 @@ export const { useAppForm: useTaskForm, withForm: withTaskForm } =
                 Set Priority
               </Button>
             </Menu.Target>
-            <Menu.Dropdown>
+            <Menu.Dropdown ref={ref}>
               <Menu.Item
-                color={field.state.value === "URGENT" ? "primary" : undefined}
-                onClick={() => field.handleChange("URGENT")}
+                color={field.state.value === "2" ? "primary" : undefined}
+                onClick={() => handleClickOption("2")}
               >
-                {t("priority.options.URGENT")}
+                {t("priority.options.2")}
               </Menu.Item>
               <Menu.Item
-                color={field.state.value === "HIGH" ? "primary" : undefined}
-                onClick={() => field.handleChange("HIGH")}
+                color={field.state.value === "1" ? "primary" : undefined}
+                onClick={() => handleClickOption("1")}
               >
-                {t("priority.options.HIGH")}
+                {t("priority.options.1")}
               </Menu.Item>
               <Menu.Item
-                color={field.state.value === null ? "primary" : undefined}
-                onClick={() => field.handleChange(null)}
+                color={field.state.value === "0" ? "primary" : undefined}
+                onClick={() => handleClickOption("0")}
               >
-                {t("priority.options.DEFAULT")}
+                {t("priority.options.0")}
               </Menu.Item>
               <Menu.Item
-                color={field.state.value === "LOW" ? "primary" : undefined}
-                onClick={() => field.handleChange("LOW")}
+                color={field.state.value === "-1" ? "primary" : undefined}
+                onClick={() => handleClickOption("-1")}
               >
-                {t("priority.options.LOW")}
+                {t("priority.options.-1")}
               </Menu.Item>
             </Menu.Dropdown>
           </Menu>

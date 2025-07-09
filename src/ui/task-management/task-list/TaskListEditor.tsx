@@ -47,8 +47,13 @@ export interface TaskListEditorProps {
   onCreateTasks: (tasks: TaskFormValues[]) => void;
   onBulkCreateTasks: UseMutateAsyncFunction<TaskTree[], Error, BulkTasks>;
   onRefineTask?: (task: TaskSelect) => void;
+  reorderingDisabled?: boolean;
   projects: ProjectSelect[];
-  onCreateProject: (callback: (projectId: ProjectSelect["id"]) => void) => void;
+  hideProject?: boolean;
+  addBetweenDisabled?: boolean;
+  onCreateProject?: (
+    callback: (projectId: ProjectSelect["id"]) => void,
+  ) => void;
   className?: string;
 }
 
@@ -59,7 +64,10 @@ export function TaskListEditor({
   onRefineTask,
   onDeleteTasks,
   onBulkCreateTasks,
+  reorderingDisabled,
   projects,
+  hideProject,
+  addBetweenDisabled,
   onCreateProject,
   className,
 }: TaskListEditorProps) {
@@ -82,9 +90,10 @@ export function TaskListEditor({
 
   return (
     <>
-      <Box className={cn("mx-auto max-h-full shrink-0 grow-0", className)}>
+      <Box className={cn(className)}>
         <SortableTasksContainer
           tasks={reorderedTasks}
+          disabled={reorderingDisabled}
           onReorder={(updatedOrder) => {
             setReorderedTasks(
               updatedOrder.map((task) => tasks.find((t) => t.id === task.id)!),
@@ -117,20 +126,25 @@ export function TaskListEditor({
                 animate={{ opacity: 100, height: "auto" }}
                 exit={{ opacity: 0, x: 10, height: 0 }}
               >
-                {index !== 0 && (
-                  <TaskAdder
-                    order={(tasks[index - 1]!.sortOrder + task.sortOrder) / 2}
-                    onCreateTasks={onCreateTasks}
-                  />
-                )}
+                <TaskAdder
+                  order={
+                    ((tasks[index - 1]?.sortOrder ?? task.sortOrder - 1) +
+                      task.sortOrder) /
+                    2
+                  }
+                  disabled={addBetweenDisabled}
+                  onCreateTasks={onCreateTasks}
+                />
                 <TaskTreeItem
                   key={task.id}
                   task={task}
+                  reorderingDisabled={reorderingDisabled}
                   onCreateTasks={onCreateTasks}
                   onUpdateTask={onUpdateTask}
                   onRefineTask={onRefineTask}
                   onDeleteTasks={onDeleteTasks}
                   projects={projects}
+                  hideProject={hideProject}
                   onCreateProject={onCreateProject}
                 />
               </m.div>
@@ -153,11 +167,13 @@ export function TaskListEditor({
 interface TaskItemProps
   extends Pick<
     TaskListEditorProps,
+    | "reorderingDisabled"
     | "onCreateTasks"
     | "onUpdateTask"
     | "onRefineTask"
     | "onDeleteTasks"
     | "projects"
+    | "hideProject"
     | "onCreateProject"
   > {
   task: TaskTree;
@@ -165,11 +181,13 @@ interface TaskItemProps
 
 function TaskTreeItem({
   task,
+  reorderingDisabled,
   onCreateTasks,
   onUpdateTask,
   onRefineTask,
   onDeleteTasks,
   projects,
+  hideProject,
   onCreateProject,
 }: TaskItemProps) {
   const [isAddingSubtask, subtaskAdder] = useDisclosure();
@@ -192,7 +210,7 @@ function TaskTreeItem({
 
   return (
     <TaskWrapper
-      className={cn("w-xs", {
+      className={cn({
         "cursor-grabbing *:pointer-events-none": active,
       })}
       style={style}
@@ -205,6 +223,7 @@ function TaskTreeItem({
             onUpdateTask?.({ id: task.id, parentId: null, ...updates })
           }
           projects={projects}
+          hideProject={hideProject}
           disableRightSection={!!active}
           onCreateProject={onCreateProject}
           actions={[
@@ -244,17 +263,19 @@ function TaskTreeItem({
             },
           ]}
           rightSection={
-            <ActionIcon
-              {...attributes}
-              {...listeners}
-              color="gray"
-              variant="transparent"
-              className={cn(
-                "mr-1 flex !h-8 !w-auto !min-w-0 !cursor-grab px-1 !outline-offset-0",
-              )}
-            >
-              <IconGripVertical size={16} />
-            </ActionIcon>
+            reorderingDisabled ? undefined : (
+              <ActionIcon
+                {...attributes}
+                {...listeners}
+                color="gray"
+                variant="transparent"
+                className={cn(
+                  "mr-1 flex !h-8 !w-auto !min-w-0 !cursor-grab px-1 !outline-offset-0",
+                )}
+              >
+                <IconGripVertical size={16} />
+              </ActionIcon>
+            )
           }
         />
       }
@@ -298,7 +319,7 @@ function TaskTreeItem({
             customSortOrder: null,
             parentId: task.id,
             projectId: null,
-            priority: null,
+            priority: "0",
             complexity: null,
           })),
         )
@@ -310,6 +331,7 @@ function TaskTreeItem({
 interface SubtaskItemProps
   extends Pick<
     TaskListEditorProps,
+    | "reorderingDisabled"
     | "onUpdateTask"
     | "onRefineTask"
     | "onDeleteTasks"
@@ -323,6 +345,7 @@ function SubtaskItem({
   task,
   onUpdateTask,
   onDeleteTasks,
+  reorderingDisabled,
   projects,
   onCreateProject,
 }: SubtaskItemProps) {
@@ -350,21 +373,21 @@ function SubtaskItem({
       disableHover={!!active}
       disableRightSection={!!active}
       rightSection={
-        <ActionIcon
-          {...attributes}
-          {...listeners}
-          color="gray"
-          variant="transparent"
-          className={cn(
-            "mr-1 flex !h-8 !w-auto !min-w-0 !cursor-grab px-1 !outline-offset-0",
-          )}
-        >
-          <IconGripVertical size={16} />
-        </ActionIcon>
+        reorderingDisabled ? undefined : (
+          <ActionIcon
+            {...attributes}
+            {...listeners}
+            color="gray"
+            variant="transparent"
+            className={cn(
+              "mr-1 flex !h-8 !w-auto !min-w-0 !cursor-grab px-1 !outline-offset-0",
+            )}
+          >
+            <IconGripVertical size={16} />
+          </ActionIcon>
+        )
       }
       actions={[
-        "edit-priority",
-        "-",
         {
           name: "delete",
           label: t("TaskPool.TaskActions.delete"),
@@ -406,6 +429,7 @@ const TaskEditor = createPolymorphicComponent<"div", TaskEditorProps>(
             formApi.state.values,
             (value, key) => !isEqual(value, item[key as keyof TaskFormValues]),
           ) as Partial<TaskFormValues>;
+
           const { title, ...rest } = changes;
           if (title) {
             debouncedUpdate({ title });

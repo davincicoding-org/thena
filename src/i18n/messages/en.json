@@ -53,15 +53,15 @@
   "task": {
     "priority": {
       "labels": {
-        "URGENT": "Urgent",
-        "HIGH": "High Priority",
-        "LOW": "Low Priority"
+        "2": "Urgent",
+        "1": "High Priority",
+        "-1": "Low Priority"
       },
       "options": {
-        "URGENT": "Urgent",
-        "HIGH": "High",
-        "DEFAULT": "Default",
-        "LOW": "Low"
+        "2": "Urgent",
+        "1": "High",
+        "0": "Default",
+        "-1": "Low"
       }
     }
   }
