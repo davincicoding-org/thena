@@ -87,4 +87,63 @@ export const projectsRouter = createTRPCRouter({
     });
     return result;
   }),
+  summary: protectedProcedure
+    .input(projectSelectSchema.shape.id.nullable())
+    .query(async ({ ctx: { db, auth }, input: projectId }) => {
+      if (!projectId) return undefined;
+
+      const projectTasks = await db.query.tasks.findMany({
+        where: (t, { eq, and }) =>
+          and(eq(t.projectId, projectId), eq(t.userId, auth.userId)),
+        with: {
+          subtasks: {
+            columns: {
+              id: true,
+              status: true,
+            },
+          },
+        },
+        columns: {
+          id: true,
+          status: true,
+        },
+      });
+
+      const todosCount = projectTasks.reduce((acc, task) => {
+        if (task.subtasks.length > 0)
+          return (
+            acc +
+            task.subtasks.filter((subtask) => subtask.status === "todo").length
+          );
+        if (task.status === "todo") return acc + 1;
+        return acc;
+      }, 0);
+
+      const completedTasks = projectTasks.flatMap((task) => {
+        if (task.subtasks.length > 0)
+          return task.subtasks
+            .filter((subtask) => subtask.status === "completed")
+            .map((subtask) => subtask.id);
+        if (task.status === "completed") return [task.id];
+        return [];
+      });
+
+      const completedTaksRuns = await db.query.taskRuns.findMany({
+        where: (tr, { inArray }) => inArray(tr.taskId, completedTasks),
+        columns: {
+          duration: true,
+        },
+      });
+
+      const totalFocusTime = completedTaksRuns.reduce(
+        (acc, run) => acc + (run.duration ?? 0),
+        0,
+      );
+
+      return {
+        todosCount,
+        completedCount: completedTasks.length,
+        totalFocusMinutes: totalFocusTime / 60,
+      };
+    }),
 });

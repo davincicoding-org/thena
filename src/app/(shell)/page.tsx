@@ -3,30 +3,22 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
-import {
-  Card,
-  Center,
-  Flex,
-  FocusTrap,
-  Loader,
-  Modal,
-  Stack,
-} from "@mantine/core";
+import { Card, Center, Flex, Loader, Stack } from "@mantine/core";
 import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
 
 import type { ProjectSelect } from "@/core/task-management";
 import { Main } from "@/app/(shell)/shell";
-import { countTasks } from "@/core/task-management";
 import { api } from "@/trpc/react";
 import { IntelligenceTile } from "@/ui/intelligence";
 import {
   ProjectCreator,
-  ProjectOverview,
   ProjectsCard,
   useProjectCreator,
   useProjects,
+  useTodos,
 } from "@/ui/task-management";
+import { ProjectModal } from "@/ui/task-management/project/ProjectModal";
 import { cn, derive } from "@/ui/utils";
 
 const MotionLoader = m.create(Loader);
@@ -36,14 +28,14 @@ export default function HomePage() {
 
   // TODOS
 
-  const { data: tasks = [], isLoading: loadingTodos } = api.tasks.list.useQuery(
-    { status: "todo" },
-  );
-  const taskCount = countTasks(tasks);
+  const todos = useTodos();
+  const todosCount = todos.tasks.reduce((acc, task) => {
+    if (task.subtasks.length > 0) return acc + task.subtasks.length;
+    return acc + 1;
+  }, 0);
 
   const todosLabel = derive(() => {
-    if (taskCount === 0) return "-";
-    if (taskCount <= 100) return taskCount.toString();
+    if (todosCount <= 100) return todosCount;
     return "100+";
   });
 
@@ -79,18 +71,18 @@ export default function HomePage() {
           <Flex gap="lg" align="center">
             <Card
               component={Link}
-              href="/tasks"
+              href="/focus"
               withBorder
               className={cn(
                 "h-40 w-40 shrink-0 cursor-pointer transition-transform hover:scale-105",
                 {
-                  "pointer-events-none": loadingTodos,
+                  "pointer-events-none": todos.isLoading,
                 },
               )}
               radius="md"
             >
               <AnimatePresence>
-                {loadingTodos ? (
+                {todos.isLoading ? (
                   <MotionLoader
                     size="xl"
                     m="auto"
@@ -138,41 +130,10 @@ export default function HomePage() {
         onCreate={projectCreator.create}
       />
 
-      {/* Project Overview */}
-      <Modal
-        opened={openedProject !== null}
-        centered
-        radius="md"
-        classNames={{
-          body: "p-0!",
-        }}
-        transitionProps={{ transition: "pop", duration: 300 }}
-        overlayProps={{
-          className: "backdrop-blur-xs",
-        }}
-        withCloseButton={false}
+      <ProjectModal
+        project={openedProject}
         onClose={() => setOpenedProject(null)}
-      >
-        <FocusTrap.InitialFocus />
-        <AnimatePresence>
-          {openedProject && (
-            <m.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <ProjectOverview
-                project={openedProject}
-                onDeleteProject={() => {
-                  projects.delete.mutate(openedProject);
-                  setOpenedProject(null);
-                }}
-              />
-            </m.div>
-          )}
-        </AnimatePresence>
-      </Modal>
+      />
     </Main>
   );
 }

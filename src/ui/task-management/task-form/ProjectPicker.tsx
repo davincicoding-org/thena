@@ -17,7 +17,7 @@ import { cn } from "@/ui/utils";
 import { ProjectAvatar } from "../project/ProjectAvatar";
 
 export interface ProjectPickerProps {
-  projects: Pick<ProjectSelect, "id" | "title" | "image">[];
+  projects: Pick<ProjectSelect, "id" | "title" | "image" | "color">[];
   onChange: (value: NonNullable<TaskFormValues["projectId"]>) => void;
   onCreate?: () => void;
   onClose: () => void;
@@ -89,27 +89,23 @@ export function ProjectPicker({
             color="gray"
             onClick={() => onChange(project.id)}
             label={project.title}
-            leftSection={
-              <ProjectAvatar
-                project={project}
-                size="sm"
-                tooltipProps={{ disabled: true }}
-              />
-            }
+            leftSection={<ProjectAvatar project={project} size="sm" />}
           />
         ))}
       </ScrollArea>
-      <div className="p-1">
-        <Button
-          variant="light"
-          fullWidth
-          size="xs"
-          leftSection={<IconPlus size={16} />}
-          onClick={onCreate}
-        >
-          Create Project
-        </Button>
-      </div>
+      {onCreate && (
+        <div className="p-1">
+          <Button
+            variant="light"
+            fullWidth
+            size="xs"
+            leftSection={<IconPlus size={16} />}
+            onClick={onCreate}
+          >
+            Create Project
+          </Button>
+        </div>
+      )}
     </Box>
   );
 }

@@ -79,7 +79,6 @@ export function ProjectsCard({
                       project={project}
                       size={96}
                       radius="md"
-                      tooltipProps={{ disabled: true }}
                       className="cursor-pointer transition-transform hover:scale-105"
                       onClick={() => onViewProject(project)}
                     />
