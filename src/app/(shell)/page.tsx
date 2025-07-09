@@ -111,7 +111,7 @@ export default function HomePage() {
             <ProjectsCard
               loading={projects.isLoading}
               items={projects.items}
-              className="min-w-0 flex-1 grow-0"
+              className="min-w-0 flex-1"
               onCreateProject={projectCreator.open}
               onViewProject={setOpenedProject}
             />
