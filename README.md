@@ -1,36 +1,134 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Thena — Where Deep Work Happens
 
-## Getting Started
+Thena is a `Next.js` 15 application focused on deep work, task management, and performance intelligence. It uses `Clerk` for authentication, `tRPC` for type-safe APIs, `Drizzle` ORM with `PostgreSQL`, `Mantine` UI, `Tailwind CSS` v4, and `Vitest` for testing.
 
-First, run the development server:
+Explore feature concepts in `docs/features/`.
+
+## Quick start
+
+1. Install prerequisites
+
+- Node 20+ (LTS recommended)
+- `pnpm` 9+ (project uses `packageManager: pnpm@9.x`)
+- Docker or `Podman` (for local `PostgreSQL`)
+
+1. Create your environment file
+
+Create `.env.development.local` at the repo root:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# PostgreSQL connection (required)
+DATABASE_URL="postgresql://postgres:password@localhost:5432/thena"
+
+# Clerk (required for protected routes)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
+CLERK_SECRET_KEY="sk_test_..."
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Notes:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `DATABASE_URL` is required by Drizzle. See `src/env.ts`.
+- Clerk protects all routes except `/sign-in` via middleware. You’ll need a Clerk app with dev keys to sign in locally.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Start a local database (one-time)
 
-## Learn More
+```bash
+./start-database.sh
+```
 
-To learn more about Next.js, take a look at the following resources:
+This script reads `DATABASE_URL`, then starts a `Postgres` container named after your DB (requires Docker or `Podman`). If the default password is detected, the script can generate one for you.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Apply database schema
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+pnpm db:push
+# Optional: open Drizzle Studio
+pnpm db:studio
+```
 
-## Deploy on Vercel
+1. Run the app
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+pnpm install
+pnpm dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Open `http://localhost:3000`. If not signed in, you’ll be redirected to `/sign-in` (Clerk).
+
+## Essential URLs (dev)
+
+- App shell: `/`
+- Focus: `/focus`
+- Intelligence: `/intelligence`
+- Demos: `/demos`, `/demos/chat`, `/demos/grid`, `/demos/speech`
+- Auth: `/sign-in`
+- `tRPC` endpoint: `/api/trpc`
+
+## Project structure (selected)
+
+- `src/app/` — `Next.js` App Router pages and API routes
+- `src/server/` — `tRPC` routers and server utilities
+- `src/ui/` — Isolated UI components
+- `src/database/` — `Drizzle` schema and migrations
+- `docs/` — concept docs and feature overviews
+
+## Authentication
+
+- Provider: `Clerk` (`@clerk/nextjs`)
+- Middleware enforces auth for all routes except `/sign-in` (see `src/middleware.ts`).
+- Required env:
+  - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+  - `CLERK_SECRET_KEY`
+
+## Data and migrations
+
+- ORM: `Drizzle` (`drizzle-orm`)
+- Schema: `src/database/schema.ts`
+- Config: `drizzle.config.ts` (loads `.env.development.local`, `.env.local`, then `.env`)
+- Commands:
+  - `pnpm db:generate` — generate migrations from schema
+  - `pnpm db:migrate` — apply migrations
+  - `pnpm db:push` — push schema to DB (good for local dev)
+  - `pnpm db:studio` — open Drizzle Studio
+
+## tRPC
+
+- Client providers in `src/trpc/react.tsx`; server utilities in `src/trpc/server.ts`.
+- App router defined under `src/server/` (see `src/server/root.ts` and `src/server/routers/*`).
+- Endpoint mounted at `/api/trpc`.
+
+## UI/Styling
+
+- `Mantine` (`@mantine/core`, dark theme by default)
+- `Tailwind CSS` v4
+- Custom components in `src/ui/components` and feature areas under `src/ui/*`
+
+## Internationalization
+
+- `next-intl` with messages in `src/i18n/messages/*`
+
+## Observability
+
+- `Sentry` config present (`@sentry/nextjs`). Add your DSN as needed.
+- `Vercel Analytics` is enabled in the root layout.
+
+## Scripts
+
+```bash
+pnpm dev                 # start Next.js dev (Turbo)
+pnpm build               # production build
+pnpm start               # start production server
+pnpm typecheck           # TypeScript checks only
+pnpm lint                # ESLint
+pnpm format              # Prettier check
+pnpm format:fix          # Prettier write
+pnpm test                # Vitest (run)
+pnpm test:watch          # Vitest in watch mode
+pnpm test:coverage       # Vitest coverage
+pnpm storybook           # Storybook at :6006
+pnpm build-storybook     # Static Storybook build
+pnpm db:generate         # Drizzle generate migrations
+pnpm db:migrate          # Drizzle run migrations
+pnpm db:push             # Drizzle push schema
+pnpm db:studio           # Drizzle Studio
+```
